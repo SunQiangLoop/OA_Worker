@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: OA 工单审批系统 API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /forms:
+    get:
+      summary: 列出表单定义
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinitionList'
+    post:
+      summary: 创建表单定义
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinitionCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinition'
+  /forms/{formId}:
+    get:
+      summary: 获取表单定义
+      parameters:
+        - name: formId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinition'
+
+  /workflows/templates:
+    get:
+      summary: 列出流程模板
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowTemplateList'
+    post:
+      summary: 创建流程模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowTemplateCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowTemplate'
+
+  /reimbursements:
+    get:
+      summary: 列出报销单
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReimbursementList'
+    post:
+      summary: 创建报销单（草稿）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReimbursementCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+
+  /reimbursements/{id}:
+    get:
+      summary: 获取报销单详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+    patch:
+      summary: 更新报销单（仅草稿）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReimbursementUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+
+  /reimbursements/{id}/submit:
+    post:
+      summary: 提交报销单
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+
+  /reimbursements/{id}/approve:
+    post:
+      summary: 审批通过
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalAction'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+
+  /reimbursements/{id}/reject:
+    post:
+      summary: 审批驳回
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalAction'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reimbursement'
+
+  /reimbursements/{id}/logs:
+    get:
+      summary: 获取审批日志
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalLogList'
+
+components:
+  schemas:
+    FormDefinitionCreate:
+      type: object
+      required: [code, name, schema]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+    FormDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+        isActive:
+          type: boolean
+        version:
+          type: integer
+    FormDefinitionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormDefinition'
+
+    WorkflowTemplateCreate:
+      type: object
+      required: [name, nodes]
+      properties:
+        name:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessNode'
+    WorkflowTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        isActive:
+          type: boolean
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessNode'
+    WorkflowTemplateList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowTemplate'
+
+    ProcessNode:
+      type: object
+      required: [nodeKey, nodeType]
+      properties:
+        nodeKey:
+          type: string
+        nodeType:
+          type: string
+          enum: [Starter, Approver, CC, Condition]
+        assigneeRule:
+          type: object
+          additionalProperties: true
+        conditionRule:
+          type: object
+          additionalProperties: true
+        nextNodeKey:
+          type: string
+
+    ReimbursementCreate:
+      type: object
+      required: [reimbursementType, reason, totalAmount]
+      properties:
+        reimbursementType:
+          type: string
+          enum: [差旅, 团建]
+        reason:
+          type: string
+        totalAmount:
+          type: number
+        summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReimbursementItem'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        formData:
+          type: object
+          additionalProperties: true
+    ReimbursementUpdate:
+      type: object
+      properties:
+        reason:
+          type: string
+        totalAmount:
+          type: number
+        summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReimbursementItem'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        formData:
+          type: object
+          additionalProperties: true
+    Reimbursement:
+      type: object
+      properties:
+        id:
+          type: string
+        reimbursementType:
+          type: string
+        reason:
+          type: string
+        totalAmount:
+          type: number
+        summary:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending, approved, rejected]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReimbursementItem'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        formData:
+          type: object
+          additionalProperties: true
+    ReimbursementList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reimbursement'
+
+    ReimbursementItem:
+      type: object
+      properties:
+        itemDate:
+          type: string
+          format: date
+        itemDesc:
+          type: string
+        amount:
+          type: number
+
+    Attachment:
+      type: object
+      properties:
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        mimeType:
+          type: string
+        url:
+          type: string
+
+    ApprovalAction:
+      type: object
+      properties:
+        comment:
+          type: string
+
+    ApprovalLog:
+      type: object
+      properties:
+        id:
+          type: string
+        nodeKey:
+          type: string
+        actorId:
+          type: string
+        action:
+          type: string
+          enum: [submit, approve, reject, cc]
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ApprovalLogList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalLog'

@@ -1,0 +1,290 @@
+openapi: 3.0.3
+info:
+  title: OA 审批 API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /forms:
+    get:
+      summary: 获取表单定义列表
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: 创建表单定义
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDefinitionCreate'
+      responses:
+        '201':
+          description: Created
+  /forms/{id}:
+    get:
+      summary: 获取表单定义详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /reimbursements:
+    get:
+      summary: 获取报销单列表
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: size
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: 创建报销单（草稿）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReimbursementCreate'
+      responses:
+        '201':
+          description: Created
+  /reimbursements/{id}:
+    get:
+      summary: 获取报销单详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: 更新报销单（草稿）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReimbursementUpdate'
+      responses:
+        '200':
+          description: OK
+  /reimbursements/{id}/submit:
+    post:
+      summary: 提交报销单
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /reimbursements/{id}/approve:
+    post:
+      summary: 审批通过
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /reimbursements/{id}/reject:
+    post:
+      summary: 审批驳回
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /reimbursements/{id}/logs:
+    get:
+      summary: 获取审批日志
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /workflows/templates:
+    get:
+      summary: 获取流程模板列表
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: 创建流程模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowTemplateCreate'
+      responses:
+        '201':
+          description: Created
+  /workflows/templates/{id}:
+    get:
+      summary: 获取流程模板详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    FormDefinitionCreate:
+      type: object
+      required: [code, name, schema]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+    ReimbursementItem:
+      type: object
+      properties:
+        item_date:
+          type: string
+          format: date-time
+        item_desc:
+          type: string
+        amount:
+          type: number
+    Attachment:
+      type: object
+      properties:
+        file_name:
+          type: string
+        file_size:
+          type: integer
+        mime_type:
+          type: string
+        storage_path:
+          type: string
+    ReimbursementCreate:
+      type: object
+      required: [form_id, reimbursement_type, reason, total_amount]
+      properties:
+        form_id:
+          type: integer
+        reimbursement_type:
+          type: string
+        reason:
+          type: string
+        total_amount:
+          type: number
+        summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReimbursementItem'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        form_data:
+          type: object
+          additionalProperties: true
+    ReimbursementUpdate:
+      type: object
+      properties:
+        reason:
+          type: string
+        total_amount:
+          type: number
+        summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReimbursementItem'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        form_data:
+          type: object
+          additionalProperties: true
+    ProcessNode:
+      type: object
+      required: [node_key, node_type]
+      properties:
+        node_key:
+          type: string
+        node_type:
+          type: string
+          enum: [Starter, Approver, CC, Condition]
+        assignee_rule:
+          type: object
+          additionalProperties: true
+        condition_rule:
+          type: object
+          additionalProperties: true
+        next_node_key:
+          type: string
+    WorkflowTemplateCreate:
+      type: object
+      required: [name, nodes]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessNode'

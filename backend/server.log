@@ -1,0 +1,210 @@
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.045ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="users"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.570ms] [34;1m[rows:0][0m CREATE TABLE `users` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`username` text NOT NULL,`email` text,`password_hash` text NOT NULL,`status` text,`last_login_at` datetime,`lock_until` datetime,`failed_count` integer)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.335ms] [34;1m[rows:0][0m CREATE INDEX `idx_users_status` ON `users`(`status`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.378ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_users_email` ON `users`(`email`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.268ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_users_username` ON `users`(`username`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.297ms] [34;1m[rows:0][0m CREATE INDEX `idx_users_deleted_at` ON `users`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.022ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="user_roles"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.390ms] [34;1m[rows:0][0m CREATE TABLE `user_roles` (`user_id` integer,`role_id` integer,PRIMARY KEY (`user_id`,`role_id`))
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.012ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="roles"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.294ms] [34;1m[rows:0][0m CREATE TABLE `roles` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`name` text NOT NULL,`description` text)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.249ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_roles_name` ON `roles`(`name`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.254ms] [34;1m[rows:0][0m CREATE INDEX `idx_roles_deleted_at` ON `roles`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="role_permissions"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.347ms] [34;1m[rows:0][0m CREATE TABLE `role_permissions` (`role_id` integer,`permission_id` integer,PRIMARY KEY (`role_id`,`permission_id`))
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="permissions"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.294ms] [34;1m[rows:0][0m CREATE TABLE `permissions` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`code` text NOT NULL,`description` text)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.273ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_permissions_code` ON `permissions`(`code`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.257ms] [34;1m[rows:0][0m CREATE INDEX `idx_permissions_deleted_at` ON `permissions`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="refresh_tokens"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.293ms] [34;1m[rows:0][0m CREATE TABLE `refresh_tokens` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`user_id` integer,`token_hash` text NOT NULL,`expires_at` datetime,`revoked_at` datetime)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.280ms] [34;1m[rows:0][0m CREATE INDEX `idx_refresh_tokens_expires_at` ON `refresh_tokens`(`expires_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.285ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_refresh_tokens_token_hash` ON `refresh_tokens`(`token_hash`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.336ms] [34;1m[rows:0][0m CREATE INDEX `idx_refresh_tokens_user_id` ON `refresh_tokens`(`user_id`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.288ms] [34;1m[rows:0][0m CREATE INDEX `idx_refresh_tokens_deleted_at` ON `refresh_tokens`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="api_keys"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.281ms] [34;1m[rows:0][0m CREATE TABLE `api_keys` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`name` text,`key_id` text NOT NULL,`secret` text NOT NULL,`status` text,`last_used_at` datetime)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.277ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_keys_status` ON `api_keys`(`status`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.264ms] [34;1m[rows:0][0m CREATE UNIQUE INDEX `idx_api_keys_key_id` ON `api_keys`(`key_id`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.263ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_keys_deleted_at` ON `api_keys`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="api_nonces"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.271ms] [34;1m[rows:0][0m CREATE TABLE `api_nonces` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`key_id` text,`nonce` text,`expires_at` datetime)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.260ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_nonces_expires_at` ON `api_nonces`(`expires_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.254ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_nonces_nonce` ON `api_nonces`(`nonce`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.280ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_nonces_key_id` ON `api_nonces`(`key_id`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.317ms] [34;1m[rows:0][0m CREATE INDEX `idx_api_nonces_deleted_at` ON `api_nonces`(`deleted_at`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="tickets"
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.293ms] [34;1m[rows:0][0m CREATE TABLE `tickets` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`deleted_at` datetime,`title` text,`description` text,`status` text,`priority` text,`created_by` integer,`assignee_id` integer)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.280ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_assignee_id` ON `tickets`(`assignee_id`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.282ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_created_by` ON `tickets`(`created_by`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.287ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_priority` ON `tickets`(`priority`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.298ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_status` ON `tickets`(`status`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.262ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_title` ON `tickets`(`title`)
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.253ms] [34;1m[rows:0][0m CREATE INDEX `idx_tickets_deleted_at` ON `tickets`(`deleted_at`)
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:22 [35;1mrecord not found
+[0m[33m[0.057ms] [34;1m[rows:0][0m SELECT * FROM `permissions` WHERE code = "ticket:read" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:24
+[0m[33m[0.430ms] [34;1m[rows:1][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`) VALUES ("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:read","Read tickets") RETURNING `id`
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:22 [35;1mrecord not found
+[0m[33m[0.026ms] [34;1m[rows:0][0m SELECT * FROM `permissions` WHERE code = "ticket:write" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:24
+[0m[33m[0.405ms] [34;1m[rows:1][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`) VALUES ("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:write","Create/update tickets") RETURNING `id`
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:22 [35;1mrecord not found
+[0m[33m[0.042ms] [34;1m[rows:0][0m SELECT * FROM `permissions` WHERE code = "user:read" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:24
+[0m[33m[0.345ms] [34;1m[rows:1][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`) VALUES ("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:read","Read users") RETURNING `id`
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:22 [35;1mrecord not found
+[0m[33m[0.027ms] [34;1m[rows:0][0m SELECT * FROM `permissions` WHERE code = "user:write" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:24
+[0m[33m[0.314ms] [34;1m[rows:1][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`) VALUES ("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:write","Manage users") RETURNING `id`
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:32 [35;1mrecord not found
+[0m[33m[0.025ms] [34;1m[rows:0][0m SELECT * FROM `roles` WHERE name = "admin" AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:35
+[0m[33m[0.291ms] [34;1m[rows:1][0m INSERT INTO `roles` (`created_at`,`updated_at`,`deleted_at`,`name`,`description`) VALUES ("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"admin","Administrator") RETURNING `id`
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:42
+[0m[33m[0.076ms] [34;1m[rows:4][0m SELECT * FROM `permissions` WHERE `permissions`.`deleted_at` IS NULL
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:43
+[0m[33m[0.063ms] [34;1m[rows:0][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`,`id`) VALUES ("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:read","Read tickets",1),("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:write","Create/update tickets",2),("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:read","Read users",3),("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:write","Manage users",4) ON CONFLICT DO NOTHING RETURNING `id`
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:43
+[0m[33m[0.039ms] [34;1m[rows:4][0m INSERT INTO `role_permissions` (`role_id`,`permission_id`) VALUES (1,1),(1,2),(1,3),(1,4) ON CONFLICT DO NOTHING
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:43
+[0m[33m[0.491ms] [34;1m[rows:1][0m UPDATE `roles` SET `updated_at`="2026-02-01 11:10:23.684" WHERE `roles`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:43
+[0m[33m[0.048ms] [34;1m[rows:0][0m DELETE FROM `role_permissions` WHERE `role_permissions`.`role_id` = 1 AND `role_permissions`.`permission_id` NOT IN (1,2,3,4)
+
+2026/02/01 11:10:23 [31;1m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:47 [35;1mrecord not found
+[0m[33m[0.029ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE username = "admin" AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:59
+[0m[33m[0.697ms] [34;1m[rows:1][0m INSERT INTO `users` (`created_at`,`updated_at`,`deleted_at`,`username`,`email`,`password_hash`,`status`,`last_login_at`,`lock_until`,`failed_count`) VALUES ("2026-02-01 11:10:23.756","2026-02-01 11:10:23.756",NULL,"admin","admin@example.com","$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4","active",NULL,NULL,0) RETURNING `id`
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:62
+[0m[33m[0.121ms] [34;1m[rows:0][0m INSERT INTO `roles` (`created_at`,`updated_at`,`deleted_at`,`name`,`description`,`id`) VALUES ("2026-02-01 11:10:23.683","2026-02-01 11:10:23.684",NULL,"admin","Administrator",1) ON CONFLICT DO NOTHING RETURNING `id`
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:62
+[0m[33m[0.029ms] [34;1m[rows:1][0m INSERT INTO `user_roles` (`user_id`,`role_id`) VALUES (1,1) ON CONFLICT DO NOTHING
+
+2026/02/01 11:10:23 [32m/Users/sunqiang/oa-workorder/backend/internal/service/seed.go:62
+[0m[33m[0.464ms] [34;1m[rows:1][0m UPDATE `users` SET `updated_at`="2026-02-01 11:10:23.756" WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /healthz                  --> example.com/oa-workorder/internal/http.NewRouter.func1 (4 handlers)
+[GIN-debug] POST   /api/v1/auth/login        --> example.com/oa-workorder/internal/handler.(*AuthHandler).Login-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/refresh      --> example.com/oa-workorder/internal/handler.(*AuthHandler).Refresh-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/logout       --> example.com/oa-workorder/internal/handler.(*AuthHandler).Logout-fm (4 handlers)
+[GIN-debug] GET    /api/v1/users/me          --> example.com/oa-workorder/internal/handler.(*UserHandler).Me-fm (5 handlers)
+[GIN-debug] GET    /api/v1/tickets           --> example.com/oa-workorder/internal/handler.(*TicketHandler).List-fm (6 handlers)
+[GIN-debug] GET    /api/v1/tickets/:id       --> example.com/oa-workorder/internal/handler.(*TicketHandler).Get-fm (6 handlers)
+[GIN-debug] POST   /api/v1/tickets           --> example.com/oa-workorder/internal/handler.(*TicketHandler).Create-fm (6 handlers)
+[GIN-debug] PATCH  /api/v1/tickets/:id       --> example.com/oa-workorder/internal/handler.(*TicketHandler).Update-fm (6 handlers)
+[GIN-debug] POST   /open/v1/tickets          --> example.com/oa-workorder/internal/handler.(*OpenHandler).CreateTicket-fm (5 handlers)
+2026/02/01 11:10:23 server listening on :8080
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8080
+[GIN-debug] [ERROR] listen tcp :8080: bind: operation not permitted
+2026/02/01 11:10:23 server stopped: listen tcp :8080: bind: operation not permitted
+exit status 1

@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: OA Workorder API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Tokens
+  /api/v1/tickets:
+    get:
+      summary: List tickets
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create ticket
+      responses:
+        '201':
+          description: Created
+  /open/v1/tickets:
+    post:
+      summary: Create ticket via Open API
+      responses:
+        '201':
+          description: Created

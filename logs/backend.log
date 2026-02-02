@@ -1,0 +1,556 @@
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.052ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="users"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.130ms] [34;1m[rows:6][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "users" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.036ms] [34;1m[rows:-][0m SELECT * FROM `users` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.013ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "users" AND name = "idx_users_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "users" AND name = "idx_users_username"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "users" AND name = "idx_users_email"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "users" AND name = "idx_users_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "users" AND name = "idx_users_department_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="user_roles"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.041ms] [34;1m[rows:1][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "user_roles" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.012ms] [34;1m[rows:-][0m SELECT * FROM `user_roles` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="roles"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.043ms] [34;1m[rows:3][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "roles" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT * FROM `roles` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "roles" AND name = "idx_roles_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "roles" AND name = "idx_roles_name"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="role_permissions"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.035ms] [34;1m[rows:1][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "role_permissions" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `role_permissions` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="permissions"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.036ms] [34;1m[rows:3][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "permissions" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `permissions` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "permissions" AND name = "idx_permissions_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "permissions" AND name = "idx_permissions_code"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="refresh_tokens"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.037ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "refresh_tokens" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT * FROM `refresh_tokens` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "refresh_tokens" AND name = "idx_refresh_tokens_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "refresh_tokens" AND name = "idx_refresh_tokens_user_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "refresh_tokens" AND name = "idx_refresh_tokens_token_hash"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "refresh_tokens" AND name = "idx_refresh_tokens_expires_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="api_keys"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.037ms] [34;1m[rows:4][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "api_keys" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT * FROM `api_keys` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_keys" AND name = "idx_api_keys_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_keys" AND name = "idx_api_keys_key_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_keys" AND name = "idx_api_keys_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="api_nonces"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.037ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "api_nonces" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT * FROM `api_nonces` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_nonces" AND name = "idx_api_nonces_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_nonces" AND name = "idx_api_nonces_key_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_nonces" AND name = "idx_api_nonces_nonce"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "api_nonces" AND name = "idx_api_nonces_expires_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="tickets"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.043ms] [34;1m[rows:8][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "tickets" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.011ms] [34;1m[rows:-][0m SELECT * FROM `tickets` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_title"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.010ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_priority"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_created_by"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_assignee_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "tickets" AND name = "idx_tickets_type"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="departments"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.036ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "departments" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT * FROM `departments` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "departments" AND name = "idx_departments_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "departments" AND name = "idx_departments_name"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "departments" AND name = "idx_departments_parent_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "departments" AND name = "idx_departments_manager_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="form_definitions"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.036ms] [34;1m[rows:4][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "form_definitions" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.011ms] [34;1m[rows:-][0m SELECT * FROM `form_definitions` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_definitions" AND name = "idx_form_definitions_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_definitions" AND name = "idx_form_definitions_code"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.010ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_definitions" AND name = "idx_form_definitions_created_by"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="form_data"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.041ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "form_data" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `form_data` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_data" AND name = "idx_form_data_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_data" AND name = "idx_form_data_form_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_data" AND name = "idx_form_data_owner_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "form_data" AND name = "idx_form_data_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="expense_reimbursements"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.037ms] [34;1m[rows:6][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "expense_reimbursements" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.010ms] [34;1m[rows:-][0m SELECT * FROM `expense_reimbursements` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.079ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_reimbursements" AND name = "idx_expense_reimbursements_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.009ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_reimbursements" AND name = "idx_expense_reimbursements_form_data_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_reimbursements" AND name = "idx_expense_reimbursements_reimbursement_type"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_reimbursements" AND name = "idx_expense_reimbursements_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.010ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_reimbursements" AND name = "idx_expense_reimbursements_workflow_instance_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="expense_items"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.037ms] [34;1m[rows:3][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "expense_items" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT * FROM `expense_items` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.018ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "table" AND tbl_name = "expense_items" AND (sql LIKE "%CONSTRAINT ""fk_expense_reimbursements_items"" %" OR sql LIKE "%CONSTRAINT fk_expense_reimbursements_items %" OR sql LIKE "%CONSTRAINT `fk_expense_reimbursements_items`%" OR sql LIKE "%CONSTRAINT [fk_expense_reimbursements_items]%" OR sql LIKE "%CONSTRAINT 	fk_expense_reimbursements_items	%")
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_items" AND name = "idx_expense_items_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "expense_items" AND name = "idx_expense_items_reimbursement_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="attachments"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.036ms] [34;1m[rows:3][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "attachments" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `attachments` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.011ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "table" AND tbl_name = "attachments" AND (sql LIKE "%CONSTRAINT ""fk_expense_reimbursements_attachments"" %" OR sql LIKE "%CONSTRAINT fk_expense_reimbursements_attachments %" OR sql LIKE "%CONSTRAINT `fk_expense_reimbursements_attachments`%" OR sql LIKE "%CONSTRAINT [fk_expense_reimbursements_attachments]%" OR sql LIKE "%CONSTRAINT 	fk_expense_reimbursements_attachments	%")
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "attachments" AND name = "idx_attachments_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "attachments" AND name = "idx_attachments_reimbursement_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.005ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="workflow_templates"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.031ms] [34;1m[rows:3][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "workflow_templates" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `workflow_templates` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_templates" AND name = "idx_workflow_templates_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_templates" AND name = "idx_workflow_templates_created_by"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.005ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="process_nodes"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.032ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "process_nodes" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.007ms] [34;1m[rows:-][0m SELECT * FROM `process_nodes` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.011ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "table" AND tbl_name = "process_nodes" AND (sql LIKE "%CONSTRAINT ""fk_workflow_templates_nodes"" %" OR sql LIKE "%CONSTRAINT fk_workflow_templates_nodes %" OR sql LIKE "%CONSTRAINT `fk_workflow_templates_nodes`%" OR sql LIKE "%CONSTRAINT [fk_workflow_templates_nodes]%" OR sql LIKE "%CONSTRAINT 	fk_workflow_templates_nodes	%")
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "process_nodes" AND name = "idx_process_nodes_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "process_nodes" AND name = "idx_process_nodes_template_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "process_nodes" AND name = "idx_process_nodes_node_key"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "process_nodes" AND name = "idx_process_nodes_node_type"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.005ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="workflow_instances"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.033ms] [34;1m[rows:7][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "workflow_instances" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.008ms] [34;1m[rows:-][0m SELECT * FROM `workflow_instances` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_template_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_business_type"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_business_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_status"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "workflow_instances" AND name = "idx_workflow_instances_started_by"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.005ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type='table' AND name="approval_logs"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.035ms] [34;1m[rows:5][0m SELECT sql FROM sqlite_master WHERE type IN ("table","index") AND tbl_name = "approval_logs" AND sql IS NOT NULL order by type = "table" desc
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT * FROM `approval_logs` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "approval_logs" AND name = "idx_approval_logs_deleted_at"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "approval_logs" AND name = "idx_approval_logs_instance_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "approval_logs" AND name = "idx_approval_logs_node_key"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/cmd/server/main.go:20
+[0m[33m[0.006ms] [34;1m[rows:-][0m SELECT count(*) FROM sqlite_master WHERE type = "index" AND tbl_name = "approval_logs" AND name = "idx_approval_logs_actor_id"
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:23
+[0m[33m[0.068ms] [34;1m[rows:1][0m SELECT * FROM `permissions` WHERE code = "ticket:read" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:23
+[0m[33m[0.028ms] [34;1m[rows:1][0m SELECT * FROM `permissions` WHERE code = "ticket:write" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:23
+[0m[33m[0.025ms] [34;1m[rows:1][0m SELECT * FROM `permissions` WHERE code = "user:read" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:23
+[0m[33m[0.023ms] [34;1m[rows:1][0m SELECT * FROM `permissions` WHERE code = "user:write" AND `permissions`.`deleted_at` IS NULL ORDER BY `permissions`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:33
+[0m[33m[0.794ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE name = "admin" AND `roles`.`deleted_at` IS NULL ORDER BY `roles`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:43
+[0m[33m[0.128ms] [34;1m[rows:4][0m SELECT * FROM `permissions` WHERE `permissions`.`deleted_at` IS NULL
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:44
+[0m[33m[0.195ms] [34;1m[rows:0][0m INSERT INTO `permissions` (`created_at`,`updated_at`,`deleted_at`,`code`,`description`,`id`) VALUES ("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:read","Read tickets",1),("2026-02-01 11:10:23.682","2026-02-01 11:10:23.682",NULL,"ticket:write","Create/update tickets",2),("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:read","Read users",3),("2026-02-01 11:10:23.683","2026-02-01 11:10:23.683",NULL,"user:write","Manage users",4) ON CONFLICT DO NOTHING RETURNING `id`
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:44
+[0m[33m[0.029ms] [34;1m[rows:0][0m INSERT INTO `role_permissions` (`role_id`,`permission_id`) VALUES (1,1),(1,2),(1,3),(1,4) ON CONFLICT DO NOTHING
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:44
+[0m[33m[1.089ms] [34;1m[rows:1][0m UPDATE `roles` SET `updated_at`="2026-02-02 14:36:21.572" WHERE `roles`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:44
+[0m[33m[0.085ms] [34;1m[rows:0][0m DELETE FROM `role_permissions` WHERE `role_permissions`.`role_id` = 1 AND `role_permissions`.`permission_id` NOT IN (1,2,3,4)
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:48
+[0m[33m[0.199ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE username = "admin" AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:83
+[0m[33m[0.023ms] [34;1m[rows:1][0m SELECT count(*) FROM `departments` WHERE `departments`.`deleted_at` IS NULL
+
+2026/02/02 14:36:21 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/service/seed.go:164
+[0m[33m[0.024ms] [34;1m[rows:1][0m SELECT count(*) FROM `workflow_templates` WHERE name = "Expense Reimbursement" AND `workflow_templates`.`deleted_at` IS NULL
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /healthz                  --> example.com/oa-workorder/internal/http.NewRouter.func1 (4 handlers)
+[GIN-debug] POST   /api/v1/auth/slider/verify --> example.com/oa-workorder/internal/handler.(*AuthHandler).SliderVerify-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/login        --> example.com/oa-workorder/internal/handler.(*AuthHandler).Login-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/refresh      --> example.com/oa-workorder/internal/handler.(*AuthHandler).Refresh-fm (4 handlers)
+[GIN-debug] POST   /api/v1/auth/logout       --> example.com/oa-workorder/internal/handler.(*AuthHandler).Logout-fm (4 handlers)
+[GIN-debug] GET    /api/v1/users/me          --> example.com/oa-workorder/internal/handler.(*UserHandler).Me-fm (5 handlers)
+[GIN-debug] GET    /api/v1/users             --> example.com/oa-workorder/internal/handler.(*UserHandler).List-fm (5 handlers)
+[GIN-debug] GET    /api/v1/departments       --> example.com/oa-workorder/internal/handler.(*DepartmentHandler).List-fm (5 handlers)
+[GIN-debug] GET    /api/v1/departments/:id/users --> example.com/oa-workorder/internal/handler.(*DepartmentHandler).GetUsers-fm (5 handlers)
+[GIN-debug] GET    /api/v1/tickets           --> example.com/oa-workorder/internal/handler.(*TicketHandler).List-fm (6 handlers)
+[GIN-debug] GET    /api/v1/tickets/:id       --> example.com/oa-workorder/internal/handler.(*TicketHandler).Get-fm (6 handlers)
+[GIN-debug] POST   /api/v1/tickets           --> example.com/oa-workorder/internal/handler.(*TicketHandler).Create-fm (6 handlers)
+[GIN-debug] PATCH  /api/v1/tickets/:id       --> example.com/oa-workorder/internal/handler.(*TicketHandler).Update-fm (6 handlers)
+[GIN-debug] GET    /api/v1/forms             --> example.com/oa-workorder/internal/handler.(*FormHandler).List-fm (5 handlers)
+[GIN-debug] POST   /api/v1/forms             --> example.com/oa-workorder/internal/handler.(*FormHandler).Create-fm (5 handlers)
+[GIN-debug] GET    /api/v1/forms/:id         --> example.com/oa-workorder/internal/handler.(*FormHandler).Get-fm (5 handlers)
+[GIN-debug] GET    /api/v1/workflows/templates --> example.com/oa-workorder/internal/handler.(*WorkflowHandler).ListTemplates-fm (5 handlers)
+[GIN-debug] POST   /api/v1/workflows/templates --> example.com/oa-workorder/internal/handler.(*WorkflowHandler).CreateTemplate-fm (5 handlers)
+[GIN-debug] GET    /api/v1/workflows/templates/:id --> example.com/oa-workorder/internal/handler.(*WorkflowHandler).GetTemplate-fm (5 handlers)
+[GIN-debug] GET    /api/v1/reimbursements    --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).List-fm (5 handlers)
+[GIN-debug] POST   /api/v1/reimbursements    --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Create-fm (5 handlers)
+[GIN-debug] GET    /api/v1/reimbursements/:id --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Get-fm (5 handlers)
+[GIN-debug] PATCH  /api/v1/reimbursements/:id --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Update-fm (5 handlers)
+[GIN-debug] POST   /api/v1/reimbursements/:id/submit --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Submit-fm (5 handlers)
+[GIN-debug] POST   /api/v1/reimbursements/:id/approve --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Approve-fm (5 handlers)
+[GIN-debug] POST   /api/v1/reimbursements/:id/reject --> example.com/oa-workorder/internal/handler.(*ReimbursementHandler).Reject-fm (5 handlers)
+[GIN-debug] GET    /api/v1/reimbursements/:id/logs --> example.com/oa-workorder/internal/handler.(*ApprovalLogHandler).ListByReimbursement-fm (5 handlers)
+[GIN-debug] POST   /open/v1/tickets          --> example.com/oa-workorder/internal/handler.(*OpenHandler).CreateTicket-fm (5 handlers)
+2026/02/02 14:36:21 server listening on 127.0.0.1:18080
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on 127.0.0.1:18080
+[GIN] 2026/02/02 - 14:36:32 | 204 |      73.709µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:37:10 | 204 |     391.375µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:37:10 | 200 |     691.458µs |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:37:22 | 204 |     158.375µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:48
+[0m[33m[2.657ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = "admin" OR email = "admin") AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:79
+[0m[33m[1.799ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`="2026-02-01 11:10:23.756",`updated_at`="2026-02-02 14:37:22.11",`deleted_at`=NULL,`username`="admin",`email`="admin@example.com",`password_hash`="$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4",`status`="active",`last_login_at`="2026-02-02 14:37:22.11",`lock_until`=NULL,`failed_count`=0,`department_id`=NULL,`position`="" WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:93
+[0m[33m[0.859ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ("2026-02-02 14:37:22.112","2026-02-02 14:37:22.112",NULL,1,"a46f3dbccb128b039cff8be541a192729e702137826744d8cef07b11e4d3ad93","2026-03-04 14:37:22.112",NULL) RETURNING `id`
+[GIN] 2026/02/02 - 14:37:22 | 200 |   97.135834ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/02 - 14:37:22 | 204 |       4.333µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/user.go:24
+[0m[33m[0.071ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/02 - 14:37:22 | 200 |     130.333µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/02 - 14:37:22 | 204 |       5.334µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/middleware/auth.go:59
+[0m[33m[0.403ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = "ticket:read") AND `users`.`deleted_at` IS NULL
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:72
+[0m[33m[0.194ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/02 14:37:22 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:73
+[0m[33m[0.084ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/02 - 14:37:22 | 200 |     862.584µs |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/02 - 14:38:32 | 204 |      69.292µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/logout"
+
+2026/02/02 14:38:32 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:195
+[0m[33m[3.500ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `revoked_at`="2026-02-02 14:38:32.364",`updated_at`="2026-02-02 14:38:32.364" WHERE token_hash = "a46f3dbccb128b039cff8be541a192729e702137826744d8cef07b11e4d3ad93" AND `refresh_tokens`.`deleted_at` IS NULL
+[GIN] 2026/02/02 - 14:38:32 | 200 |    3.882125ms |       127.0.0.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/02/02 - 14:40:50 | 204 |      72.291µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:40:50 | 200 |     261.833µs |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:40:55 | 204 |      32.084µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:48
+[0m[33m[1.057ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = "admin" OR email = "admin") AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:79
+[0m[33m[1.621ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`="2026-02-01 11:10:23.756",`updated_at`="2026-02-02 14:40:55.867",`deleted_at`=NULL,`username`="admin",`email`="admin@example.com",`password_hash`="$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4",`status`="active",`last_login_at`="2026-02-02 14:40:55.867",`lock_until`=NULL,`failed_count`=0,`department_id`=NULL,`position`="" WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:93
+[0m[33m[0.954ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ("2026-02-02 14:40:55.868","2026-02-02 14:40:55.868",NULL,1,"93f40ee61bc100a557cf923695de291ba311cd4c42f17c236beab369eb0ebe33","2026-03-04 14:40:55.868",NULL) RETURNING `id`
+[GIN] 2026/02/02 - 14:40:55 | 200 |  104.249917ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/02 - 14:40:55 | 204 |       2.666µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/user.go:24
+[0m[33m[0.094ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/02 - 14:40:55 | 200 |      259.75µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/02 - 14:40:55 | 204 |       8.667µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/middleware/auth.go:59
+[0m[33m[0.253ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = "ticket:read") AND `users`.`deleted_at` IS NULL
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:72
+[0m[33m[0.339ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/02 14:40:55 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:73
+[0m[33m[0.235ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/02 - 14:40:55 | 200 |    1.110875ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/02 - 14:40:59 | 204 |      31.042µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/logout"
+
+2026/02/02 14:40:59 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:195
+[0m[33m[2.169ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `revoked_at`="2026-02-02 14:40:59.18",`updated_at`="2026-02-02 14:40:59.18" WHERE token_hash = "93f40ee61bc100a557cf923695de291ba311cd4c42f17c236beab369eb0ebe33" AND `refresh_tokens`.`deleted_at` IS NULL
+[GIN] 2026/02/02 - 14:40:59 | 200 |    2.379333ms |       127.0.0.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/02/02 - 14:41:08 | 204 |    2.207416ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:41:08 | 200 |     183.292µs |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:41:09 | 204 |        13.5µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/02 14:41:09 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:48
+[0m[33m[0.981ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = "admin" OR email = "admin") AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/02 14:41:09 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:70
+[0m[33m[1.279ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`="2026-02-01 11:10:23.756",`updated_at`="2026-02-02 14:41:09.708",`deleted_at`=NULL,`username`="admin",`email`="admin@example.com",`password_hash`="$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4",`status`="active",`last_login_at`="2026-02-02 14:40:55.867",`lock_until`=NULL,`failed_count`=1,`department_id`=NULL,`position`="" WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/02 - 14:41:09 | 401 |  108.799958ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:48
+[0m[33m[1.740ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = "admin" OR email = "admin") AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:79
+[0m[33m[1.610ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`="2026-02-01 11:10:23.756",`updated_at`="2026-02-02 14:41:13.476",`deleted_at`=NULL,`username`="admin",`email`="admin@example.com",`password_hash`="$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4",`status`="active",`last_login_at`="2026-02-02 14:41:13.476",`lock_until`=NULL,`failed_count`=0,`department_id`=NULL,`position`="" WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:93
+[0m[33m[1.063ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ("2026-02-02 14:41:13.477","2026-02-02 14:41:13.477",NULL,1,"05fd0721d679b3faf728a58c3f505bd75b37b744f937452690a237369881ca88","2026-03-04 14:41:13.477",NULL) RETURNING `id`
+[GIN] 2026/02/02 - 14:41:13 | 200 |      94.899ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/02 - 14:41:13 | 204 |       2.375µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/user.go:24
+[0m[33m[0.083ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/02 - 14:41:13 | 200 |     150.792µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/02 - 14:41:13 | 204 |       23.75µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/middleware/auth.go:59
+[0m[33m[0.389ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = "ticket:read") AND `users`.`deleted_at` IS NULL
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:72
+[0m[33m[0.172ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/02 14:41:13 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/ticket.go:73
+[0m[33m[0.361ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/02 - 14:41:13 | 200 |    1.298042ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/02 - 14:41:16 | 204 |      12.459µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/logout"
+
+2026/02/02 14:41:16 [32m/Users/sunqiang/Desktop/oa-workorder/backend/internal/handler/auth.go:195
+[0m[33m[2.641ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `revoked_at`="2026-02-02 14:41:16.897",`updated_at`="2026-02-02 14:41:16.897" WHERE token_hash = "05fd0721d679b3faf728a58c3f505bd75b37b744f937452690a237369881ca88" AND `refresh_tokens`.`deleted_at` IS NULL
+[GIN] 2026/02/02 - 14:41:16 | 200 |     2.92625ms |       127.0.0.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/02/02 - 14:41:19 | 204 |      23.083µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/02 - 14:41:19 | 200 |      194.75µs |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
