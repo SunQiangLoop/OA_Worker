@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"example.com/oa-workorder/internal/middleware"
 	"example.com/oa-workorder/internal/models"
@@ -98,6 +99,39 @@ type updateTicketRequest struct {
 	Priority    *string `json:"priority"`
 	Status      *string `json:"status"`
 	AssigneeID  *uint   `json:"assignee_id"`
+}
+
+// PublicList exposes a read-only list of approvals without auth (demo use).
+// Default filters: type=expense when no type is provided.
+func (h *TicketHandler) PublicList(c *gin.Context) {
+	var tickets []models.Ticket
+	q := h.DB.Model(&models.Ticket{})
+
+	t := c.DefaultQuery("type", "expense")
+	if t != "" {
+		q = q.Where("type = ?", t)
+	}
+	if status := c.Query("status"); status != "" {
+		q = q.Where("status = ?", status)
+	}
+	if keyword := strings.TrimSpace(c.Query("keyword")); keyword != "" {
+		like := "%" + keyword + "%"
+		q = q.Where("title LIKE ? OR description LIKE ?", like, like)
+	}
+
+	page, size := pagination(c)
+	var total int64
+	_ = q.Count(&total).Error
+	if err := q.Order("id desc").Limit(size).Offset((page - 1) * size).Find(&tickets).Error; err != nil {
+		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to list tickets")
+		return
+	}
+	response.OK(c, gin.H{
+		"items": tickets,
+		"page":  page,
+		"size":  size,
+		"total": total,
+	})
 }
 
 func (h *TicketHandler) Update(c *gin.Context) {

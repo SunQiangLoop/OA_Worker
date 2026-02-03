@@ -14557,13 +14557,13 @@ function loadContent(moduleCode, element = null) {
     // 日常费用报销 - OA 联动
     // ============================================================
     function getExpenseDailyConfig() {
-        const rawBase = (window.OA_BASE_URL || localStorage.getItem("OA_BASE_URL") || "").toString().trim();
+        const rawBase = (window.OA_BASE_URL || "").toString().trim();
         const host = window.location.hostname || "127.0.0.1";
-        const defaultPort = (window.OA_BACKEND_PORT || localStorage.getItem("OA_BACKEND_PORT") || "8000").toString();
+        const defaultPort = (window.OA_BACKEND_PORT || "18080").toString();
         const baseUrl = rawBase
             ? rawBase.replace(/\/$/, "")
             : `http://${host}:${defaultPort}`;
-        let apiPrefix = (window.OA_API_PREFIX || "/api").toString().trim();
+        let apiPrefix = (window.OA_API_PREFIX || "/public/v1").toString().trim();
         if (!apiPrefix.startsWith("/")) apiPrefix = `/${apiPrefix}`;
         const templateId = Number(window.OA_EXPENSE_TEMPLATE_ID || 1) || 1;
         const mockUserId = (window.OA_MOCK_USER_ID || "10").toString();
@@ -14572,8 +14572,7 @@ function loadContent(moduleCode, element = null) {
 
     function normalizeOAStatus(status) {
         if (!status) return "";
-        if (typeof status === "string") return status;
-        if (typeof status === "object" && status.value) return status.value;
+        if (typeof status === "object" && status.value) return String(status.value);
         return String(status);
     }
 
@@ -14602,14 +14601,27 @@ function loadContent(moduleCode, element = null) {
         return `BX${yy}${mm}${dd}${seq}`;
     }
 
+    function parseExpenseDescription(desc) {
+        const info = { applicant: "", department: "", reason: "" };
+        if (!desc) return info;
+        const parts = String(desc).split(/[;；]/).map(part => part.trim()).filter(Boolean);
+        parts.forEach(part => {
+            if (part.startsWith("申请人：")) info.applicant = part.replace("申请人：", "").trim();
+            if (part.startsWith("所属部门：")) info.department = part.replace("所属部门：", "").trim();
+            if (part.startsWith("申请理由：")) info.reason = part.replace("申请理由：", "").trim();
+        });
+        return info;
+    }
+
     function getExpenseStatusMeta(status) {
-        const key = normalizeOAStatus(status);
-        if (key === "PENDING") return { label: "审批中", tone: "warning" };
-        if (key === "APPROVED") return { label: "审批通过", tone: "success" };
-        if (key === "REJECTED") return { label: "已拒绝", tone: "danger" };
-        if (key === "CANCELLED") return { label: "已撤销", tone: "neutral" };
-        if (key === "LOCAL_ONLY") return { label: "未同步", tone: "info" };
-        return { label: key || "未知", tone: "neutral" };
+        const raw = normalizeOAStatus(status);
+        const key = raw.toLowerCase();
+        if (key === "pending") return { label: "审批中", tone: "warning" };
+        if (key === "approved") return { label: "审批通过", tone: "success" };
+        if (key === "rejected") return { label: "已拒绝", tone: "danger" };
+        if (key === "cancelled") return { label: "已撤销", tone: "neutral" };
+        if (key === "local_only") return { label: "未同步", tone: "info" };
+        return { label: raw || "未知", tone: "neutral" };
     }
 
     function getPaymentStatusMeta(status) {
@@ -14733,7 +14745,7 @@ function loadContent(moduleCode, element = null) {
         const paymentTime = item.payment_time ? formatExpenseDate(item.payment_time) : "-";
         const paymentMethod = item.payment_method || "银行转账";
 
-        const payDisabled = normalizeOAStatus(item.oa_status) !== "APPROVED" || item.payment_status === "已付款";
+        const payDisabled = normalizeOAStatus(item.oa_status).toLowerCase() !== "approved" || item.payment_status === "已付款";
         const payDisabledAttr = payDisabled ? "disabled" : "";
 
         container.innerHTML = `
@@ -14830,7 +14842,7 @@ function loadContent(moduleCode, element = null) {
         const list = getExpenseDailyList();
         const item = list.find(it => it.id === id || it.bill_no === id || it.external_ref_id === id) || window.currentExpenseDailyBill;
         if (!item) return alert("未找到该报销单");
-        if (normalizeOAStatus(item.oa_status) !== "APPROVED") {
+        if (normalizeOAStatus(item.oa_status).toLowerCase() !== "approved") {
             return alert("该单据尚未审批通过，无法付款");
         }
         if (item.payment_status === "已付款") return alert("该单据已完成付款");
@@ -14843,29 +14855,32 @@ function loadContent(moduleCode, element = null) {
         const voucherId = createExpenseVoucher(item, paymentMethod);
         const config = getExpenseDailyConfig();
 
-        try {
-            const res = await fetch(`${config.baseUrl}${config.apiPrefix}/finance/bills/pay`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Mock-User-Id": config.mockUserId
-                },
-                body: JSON.stringify({
-                    bill_no: item.bill_no || item.id,
-                    external_ref_id: item.external_ref_id,
-                    workflow_instance_id: item.oa_instance_id,
-                    payment_method: paymentMethod,
-                    payment_note: paymentNote,
-                    voucher_id: voucherId
-                })
-            });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || `付款接口返回 ${res.status}`);
+        const useRemotePay = !String(config.apiPrefix || "").startsWith("/public/v1");
+        if (useRemotePay) {
+            try {
+                const res = await fetch(`${config.baseUrl}${config.apiPrefix}/finance/bills/pay`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Mock-User-Id": config.mockUserId
+                    },
+                    body: JSON.stringify({
+                        bill_no: item.bill_no || item.id,
+                        external_ref_id: item.external_ref_id,
+                        workflow_instance_id: item.oa_instance_id,
+                        payment_method: paymentMethod,
+                        payment_note: paymentNote,
+                        voucher_id: voucherId
+                    })
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `付款接口返回 ${res.status}`);
+                }
+            } catch (error) {
+                alert(`付款失败：${error.message || error}`);
+                return;
             }
-        } catch (error) {
-            alert(`付款失败：${error.message || error}`);
-            return;
         }
 
         const now = new Date().toISOString();
@@ -15021,7 +15036,7 @@ function loadContent(moduleCode, element = null) {
             return;
         }
 
-        const oaStatus = normalizeOAStatus(oaInstance && oaInstance.status) || "PENDING";
+        const oaStatus = normalizeOAStatus(oaInstance && oaInstance.status) || "pending";
         const record = {
             id: newId,
             applicant: payload.applicant || "未命名",
@@ -15035,7 +15050,7 @@ function loadContent(moduleCode, element = null) {
             oa_instance_id: oaInstance ? oaInstance.id : null,
             oa_status: oaStatus,
             current_node_name: oaInstance && oaInstance.current_node_name ? oaInstance.current_node_name : "待审批",
-            payment_status: oaStatus === "APPROVED" ? "待付款" : "无付款",
+            payment_status: oaStatus.toLowerCase() === "approved" ? "待付款" : "无付款",
             created_at: oaInstance && oaInstance.created_at ? oaInstance.created_at : payload.created_at
         };
 
@@ -15048,129 +15063,58 @@ function loadContent(moduleCode, element = null) {
 
     window.syncExpenseDailyFromOA = async function (options = {}) {
         const config = getExpenseDailyConfig();
-        const params = new URLSearchParams();
-        params.set("template_id", String(config.templateId));
-        const instanceUrl = `${config.baseUrl}${config.apiPrefix}/workflow/instances?${params.toString()}`;
-        const billsUrl = `${config.baseUrl}${config.apiPrefix}/finance/bills`;
+        const url = `${config.baseUrl}${config.apiPrefix}/approvals?type=expense`;
 
         try {
-            const list = getExpenseDailyList();
-            const indexMap = new Map();
-            const listMap = new Map();
-            const addIndex = (key, item) => {
-                if (!key) return;
-                indexMap.set(key, item);
-            };
-            const findExisting = (keys) => {
-                for (const key of keys) {
-                    if (key && indexMap.has(key)) return indexMap.get(key);
-                }
-                return null;
-            };
-            list.forEach(item => {
-                addIndex(item.id, item);
-                addIndex(item.bill_no, item);
-                addIndex(item.external_ref_id, item);
-                if (item.oa_instance_id) addIndex(`workflow:${item.oa_instance_id}`, item);
-                if (item.oa_instance_id) addIndex(item.oa_instance_id, item);
-            });
-
-            // 1) 先同步财务单据（审批通过后的落库结果）
-            const billRes = await fetch(billsUrl, {
-                headers: {
-                    "X-Mock-User-Id": config.mockUserId
-                }
-            });
-            if (billRes.ok) {
-                const bills = await billRes.json();
-                (bills || []).forEach(bill => {
-                    const keyCandidates = [bill.source_form_id, bill.external_ref_id, bill.bill_no];
-                    const existing = findExisting(keyCandidates);
-                    const paymentStatus = bill.payment_status === "PAID" ? "已付款" : "待付款";
-                    const currentNodeName = paymentStatus === "已付款" ? "已打款" : "出纳打款";
-                    const canonicalId = bill.source_form_id || (existing ? existing.id : "") || bill.bill_no || bill.external_ref_id;
-                    const merged = {
-                        id: canonicalId,
-                        bill_no: bill.bill_no,
-                        external_ref_id: bill.external_ref_id,
-                        applicant: bill.applicant_name || (existing ? existing.applicant : "-"),
-                        department: bill.department_name || (existing ? existing.department : "-"),
-                        expense_type: bill.expense_type || (existing ? existing.expense_type : "-"),
-                        amount: Number(bill.amount) || (existing ? existing.amount : 0),
-                        offset_amount: existing ? existing.offset_amount : 0,
-                        payable_amount: Number(bill.amount) || (existing ? existing.payable_amount : 0),
-                        invoice_count: existing ? existing.invoice_count : 0,
-                        reason: existing ? existing.reason : "-",
-                        oa_instance_id: existing ? existing.oa_instance_id : null,
-                        oa_status: "APPROVED",
-                        current_node_name: currentNodeName,
-                        payment_status: paymentStatus,
-                        voucher_status: bill.voucher_status || (existing ? existing.voucher_status : "NOT_CREATED"),
-                        voucher_id: existing ? existing.voucher_id : undefined,
-                        payment_method: existing ? existing.payment_method : undefined,
-                        payment_time: existing ? existing.payment_time : undefined,
-                        created_at: bill.created_at || (existing ? existing.created_at : "")
-                    };
-                    listMap.set(canonicalId, merged);
-                    addIndex(canonicalId, merged);
-                    addIndex(bill.bill_no, merged);
-                    addIndex(bill.external_ref_id, merged);
-                    addIndex(bill.source_form_id, merged);
-                });
-            }
-
-            // 2) 再同步审批中的实例（用于显示待审批/流转状态）
-            const res = await fetch(instanceUrl, {
-                headers: {
-                    "X-Mock-User-Id": config.mockUserId
-                }
-            });
+            const res = await fetch(url);
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(text || `OA 接口返回 ${res.status}`);
             }
-            const instances = await res.json();
+            const payload = await res.json();
+            const items = (payload && payload.data && payload.data.items) || payload.items || [];
 
-            (instances || []).forEach(instance => {
-                const form = instance.form_data || {};
-                const instanceId = instance.id;
-                const fmsId = form.fms_id || form.fmsId || buildExpenseBillNoByInstance(instance);
-                const externalRef = `workflow:${instanceId}`;
-                const existing = findExisting([fmsId, externalRef, instanceId]);
-                const oaStatus = normalizeOAStatus(instance.status);
-                const payloadAmount = Number(form.amount) || 0;
-                const payloadOffset = Number(form.offset_amount) || 0;
-                const payable = Number(form.payable_amount) || Math.max(payloadAmount - payloadOffset, 0);
-
-                const nodeName = oaStatus === "APPROVED"
-                    ? "出纳打款"
-                    : (instance.current_node_name || "-");
-                const canonicalId = fmsId || (existing ? existing.id : "") || externalRef;
-                const merged = {
-                    id: canonicalId,
-                    bill_no: existing ? existing.bill_no : undefined,
-                    external_ref_id: existing ? existing.external_ref_id : externalRef,
-                    applicant: form.applicant || (existing ? existing.applicant : "-"),
-                    department: form.department || (existing ? existing.department : "-"),
-                    expense_type: form.expense_type || form.type || (existing ? existing.expense_type : "-"),
-                    amount: payloadAmount || (existing ? existing.amount : 0),
-                    offset_amount: payloadOffset || (existing ? existing.offset_amount : 0),
-                    payable_amount: payable || (existing ? existing.payable_amount : 0),
-                    invoice_count: Number(form.invoice_count) || (existing ? existing.invoice_count : 0),
-                    reason: form.reason || (existing ? existing.reason : "-"),
-                    oa_instance_id: instanceId,
-                    oa_status: oaStatus || (existing ? existing.oa_status : "PENDING"),
-                    current_node_name: nodeName,
-                    payment_status: (existing && existing.payment_status) || (oaStatus === "APPROVED" ? "待付款" : "无付款"),
-                    created_at: instance.created_at || (existing ? existing.created_at : "")
-                };
-                listMap.set(canonicalId, merged);
-                addIndex(canonicalId, merged);
-                addIndex(fmsId, merged);
-                addIndex(externalRef, merged);
+            const localList = getExpenseDailyList();
+            const localMap = new Map();
+            localList.forEach(item => {
+                if (item.id) localMap.set(String(item.id), item);
             });
 
-            const mergedList = Array.from(listMap.values());
+            const mapped = (items || []).map(ticket => {
+                const info = parseExpenseDescription(ticket.description || "");
+                const rawStatus = normalizeOAStatus(ticket.status);
+                const statusKey = rawStatus.toLowerCase();
+                const expenseType = (ticket.title || "").replace(/报销$/, "") || "办公费";
+                const currentNode = statusKey === "approved" ? "出纳打款" : statusKey === "rejected" ? "已拒绝" : "待审批";
+                const paymentStatus = statusKey === "approved" ? "待付款" : "无付款";
+                return {
+                    id: String(ticket.id || ""),
+                    bill_no: ticket.id ? `BX${String(ticket.id).padStart(4, "0")}` : undefined,
+                    external_ref_id: ticket.id ? `ticket:${ticket.id}` : undefined,
+                    applicant: info.applicant || "-",
+                    department: info.department || "-",
+                    expense_type: expenseType || "-",
+                    amount: Number(ticket.amount) || 0,
+                    offset_amount: 0,
+                    payable_amount: Number(ticket.amount) || 0,
+                    invoice_count: 0,
+                    reason: info.reason || ticket.description || "-",
+                    oa_instance_id: ticket.id || null,
+                    oa_status: rawStatus || "pending",
+                    current_node_name: currentNode,
+                    payment_status: paymentStatus,
+                    created_at: ticket.created_at || ""
+                };
+            });
+
+            const mergedMap = new Map();
+            mapped.forEach(item => mergedMap.set(item.id, item));
+            localList.forEach(item => {
+                if (!item.id || mergedMap.has(String(item.id))) return;
+                mergedMap.set(String(item.id), { ...item, oa_status: "local_only" });
+            });
+
+            const mergedList = Array.from(mergedMap.values());
             mergedList.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
             saveExpenseDailyList(mergedList);
             const now = new Date().toLocaleString();
@@ -15201,13 +15145,13 @@ function loadContent(moduleCode, element = null) {
             if (keyword && !text.includes(keyword.trim().toLowerCase())) return false;
             if (typeFilter && item.expense_type !== typeFilter) return false;
             if (statusFilter) {
-                const oaStatus = normalizeOAStatus(item.oa_status);
-                if (statusFilter === "审批中" && oaStatus !== "PENDING") return false;
-                if (statusFilter === "审批通过" && oaStatus !== "APPROVED") return false;
-                if (statusFilter === "已拒绝" && oaStatus !== "REJECTED") return false;
+                const oaStatus = normalizeOAStatus(item.oa_status).toLowerCase();
+                if (statusFilter === "审批中" && oaStatus !== "pending") return false;
+                if (statusFilter === "审批通过" && oaStatus !== "approved") return false;
+                if (statusFilter === "已拒绝" && oaStatus !== "rejected") return false;
                 if (statusFilter === "待付款" && item.payment_status !== "待付款") return false;
                 if (statusFilter === "已付款" && item.payment_status !== "已付款") return false;
-                if (statusFilter === "未同步" && oaStatus !== "LOCAL_ONLY") return false;
+                if (statusFilter === "未同步" && oaStatus !== "local_only") return false;
             }
             return true;
         });
@@ -15245,9 +15189,9 @@ function loadContent(moduleCode, element = null) {
 
         tbody.innerHTML = rows || `<tr><td colspan="9" style="text-align:center; color:#999;">暂无数据</td></tr>`;
 
-        const pendingCount = list.filter(item => normalizeOAStatus(item.oa_status) === "PENDING").length;
-        const approvedCount = list.filter(item => normalizeOAStatus(item.oa_status) === "APPROVED").length;
-        const rejectedCount = list.filter(item => normalizeOAStatus(item.oa_status) === "REJECTED").length;
+        const pendingCount = list.filter(item => normalizeOAStatus(item.oa_status).toLowerCase() === "pending").length;
+        const approvedCount = list.filter(item => normalizeOAStatus(item.oa_status).toLowerCase() === "approved").length;
+        const rejectedCount = list.filter(item => normalizeOAStatus(item.oa_status).toLowerCase() === "rejected").length;
         const paidCount = list.filter(item => item.payment_status === "已付款").length;
 
         const pendingEl = document.getElementById("expense-kpi-pending");

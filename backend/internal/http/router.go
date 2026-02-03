@@ -100,6 +100,11 @@ func NewRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 		open.POST("/tickets", openHandler.CreateTicket)
 	}
 
+	public := r.Group("/public/v1")
+	{
+		public.GET("/approvals", ticketHandler.PublicList)
+	}
+
 	return r
 }
 
