@@ -15212,26 +15212,29 @@ function loadContent(moduleCode, element = null) {
         const item = list.find(it => it.id === id || it.bill_no === id || it.external_ref_id === id);
         if (!item) return;
         const config = getExpenseDailyConfig();
-        try {
-            const res = await fetch(`${config.baseUrl}${config.apiPrefix}/finance/bills/delete`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Mock-User-Id": config.mockUserId
-                },
-                body: JSON.stringify({
-                    bill_no: item.bill_no,
-                    external_ref_id: item.external_ref_id,
-                    workflow_instance_id: item.oa_instance_id
-                })
-            });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || `删除接口返回 ${res.status}`);
+        const useRemoteDelete = !String(config.apiPrefix || "").startsWith("/public/v1");
+        if (useRemoteDelete) {
+            try {
+                const res = await fetch(`${config.baseUrl}${config.apiPrefix}/finance/bills/delete`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Mock-User-Id": config.mockUserId
+                    },
+                    body: JSON.stringify({
+                        bill_no: item.bill_no,
+                        external_ref_id: item.external_ref_id,
+                        workflow_instance_id: item.oa_instance_id
+                    })
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `删除接口返回 ${res.status}`);
+                }
+            } catch (error) {
+                alert(`删除失败：${error.message || error}`);
+                return;
             }
-        } catch (error) {
-            alert(`删除失败：${error.message || error}`);
-            return;
         }
 
         const next = list.filter(row => row.id !== id && row.bill_no !== id && row.external_ref_id !== id);
