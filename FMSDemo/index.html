@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务管理系统 </title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <div id="startup-loader" class="startup-loader is-visible" aria-hidden="true">
+        <div class="startup-loader__content">
+            <div class="startup-loader__spinner" role="status" aria-label="加载中"></div>
+            <div class="startup-loader__label">正在打开财务工作台</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div>财务管理系统</div>
+        <div>
+            <span style="font-size: 14px;">欢迎, 管理员 | 退出</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+
+            <input type="text" id="menuSearch" placeholder="搜索目录..." onkeyup="filterMenu()">
+
+            <div class="menu-group-title">核心仪表盘</div>
+            <div class="menu-item active" onclick="loadContent('Dashboard', this)">首页</div>
+
+            <div class="menu-group-title">财务管理</div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">结算管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('SettlementWaybill', this)">运单结算</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementTrunk', this)">干线批次结算</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">短途批次结算</div>
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">对账管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ReconSite', this)">网点对账</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomer', this)">客户对账</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCarrier', this)">承运商对账</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconDriver', this)">司机对账</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconDiffHandle', this)">对账差异处理</div>
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应收管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ARCustomerStatement', this)">客户对账单列表</div>
+                <div class="sub-menu-item" onclick="loadContent('ARPrecollection', this)">预收款单</div>
+                <div class="sub-menu-item" onclick="loadContent('ARCollectionVerify', this)">客户收款核销</div>
+                <div class="sub-menu-item" onclick="loadContent('ARAgeAnalysis', this)">客户账龄分析</div>
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应付管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('APPaymentApply', this)">供应商付款申请</div>
+                <div class="sub-menu-item" onclick="loadContent('APPrepayment', this)">预付款单</div>
+                <div class="sub-menu-item" onclick="loadContent('APPaymentVerify', this)">付款核销</div>
+
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">资金管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('FundCustomerAcct', this)">客户资金账户</div>
+                <div class="sub-menu-item" onclick="loadContent('FundWallet', this)">司机/网点钱包</div>
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">费用报销</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ExpenseLoan', this)">借款单</div>
+                <div class="sub-menu-item" onclick="loadContent('ExpenseRepay', this)">还款单</div>
+                <div class="sub-menu-item" onclick="loadContent('ExpenseDaily', this)">日常费用报销</div>
+                <div class="sub-menu-item" onclick="loadContent('ExpenseTravel', this)">差旅报销</div>
+                <div class="sub-menu-item" onclick="loadContent('ExpenseCompensation', this)">酬金结算</div>
+            </div>
+            
+            <div class="sub-menu-item" onclick="loadContent('AbnormalManagement', this)">异动管理</div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">风控与日志</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('RiskSensitiveLog', this)">敏感操作日志</div>
+                <div class="sub-menu-item" onclick="loadContent('RiskDataChange', this)">数据变更明细</div>
+            </div>
+
+
+            <div class="menu-group-title">会计核算</div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">会计基础</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('AcctSubject', this)">会计科目</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctSet', this)">会计账套</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctPeriod', this)">会计期间</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctAuxiliary', this)">辅助核算项</div>
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">凭证管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('VoucherEntryReview', this)">凭证录入</div>
+                <div class="sub-menu-item" onclick="loadContent('FinanceVoucherAudit', this)">凭证审核中心</div>
+            </div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">会计引擎</div>
+            <div class="sub-menu">
+            </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">期末处理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('PeriodEndProfit', this)">结转损益</div>
+                <div class="sub-menu-item" onclick="loadContent('PeriodEndClose', this)">月末结账</div>
+            </div>
+            <div class="menu-group-title">数据报表</div>
+                        <div class="menu-item collapsed" onclick="toggleSubMenu(this)">财务报表</div>
+                        <div class="sub-menu">
+                            <div class="sub-menu-item" onclick="loadContent('AcctSubjectBalance', this)">科目余额表</div>
+                            <div class="sub-menu-item" onclick="loadContent('AcctSubjectDetail', this)">明细账</div>
+                            <div class="sub-menu-item" onclick="loadContent('ReportTrialBalance', this)">试算平衡表</div>
+                            <div class="sub-menu-item" onclick="loadContent('ReportBalanceSheet', this)">资产负债表</div>
+                            <div class="sub-menu-item" onclick="loadContent('ReportIncomeStatement', this)">利润损益表</div>
+                            <div class="sub-menu-item" onclick="loadContent('ReportCashFlow', this)">现金流量表</div>
+                        </div>
+
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">管理报表</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ReportVehicleProfit', this)">单车线路盈亏分析</div>
+                <div class="sub-menu-item" onclick="loadContent('ReportCustomerProfit', this)">客户毛利分析</div>
+                <div class="sub-menu-item" onclick="loadContent('ReportARAPAge', this)">应收应付账龄分析</div>
+            </div>
+
+            <!-- 以下内容待开发，暂时不删除 -->
+            <!-- <div class="menu-item collapsed" onclick="toggleSubMenu(this)">预算与绩效</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('BudgetPlanning', this)">预算编制</div>
+                <div class="sub-menu-item" onclick="loadContent('BudgetExecutionAnalysis', this)">预算执行分析</div>
+                <div class="sub-menu-item" onclick="loadContent('BudgetPerformance', this)">绩效考核</div>
+            </div> 
+            <div class="menu-group-title">基础资料</div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">往来单位</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('BaseCustomer', this)">客户档案</div>
+            </div>
+            <div class="menu-group-title">人事中心</div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">人事管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('HREmployee', this)">员工花名册</div>
+                <div class="sub-menu-item" onclick="loadContent('DriverProfile', this)">司机档案管理</div>
+                <div class="sub-menu-item" onclick="loadContent('HRPerformance', this)">绩效考核</div>
+                <div class="sub-menu-item" onclick="loadContent('HRAttendance', this)">考勤管理</div>
+                <div class="sub-menu-item" onclick="loadContent('HRSalary', this)">薪酬核算与发放</div>
+                <div class="sub-menu-item" onclick="loadContent('HRSalaryConfig', this)">薪酬规则配置</div>
+            </div>
+            <div class="menu-group-title">票据税务管理</div>
+                        <div class="menu-item collapsed" onclick="toggleSubMenu(this)">发票管理</div>
+                        <div class="sub-menu">
+                            <div class="sub-menu-item" onclick="loadContent('TaxOutputInvoice', this)">销项发票台账</div>
+                            <div class="sub-menu-item" onclick="loadContent('APInvoiceManage', this)">进项发票台账</div>
+                        </div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">固定资产管理</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('AssetCard', this)">资产卡片</div>
+                <div class="sub-menu-item" onclick="loadContent('AssetDepreciation', this)">折旧计算</div>
+                <div class="sub-menu-item" onclick="loadContent('AssetChange', this)">资产变动</div>
+            </div> -->
+            
+            <div class="menu-group-title">设置</div>
+            <div class="menu-item" onclick="loadContent('AccountingStandardSetting', this)">基础设置</div>
+            <div class="menu-item" onclick="loadContent('FinanceOpeningBalance', this)">期初余额录入</div>
+            <div class="menu-item" onclick="loadContent('Permission', this)">权限管理</div>
+            <div class="menu-item" onclick="loadContent('PaymentMethodConfig', this)">收支方式配置</div>
+
+        </div>
+
+        <div class="content-area" id="content-area">
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/core/accounting_engine.js"></script>
+    <script src="js/core/view_manager.js"></script>
+    <script src="js/data/voucher_seed_20260131.js"></script>
+    <script src="js/core/modules/asset/asset_depr.js"></script>
+    <script src="js/core/modules/asset/asset_card.js"></script>
+    <script src="js/core/modules/finance/settlement.js"></script>
+    <script src="js/core/modules/finance/voucher.js"></script>
+    <script src="js/core/modules/finance/invoice.js"></script>
+    <script src="js/core/modules/finance/treasury.js"></script>
+    <script src="js/core/modules/finance/ledger.js"></script>
+    <script src="js/core/modules/finance/report.js"></script>
+    <script src="js/core/modules/finance/closing.js"></script>
+    <script src="js/core/modules/finance/engine_config.js"></script>
+    <script src="js/core/modules/asset/asset_card.js"></script>
+    <script src="js/core/modules/asset/asset_depr.js"></script>
+    <script src="js/core/modules/hr/employee.js"></script>
+    <script src="js/core/modules/hr/salary.js"></script>
+    <script src="js/core/modules/hr/config.js"></script>
+    <script src="js/core/modules/hr/attendance.js"></script>
+    <script src="js/core/modules/hr/performance.js"></script>
+
+
+
+</body>
+
+</html>

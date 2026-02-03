@@ -1359,6 +1359,107 @@ button:focus-visible {
   margin-bottom: 10px;
 }
 
+.app-shell .expense-page {
+  gap: 18px;
+}
+
+.app-shell .expense-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.app-shell .badge-available {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ffe8d6;
+  color: #f97316;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.app-shell .expense-panel {
+  padding: 20px 22px 24px;
+}
+
+.app-shell .expense-form {
+  display: grid;
+  gap: 14px;
+}
+
+.app-shell .expense-form .form-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-shell .expense-form label {
+  font-weight: 600;
+  color: var(--shell-muted);
+}
+
+.app-shell .expense-form .form-control {
+  display: flex;
+  align-items: center;
+}
+
+.app-shell .expense-form input,
+.app-shell .expense-form select,
+.app-shell .expense-form textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--shell-border);
+  padding: 10px 12px;
+  background: #fafafa;
+  font-size: 14px;
+  color: var(--shell-text);
+}
+
+.app-shell .expense-form textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.app-shell .amount-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid var(--shell-border);
+  overflow: hidden;
+  background: #fff;
+}
+
+.app-shell .amount-control input {
+  width: 90px;
+  border: none;
+  text-align: center;
+  background: transparent;
+}
+
+.app-shell .amount-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f1f5f9;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-shell .form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.app-shell .form-error {
+  color: #ef4444;
+  font-size: 12px;
+}
+
 .app-shell .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

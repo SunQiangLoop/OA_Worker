@@ -1,0 +1,7 @@
+2026-02-03T01:16:14.290867Z  INFO codex_core::auth: Reloading auth
+2026-02-03T01:16:14.308088Z  INFO codex_core::auth: Reloaded auth, changed: true
+2026-02-03T01:16:26.218979Z  INFO session_init: codex_core::codex: new
+2026-02-03T01:16:26.258775Z  INFO session_init: codex_core::codex: close time.busy=3.76ms time.idle=36.1ms
+2026-02-03T01:16:26.258813Z  INFO session_loop{thread_id=019c2112-7eeb-7692-8b7a-b8302c221563}: codex_core::codex: new
+2026-02-03T01:18:20.396385Z  INFO session_loop{thread_id=019c2112-7eeb-7692-8b7a-b8302c221563}: codex_core::codex::handlers: Shutting down Codex instance
+2026-02-03T01:18:20.396732Z  INFO session_loop{thread_id=019c2112-7eeb-7692-8b7a-b8302c221563}: codex_core::codex: close time.busy=11.3ms time.idle=114s

@@ -25,6 +25,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/approvals/apply/expense',
+    name: 'approval-apply-expense',
+    component: () => import('../pages/ApprovalExpense.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/approvals/workflow/create',
     name: 'approval-workflow-create',
     component: () => import('../pages/WorkflowBuilder.vue'),

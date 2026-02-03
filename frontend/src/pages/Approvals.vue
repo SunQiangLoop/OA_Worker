@@ -128,9 +128,6 @@ watch(statusFilter, () => {
         <button class="btn btn-ghost" type="button" @click="router.push('/approvals/workflow/create')">
           创建审批流程
         </button>
-        <button class="btn btn-primary" type="button" @click="showModal = true">
-          新建审批单
-        </button>
       </div>
     </div>
 

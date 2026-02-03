@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const keyword = ref('')
 
 const categories = [
@@ -64,6 +66,12 @@ const activeCategoryData = computed(() => {
   const found = filteredCategories.value.find((cat) => cat.name === activeCategory.value)
   return found || filteredCategories.value[0]
 })
+
+function openApply(item) {
+  if (item?.name === '费用报销') {
+    router.push('/approvals/apply/expense')
+  }
+}
 </script>
 
 <template>
@@ -88,7 +96,13 @@ const activeCategoryData = computed(() => {
       </div>
       <div class="panel-body">
         <div class="apply-card-grid">
-          <button v-for="item in recommended" :key="item.name" class="apply-card" type="button">
+          <button
+            v-for="item in recommended"
+            :key="item.name"
+            class="apply-card"
+            type="button"
+            @click="openApply(item)"
+          >
             <span class="apply-icon" :style="{ background: item.color }">{{ item.icon }}</span>
             <span class="apply-name">{{ item.name }}</span>
           </button>
@@ -126,6 +140,7 @@ const activeCategoryData = computed(() => {
                 :key="item.name"
                 class="apply-card"
                 type="button"
+                @click="openApply(item)"
               >
                 <span class="apply-icon" :style="{ background: item.color }">{{ item.icon }}</span>
                 <span class="apply-name">{{ item.name }}</span>
