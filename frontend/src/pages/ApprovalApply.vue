@@ -1,11 +1,11 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const keyword = ref('')
 
-const categories = [
+const baseCategories = [
   {
     name: '财务',
     items: [
@@ -40,9 +40,6 @@ const categories = [
   },
 ]
 
-const categoryOptions = categories.map((c) => c.name)
-const activeCategory = ref(categoryOptions[0])
-
 const recommended = [
   { name: '费用报销', icon: '¥', color: '#22c55e' },
   { name: '采购申请', icon: '🧾', color: '#3b82f6' },
@@ -50,11 +47,30 @@ const recommended = [
   { name: '请假', icon: '🧑‍💼', color: '#2563eb' },
 ]
 
+const categories = computed(() => {
+  const raw = localStorage.getItem('oa_workflow_templates')
+  const templates = raw ? JSON.parse(raw) : []
+  const merged = baseCategories.map((cat) => ({ ...cat, items: [...cat.items] }))
+  templates.forEach((tpl) => {
+    const target = merged.find((cat) => cat.name === tpl.category)
+    const item = { name: tpl.name, icon: tpl.icon || '¥', color: tpl.color || '#22c55e' }
+    if (target) {
+      if (!target.items.some((i) => i.name === item.name)) target.items.unshift(item)
+    } else {
+      merged.unshift({ name: tpl.category || '其他', items: [item] })
+    }
+  })
+  return merged
+})
+
+const categoryOptions = computed(() => categories.value.map((c) => c.name))
+const activeCategory = ref(categoryOptions.value[0])
+
 const filteredCategories = computed(() => {
-  if (!keyword.value) return categories
+  if (!keyword.value) return categories.value
   const kw = keyword.value.trim()
-  if (!kw) return categories
-  return categories
+  if (!kw) return categories.value
+  return categories.value
     .map((cat) => {
       const items = cat.items.filter((item) => item.name.includes(kw))
       return { ...cat, items }
@@ -66,6 +82,16 @@ const activeCategoryData = computed(() => {
   const found = filteredCategories.value.find((cat) => cat.name === activeCategory.value)
   return found || filteredCategories.value[0]
 })
+
+watch(
+  categoryOptions,
+  (opts) => {
+    if (!opts.includes(activeCategory.value)) {
+      activeCategory.value = opts[0]
+    }
+  },
+  { immediate: true }
+)
 
 function openApply(item) {
   if (item?.name === '费用报销') {

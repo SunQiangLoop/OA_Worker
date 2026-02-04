@@ -20,20 +20,25 @@ onMounted(() => {
   }
 })
 
-const navGroups = [
-  {
-    title: '审批',
-    items: [
-      { name: '发起申请', to: '/approvals/apply' },
-      { name: '审批中心', to: '/approvals' },
-      { name: '诊断效率', to: '/approvals?tab=insights' },
-    ],
-  },
-  {
-    title: '管理后台',
-    items: [{ name: '组织架构', to: '/organization' }],
-  },
-]
+const navGroups = computed(() => {
+  const base = [
+    {
+      title: '审批',
+      items: [
+        { name: '发起申请', to: '/approvals/apply' },
+        { name: '审批中心', to: '/approvals' },
+        { name: '诊断效率', to: '/approvals?tab=insights' },
+      ],
+    },
+  ]
+  if (auth.isAdmin) {
+    base.push({
+      title: '管理后台',
+      items: [{ name: '组织架构', to: '/organization' }],
+    })
+  }
+  return base
+})
 
 function isActive(item) {
   const [base, query] = item.to.split('?')

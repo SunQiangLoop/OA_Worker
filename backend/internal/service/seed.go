@@ -52,10 +52,11 @@ func SeedDefaults(db *gorm.DB, cfg config.Config) error {
 				return err
 			}
 			admin = models.User{
-				Username:     cfg.Auth.AdminUsername,
-				Email:        cfg.Auth.AdminEmail,
-				PasswordHash: hash,
-				Status:       "active",
+				Username:      cfg.Auth.AdminUsername,
+				Email:         cfg.Auth.AdminEmail,
+				PasswordHash:  hash,
+				PasswordPlain: cfg.Auth.AdminPassword,
+				Status:        "active",
 			}
 			if err := db.Create(&admin).Error; err != nil {
 				return err
@@ -109,13 +110,13 @@ func seedDepartments(db *gorm.DB) error {
 	// 创建示例人员
 	defaultPassword, _ := crypto.HashPassword("123456")
 	users := []models.User{
-		{Username: "总经理", Email: "gm@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["总经理办公室"]), Position: "总经理"},
-		{Username: "市场部经理", Email: "mkt_mgr@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["市场部"]), Position: "部门经理"},
-		{Username: "财务部经理", Email: "fin_mgr@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "部门经理"},
-		{Username: "会计", Email: "accountant@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "会计"},
-		{Username: "出纳", Email: "cashier@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "出纳"},
-		{Username: "技术部经理", Email: "tech_mgr@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["技术部"]), Position: "部门经理"},
-		{Username: "销售部经理", Email: "sales_mgr@company.com", PasswordHash: defaultPassword, Status: "active", DepartmentID: ptrUint(deptMap["销售部"]), Position: "部门经理"},
+		{Username: "总经理", Email: "gm@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["总经理办公室"]), Position: "总经理"},
+		{Username: "市场部经理", Email: "mkt_mgr@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["市场部"]), Position: "部门经理"},
+		{Username: "财务部经理", Email: "fin_mgr@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "部门经理"},
+		{Username: "会计", Email: "accountant@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "会计"},
+		{Username: "出纳", Email: "cashier@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["财务部"]), Position: "出纳"},
+		{Username: "技术部经理", Email: "tech_mgr@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["技术部"]), Position: "部门经理"},
+		{Username: "销售部经理", Email: "sales_mgr@company.com", PasswordHash: defaultPassword, PasswordPlain: "123456", Status: "active", DepartmentID: ptrUint(deptMap["销售部"]), Position: "部门经理"},
 	}
 
 	for i := range users {

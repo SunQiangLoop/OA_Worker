@@ -2,8 +2,10 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"example.com/oa-workorder/internal/models"
+	"example.com/oa-workorder/pkg/response"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -23,7 +25,7 @@ type DepartmentNode struct {
 func (h *DepartmentHandler) List(c *gin.Context) {
 	var departments []models.Department
 	if err := h.DB.Order("sort_order, id").Find(&departments).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusInternalServerError, "DB_ERROR", err.Error())
 		return
 	}
 
@@ -35,7 +37,7 @@ func (h *DepartmentHandler) List(c *gin.Context) {
 		h.loadManagerInfo(node)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": tree})
+	response.OK(c, tree)
 }
 
 // GetUsers 获取部门下的用户列表
@@ -44,11 +46,105 @@ func (h *DepartmentHandler) GetUsers(c *gin.Context) {
 
 	var users []models.User
 	if err := h.DB.Where("department_id = ?", deptID).Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusInternalServerError, "DB_ERROR", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	result := make([]gin.H, len(users))
+	for i, u := range users {
+		result[i] = gin.H{
+			"id":             u.ID,
+			"username":       u.Username,
+			"email":          u.Email,
+			"status":         u.Status,
+			"department_id":  u.DepartmentID,
+			"position":       u.Position,
+			"password_plain": u.PasswordPlain,
+		}
+	}
+
+	response.OK(c, result)
+}
+
+type createDepartmentRequest struct {
+	Name      string `json:"name" binding:"required"`
+	ParentID  *uint  `json:"parent_id"`
+	ManagerID *uint  `json:"manager_id"`
+	SortOrder int    `json:"sort_order"`
+}
+
+func (h *DepartmentHandler) Create(c *gin.Context) {
+	var req createDepartmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid payload")
+		return
+	}
+	dept := models.Department{
+		Name:      req.Name,
+		ParentID:  req.ParentID,
+		ManagerID: req.ManagerID,
+		SortOrder: req.SortOrder,
+	}
+	if err := h.DB.Create(&dept).Error; err != nil {
+		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to create department")
+		return
+	}
+	response.Created(c, dept)
+}
+
+type updateDepartmentRequest struct {
+	Name      *string `json:"name"`
+	ParentID  *uint   `json:"parent_id"`
+	ManagerID *uint   `json:"manager_id"`
+	SortOrder *int    `json:"sort_order"`
+}
+
+func (h *DepartmentHandler) Update(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid department id")
+		return
+	}
+	var req updateDepartmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid payload")
+		return
+	}
+	updates := map[string]interface{}{}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.ParentID != nil {
+		updates["parent_id"] = req.ParentID
+	}
+	if req.ManagerID != nil {
+		updates["manager_id"] = req.ManagerID
+	}
+	if req.SortOrder != nil {
+		updates["sort_order"] = *req.SortOrder
+	}
+	if len(updates) == 0 {
+		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "no updates")
+		return
+	}
+	if err := h.DB.Model(&models.Department{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to update department")
+		return
+	}
+	response.OK(c, gin.H{"updated": true})
+}
+
+func (h *DepartmentHandler) Delete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid department id")
+		return
+	}
+	if err := h.DB.Delete(&models.Department{}, id).Error; err != nil {
+		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to delete department")
+		return
+	}
+	response.OK(c, gin.H{"deleted": true})
 }
 
 // buildDepartmentTree 构建部门树

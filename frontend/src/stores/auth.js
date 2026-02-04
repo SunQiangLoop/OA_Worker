@@ -16,6 +16,13 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => {
       return Boolean(state.accessToken)
     },
+    isAdmin: (state) => {
+      if (!state.user) return false
+      if (state.user.is_admin) return true
+      if (state.user.username === 'admin') return true
+      const roles = state.user.roles || []
+      return roles.includes('admin')
+    },
   },
   actions: {
     async login(payload) {

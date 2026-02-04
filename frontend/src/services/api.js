@@ -141,6 +141,24 @@ export const orgApi = {
   getUsers(params) {
     return api.get('/api/v1/users', { params }).then(unwrap)
   },
+  createDepartment(payload) {
+    return api.post('/api/v1/departments', payload).then(unwrap)
+  },
+  updateDepartment(id, payload) {
+    return api.patch(`/api/v1/departments/${id}`, payload).then(unwrap)
+  },
+  deleteDepartment(id) {
+    return api.delete(`/api/v1/departments/${id}`).then(unwrap)
+  },
+  createUser(payload) {
+    return api.post('/api/v1/users', payload).then(unwrap)
+  },
+  updateUser(id, payload) {
+    return api.patch(`/api/v1/users/${id}`, payload).then(unwrap)
+  },
+  deleteUser(id) {
+    return api.delete(`/api/v1/users/${id}`).then(unwrap)
+  },
 }
 
 export function setTokens(access, refresh) {

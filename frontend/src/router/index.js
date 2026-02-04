@@ -46,7 +46,7 @@ const routes = [
     path: '/organization',
     name: 'organization',
     component: () => import('../pages/Organization.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/:pathMatch(.*)*',
@@ -71,6 +71,10 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !isAuthed) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: 'approvals' }
   }
 
   if (to.name === 'login' && isAuthed) {

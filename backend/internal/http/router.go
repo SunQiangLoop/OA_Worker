@@ -56,10 +56,16 @@ func NewRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	auth.Use(middleware.RequireAuth(cfg))
 	{
 		auth.GET("/users/me", userHandler.Me)
-		auth.GET("/users", userHandler.List)
+		auth.GET("/users", middleware.RequirePermission(db, "user:read"), userHandler.List)
+		auth.POST("/users", middleware.RequirePermission(db, "user:write"), userHandler.Create)
+		auth.PATCH("/users/:id", middleware.RequirePermission(db, "user:write"), userHandler.Update)
+		auth.DELETE("/users/:id", middleware.RequirePermission(db, "user:write"), userHandler.Delete)
 
 		auth.GET("/departments", deptHandler.List)
-		auth.GET("/departments/:id/users", deptHandler.GetUsers)
+		auth.GET("/departments/:id/users", middleware.RequirePermission(db, "user:read"), deptHandler.GetUsers)
+		auth.POST("/departments", middleware.RequirePermission(db, "user:write"), deptHandler.Create)
+		auth.PATCH("/departments/:id", middleware.RequirePermission(db, "user:write"), deptHandler.Update)
+		auth.DELETE("/departments/:id", middleware.RequirePermission(db, "user:write"), deptHandler.Delete)
 
 		auth.GET("/tickets", middleware.RequirePermission(db, "ticket:read"), ticketHandler.List)
 		auth.GET("/tickets/:id", middleware.RequirePermission(db, "ticket:read"), ticketHandler.Get)

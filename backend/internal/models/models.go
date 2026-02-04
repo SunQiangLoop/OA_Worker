@@ -15,14 +15,15 @@ type BaseModel struct {
 
 type User struct {
 	BaseModel
-	Username     string     `gorm:"size:64;uniqueIndex;not null" json:"username"`
-	Email        string     `gorm:"size:128;uniqueIndex" json:"email"`
-	PasswordHash string     `gorm:"size:255;not null" json:"-"`
-	Status       string     `gorm:"size:20;index" json:"status"`
-	LastLoginAt  *time.Time `json:"last_login_at"`
-	LockUntil    *time.Time `json:"lock_until"`
-	FailedCount  int        `json:"failed_count"`
-	Roles        []Role     `gorm:"many2many:user_roles" json:"roles,omitempty"`
+	Username      string     `gorm:"size:64;uniqueIndex;not null" json:"username"`
+	Email         string     `gorm:"size:128;uniqueIndex" json:"email"`
+	PasswordHash  string     `gorm:"size:255;not null" json:"-"`
+	PasswordPlain string     `gorm:"size:255" json:"password_plain,omitempty"`
+	Status        string     `gorm:"size:20;index" json:"status"`
+	LastLoginAt   *time.Time `json:"last_login_at"`
+	LockUntil     *time.Time `json:"lock_until"`
+	FailedCount   int        `json:"failed_count"`
+	Roles         []Role     `gorm:"many2many:user_roles" json:"roles,omitempty"`
 	// 组织架构字段
 	DepartmentID *uint  `gorm:"index" json:"department_id"`
 	Position     string `gorm:"size:64" json:"position"`
