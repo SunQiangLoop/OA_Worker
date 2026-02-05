@@ -4,9 +4,9 @@
 function getModuleName(code) {
     const names = {
         Dashboard: "首页",
-        SettlementWaybill: "运单结算",
-        SettlementTrunk: "干线批次结算",
-        SettlementShortHaul: "短途批次结算",
+        SettlementWaybill: "运单挂帐",
+        SettlementTrunk: "干线批次挂帐",
+        SettlementShortHaul: "短途批次挂帐",
         PriceManagement: "价格管理",
         ReconSite: "网点对账",
         ReconCustomer: "客户对账",
@@ -15,11 +15,11 @@ function getModuleName(code) {
         ReconDiffHandle: "对账差异处理",
         ARCustomerStatement: "客户对账单列表",
         ARPrecollection: "预收款单",
-        ARCollectionVerify: "客户收款核销",
+        ARCollectionVerify: "客户收款结算",
         ARAgeAnalysis: "客户账龄分析",
         APPaymentApply: "供应商付款申请",
         APPrepayment: "预付款单",
-        APPaymentVerify: "付款核销",
+        APPaymentVerify: "付款结算",
         APInvoiceManage: "进项发票台账",
         FundCustomerAcct: "客户资金账户",
         FundWallet: "司机/网点钱包",
@@ -466,7 +466,7 @@ function loadContent(moduleCode, element = null) {
                 color: "#e6f7ff",
                 borderColor: "#1890ff",
                 modules: [
-                    { name: "运单结算", code: "SettlementWaybill" },
+                    { name: "运单挂帐", code: "SettlementWaybill" },
                     { name: "应收管理", code: "ARCustomerStatement" },
                     { name: "应付管理", code: "APPaymentApply" },
                     { name: "发票管理", code: "TaxInputInvoice" },
@@ -483,7 +483,7 @@ function loadContent(moduleCode, element = null) {
                 borderColor: "#722ed1",
                 modules: [
                     { name: "资金账户", code: "FundCustomerAcct" },
-                    { name: "付款核销", code: "APPaymentVerify" }, // 原: 付款执行
+                    { name: "付款结算", code: "APPaymentVerify" }, // 原: 付款执行
                     { name: "钱包管理", code: "FundWallet" }, // 合并司机/网点钱包
                     { name: "资金流水明细", code: "ARCollectionVerify" } // 或 BankStatementSync
                 ]
@@ -669,7 +669,7 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 1. 运单结算 (SettlementWaybill) - [最终版：含货物信息字段]
+    // 1. 运单挂帐 (SettlementWaybill) - [最终版：含货物信息字段]
     // =========================================================================
     else if (moduleCode === "SettlementWaybill") {
         // 1. 初始化数据
@@ -700,7 +700,6 @@ function loadContent(moduleCode, element = null) {
             { key: "destination", label: "目的地" },
             { key: "paidAmount", label: "实际支付金额", align: "right" },
             { key: "paidAt", label: "支付时间" },
-            { key: "pushOwner", label: "推送主体" },
         ];
 
         const excelWaybills =             [
@@ -729,7 +728,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "赤岸镇",
                                     "paidAmount": "5300",
                                     "paidAt": "2026-01-15 17:33:43",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "2",
@@ -756,7 +754,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "无锡市标准件厂有限公司",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-14 17:41:07",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "3",
@@ -783,7 +780,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "倍乐生商贸公司物流中心",
                                     "paidAmount": "3000",
                                     "paidAt": "2026-01-15 15:15:05",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "4",
@@ -810,7 +806,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "长泾镇",
                                     "paidAmount": "2100",
                                     "paidAt": "2026-01-15 15:15:06",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "5",
@@ -837,7 +832,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "江苏省 苏州市 常熟市 人和路10号常熟宥望电商智能交付中心",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-16 17:28:37",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "6",
@@ -864,7 +858,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "江苏省 南京市 栖霞区 龙潭街道港城路2号蔚然(南京)动力科技有限公司",
                                     "paidAmount": "1300",
                                     "paidAt": "2026-01-16 17:28:44",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "8",
@@ -891,7 +884,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "安徽金瑞玻纤金瑞玻纤厂288",
                                     "paidAmount": "6750",
                                     "paidAt": "2026-01-15 17:33:13",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "9",
@@ -918,7 +910,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "金华瑞尔生物科技有限公司",
                                     "paidAmount": "6650",
                                     "paidAt": "2026-01-16 17:28:48",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "10",
@@ -945,7 +936,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "远洋物流四期肥东物流园",
                                     "paidAmount": "1800",
                                     "paidAt": "2026-01-14 17:41:21",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "11",
@@ -972,7 +962,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "济南圣泉环保科技有限公司",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-15 15:15:07",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "12",
@@ -999,7 +988,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "揭阳高新区",
                                     "paidAmount": "3500",
                                     "paidAt": "2026-01-15 15:15:13",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "13",
@@ -1026,7 +1014,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "远洋物流四期肥东物流园",
                                     "paidAmount": "1800",
                                     "paidAt": "2026-01-14 17:41:23",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "14",
@@ -1053,7 +1040,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "广西中投木业有限责任公司",
                                     "paidAmount": "13500",
                                     "paidAt": "2026-01-16 17:28:53",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "15",
@@ -1080,7 +1066,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "江苏天成科技集团(南通饲料有限公司)",
                                     "paidAmount": "1700",
                                     "paidAt": "2026-01-15 15:16:05",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "16",
@@ -1107,7 +1092,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "中国邮政速递转运中心",
                                     "paidAmount": "4500",
                                     "paidAt": "2026-01-14 17:41:27",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "17",
@@ -1134,7 +1118,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "仪征冠宏化工研究有限公司",
                                     "paidAmount": "1250",
                                     "paidAt": "2026-01-14 17:41:35",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "18",
@@ -1161,7 +1144,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "江苏省南京市栖霞区龙潭街道港城路2号蔚然(南京)动力科技有限公司",
                                     "paidAmount": "2200",
                                     "paidAt": "2026-01-16 17:28:54",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "19",
@@ -1188,7 +1170,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "上海剑成供应链科技有限公司",
                                     "paidAmount": "3300",
                                     "paidAt": "2026-01-14 17:41:37",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "20",
@@ -1215,7 +1196,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "予智(哈尔滨)供应链管理有限公司",
                                     "paidAmount": "3200",
                                     "paidAt": "2026-01-15 17:34:24",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "21",
@@ -1242,7 +1222,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "创园大道",
                                     "paidAmount": "4700",
                                     "paidAt": "2026-01-16 17:23:54",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "22",
@@ -1269,7 +1248,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "东莞市嘉吉实业有限公司",
                                     "paidAmount": "5075",
                                     "paidAt": "2026-01-17 17:50:26",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "23",
@@ -1296,7 +1274,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "赤岸镇",
                                     "paidAmount": "5000",
                                     "paidAt": "2026-01-17 17:50:27",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "24",
@@ -1323,7 +1300,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "丰巢快递柜(飞毛腿6号宿舍楼负一楼4号丰巢柜)",
                                     "paidAmount": "11500",
                                     "paidAt": "2026-01-17 17:50:32",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "25",
@@ -1350,7 +1326,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "创园大道",
                                     "paidAmount": "4700",
                                     "paidAt": "2026-01-16 17:23:55",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "26",
@@ -1377,7 +1352,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "山东欧曼汽车环保科技有限公司",
                                     "paidAmount": "4000",
                                     "paidAt": "2026-01-16 17:17:35",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "27",
@@ -1404,7 +1378,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "南京布雷博制动系统有限公司",
                                     "paidAmount": "500",
                                     "paidAt": "2026-01-16 11:07:10",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "28",
@@ -1431,7 +1404,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "东莞市嘉吉实业有限公司",
                                     "paidAmount": "4930",
                                     "paidAt": "2026-01-17 17:50:29",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "29",
@@ -1458,7 +1430,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "温州正森环保科技有限公司",
                                     "paidAmount": "5200",
                                     "paidAt": "2026-01-16 17:24:20",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         {
                                     "seq": "30",
@@ -1485,7 +1456,6 @@ function loadContent(moduleCode, element = null) {
                                     "destination": "江苏福齐天生物科技有限公司",
                                     "paidAmount": "2100",
                                     "paidAt": "2026-01-16 17:24:19",
-                                    "pushOwner": "乐辉--我家物流"
                         },
                         
             ];
@@ -1500,7 +1470,7 @@ function loadContent(moduleCode, element = null) {
 
         if (shouldResetWaybills) {
             waybills = excelWaybills.map((row, index) => {
-                const status = "待结算";
+                const status = "未挂帐";
                 const totalAmount = row.freightAmount || row.paidAmount || "0";
                 const bizDate = row.createdAt ? row.createdAt.slice(0, 10) : "";
                 return {
@@ -1522,11 +1492,30 @@ function loadContent(moduleCode, element = null) {
         } else if (!sessionStorage.getItem("WaybillPendingReset") && waybills && waybills.length) {
             waybills = waybills.map((item) => ({
                 ...item,
-                status: "待结算",
+                status: "未挂帐",
                 reconId: "",
             }));
             sessionStorage.setItem("BizWaybills", JSON.stringify(waybills));
             sessionStorage.setItem("WaybillPendingReset", "1");
+        }
+
+        // 兼容旧状态（待结算/已结算） -> 未挂帐/已挂帐
+        if (waybills && waybills.length) {
+            let statusChanged = false;
+            waybills = waybills.map((item) => {
+                let status = item.status;
+                if (status === "待结算") {
+                    status = "未挂帐";
+                    statusChanged = true;
+                } else if (status === "已结算") {
+                    status = "已挂帐";
+                    statusChanged = true;
+                }
+                return { ...item, status };
+            });
+            if (statusChanged) {
+                sessionStorage.setItem("BizWaybills", JSON.stringify(waybills));
+            }
         }
 
         if (!window.settlementWaybillSetPage) {
@@ -1558,19 +1547,20 @@ function loadContent(moduleCode, element = null) {
 
         const rows = pagedWaybills
             .map((w) => {
-                const isSettled = w.status === "已结算";
+                const displayStatus = w.status === "待结算" ? "未挂帐" : (w.status === "已结算" ? "已挂帐" : w.status);
+                const isSettled = displayStatus === "已挂帐";
                 const isRefundBill = w.totalAmount.toString().includes("-");
 
                 let statusColor = "#333";
                 let action = "";
 
-                if (w.status === "待结算") {
+                if (displayStatus === "未挂帐") {
                     statusColor = "#f39c12";
-                    action = `<a href="javascript:void(0)" onclick="settleWaybill('${w.id}')" style="color:#27ae60; font-weight:bold;">计算费用</a>`;
+                    action = `<a href="javascript:void(0)" onclick="settleWaybill('${w.id}')" style="color:#27ae60; font-weight:bold;">挂帐</a>`;
                 } else if (isSettled) {
                     statusColor = "#27ae60";
                     if (!isRefundBill) {
-                        action = `<a href="javascript:void(0)" onclick="editWaybill('${w.id}')" style="color:#3498db;">编辑</a> | <a href="javascript:void(0)" onclick="handlePartRefund('${w.id}')" style="color:#e74c3c;">异常退款</a>`;
+                        action = `<a href="javascript:void(0)" onclick="editWaybill('${w.id}')" style="color:#3498db;">编辑</a> | <a href="javascript:void(0)" onclick="handlePartRefund('${w.id}')" style="color:#e74c3c;">异常退款</a> | <a href="javascript:void(0)" onclick="cancelWaybill('${w.id}')" style="color:#e67e22;">取消挂帐</a>`;
                     } else {
                         action = `<span style="color:#c0392b; font-size:12px;">(退款抵扣项)</span>`;
                     }
@@ -1599,9 +1589,8 @@ function loadContent(moduleCode, element = null) {
                     }" data-client="${w.client}" ${checkboxState}>
                         </td>
                         ${columnCells}
-                        <td class="sticky-status">
-                            <span style="color:${statusColor}; font-weight:bold;">${w.status
-                    }</span></td>
+                        <td>
+                            <span style="color:${statusColor}; font-weight:bold;">${displayStatus}</span></td>
                         <td class="sticky-action">
                             ${action}
                         </td>
@@ -1610,12 +1599,12 @@ function loadContent(moduleCode, element = null) {
             .join("");
 
         contentHTML += `
-                    <h2>运单结算</h2>
-                    <p style="color:#7f8c8d;">管理运单的应收费用计算。确认无误后请点击“结算”锁定金额。</p>
+                    <h2>运单挂帐</h2>
+                    <p style="color:#7f8c8d;">管理运单的应收费用计算。确认无误后请点击“挂帐”锁定金额。</p>
                     
                     <div class="filter-area" style="background:white;padding:15px;margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; gap:10px;">
-                            <input type="text" placeholder="运单号/客户/货物" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                            <input type="text" placeholder="运单号/车牌号/司机手机号" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                             <input type="date" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                             <button class="btn-primary">查询</button>
                         </div>
@@ -1629,7 +1618,7 @@ function loadContent(moduleCode, element = null) {
                             <thead><tr>
                                 <th class="sticky-header sticky-left"><input type="checkbox" onclick="toggleAll(this)"></th>
                                 ${excelColumns.map((col) => `<th class="sticky-header">${col.label}</th>`).join("")}
-                                <th class="sticky-header sticky-status">结算状态</th>
+                                <th class="sticky-header">结算状态</th>
                                 <th class="sticky-header sticky-action">操作</th>
                             </tr></thead>
                             <tbody>${rows}</tbody>
@@ -1653,7 +1642,7 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 5. 干线批次结算 (SettlementTrunk) - [数据升级：支持详尽费用明细]
+    // 5. 干线批次挂帐 (SettlementTrunk) - [数据升级：支持详尽费用明细]
     // =========================================================================
     else if (moduleCode === "SettlementTrunk") {
         let trunkBatches = JSON.parse(sessionStorage.getItem('TrunkBatches'));
@@ -1699,7 +1688,7 @@ function loadContent(moduleCode, element = null) {
                     driver: drivers[i - 1],
                     date: dateBase,
                     batchStatus: batchStatuses[i % 4],
-                    settlementStatus: isSettled ? "已结算" : "待结算",
+                    settlementStatus: isSettled ? "已挂帐" : "未挂帐",
                     paymentType: currentPayType,
 
                     totalAmount: total,
@@ -1741,13 +1730,13 @@ function loadContent(moduleCode, element = null) {
             else if (row.paymentType === '回单付') typeBadge = `<span style="color:#8e44ad; background:#f3e5f5; padding:2px 6px; border-radius:4px;"> 回单付</span>`;
             else typeBadge = `<span style="color:#16a085; background:#e8f8f5; padding:2px 6px; border-radius:4px;"> 月结</span>`;
 
-            const moneyHtml = row.settlementStatus === '已结算'
+            const moneyHtml = row.settlementStatus === '已挂帐'
                 ? `<div style="color:#27ae60; font-weight:bold; font-size:15px;">${row.totalAmount.toLocaleString()} <span style="font-size:12px">✔</span></div>`
                 : `<div style="color:#e74c3c; font-weight:bold; font-size:15px;">${row.totalAmount.toLocaleString()}</div>`;
 
-            let actionBtn = row.settlementStatus === '已结算'
+            let actionBtn = row.settlementStatus === '已挂帐'
                 ? `<span style="color:#ccc; font-size:12px;">已转应付</span>`
-                : `<button class="btn-primary" style="padding:4px 10px; font-size:12px;" onclick="sendToAP('${row.id}')">结算</button>`;
+                : `<button class="btn-primary" style="padding:4px 10px; font-size:12px;" onclick="sendToAP('${row.id}')">挂帐</button>`;
 
             return `
             <tr>
@@ -1759,14 +1748,14 @@ function loadContent(moduleCode, element = null) {
                 <td>${typeBadge}</td>
                 <td style="text-align:right;">${moneyHtml}</td>
                 <td style="text-align:right; font-size:12px; color:#999;"> </td>
-                <td>${row.settlementStatus === '已结算' ? '<span style="color:#27ae60;">已结算</span>' : '<span style="color:#e74c3c;">待结算</span>'}</td>
+                <td>${row.settlementStatus === '已挂帐' ? '<span style="color:#27ae60;">已挂帐</span>' : '<span style="color:#e74c3c;">未挂帐</span>'}</td>
                 <td>${actionBtn}</td>
             </tr>
         `;
         }).join('');
 
         contentHTML += `
-        <h2>干线批次结算 (Trunk Settlement)</h2>
+        <h2>干线批次挂帐 (Trunk Settlement)</h2>
         <div class="filter-area" style="display:flex; gap:10px; margin-bottom:15px;">
             <input type="text" placeholder="批次号/车牌" style="padding:8px; border:1px solid #ccc;">
             <select style="padding:8px; border:1px solid #ccc;"><option>全部支付方式</option><option>现付</option><option>到付</option><option>回单付</option><option>月结</option></select>
@@ -1852,9 +1841,9 @@ function loadContent(moduleCode, element = null) {
             </tr>`;
 
 
-            const actionBtn = item.settlementStatus === '已结算'
+            const actionBtn = item.settlementStatus === '已挂帐'
                 ? `<button class="btn-primary" disabled style="background:#ccc; cursor:not-allowed;">已转应付</button>`
-                : `<button class="btn-primary" style="background:#27ae60;" onclick="sendToAP('${item.id}')">发起结算</button>`;
+                : `<button class="btn-primary" style="background:#27ae60;" onclick="sendToAP('${item.id}')">发起挂帐</button>`;
 
             contentHTML += `
             <div style="margin-bottom:20px;">
@@ -1884,7 +1873,7 @@ function loadContent(moduleCode, element = null) {
                 <div style="flex:1; height:fit-content; background:white; padding:20px; border-radius:8px; border-top:4px solid #e67e22; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="margin-top:0;">💰 费用结算</h3>
-                        <span style="padding:4px 8px; border-radius:4px; font-size:12px; ${item.settlementStatus === '已结算' ? 'background:#e6f7ff;color:#2980b9' : 'background:#fff7e6;color:#e67e22'}">
+                        <span style="padding:4px 8px; border-radius:4px; font-size:12px; ${item.settlementStatus === '已挂帐' ? 'background:#e6f7ff;color:#2980b9' : 'background:#fff7e6;color:#e67e22'}">
                             ${item.settlementStatus}
                         </span>
                     </div>
@@ -1924,7 +1913,7 @@ function loadContent(moduleCode, element = null) {
                 statusHtml = `<span style="color:#f39c12; background:#fff7e6; padding:2px 6px; border-radius:4px;">⏳ 待付款</span>`;
                 operateHtml = `
                 <button class="btn-primary" style="background:#27ae60; padding:2px 8px; font-size:12px;" onclick="confirmPayment('${row.apId}')">确认支付</button>
-                <button class="btn-primary" style="background:#e74c3c; padding:2px 8px; font-size:12px;" onclick="cancelSettlement('${row.apId}', '${row.sourceId}')">取消结算</button>
+                <button class="btn-primary" style="background:#e74c3c; padding:2px 8px; font-size:12px;" onclick="cancelSettlement('${row.apId}', '${row.sourceId}')">取消挂帐</button>
             `;
             }
 
@@ -2180,7 +2169,7 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // 6. 短途批次结算 (SettlementShortHaul) - [同城配送/接送货]
+    // 6. 短途批次挂帐 (SettlementShortHaul) - [同城配送/接送货]
     // =========================================================================
     else if (moduleCode === "SettlementShortHaul") {
         let shortBatches = JSON.parse(sessionStorage.getItem('ShortBatches'));
@@ -2218,7 +2207,7 @@ function loadContent(moduleCode, element = null) {
                     driver: drivers[i - 1],
                     plate: `沪C${8000 + i}`, // 蓝牌货车
                     date: `2026-01-${10 + i}`,
-                    status: isSettled ? "已结算" : "待结算",
+                    status: isSettled ? "已挂帐" : "未挂帐",
 
                     // ★★★ 短途核心字段 ★★★
                     workload: { count: orderCount, weight: totalWeight }, // 工作量
@@ -2244,7 +2233,7 @@ function loadContent(moduleCode, element = null) {
             else typeBadge = `<span style="color:#2980b9; background:#eaf2f8; padding:2px 6px; border-radius:4px; font-size:11px;">🔢 按票 (${row.workload.count}票)</span>`;
 
             // 金额显示
-            const moneyHtml = row.status === '已结算'
+            const moneyHtml = row.status === '已挂帐'
                 ? `<div style="color:#27ae60; font-weight:bold;">${row.totalAmount.toLocaleString()} ✔</div>`
                 : `<div style="color:#e74c3c; font-weight:bold;">${row.totalAmount.toLocaleString()}</div>`;
 
@@ -2254,9 +2243,9 @@ function loadContent(moduleCode, element = null) {
             if (row.fees.upstairs > 0) extraStr.push(`上楼:${row.fees.upstairs}`);
             const extraDesc = extraStr.length > 0 ? `<div style="font-size:11px; color:#999;">含: ${extraStr.join('+')}</div>` : '';
 
-            const actionBtn = row.status === '已结算'
+            const actionBtn = row.status === '已挂帐'
                 ? `<span style="color:#ccc; font-size:12px;">已转应付</span>`
-                : `<button class="btn-primary" style="padding:4px 10px; font-size:12px;" onclick="settleShortHaul('${row.id}')">结算</button>`;
+                : `<button class="btn-primary" style="padding:4px 10px; font-size:12px;" onclick="settleShortHaul('${row.id}')">挂帐</button>`;
 
             return `
             <tr>
@@ -2276,7 +2265,7 @@ function loadContent(moduleCode, element = null) {
                     ${extraDesc}
                 </td>
                 <td>
-                    ${row.status === '已结算' ? '<span style="color:#27ae60;">已结算</span>' : '<span style="color:#e74c3c;">待结算</span>'}
+                    ${row.status === '已挂帐' ? '<span style="color:#27ae60;">已挂帐</span>' : '<span style="color:#e74c3c;">未挂帐</span>'}
                 </td>
                 <td>${actionBtn}</td>
             </tr>
@@ -2284,11 +2273,11 @@ function loadContent(moduleCode, element = null) {
         }).join('');
 
         contentHTML += `
-        <h2>短途批次结算 (City Delivery Settlement)</h2>
+        <h2>短途批次挂帐 (City Delivery Settlement)</h2>
         <div class="filter-area" style="display:flex; gap:10px; margin-bottom:15px;">
             <input type="text" placeholder="批次/司机/区域" style="padding:8px; border:1px solid #ccc;">
             <select style="padding:8px; border:1px solid #ccc;"><option>全部模式</option><option>按趟</option><option>按重量</option></select>
-            <select style="padding:8px; border:1px solid #ccc;"><option>全部状态</option><option>待结算</option><option>已结算</option></select>
+            <select style="padding:8px; border:1px solid #ccc;"><option>全部状态</option><option>未挂帐</option><option>已挂帐</option></select>
             <button class="btn-primary">查询</button>
         </div>
         <table class="data-table">
@@ -2356,7 +2345,7 @@ function loadContent(moduleCode, element = null) {
                 <div style="flex:1; height:fit-content; background:white; padding:20px; border-radius:8px; border-top:4px solid #2980b9; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
                      <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="margin-top:0;">💰 费用结算</h3>
-                        <span style="padding:4px 8px; border-radius:4px; font-size:12px; ${item.status === '已结算' ? 'background:#e6f7ff;color:#2980b9' : 'background:#fff7e6;color:#e67e22'}">
+                        <span style="padding:4px 8px; border-radius:4px; font-size:12px; ${item.status === '已挂帐' ? 'background:#e6f7ff;color:#2980b9' : 'background:#fff7e6;color:#e67e22'}">
                             ${item.status}
                         </span>
                     </div>
@@ -2381,9 +2370,9 @@ function loadContent(moduleCode, element = null) {
                     </table>
 
                     <div style="margin-top:30px; text-align:right;">
-                         ${item.status === '已结算'
+                         ${item.status === '已挂帐'
                     ? `<button class="btn-primary" disabled style="background:#ccc;">已转应付</button>`
-                    : `<button class="btn-primary" style="background:#27ae60;" onclick="settleShortHaul('${item.id}')">发起结算</button>`
+                    : `<button class="btn-primary" style="background:#27ae60;" onclick="settleShortHaul('${item.id}')">发起挂帐</button>`
                 }
                     </div>
                 </div>
@@ -2626,7 +2615,7 @@ function loadContent(moduleCode, element = null) {
             .join("");
 
         const emptyReconRow =
-            rows || '<tr><td colspan="6" style="text-align:center; color:#999;">暂无对账单数据，请先在运单结算生成对账单。</td></tr>';
+            rows || '<tr><td colspan="6" style="text-align:center; color:#999;">暂无对账单数据，请先在运单挂帐生成对账单。</td></tr>';
 
         contentHTML += `
                     <h2>客户对账 </h2>
@@ -2898,7 +2887,7 @@ function loadContent(moduleCode, element = null) {
                                 <option value="">差异处理状态</option>
                                 <option>待财务分析</option>
                                 <option>待对方确认</option>
-                                <option>已核销</option>
+                                <option>已结算</option>
                             </select>
                             <button class="btn-primary">查询差异</button>
                         </div>
@@ -2930,7 +2919,7 @@ function loadContent(moduleCode, element = null) {
                                 <td>广州白云网点</td>
                                 <td>-100.00</td>
                                 <td>代收货款遗漏</td>
-                                <td><span style="color: #27ae60;">已核销</span></td>
+                                <td><span style="color: #27ae60;">已结算</span></td>
                                 <td><a href="#" style="color:#3498db;">查看记录</a></td>
                             </tr>
                         </tbody>
@@ -2955,7 +2944,7 @@ function loadContent(moduleCode, element = null) {
                     amount: "50,000.00",
                     verified: "50,000.00",
                     unverified: "0.00",
-                    status: "已核销",
+                    status: "已结算",
                 },
                 {
                     id: "DZ202510-002",
@@ -2964,7 +2953,7 @@ function loadContent(moduleCode, element = null) {
                     amount: "20,000.00",
                     verified: "10,000.00",
                     unverified: "10,000.00",
-                    status: "部分核销",
+                    status: "部分结算",
                 },
             ];
             sessionStorage.setItem("ARStatements", JSON.stringify(arList));
@@ -2976,14 +2965,14 @@ function loadContent(moduleCode, element = null) {
                 let statusColor = "#333";
                 let action = "";
 
-                // 根据核销状态显示不同颜色和按钮
-                if (item.status === "未核销") {
+                // 根据结算状态显示不同颜色和按钮
+                if (item.status === "未结算") {
                     statusColor = "#e74c3c"; // 红色：催款重点
-                    // 点击跳转到核销页面，并带上单号
-                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60; font-weight:bold;">收款核销</a>`;
-                } else if (item.status === "部分核销") {
+                    // 点击跳转到结算页面，并带上单号
+                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60; font-weight:bold;">收款结算</a>`;
+                } else if (item.status === "部分结算") {
                     statusColor = "#f39c12"; // 黄色
-                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60;">继续核销</a>`;
+                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60;">继续结算</a>`;
                 } else {
                     statusColor = "#999"; // 灰色
                     action = `<span style="color:#ccc;">查看详情</span>`;
@@ -3004,14 +2993,14 @@ function loadContent(moduleCode, element = null) {
 
         contentHTML += `
                     <h2>客户对账单列表 (应收台账)</h2>
-                    <p style="color: #7f8c8d;">应收管理的核心报表。此处列出所有【已确认】的对账单，等待财务收款核销。</p>
+                    <p style="color: #7f8c8d;">应收管理的核心报表。此处列出所有【已确认】的对账单，等待财务收款结算。</p>
                     
                     <div class="filter-area" style="background:white;padding:15px;margin-bottom:20px;">
                         <div style="display: flex; gap: 15px;">
                             <input type="text" placeholder="对账单号/客户" style="padding:8px; border:1px solid #ccc;">
                             <select style="padding:8px; border:1px solid #ccc;">
-                                <option>未核销</option>
-                                <option>已核销</option>
+                                <option>未结算</option>
+                                <option>已结算</option>
                             </select>
                             <button class="btn-primary" onclick="loadContent('ARCustomerStatement')">刷新列表</button>
                         </div>
@@ -3024,9 +3013,9 @@ function loadContent(moduleCode, element = null) {
                                 <th>客户名称</th>
                                 <th>账期</th>
                                 <th style="text-align:right;">应收总额</th>
-                                <th style="text-align:right;">已核销</th>
-                                <th style="text-align:right;">待核销</th>
-                                <th>核销状态</th>
+                                <th style="text-align:right;">已结算</th>
+                                <th style="text-align:right;">待结算</th>
+                                <th>结算状态</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -3041,15 +3030,15 @@ function loadContent(moduleCode, element = null) {
     else if (moduleCode === "ARPrecollection") {
         contentHTML += `
                     <h2>预收款单</h2>
-                    <p style="color: #7f8c8d;">管理客户提前支付的款项，这些款项将在后续运单结算时用于核销应收款。</p>
+                    <p style="color: #7f8c8d;">管理客户提前支付的款项，这些款项将在后续运单挂帐时用于结算应收款。</p>
                     <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                             <input type="text" placeholder="预收款单号 / 客户名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
                             <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">核销状态 (全部)</option>
-                                <option>未核销</option>
-                                <option>部分核销</option>
-                                <option>已核销</option>
+                                <option value="">结算状态 (全部)</option>
+                                <option>未结算</option>
+                                <option>部分结算</option>
+                                <option>已结算</option>
                             </select>
                             <button class="btn-primary">查询</button>
                         </div>
@@ -3066,9 +3055,9 @@ function loadContent(moduleCode, element = null) {
                                 <th>预收款单号</th>
                                 <th>客户名称</th>
                                 <th>预收金额 (RMB)</th>
-                                <th>已核销金额 (RMB)</th>
+                                <th>已结算金额 (RMB)</th>
                                 <th>可用余额 (RMB)</th>
-                                <th>核销状态</th>
+                                <th>结算状态</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -3079,8 +3068,8 @@ function loadContent(moduleCode, element = null) {
                                 <td>50,000.00</td>
                                 <td>15,000.00</td>
                                 <td>35,000.00</td>
-                                <td><span style="color: #f39c12;">部分核销</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/核销</a></td>
+                                <td><span style="color: #f39c12;">部分结算</span></td>
+                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
                             </tr>
                             <tr>
                                 <td>YSD202510002</td>
@@ -3088,8 +3077,8 @@ function loadContent(moduleCode, element = null) {
                                 <td>10,000.00</td>
                                 <td>0.00</td>
                                 <td>10,000.00</td>
-                                <td><span style="color: #c0392b;">未核销</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/核销</a></td>
+                                <td><span style="color: #c0392b;">未结算</span></td>
+                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
                             </tr>
                         </tbody>
                     </table>
@@ -3097,23 +3086,26 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 6. 客户收款核销 (ARCollectionVerify) - [终极闭环：收钱消账]
+    // 6. 客户收款结算 (ARCollectionVerify) - [终极闭环：收钱消账]
     // =========================================================================
     else if (moduleCode === "ARCollectionVerify") {
-        // 1. 读取待核销的应收账款
+        // 1. 读取待结算的应收账款
         const arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
         const targetId = sessionStorage.getItem("TargetVerifyBill"); // 获取刚才跳转过来的目标ID
 
-        // 2. 过滤出未核销的，并生成表格
+        // 2. 过滤出未结算的，并生成表格
         const rows = arList
-            .filter((item) => item.status !== "已核销")
+            .filter((item) => item.status !== "已结算")
             .map((item) => {
                 // 如果是刚才点的单子，给个高亮背景
                 const isTarget = item.id === targetId;
                 const bgStyle = isTarget
                     ? "background-color: #e6f7ff; border: 2px solid #1890ff;"
                     : "";
-                const action = `<button class="btn-primary" style="padding:4px 10px;" onclick="openVerifyModal('AR', '${item.id}', '${item.amount}', '${item.client}')">确认到账并核销</button>`;
+                const action = `
+                    <button class="btn-primary" style="padding:4px 10px;" onclick="openVerifyModal('AR', '${item.id}', '${item.amount}', '${item.client}')">结算</button>
+                    <button class="btn-primary" style="padding:4px 10px; background:#e67e22; margin-left:6px;" onclick="cancelARSettlement('${item.id}')">取消结算</button>
+                `;
 
                 return `
                         <tr style="${bgStyle}">
@@ -3127,7 +3119,7 @@ function loadContent(moduleCode, element = null) {
                     }</td>
                             <td style="text-align:right; color:#e74c3c;">${item.unverified
                     }</td>
-                            <td><span style="color: #f39c12;">待核销</span></td>
+                            <td><span style="color: ${item.status === '已取消结算' ? '#95a5a6' : '#f39c12'};">${item.status === '已取消结算' ? '已取消结算' : '待结算'}</span></td>
                             <td>${action}</td>
                         </tr>
                     `;
@@ -3135,7 +3127,7 @@ function loadContent(moduleCode, element = null) {
             .join("");
 
         contentHTML += `
-                    <h2>客户收款核销 </h2>
+                    <h2>客户收款结算 </h2>
                     <p style="color: #7f8c8d;">财务/出纳在此确认银行流水，并将其与应收账款进行匹配消账。</p>
                     
                     <div class="filter-area" style="background-color: white; padding: 15px; margin-bottom: 20px;">
@@ -3144,12 +3136,13 @@ function loadContent(moduleCode, element = null) {
                             <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
                                 <option>工行基本户 (****8888)</option>
                                 <option>支付宝企业户</option>
+                                <option>微信企业户</option>
                             </select>
                             <button class="btn-primary" onclick="alert('模拟：已拉取最新银行流水')">📥 拉取银行流水</button>
                         </div>
                     </div>
 
-                    <h3>待核销应收列表</h3>
+                    <h3>待结算应收列表</h3>
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -3157,7 +3150,7 @@ function loadContent(moduleCode, element = null) {
                                 <th>客户名称</th>
                                 <th>账期</th>
                                 <th style="text-align:right;">应收金额</th>
-                                <th style="text-align:right;">待核销余额</th>
+                                <th style="text-align:right;">待结算余额</th>
                                 <th>状态</th>
                                 <th>操作</th>
                             </tr>
@@ -3165,7 +3158,7 @@ function loadContent(moduleCode, element = null) {
                         <tbody>
                             ${rows.length > 0
                 ? rows
-                : '<tr><td colspan="7" style="text-align:center; color:#ccc; padding:20px;">没有待核销的款项，真棒！👏</td></tr>'
+                : '<tr><td colspan="7" style="text-align:center; color:#ccc; padding:20px;">没有待结算的款项，真棒！👏</td></tr>'
             }
                         </tbody>
                     </table>
@@ -3173,12 +3166,12 @@ function loadContent(moduleCode, element = null) {
                     <div id="verifyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999;">
                         <div style="position:absolute; top:10%; left:50%; transform:translateX(-50%); width:520px; background:#fff; border-radius:8px; box-shadow:0 5px 25px rgba(0,0,0,0.2); padding:20px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <h3 style="margin:0;">核销确认</h3>
+                                <h3 style="margin:0;">结算确认</h3>
                                 <button onclick="closeVerifyModal()" style="border:none; background:transparent; font-size:20px; cursor:pointer;">×</button>
                             </div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                                 <div>
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">核销金额</label>
+                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">结算金额</label>
                                     <input id="verify_amount" type="number" step="0.01" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                                 </div>
                                 <div>
@@ -3203,7 +3196,7 @@ function loadContent(moduleCode, element = null) {
                             <input type="hidden" id="verify_counterparty">
                             <div style="margin-top:16px; text-align:right;">
                                 <button onclick="closeVerifyModal()" style="padding:8px 14px; border:1px solid #ccc; background:#fff; border-radius:4px; margin-right:8px;">取消</button>
-                                <button class="btn-primary" onclick="confirmVerify()">确认核销</button>
+                                <button class="btn-primary" onclick="confirmVerify()">结算</button>
                             </div>
                         </div>
                     </div>
@@ -3274,15 +3267,15 @@ function loadContent(moduleCode, element = null) {
     else if (moduleCode === "APPrepayment") {
         contentHTML += `
                     <h2>预付款单</h2>
-                    <p style="color: #7f8c8d;">管理向供应商预先支付的款项，这些款项将在后续应付账款发生时用于核销。</p>
+                    <p style="color: #7f8c8d;">管理向供应商预先支付的款项，这些款项将在后续应付账款发生时用于结算。</p>
                     <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                             <input type="text" placeholder="预付款单号 / 供应商名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
                             <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">核销状态 (全部)</option>
-                                <option>未核销</option>
-                                <option>部分核销</option>
-                                <option>已核销</option>
+                                <option value="">结算状态 (全部)</option>
+                                <option>未结算</option>
+                                <option>部分结算</option>
+                                <option>已结算</option>
                             </select>
                             <button class="btn-primary">查询</button>
                         </div>
@@ -3299,9 +3292,9 @@ function loadContent(moduleCode, element = null) {
                                 <th>预付款单号</th>
                                 <th>供应商名称</th>
                                 <th>预付金额 (RMB)</th>
-                                <th>已核销金额 (RMB)</th>
+                                <th>已结算金额 (RMB)</th>
                                 <th>可用余额 (RMB)</th>
-                                <th>核销状态</th>
+                                <th>结算状态</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -3312,8 +3305,8 @@ function loadContent(moduleCode, element = null) {
                                 <td>100,000.00</td>
                                 <td>25,000.00</td>
                                 <td>75,000.00</td>
-                                <td><span style="color: #f39c12;">部分核销</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/核销</a></td>
+                                <td><span style="color: #f39c12;">部分结算</span></td>
+                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
                             </tr>
                             <tr>
                                 <td>YFD202510002</td>
@@ -3321,8 +3314,8 @@ function loadContent(moduleCode, element = null) {
                                 <td>50,000.00</td>
                                 <td>0.00</td>
                                 <td>50,000.00</td>
-                                <td><span style="color: #c0392b;">未核销</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/核销</a></td>
+                                <td><span style="color: #c0392b;">未结算</span></td>
+                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
                             </tr>
                         </tbody>
                     </table>
@@ -3330,19 +3323,19 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 10. 付款核销 (AP Payment Verify)
+    // 10. 付款结算 (AP Payment Verify)
     // =========================================================================
     else if (moduleCode === "APPaymentVerify") {
         contentHTML += `
-                    <h2>付款核销</h2>
-                    <p style="color: #7f8c8d;">将实际发生的银行付款流水与已批准的应付单据（应付账款、预付款）进行匹配和核销。</p>
+                    <h2>付款结算</h2>
+                    <p style="color: #7f8c8d;">将实际发生的银行付款流水与已批准的应付单据（应付账款、预付款）进行匹配和结算。</p>
                     <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                             <input type="text" placeholder="付款流水号 / 供应商名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
                             <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">核销状态 (全部)</option>
-                                <option>待核销</option>
-                                <option>已核销</option>
+                                <option value="">结算状态 (全部)</option>
+                                <option>待结算</option>
+                                <option>已结算</option>
                             </select>
                             <input type="date" placeholder="付款日期" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
                             <button class="btn-primary">查询</button>
@@ -3350,18 +3343,18 @@ function loadContent(moduleCode, element = null) {
                     </div>
                     
                     <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #3498db;">批量自动匹配核销</button>
+                        <button class="btn-primary" style="background-color: #3498db;">批量自动匹配结算</button>
                     </div>
 
-                    <h3>待核销付款流水</h3>
+                    <h3>待结算付款流水</h3>
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>银行流水号</th>
                                 <th>供应商名称</th>
                                 <th>付款金额 (RMB)</th>
-                                <th>已核销金额 (RMB)</th>
-                                <th>待核销余额 (RMB)</th>
+                                <th>已结算金额 (RMB)</th>
+                                <th>待结算余额 (RMB)</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -3372,7 +3365,7 @@ function loadContent(moduleCode, element = null) {
                                 <td>18,500.00</td>
                                 <td>0.00</td>
                                 <td>18,500.00</td>
-                                <td><a href="javascript:void(0)" style="color:#27ae60;" onclick="openVerifyModal('AP', 'FK202511010', '18500.00', '甲承运商')">立即核销</a></td>
+                                <td><a href="javascript:void(0)" style="color:#27ae60;" onclick="openVerifyModal('AP', 'FK202511010', '18500.00', '甲承运商')">立即结算</a></td>
                             </tr>
                             <tr>
                                 <td>FK202511011</td>
@@ -3380,7 +3373,7 @@ function loadContent(moduleCode, element = null) {
                                 <td>5,000.00</td>
                                 <td>5,000.00</td>
                                 <td>0.00</td>
-                                <td><a href="#" style="color:#3498db;">查看核销记录</a></td>
+                                <td><a href="#" style="color:#3498db;">查看结算记录</a></td>
                             </tr>
                         </tbody>
                     </table>
@@ -8881,16 +8874,16 @@ function loadContent(moduleCode, element = null) {
                         <label>组合查询</label>
                         <div class="voucher-filter__combo">
                             <div class="voucher-filter__combo-item">
-                                <span class="voucher-filter__combo-label">Source Type</span>
+                                <span class="voucher-filter__combo-label">来源类型</span>
                                 <select id="voucher-doc-type">
-                                    <option value="">None</option>
-                                    <option value="waybill">Waybill</option>
-                                    <option value="batch">Batch</option>
-                                    <option value="reimbursement">Reimbursement</option>
+                                    <option value="">全部</option>
+                                    <option value="waybill">运单</option>
+                                    <option value="batch">批次</option>
+                                    <option value="reimbursement">报销</option>
                                 </select>
                             </div>
                             <div class="voucher-filter__combo-item">
-                                <span class="voucher-filter__combo-label">Document No</span>
+                                <span class="voucher-filter__combo-label">单据号</span>
                                 <input type="text" id="voucher-doc-no" placeholder="例如：YD2601...">
                             </div>
                         </div>
@@ -8949,7 +8942,7 @@ function loadContent(moduleCode, element = null) {
                             <th style="width:90px;">审核人</th>
                             <th style="width:90px;">制单人</th>
                             <th>摘要</th>
-                            <th style="width:60px; text-align:center;">原单</th>
+                            <th style="width:60px; text-align:center;">关联单</th>
                             <th style="width:100px;">状态</th>
                             <th style="width:110px;">科目编码</th>
                             <th style="width:140px;">科目名称</th>
@@ -13333,14 +13326,15 @@ function loadContent(moduleCode, element = null) {
                 .engine-container { display: flex; height: calc(100vh - 140px); border: 1px solid #ddd; background: #fff; }
                 .engine-sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #ddd; overflow-y: auto; padding: 10px; }
                 .engine-content { flex: 1; padding: 20px; overflow-y: auto; }
-                .tree-node { cursor: pointer; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: #333; }
+                .tree-node { cursor: pointer; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: #333; display:flex; align-items:center; justify-content:space-between; gap:8px; }
                 .tree-node:hover { background-color: #e9ecef; }
                 .tree-node.active { background-color: #007bff; color: #fff; }
                 .level-1 { font-weight: bold; margin-top: 10px; font-size: 14px; }
                 .level-2 { margin-left: 15px; font-weight: bold; color: #555; margin-top: 5px; }
-                .level-3 { margin-left: 30px; font-weight: normal; border-left: 1px solid #eee; }
+                .level-3 { margin-left: 30px; font-weight: normal; border-left: 1px solid #eee; justify-content: flex-start; gap: 6px; }
                 .engine-category { margin-left: 4px; }
-                .engine-toggle-icon { float: right; color: #7f8c8d; font-size: 12px; }
+                .engine-subcategory { margin-left: 4px; }
+                .engine-toggle-icon { margin-left: auto; color: #7f8c8d; font-size: 12px; }
                 .config-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
                 .config-table th, .config-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
                 .config-table th { background-color: #f1f1f1; font-weight: bold; }
@@ -13424,7 +13418,7 @@ function loadContent(moduleCode, element = null) {
                     <select id="demo_status" style="border:1px solid #1890ff; padding: 4px;" onchange="window.toggleSettlementOption()">
                         <option value="运输中">运输中</option>
                         <option value="已签收">已签收 (触发挂账)</option>
-                        <option value="已结算">已结算 (触发结算)</option>
+                        <option value="已挂帐">已挂帐 (触发挂帐)</option>
                     </select>
                 </div>
 
@@ -13441,12 +13435,12 @@ function loadContent(moduleCode, element = null) {
 
                 <hr>
                 <div id="settlement_option" style="display:none; background:#fffbe6; padding:10px; border:1px solid #ffe58f;">
-                    <label>🔴 结算收支方式：</label>
+                    <label>🔴 挂帐收支方式：</label>
                     <select id="demo_pmId" style="padding: 4px;">
                         <option value="pm_wx">微信支付</option>
                         <option value="pm_cash">现金</option>
                     </select>
-                    <div style="font-size:12px; color:#d48806;">(仅当触发结算规则时有效)</div>
+                    <div style="font-size:12px; color:#d48806;">(仅当触发挂帐规则时有效)</div>
                 </div>
 
                 <button onclick="window.runEngineDemo()" style="width:100%; margin-top:15px; background:#1890ff; color:white; border:none; padding:10px; cursor:pointer; font-size:16px; border-radius:4px;">🚀 生成凭证 (Run Engine)</button>
@@ -13471,11 +13465,11 @@ function loadContent(moduleCode, element = null) {
     };
 
     /**
-     * 2. 辅助函数：切换结算选项显示状态
+     * 2. 辅助函数：切换挂帐选项显示状态
      */
     window.toggleSettlementOption = function () {
         const status = document.getElementById('demo_status').value;
-        const isSettle = status === '已结算';
+        const isSettle = status === '已挂帐';
         document.getElementById('settlement_option').style.display = isSettle ? 'block' : 'none';
     };
 
@@ -14281,6 +14275,25 @@ function loadContent(moduleCode, element = null) {
         window.renderTrialBalance({ period });
     };
 
+    function getDefaultPaymentMethods() {
+        return [
+            { id: "pm_cash", name: "现金", subjectCode: "1001", subjectName: "库存现金" },
+            { id: "pm_wx", name: "微信", subjectCode: "1012.01", subjectName: "其他货币资金-微信" },
+            { id: "pm_bank", name: "银行卡", subjectCode: "1002.01", subjectName: "银行存款-基本户" }
+        ];
+    }
+
+    function loadPaymentMethodsWithFallback() {
+        let methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
+        if (!Array.isArray(methods)) methods = [];
+        const hasSubject = methods.some(m => m.subjectCode && m.subjectName);
+        if (!methods.length || !hasSubject) {
+            methods = getDefaultPaymentMethods();
+            sessionStorage.setItem("ConfigPaymentMethods", JSON.stringify(methods));
+        }
+        return methods;
+    }
+
     window.openVerifyModal = function (type, billId, amount, counterparty) {
         const modal = document.getElementById("verifyModal");
         if (!modal) return;
@@ -14292,10 +14305,10 @@ function loadContent(moduleCode, element = null) {
         document.getElementById("verify_amount").value = parseFloat((amount || "0").toString().replace(/,/g, "")) || 0;
         document.getElementById("verify_date").value = today;
         document.getElementById("verify_ref").value = "";
-        document.getElementById("verify_remark").value = `${counterparty || ""} 核销`;
+        document.getElementById("verify_remark").value = `${counterparty || ""} 结算`;
 
         const methodSelect = document.getElementById("verify_method");
-        const methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
+        const methods = loadPaymentMethodsWithFallback();
         const options = methods.length
             ? methods.map(m => {
                 const label = m.name || m.id;
@@ -14320,13 +14333,13 @@ function loadContent(moduleCode, element = null) {
         const date = document.getElementById("verify_date").value;
         const remark = document.getElementById("verify_remark").value;
         const methodId = document.getElementById("verify_method").value;
-        const methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
+        const methods = loadPaymentMethodsWithFallback();
         const method = methods.find(m => m.id === methodId);
 
         if (!method || !method.subjectCode || !method.subjectName) {
             return alert("❌ 收支方式未配置科目类别，请先维护收支方式科目。");
         }
-        if (amount <= 0) return alert("❌ 核销金额必须大于 0。");
+        if (amount <= 0) return alert("❌ 结算金额必须大于 0。");
 
         if (type === "AR") {
             const arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
@@ -14338,12 +14351,12 @@ function loadContent(moduleCode, element = null) {
                 const newUnverified = Math.max(unverified - amount, 0);
                 target.verified = newVerified.toFixed(2);
                 target.unverified = newUnverified.toFixed(2);
-                target.status = newUnverified <= 0 ? "已核销" : "部分核销";
+                target.status = newUnverified <= 0 ? "已结算" : "部分结算";
                 sessionStorage.setItem("ARStatements", JSON.stringify(arList));
             }
         }
 
-        const summary = remark || `${counterparty || ""} 核销`;
+        const summary = remark || `${counterparty || ""} 结算`;
         const voucherId = "收" + new Date().getFullYear() + Math.floor(Math.random() * 10000 + 1000);
         const lines = type === "AR"
             ? [
@@ -14361,16 +14374,32 @@ function loadContent(moduleCode, element = null) {
             date: date || new Date().toISOString().split("T")[0],
             amount: amount.toFixed(2),
             summary: summary,
-            user: "核销确认",
+            user: "结算确认",
             status: "已记账",
             lines: lines
         });
         sessionStorage.setItem("ManualVouchers", JSON.stringify(vouchers));
 
-        alert("✅ 核销完成，已生成凭证。");
+        alert("✅ 结算完成，已生成凭证。");
         window.closeVerifyModal();
         if (typeof loadContent === "function") {
             loadContent(type === "AR" ? "ARCollectionVerify" : "APPaymentVerify");
+        }
+    };
+
+    window.cancelARSettlement = function (billId) {
+        const arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
+        const target = arList.find(i => i.id === billId);
+        if (!target) return;
+        if (!confirm(`确认取消结算【${billId}】吗？`)) return;
+        const total = parseFloat((target.amount || "0").toString().replace(/,/g, "")) || 0;
+        target.verified = "0.00";
+        target.unverified = total.toFixed(2);
+        target.status = "已取消结算";
+        sessionStorage.setItem("ARStatements", JSON.stringify(arList));
+        alert("✅ 已取消结算。");
+        if (typeof loadContent === "function") {
+            loadContent("ARCollectionVerify");
         }
     };
 

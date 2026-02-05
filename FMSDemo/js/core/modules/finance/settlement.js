@@ -7,6 +7,16 @@ window.toggleAll = function (source) {
     });
 }
 
+// 挂帐模板：用于运单挂帐/批次挂帐等挂帐类模块
+const resolveAccrualTemplateName = (paymentType) => {
+    const payType = (paymentType || '现付').toString();
+    if (payType.includes('月结')) return '月结挂帐';
+    if (payType.includes('到付')) return '到付挂帐';
+    if (payType.includes('回付')) return '回付挂帐';
+    return '现付挂帐';
+};
+
+// 结算模板：用于应收管理/结算相关模块
 const resolveSettlementTemplateName = (paymentType) => {
     const payType = (paymentType || '现付').toString();
     if (payType.includes('月结')) return '月结结算';
@@ -15,13 +25,36 @@ const resolveSettlementTemplateName = (paymentType) => {
     return '现付结算';
 };
 
+const ensurePaymentMethodsConfig = () => {
+    let list = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || "[]");
+    if (!Array.isArray(list) || list.length === 0) {
+        list = [
+            { id: 'pm_cash', name: '现金', subjectCode: '1001', subjectName: '库存现金' },
+            { id: 'pm_wx', name: '微信', subjectCode: '1012.01', subjectName: '其他货币资金-微信' },
+            { id: 'pm_bank', name: '银行卡', subjectCode: '1002.01', subjectName: '银行存款-基本户' }
+        ];
+        sessionStorage.setItem('ConfigPaymentMethods', JSON.stringify(list));
+    }
+    return list;
+};
+
+const resolvePaymentMethodId = (preferredId) => {
+    const list = ensurePaymentMethodsConfig();
+    if (!Array.isArray(list) || list.length === 0) return preferredId || 'pm_cash';
+    const exact = list.find(m => m.id === preferredId && m.subjectCode && m.subjectName);
+    if (exact) return exact.id;
+    const fallback = list.find(m => m.subjectCode && m.subjectName);
+    return fallback ? fallback.id : (preferredId || list[0].id);
+};
+
 const generateSettlementVoucher = (templateName, doc, pmId) => {
     if (typeof window.generateVoucherFromEngineTemplate === 'function') {
         const result = window.generateVoucherFromEngineTemplate(templateName, doc, { paymentMethodId: pmId });
         if (result && result.success) {
             return { success: true, voucherId: result.voucherId };
         }
-        return { success: false, error: (result && result.error) ? result.error : '模板未生成凭证' };
+        const templateLabel = templateName && templateName.includes('挂帐') ? '挂帐模板' : '结算模板';
+        return { success: false, error: (result && result.error) ? result.error : `${templateLabel}未生成凭证` };
     }
     if (window.settlementSystem && window.settlementSystem.generateVoucherChain) {
         const result = window.settlementSystem.generateVoucherChain(doc, pmId);
@@ -33,12 +66,12 @@ const generateSettlementVoucher = (templateName, doc, pmId) => {
     return { success: false, error: '会计引擎未加载' };
 };
 
-// 运单结算逻辑
+// 运单挂帐逻辑
 window.settleWaybill = function (id) {
     let list = JSON.parse(sessionStorage.getItem('BizWaybills'));
     let item = list.find(i => i.id === id);
     if (item) {
-        item.status = '已结算';
+        item.status = '已挂帐';
         // ★★★ 修复 1：读取 totalAmount，如果没有则默认 1000 ★★★
         let currentVal = item.totalAmount || item.amount || "1000";
         item.totalAmount = parseFloat(currentVal.toString().replace(/,/g, '')).toFixed(2);
@@ -59,7 +92,7 @@ window.settleWaybill = function (id) {
             sessionStorage.setItem('ARStatements', JSON.stringify(arList));
         }
 
-        const shouldGenerateVoucher = confirm("✅ 费用计算完成！\n状态已更新为【已结算】。\n已生成应收。\n\n是否立即生成凭证？\n点击【取消】将在对账时统一生成一张凭证。");
+        const shouldGenerateVoucher = confirm("✅ 挂帐完成！\n状态已更新为【已挂帐】。\n已生成应收。\n\n是否立即生成凭证？\n点击【取消】将在对账时统一生成一张凭证。");
         let vId = '';
         let engineTip = '';
 
@@ -70,13 +103,13 @@ window.settleWaybill = function (id) {
                 waybillNo: item.id,
                 bill_no: item.id,
                 paymentType: item.paymentType || '现付',
-                status: '已结算',
+                status: '已挂帐',
                 clientName: item.client,
                 orgName: item.orgName || '上海分公司',
                 amount: item.totalAmount
             };
-            const pmId = item.paymentMethod || 'pm_cash';
-            const templateName = resolveSettlementTemplateName(item.paymentType || '现付');
+            const pmId = resolvePaymentMethodId(item.paymentMethod || 'pm_cash');
+            const templateName = resolveAccrualTemplateName(item.paymentType || '现付');
             const result = generateSettlementVoucher(templateName, doc, pmId);
             if (result.success) {
                 vId = result.voucherId;
@@ -95,9 +128,32 @@ window.settleWaybill = function (id) {
         sessionStorage.setItem('BizWaybills', JSON.stringify(list));
 
         const voucherTip = vId ? `\n已生成凭证：${vId}` : `\n未生成凭证：${engineTip}`;
-        alert(`✅ 费用计算完成！状态已更新为【已结算】。\n已生成应收。${voucherTip}`);
+        alert(`✅ 挂帐完成！状态已更新为【已挂帐】。\n已生成应收。${voucherTip}`);
         loadContent('SettlementWaybill');
     }
+}
+
+// 取消挂帐
+window.cancelWaybill = function (id) {
+    let list = JSON.parse(sessionStorage.getItem('BizWaybills') || "[]");
+    let item = list.find(i => i.id === id);
+    if (!item) return;
+
+    if (!confirm(`确认取消挂帐运单【${id}】吗？\n状态将回滚为【未挂帐】。`)) return;
+
+    item.status = '未挂帐';
+    item.voucherPending = false;
+    delete item.voucherId;
+    item.reconId = "";
+
+    sessionStorage.setItem('BizWaybills', JSON.stringify(list));
+
+    let arList = JSON.parse(sessionStorage.getItem('ARStatements') || "[]");
+    arList = arList.filter(ar => ar.id !== id);
+    sessionStorage.setItem('ARStatements', JSON.stringify(arList));
+
+    alert("✅ 已取消挂帐，状态已回滚为【未挂帐】。");
+    loadContent('SettlementWaybill');
 }
 
 /** 1. 处理异常退款 (生成负数单据) */
@@ -116,7 +172,7 @@ window.handlePartRefund = function (id) {
     const refundAmount = parseFloat(refundAmountStr);
     if (isNaN(refundAmount) || refundAmount <= 0) return alert("金额无效");
 
-    if (!confirm(`确认退款 ${refundAmount} 元吗？\n系统将生成一条负数结算单。`)) return;
+    if (!confirm(`确认退款 ${refundAmount} 元吗？\n系统将生成一条负数挂帐单。`)) return;
 
     // 生成红字调整单
     const refundBill = {
@@ -127,7 +183,7 @@ window.handlePartRefund = function (id) {
         goods: "退款抵扣",  // 补全字段
         weight: "-",
         totalAmount: '-' + refundAmount.toFixed(2), // ★★★ 修复 3：统一使用 totalAmount ★★★
-        status: '已结算', 
+        status: '已挂帐', 
         details: { '退款说明': '异常退运费' }
     };
 
@@ -136,7 +192,7 @@ window.handlePartRefund = function (id) {
     list.splice(idx + 1, 0, refundBill);
 
     sessionStorage.setItem('BizWaybills', JSON.stringify(list));
-    alert("✅ 退款单已生成！\n状态为【已结算】，下次生成对账单时将自动抵扣。");
+    alert("✅ 退款单已生成！\n状态为【已挂帐】，下次生成对账单时将自动抵扣。");
     loadContent('SettlementWaybill');
 }
 
@@ -152,10 +208,10 @@ window.editWaybill = function (id) {
     const newAmount = prompt(`编辑运单【${id}】\n\n当前金额：${currentAmt}\n请输入修正后的金额：`, currentAmt);
     if (newAmount && newAmount !== currentAmt) {
         item.totalAmount = parseFloat(newAmount).toFixed(2); // 更新 totalAmount
-        // 如果改了金额，状态重置为待结算，需要重新确认
-        item.status = '待结算';
+        // 如果改了金额，状态重置为未挂帐，需要重新确认
+        item.status = '未挂帐';
         sessionStorage.setItem('BizWaybills', JSON.stringify(list));
-        alert("✅ 修改成功！状态已重置为【待结算】，请重新确认费用。");
+        alert("✅ 修改成功！状态已重置为【未挂帐】，请重新确认费用。");
         loadContent('SettlementWaybill');
     }
 }
@@ -164,7 +220,7 @@ window.editWaybill = function (id) {
 window.createReconBill = function () {
     // 获取所有被勾选的运单
     const checkedBoxes = document.querySelectorAll('.wb-check:checked');
-    if (checkedBoxes.length === 0) return alert("⚠️ 请至少勾选一笔【已结算】的运单！");
+    if (checkedBoxes.length === 0) return alert("⚠️ 请至少勾选一笔【已挂帐】的运单！");
 
     let ids = [];
     let clientName = "";
@@ -239,7 +295,7 @@ window.createReconBill = function () {
             orgName: sampleWaybill && sampleWaybill.orgName ? sampleWaybill.orgName : '上海分公司',
             amount: totalAmount
         };
-        const pmId = sampleWaybill && sampleWaybill.paymentMethod ? sampleWaybill.paymentMethod : 'pm_cash';
+        const pmId = resolvePaymentMethodId(sampleWaybill && sampleWaybill.paymentMethod ? sampleWaybill.paymentMethod : 'pm_cash');
         const templateName = resolveSettlementTemplateName(doc.paymentType);
         const result = generateSettlementVoucher(templateName, doc, pmId);
         if (result.success) {
@@ -276,10 +332,10 @@ window.sendToAP = function(id) {
     // 直接取总金额
     const amountToPay = item.totalAmount;
 
-    if(!confirm(`确认结算批次【${id}】吗？\n\n支付方式：${item.paymentType}\n应付金额：${amountToPay.toLocaleString()}\n\n结算后将推送到【应付管理】。`)) return;
+    if(!confirm(`确认挂帐批次【${id}】吗？\n\n支付方式：${item.paymentType}\n应付金额：${amountToPay.toLocaleString()}\n\n挂帐后将推送到【应付管理】。`)) return;
 
     // A. 修改自身状态
-    item.settlementStatus = "已结算";
+    item.settlementStatus = "已挂帐";
     item.paidAmount = amountToPay; // 标记为已付
     
     sessionStorage.setItem('TrunkBatches', JSON.stringify(trunkList));
@@ -296,7 +352,7 @@ window.sendToAP = function(id) {
     });
     sessionStorage.setItem('APApplications', JSON.stringify(apList));
 
-    alert("✅ 结算成功！已转入应付管理。");
+    alert("✅ 挂帐成功！已转入应付管理。");
     loadContent('SettlementTrunk'); 
 }
 
@@ -332,10 +388,10 @@ window.sendToAP = function(id) {
 
     // 确认框
     const amountToPay = item.totalAmount;
-    if(!confirm(`确认结算批次【${id}】吗？\n\n支付方式：${item.paymentType}\n应付金额：${amountToPay.toLocaleString()}\n\n结算后将推送到【应付管理】。`)) return;
+    if(!confirm(`确认挂帐批次【${id}】吗？\n\n支付方式：${item.paymentType}\n应付金额：${amountToPay.toLocaleString()}\n\n挂帐后将推送到【应付管理】。`)) return;
 
-    // A. 修改干线数据状态 -> "已结算"
-    item.settlementStatus = "已结算";
+    // A. 修改干线数据状态 -> "已挂帐"
+    item.settlementStatus = "已挂帐";
     item.paidAmount = amountToPay;
     
     sessionStorage.setItem('TrunkBatches', JSON.stringify(trunkList));
@@ -358,7 +414,7 @@ window.sendToAP = function(id) {
         sessionStorage.setItem('APApplications', JSON.stringify(apList));
     }
 
-    alert("✅ 结算成功！已转入应付管理。");
+    alert("✅ 挂帐成功！已转入应付管理。");
     loadContent('SettlementTrunk'); // 刷新当前页
 }
 
@@ -383,9 +439,9 @@ window.confirmPayment = function(apId) {
     }
 }
 
-/** 取消结算 (回滚) - 这就是你找不到的按钮逻辑 */
+/** 取消挂帐 (回滚) - 这就是你找不到的按钮逻辑 */
 window.cancelSettlement = function(apId, sourceId) {
-    if(!confirm(`确认退回单据【${apId}】吗？\n\n注意：这将删除应付申请，并将源单据【${sourceId}】回滚为 [待结算] 状态。`)) return;
+    if(!confirm(`确认退回单据【${apId}】吗？\n\n注意：这将删除应付申请，并将源单据【${sourceId}】回滚为 [未挂帐] 状态。`)) return;
 
     // A. 从应付表删除
     let apList = JSON.parse(sessionStorage.getItem('APApplications') || "[]");
@@ -397,12 +453,12 @@ window.cancelSettlement = function(apId, sourceId) {
     let trunkItem = trunkList.find(i => i.id === sourceId);
     
     if (trunkItem) {
-        trunkItem.settlementStatus = "待结算"; // 变回红色待结算
+        trunkItem.settlementStatus = "未挂帐"; // 变回红色未挂帐
         trunkItem.paidAmount = 0;
         sessionStorage.setItem('TrunkBatches', JSON.stringify(trunkList));
     }
 
-    alert("✅ 结算已取消！源单据状态已回滚。");
+    alert("✅ 已取消挂帐！源单据状态已回滚。");
     loadContent('APPaymentApply'); // 刷新页面
 }
 
@@ -411,7 +467,7 @@ window.cancelSettlement = function(apId, sourceId) {
 // =======================================================
 window.revokePayment = function(apId) {
     // 既然是线下转账，不需要太严重的警告，简单确认即可
-    if(!confirm(`确认要撤销单据【${apId}】的支付状态吗？\n\n状态将变回【待付款】，以便您重新操作或取消结算。`)) return;
+    if(!confirm(`确认要撤销单据【${apId}】的支付状态吗？\n\n状态将变回【待付款】，以便您重新操作或取消挂帐。`)) return;
 
     let apList = JSON.parse(sessionStorage.getItem('APApplications') || "[]");
     let item = apList.find(i => i.apId === apId);
@@ -424,7 +480,7 @@ window.revokePayment = function(apId) {
         sessionStorage.setItem('APApplications', JSON.stringify(apList));
         
         // 2. 刷新页面
-        alert("✅ 已撤销支付状态！\n\n现在您可以点击【取消结算】来删除此单据了。");
+        alert("✅ 已撤销支付状态！\n\n现在您可以点击【取消挂帐】来删除此单据了。");
         loadContent('APPaymentApply'); 
     }
 }
@@ -448,10 +504,10 @@ window.settleShortHaul = function(id) {
     let item = list.find(i => i.id === id);
     if (!item) return;
 
-    if(!confirm(`确认结算短途批次【${id}】吗？\n\n计费模式：${item.feeType}\n应付金额：${item.totalAmount.toLocaleString()}`)) return;
+    if(!confirm(`确认挂帐短途批次【${id}】吗？\n\n计费模式：${item.feeType}\n应付金额：${item.totalAmount.toLocaleString()}`)) return;
 
     // 1. 自身状态更新
-    item.status = "已结算";
+    item.status = "已挂帐";
     sessionStorage.setItem('ShortBatches', JSON.stringify(list));
 
     // 2. 推送至应付 (AP)
@@ -466,7 +522,7 @@ window.settleShortHaul = function(id) {
     });
     sessionStorage.setItem('APApplications', JSON.stringify(apList));
 
-    alert("✅ 短途费用结算成功！已生成付款申请。");
+    alert("✅ 短途费用挂帐成功！已生成付款申请。");
     
     // 刷新页面 (如果在详情页则刷新详情页，在列表页则刷新列表页)
     // 简单判断：如果当前有 ID，说明在详情页
@@ -1048,7 +1104,7 @@ class SettlementSystem {
         this.bookingRules = [
             { id: 'rule_1', condition: (doc) => doc.type === '运单' && doc.paymentType === '现付' && doc.status === '已签收', scenarioId: '现付挂账' },
             { id: 'rule_2', condition: (doc) => doc.type === '运单' && doc.paymentType === '月结' && doc.status === '已签收', scenarioId: '月结挂账' },
-            { id: 'rule_3', condition: (doc) => doc.type === '运单' && doc.status === '已结算', scenarioId: '现付结算' } // 结算类
+            { id: 'rule_3', condition: (doc) => doc.type === '运单' && doc.status === '已挂帐', scenarioId: '现付结算' } // 结算类
         ];
 
         // 模块B: 自动分录模板 (Entry Templates) - 你的 ACCOUNTING_SCENARIOS
@@ -1174,7 +1230,7 @@ window.runEngineDemo = function() {
     const doc = {
         waybillNo: document.getElementById('demo_waybillNo').value,
         paymentType: document.getElementById('demo_paymentType').value, // 现付/月结
-        status: document.getElementById('demo_status').value, // 已签收/已结算
+        status: document.getElementById('demo_status').value, // 已签收/已挂帐
         amount: parseFloat(document.getElementById('demo_amount').value) || 0
     };
     const pmId = document.getElementById('demo_pmId').value;

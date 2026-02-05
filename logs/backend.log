@@ -937,3 +937,1140 @@ exit status 1
 2026/02/04 08:41:05 [31;1m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [35;1mrecord not found
 [0m[33m[145.227ms] [34;1m[rows:0][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '1cfe953c791f52a714f22e093711629d8a73d7ea1264168bcdd7de89d2820c38' AND revoked_at IS NULL AND expires_at > '2026-02-04 08:41:05.491') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
 [GIN] 2026/02/04 - 08:41:05 | 401 |  150.879208ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+[GIN] 2026/02/04 - 09:09:45 | 204 |    2.745583ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 09:09:45 | 200 |    4.621917ms |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 09:09:46 | 204 |      10.541µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 09:09:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[10.965ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 09:09:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:70
+[0m[33m[11.878ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 09:09:46.535',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-03 21:26:33.05',`lock_until`=NULL,`failed_count`=1,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/04 - 09:09:46 | 401 |   119.63275ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:09:53 | 204 |      49.125µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 09:09:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[1.958ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 09:09:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:70
+[0m[33m[2.339ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 09:09:53.725',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-03 21:26:33.05',`lock_until`=NULL,`failed_count`=2,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/04 - 09:09:53 | 401 |  102.364875ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+
+2026/02/04 09:09:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[2.521ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 09:09:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:70
+[0m[33m[2.329ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 09:09:55.349',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-03 21:26:33.05',`lock_until`=NULL,`failed_count`=3,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/04 - 09:09:55 | 401 |   95.736458ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:11:02 | 204 |    1.230167ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 09:11:02 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[1.243ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 09:11:02 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:70
+[0m[33m[3.106ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 09:11:02.18',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-03 21:26:33.05',`lock_until`=NULL,`failed_count`=4,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/04 - 09:11:02 | 401 |  117.464291ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:06 | 204 |      400.75µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:06 | 401 |     644.542µs |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:14 | 204 |    1.425166ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:14 | 401 |         124µs |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:30 | 204 |      22.167µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 09:30:30 | 200 |      589.75µs |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 09:30:31 | 204 |       7.042µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[16.713ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:79
+[0m[33m[6.470ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 09:30:31.546',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-04 09:30:31.546',`lock_until`=NULL,`failed_count`=0,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:93
+[0m[33m[4.782ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 09:30:31.553','2026-02-04 09:30:31.553',NULL,1,'80e1f4fc56518ea097b1ea96d0025d20af51736b3e3ac5edccf51f72633230dd','2026-03-06 09:30:31.552',NULL)
+[GIN] 2026/02/04 - 09:30:31 | 200 |    119.6855ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 09:30:31 | 204 |       3.041µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.600ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.442ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 09:30:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.294ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 09:30:31 | 200 |    2.527042ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 09:30:39 | 204 |      30.417µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 09:30:39 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[6.577ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:39 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.484ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 09:30:39 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.757ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 09:30:39 | 200 |    8.364542ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 09:30:42 | 204 |       8.125µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/5"
+
+2026/02/04 09:30:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.709ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.572ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '5' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 09:30:42 | 200 |    1.625625ms |       127.0.0.1 | GET      "/api/v1/tickets/5"
+
+2026/02/04 09:30:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.299ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.242ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 09:30:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.350ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 09:30:44 | 200 |    2.243333ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 09:30:46 | 204 |      25.709µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/4"
+
+2026/02/04 09:30:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.572ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.502ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '4' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 09:30:46 | 200 |       1.325ms |       127.0.0.1 | GET      "/api/v1/tickets/4"
+
+2026/02/04 09:30:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.573ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:write') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:164
+[0m[33m[3.497ms] [34;1m[rows:1][0m UPDATE `tickets` SET `status`='pending',`updated_at`='2026-02-04 09:30:47.642' WHERE id = '4' AND `tickets`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 09:30:47 | 200 |    6.998209ms |       127.0.0.1 | PATCH    "/api/v1/tickets/4"
+
+2026/02/04 09:30:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.455ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 09:30:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.727ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '4' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 09:30:47 | 200 |     2.64675ms |       127.0.0.1 | GET      "/api/v1/tickets/4"
+[GIN] 2026/02/04 - 10:48:06 | 204 |    2.820583ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/logout"
+
+2026/02/04 10:48:06 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:195
+[0m[33m[63.504ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `revoked_at`='2026-02-04 10:48:06.509',`updated_at`='2026-02-04 10:48:06.553' WHERE token_hash = '80e1f4fc56518ea097b1ea96d0025d20af51736b3e3ac5edccf51f72633230dd' AND `refresh_tokens`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 10:48:06 | 200 |   70.139041ms |       127.0.0.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/02/04 - 17:06:58 | 204 |    2.654666ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 17:06:58 | 200 |    4.166333ms |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 17:06:59 | 204 |      61.667µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 17:06:59 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[23.244ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:06:59 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:70
+[0m[33m[9.113ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 17:06:59.4',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-04 09:30:31.546',`lock_until`=NULL,`failed_count`=1,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+[GIN] 2026/02/04 - 17:06:59 | 401 |     126.183ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 17:07:07 | 204 |    1.813291ms |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 17:07:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[6.571ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = 'admin' OR email = 'admin') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:79
+[0m[33m[3.261ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 11:10:23.756',`updated_at`='2026-02-04 17:07:08.095',`deleted_at`=NULL,`username`='admin',`email`='admin@example.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$omSgq0MkyfmGbKXfEq1vvg$cF9uSy5aRFo3QuxwOqhgBM+xVQOLE0sT+OE9ZEyNxN4',`password_plain`='',`status`='active',`last_login_at`='2026-02-04 17:07:08.095',`lock_until`=NULL,`failed_count`=0,`department_id`=NULL,`position`='' WHERE `users`.`deleted_at` IS NULL AND `id` = 1
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:93
+[0m[33m[4.286ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 17:07:08.099','2026-02-04 17:07:08.099',NULL,1,'eefd8971f0b1c1324aca3b8f1e17cbdc0b0e762a65bab0f8fd6850e35eca01dc','2026-03-06 17:07:08.098',NULL)
+[GIN] 2026/02/04 - 17:07:08 | 200 |  116.573583ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 17:07:08 | 204 |       2.333µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.459ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.417ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.310ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 17:07:08 | 200 |    2.524583ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 17:07:08 | 204 |       6.375µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[3.687ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[5.858ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 17:07:08 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.734ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 17:07:08 | 200 |    11.39025ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 17:07:14 | 204 |       19.75µs |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[0.878ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.447ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.269ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.192ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.202ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.231ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 17:07:14 | 200 |       3.136ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 17:07:14 | 204 |       4.583µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.809ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.495ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:14 | 200 |    1.531583ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/04 - 17:07:16 | 204 |       6.667µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/2/users"
+
+2026/02/04 17:07:16 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.089ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:16 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.515ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '2' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:16 | 200 |    1.764875ms |       127.0.0.1 | GET      "/api/v1/departments/2/users"
+[GIN] 2026/02/04 - 17:07:16 | 204 |      36.125µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/3/users"
+
+2026/02/04 17:07:16 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.632ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:16 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.957ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:16 | 200 |    3.020458ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+
+2026/02/04 17:07:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[3.610ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.798ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:17 | 200 |    6.913541ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+[GIN] 2026/02/04 - 17:07:17 | 204 |       8.958µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/4/users"
+
+2026/02/04 17:07:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.876ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.662ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '4' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:17 | 200 |    1.791916ms |       127.0.0.1 | GET      "/api/v1/departments/4/users"
+[GIN] 2026/02/04 - 17:07:19 | 204 |      19.875µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/6/users"
+
+2026/02/04 17:07:19 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[5.090ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:19 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.778ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '6' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:19 | 200 |    6.524458ms |       127.0.0.1 | GET      "/api/v1/departments/6/users"
+[GIN] 2026/02/04 - 17:07:20 | 204 |       9.667µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/7/users"
+
+2026/02/04 17:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.053ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[2.914ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE department_id = '7' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:20 | 200 |    5.305958ms |       127.0.0.1 | GET      "/api/v1/departments/7/users"
+[GIN] 2026/02/04 - 17:07:20 | 204 |      14.708µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/8/users"
+
+2026/02/04 17:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[8.864ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.564ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE department_id = '8' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:20 | 200 |   10.189625ms |       127.0.0.1 | GET      "/api/v1/departments/8/users"
+
+2026/02/04 17:07:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[6.173ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.466ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE department_id = '7' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:21 | 200 |      6.9675ms |       127.0.0.1 | GET      "/api/v1/departments/7/users"
+
+2026/02/04 17:07:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.958ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.758ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '6' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:21 | 200 |    2.483875ms |       127.0.0.1 | GET      "/api/v1/departments/6/users"
+
+2026/02/04 17:07:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[3.444ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.307ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '4' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:22 | 200 |    5.635417ms |       127.0.0.1 | GET      "/api/v1/departments/4/users"
+[GIN] 2026/02/04 - 17:07:24 | 204 |      24.958µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/3/users"
+
+2026/02/04 17:07:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.895ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.562ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:24 | 200 |    1.857667ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+[GIN] 2026/02/04 - 17:07:24 | 204 |      12.459µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/2/users"
+
+2026/02/04 17:07:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.928ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.969ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '2' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:24 | 200 |     5.42525ms |       127.0.0.1 | GET      "/api/v1/departments/2/users"
+[GIN] 2026/02/04 - 17:07:26 | 204 |       22.25µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 17:07:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.547ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[2.638ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:26 | 200 |    6.147125ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+
+2026/02/04 17:07:27 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.807ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:27 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.485ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '2' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:27 | 200 |    1.595875ms |       127.0.0.1 | GET      "/api/v1/departments/2/users"
+
+2026/02/04 17:07:28 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.927ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 17:07:28 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.213ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 17:07:28 | 200 |        3.63ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+[GIN] 2026/02/04 - 18:43:12 | 204 |    7.399667ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/04 - 18:43:12 | 204 |    6.974458ms |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/04 - 18:43:12 | 401 |   24.685834ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 18:43:12 | 401 |   24.872667ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 18:43:12 | 204 |       7.041µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[331.111ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'eefd8971f0b1c1324aca3b8f1e17cbdc0b0e762a65bab0f8fd6850e35eca01dc' AND revoked_at IS NULL AND expires_at > '2026-02-04 18:43:12.571') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[13.928ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 17:07:08.099',`updated_at`='2026-02-04 18:43:12.907',`deleted_at`=NULL,`user_id`=1,`token_hash`='eefd8971f0b1c1324aca3b8f1e17cbdc0b0e762a65bab0f8fd6850e35eca01dc',`expires_at`='2026-03-06 17:07:08.098',`revoked_at`='2026-02-04 18:43:12.905' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 99
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.833ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 18:43:12.92','2026-02-04 18:43:12.92',NULL,1,'460ae85f2e107aa15e49ec594461792aeac28e2340f73fc7e1f045f8dbf5da52','2026-03-06 18:43:12.919',NULL)
+[GIN] 2026/02/04 - 18:43:12 | 200 |  353.133667ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.532ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.439ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.274ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 18:43:12 | 200 |    3.385541ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[8.071ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.489ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 18:43:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[1.760ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 18:43:12 | 200 |   10.577792ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:20:49 | 204 |     4.01525ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/04 - 20:20:49 | 204 |         132µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:20:49 | 401 |     640.625µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 20:20:49 | 401 |       289.5µs |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:20:49 | 204 |      10.416µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[2.709ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '460ae85f2e107aa15e49ec594461792aeac28e2340f73fc7e1f045f8dbf5da52' AND revoked_at IS NULL AND expires_at > '2026-02-04 20:20:49.865') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[16.270ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 18:43:12.92',`updated_at`='2026-02-04 20:20:49.869',`deleted_at`=NULL,`user_id`=1,`token_hash`='460ae85f2e107aa15e49ec594461792aeac28e2340f73fc7e1f045f8dbf5da52',`expires_at`='2026-03-06 18:43:12.919',`revoked_at`='2026-02-04 20:20:49.868' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 100
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[16.467ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 20:20:49.898','2026-02-04 20:20:49.898',NULL,1,'83c89925ac2d0c7f379ab3f78882c1ef488299c04ed572c18243d340e68a934b','2026-03-06 20:20:49.885',NULL)
+[GIN] 2026/02/04 - 20:20:49 | 200 |   36.649708ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.422ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[4.950ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[6.999ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.665ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 20:20:49 | 200 |   13.070208ms |       127.0.0.1 | GET      "/api/v1/tickets"
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[18.444ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 20:20:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[22.859ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 20:20:49 | 200 |   23.153791ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 20:27:11 | 204 |    2.416208ms |       127.0.0.1 | OPTIONS  "/api/v1/tickets/3"
+
+2026/02/04 20:27:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[37.580ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 20:27:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[3.461ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '3' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 20:27:11 | 200 |   47.240041ms |       127.0.0.1 | GET      "/api/v1/tickets/3"
+[GIN] 2026/02/04 - 20:27:22 | 204 |       71.25µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 20:27:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.108ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 20:27:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[4.102ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 20:27:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.755ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 20:27:22 | 200 |        7.44ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:39:14 | 204 |      41.083µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/04 - 20:39:14 | 401 |     353.583µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 20:39:14 | 204 |       7.208µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+[GIN] 2026/02/04 - 20:39:14 | 204 |       609.5µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:39:14 | 401 |      40.708µs |       127.0.0.1 | GET      "/api/v1/tickets"
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[36.112ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '83c89925ac2d0c7f379ab3f78882c1ef488299c04ed572c18243d340e68a934b' AND revoked_at IS NULL AND expires_at > '2026-02-04 20:39:14.483') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[10.591ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 20:20:49.898',`updated_at`='2026-02-04 20:39:14.522',`deleted_at`=NULL,`user_id`=1,`token_hash`='83c89925ac2d0c7f379ab3f78882c1ef488299c04ed572c18243d340e68a934b',`expires_at`='2026-03-06 20:20:49.885',`revoked_at`='2026-02-04 20:39:14.52' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 101
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.473ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 20:39:14.531','2026-02-04 20:39:14.531',NULL,1,'0e2621b040c87fd3aeed936dc1fc9443569ddd775963df69bb985e2ee28455ac','2026-03-06 20:39:14.531',NULL)
+[GIN] 2026/02/04 - 20:39:14 | 200 |   53.620417ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.455ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.360ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.181ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 20:39:14 | 200 |    5.516125ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[5.475ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.732ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 20:39:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[1.757ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 20:39:14 | 200 |    8.258542ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 20:41:42 | 204 |       62.75µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 20:41:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[7.426ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 20:41:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.727ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 20:41:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[6.386ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 20:41:42 | 200 |   15.102791ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:02:12 | 204 |    2.846208ms |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+[GIN] 2026/02/04 - 21:02:12 | 401 |      3.3905ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 21:02:12 | 204 |       4.541µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[26.794ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '0e2621b040c87fd3aeed936dc1fc9443569ddd775963df69bb985e2ee28455ac' AND revoked_at IS NULL AND expires_at > '2026-02-04 21:02:12.04') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[6.983ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 20:39:14.531',`updated_at`='2026-02-04 21:02:12.071',`deleted_at`=NULL,`user_id`=1,`token_hash`='0e2621b040c87fd3aeed936dc1fc9443569ddd775963df69bb985e2ee28455ac',`expires_at`='2026-03-06 20:39:14.531',`revoked_at`='2026-02-04 21:02:12.068' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 102
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[1.052ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 21:02:12.076','2026-02-04 21:02:12.076',NULL,1,'8415b1e85da52be21920cef56b6f9719b7f23e3f1662bf26397c545c12e96438','2026-03-06 21:02:12.076',NULL)
+[GIN] 2026/02/04 - 21:02:12 | 200 |   37.129875ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[1.316ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.644ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.245ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.170ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.153ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.162ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:02:12 | 200 |      3.1605ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 21:02:12 | 204 |       8.916µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[4.614ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:02:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.553ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:02:12 | 200 |     5.54575ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/04 - 21:02:34 | 204 |      96.375µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:02:34 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.161ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:02:34 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.292ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:02:34 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[1.512ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:02:34 | 200 |    3.681666ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:02:38 | 204 |      11.166µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/2"
+
+2026/02/04 21:02:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.150ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:02:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.554ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '2' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:02:38 | 200 |    2.024375ms |       127.0.0.1 | GET      "/api/v1/tickets/2"
+[GIN] 2026/02/04 - 21:02:41 | 204 |      46.084µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:02:41 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.805ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:02:41 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.508ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:02:41 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.457ms] [34;1m[rows:4][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:02:41 | 200 |    2.152167ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:04:43 | 204 |       47.25µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.418ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.563ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.374ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:04:43 | 200 |     4.13525ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 21:04:43 | 204 |        7.75µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.992ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.506ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:04:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.521ms] [34;1m[rows:2][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:04:43 | 200 |    4.465875ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:07:20 | 204 |      51.041µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.799ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.541ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[8.564ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:07:20 | 200 |    8.879334ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 21:07:20 | 204 |       6.917µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.829ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.287ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:07:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.703ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:07:20 | 200 |    2.146958ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:07:30 | 204 |       29.25µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/4"
+
+2026/02/04 21:07:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.699ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:07:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.883ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '4' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:07:30 | 200 |     3.01775ms |       127.0.0.1 | GET      "/api/v1/tickets/4"
+[GIN] 2026/02/04 - 21:15:22 | 204 |     124.791µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:15:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[7.497ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:15:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.390ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:15:22 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.391ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:15:22 | 200 |     9.06675ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:18:52 | 204 |      42.833µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.515ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.549ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.073ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:18:52 | 200 |    2.415459ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 21:18:52 | 204 |       9.792µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.216ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.260ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:18:52 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.476ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:18:52 | 200 |    2.485875ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:20:40 | 204 |      26.959µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/1"
+[GIN] 2026/02/04 - 21:20:40 | 401 |      79.084µs |       127.0.0.1 | GET      "/api/v1/tickets/1"
+[GIN] 2026/02/04 - 21:20:40 | 204 |       6.125µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/04 21:20:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[27.684ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '8415b1e85da52be21920cef56b6f9719b7f23e3f1662bf26397c545c12e96438' AND revoked_at IS NULL AND expires_at > '2026-02-04 21:20:40.453') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/04 21:20:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[9.909ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 21:02:12.076',`updated_at`='2026-02-04 21:20:40.482',`deleted_at`=NULL,`user_id`=1,`token_hash`='8415b1e85da52be21920cef56b6f9719b7f23e3f1662bf26397c545c12e96438',`expires_at`='2026-03-06 21:02:12.076',`revoked_at`='2026-02-04 21:20:40.481' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 103
+
+2026/02/04 21:20:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[0.737ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 21:20:40.492','2026-02-04 21:20:40.492',NULL,1,'bd85aa6be23bda43f10fe349f46c29fce1c81e67c50034cc1d9436eb6de2d9b7','2026-03-06 21:20:40.491',NULL)
+[GIN] 2026/02/04 - 21:20:40 | 200 |   38.751416ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 21:20:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.674ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:20:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.234ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:20:40 | 200 |    1.083709ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+[GIN] 2026/02/04 - 21:20:42 | 204 |       9.625µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:20:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.274ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:20:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.657ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:20:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.824ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:20:42 | 200 |    3.410208ms |       127.0.0.1 | GET      "/api/v1/tickets"
+
+2026/02/04 21:20:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.599ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:20:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:89
+[0m[33m[0.408ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:20:43 | 200 |    1.377292ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+
+2026/02/04 21:20:45 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.780ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:20:45 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.164ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:20:45 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.402ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:20:45 | 200 |    3.184167ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:22:30 | 204 |      37.209µs |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[2.039ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.600ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.819ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.412ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.232ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.422ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:22:30 | 200 |    5.241417ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 21:22:30 | 204 |       7.292µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.112ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.003ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:22:30 | 200 |    3.332875ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/04 - 21:22:32 | 204 |      11.875µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/2/users"
+
+2026/02/04 21:22:32 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.744ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:22:32 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.040ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '2' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:22:32 | 200 |    3.175792ms |       127.0.0.1 | GET      "/api/v1/departments/2/users"
+[GIN] 2026/02/04 - 21:22:40 | 204 |       37.25µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/3/users"
+
+2026/02/04 21:22:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.174ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:22:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.711ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:22:40 | 200 |    4.447875ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+
+2026/02/04 21:33:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:124
+[0m[33m[3.067ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:33:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:125
+[0m[33m[0.608ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:33:26 | 200 |    4.322292ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+[GIN] 2026/02/04 - 21:40:00 | 204 |      72.167µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/logout"
+
+2026/02/04 21:40:00 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:195
+[0m[33m[6.803ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `revoked_at`='2026-02-04 21:40:00.756',`updated_at`='2026-02-04 21:40:00.757' WHERE token_hash = 'bd85aa6be23bda43f10fe349f46c29fce1c81e67c50034cc1d9436eb6de2d9b7' AND `refresh_tokens`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:00 | 200 |     7.16325ms |       127.0.0.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/02/04 - 21:40:07 | 204 |     133.125µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 21:40:07 | 200 |     1.24075ms |       127.0.0.1 | POST     "/api/v1/auth/slider/verify"
+[GIN] 2026/02/04 - 21:40:07 | 204 |      13.875µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/login"
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:48
+[0m[33m[2.428ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE (username = '会计' OR email = '会计') AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:79
+[0m[33m[5.302ms] [34;1m[rows:1][0m UPDATE `users` SET `created_at`='2026-02-01 13:41:21.532',`updated_at`='2026-02-04 21:40:07.894',`deleted_at`=NULL,`username`='会计',`email`='accountant@company.com',`password_hash`='$argon2id$v=19$m=65536,t=3,p=2$uxnHprS6Qvhn1AxiO3aMPg$mpTsXM5z+eRtA/xDWiVDHt3oStbzpriP1Is/Lzb6T9g',`password_plain`='123456',`status`='active',`last_login_at`='2026-02-04 21:40:07.893',`lock_until`=NULL,`failed_count`=0,`department_id`=3,`position`='会计' WHERE `users`.`deleted_at` IS NULL AND `id` = 5
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:93
+[0m[33m[2.044ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 21:40:07.899','2026-02-04 21:40:07.899',NULL,5,'afca2dff3c86724e807b2413dd62698771d758d7447a14a322ddb8cf62281c4f','2026-03-06 21:40:07.898',NULL)
+[GIN] 2026/02/04 - 21:40:07 | 200 |  108.992416ms |       127.0.0.1 | POST     "/api/v1/auth/login"
+[GIN] 2026/02/04 - 21:40:07 | 204 |       2.542µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.327ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.312ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.368ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:40:07 | 200 |    1.418042ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 21:40:07 | 204 |       4.667µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[15.572ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.284ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:40:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.305ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:40:07 | 200 |    16.36975ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:40:09 | 204 |      23.334µs |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[0.754ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.532ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.289ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.184ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.187ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.185ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:40:09 | 200 |       2.668ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 21:40:09 | 204 |       7.208µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.876ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.560ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:09 | 200 |    2.930708ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/04 - 21:40:12 | 204 |       9.875µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/3/users"
+
+2026/02/04 21:40:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.086ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.748ms] [34;1m[rows:3][0m SELECT * FROM `users` WHERE department_id = '3' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:12 | 200 |    2.134208ms |       127.0.0.1 | GET      "/api/v1/departments/3/users"
+[GIN] 2026/02/04 - 21:40:17 | 204 |      38.666µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/4/users"
+
+2026/02/04 21:40:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.131ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:17 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.129ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '4' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:17 | 200 |    3.728333ms |       127.0.0.1 | GET      "/api/v1/departments/4/users"
+[GIN] 2026/02/04 - 21:40:18 | 204 |     132.958µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/6/users"
+
+2026/02/04 21:40:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.536ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[2.464ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '6' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:18 | 200 |    4.547292ms |       127.0.0.1 | GET      "/api/v1/departments/6/users"
+
+2026/02/04 21:40:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.556ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[1.003ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '4' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:20 | 200 |       4.203ms |       127.0.0.1 | GET      "/api/v1/departments/4/users"
+
+2026/02/04 21:40:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[2.221ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[2.948ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '6' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:21 | 200 |    5.607084ms |       127.0.0.1 | GET      "/api/v1/departments/6/users"
+[GIN] 2026/02/04 - 21:40:24 | 204 |      12.334µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/7/users"
+
+2026/02/04 21:40:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[3.039ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.943ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE department_id = '7' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:24 | 200 |    4.468833ms |       127.0.0.1 | GET      "/api/v1/departments/7/users"
+[GIN] 2026/02/04 - 21:40:26 | 204 |      36.833µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/8/users"
+
+2026/02/04 21:40:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.200ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.492ms] [34;1m[rows:0][0m SELECT * FROM `users` WHERE department_id = '8' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:26 | 200 |    1.949625ms |       127.0.0.1 | GET      "/api/v1/departments/8/users"
+[GIN] 2026/02/04 - 21:40:27 | 204 |      12.834µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/5/users"
+
+2026/02/04 21:40:27 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.372ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:27 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.963ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '5' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:27 | 200 |    3.541959ms |       127.0.0.1 | GET      "/api/v1/departments/5/users"
+[GIN] 2026/02/04 - 21:40:33 | 204 |      55.292µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:40:33 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.926ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:33 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.286ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:40:33 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.389ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:40:33 | 200 |    1.936375ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:40:35 | 204 |      20.375µs |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[0.684ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.370ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.337ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.330ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.267ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.220ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 21:40:35 | 200 |    2.671917ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/04 - 21:40:35 | 204 |       7.167µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.638ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:40:35 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.464ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/04 - 21:40:35 | 200 |    1.310667ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/04 - 21:48:48 | 204 |      41.375µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:48:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[15.908ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:48:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[6.057ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:48:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.516ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:48:48 | 200 |   22.994875ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:49:06 | 204 |      23.458µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:49:06 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.765ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:49:06 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.641ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:49:06 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.387ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:49:06 | 200 |     3.18325ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 21:52:38 | 204 |      52.958µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/04 21:52:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.968ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 21:52:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.216ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 21:52:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.235ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 21:52:38 | 200 |       1.804ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 22:31:06 | 204 |    2.695875ms |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/04 - 22:31:06 | 204 |    3.022542ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/04 - 22:31:06 | 401 |    3.398625ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/04 - 22:31:06 | 401 |    3.900666ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/04 - 22:31:06 | 204 |       3.708µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[466.287ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'afca2dff3c86724e807b2413dd62698771d758d7447a14a322ddb8cf62281c4f' AND revoked_at IS NULL AND expires_at > '2026-02-04 22:31:06.994') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[28.009ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 21:40:07.899',`updated_at`='2026-02-04 22:31:07.529',`deleted_at`=NULL,`user_id`=5,`token_hash`='afca2dff3c86724e807b2413dd62698771d758d7447a14a322ddb8cf62281c4f',`expires_at`='2026-03-06 21:40:07.899',`revoked_at`='2026-02-04 22:31:07.527' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 105
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[6.507ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-04 22:31:07.556','2026-02-04 22:31:07.556',NULL,5,'913d7fdbbf7954e5d0b6d0b149fee052ac5dd6df9e82615b338675cae5ef11f7','2026-03-06 22:31:07.555',NULL)
+[GIN] 2026/02/04 - 22:31:07 | 200 |    504.8525ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[5.846ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[1.159ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.583ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/04 - 22:31:07 | 200 |    8.022875ms |       127.0.0.1 | GET      "/api/v1/tickets"
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.049ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.589ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/04 22:31:07 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[18.652ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/04 - 22:31:07 | 200 |   19.796167ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 08:34:38 | 204 |    2.131458ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/05 - 08:34:38 | 204 |      43.875µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/05 - 08:34:38 | 401 |    6.124708ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 08:34:38 | 401 |    6.252958ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 08:34:38 | 204 |         4.5µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[19.587ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '913d7fdbbf7954e5d0b6d0b149fee052ac5dd6df9e82615b338675cae5ef11f7' AND revoked_at IS NULL AND expires_at > '2026-02-05 08:34:38.719') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[11.079ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-04 22:31:07.556',`updated_at`='2026-02-05 08:34:38.744',`deleted_at`=NULL,`user_id`=5,`token_hash`='913d7fdbbf7954e5d0b6d0b149fee052ac5dd6df9e82615b338675cae5ef11f7',`expires_at`='2026-03-06 22:31:07.555',`revoked_at`='2026-02-05 08:34:38.741' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 106
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.531ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-05 08:34:38.753','2026-02-05 08:34:38.753',NULL,5,'8846bdd1c9b1947dd684319b47f006456dcd69d1fdcf7efb5f1186b143b26ed4','2026-03-07 08:34:38.753',NULL)
+[GIN] 2026/02/05 - 08:34:38 | 200 |   38.393458ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.444ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.672ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.591ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 08:34:38 | 200 |    4.568834ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[7.505ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.410ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 08:34:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.465ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 08:34:38 | 200 |    8.566125ms |       127.0.0.1 | GET      "/api/v1/tickets"
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.262ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.530ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.570ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 08:34:40 | 200 |     2.17975ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.591ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.181ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 08:34:40 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.346ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 08:34:40 | 200 |    1.448042ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 08:35:12 | 204 |     813.916µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.478ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.178ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.005ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 08:35:12 | 200 |    2.195542ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 08:35:12 | 204 |       7.125µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.759ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.183ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 08:35:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.237ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 08:35:12 | 200 |    1.427125ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 09:08:46 | 204 |    3.731666ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/05 - 09:08:46 | 204 |    3.296917ms |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/05 - 09:08:46 | 401 |    4.121458ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 09:08:46 | 401 |    4.116125ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 09:08:46 | 204 |      19.334µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[268.786ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = '8846bdd1c9b1947dd684319b47f006456dcd69d1fdcf7efb5f1186b143b26ed4' AND revoked_at IS NULL AND expires_at > '2026-02-05 09:08:46.539') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[18.074ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-05 08:34:38.753',`updated_at`='2026-02-05 09:08:46.814',`deleted_at`=NULL,`user_id`=5,`token_hash`='8846bdd1c9b1947dd684319b47f006456dcd69d1fdcf7efb5f1186b143b26ed4',`expires_at`='2026-03-07 08:34:38.753',`revoked_at`='2026-02-05 09:08:46.811' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 107
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[4.222ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-05 09:08:46.83','2026-02-05 09:08:46.83',NULL,5,'e62de3b5e026f3cad2731b4d301c2b5f3d34c2c15d349aa8df90e4c81793683c','2026-03-07 09:08:46.829',NULL)
+[GIN] 2026/02/05 - 09:08:46 | 200 |  296.884042ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.482ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.486ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.530ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 09:08:46 | 200 |    2.696709ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[4.604ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.235ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 09:08:46 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.297ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 09:08:46 | 200 |    5.534333ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 10:11:53 | 204 |    2.616375ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/05 - 10:11:53 | 204 |      70.584µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/02/05 - 10:11:53 | 401 |    7.790084ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 10:11:53 | 401 |     277.958µs |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 10:11:53 | 204 |       4.708µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[75.621ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'e62de3b5e026f3cad2731b4d301c2b5f3d34c2c15d349aa8df90e4c81793683c' AND revoked_at IS NULL AND expires_at > '2026-02-05 10:11:53.496') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[12.807ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-05 09:08:46.83',`updated_at`='2026-02-05 10:11:53.577',`deleted_at`=NULL,`user_id`=5,`token_hash`='e62de3b5e026f3cad2731b4d301c2b5f3d34c2c15d349aa8df90e4c81793683c',`expires_at`='2026-03-07 09:08:46.83',`revoked_at`='2026-02-05 10:11:53.574' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 108
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.439ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-05 10:11:53.588','2026-02-05 10:11:53.588',NULL,5,'9d5f7e2788489a8eed4417e251674e64e4b787cf3c23dd2aab17f3d21a3fbd05','2026-03-07 10:11:53.588',NULL)
+[GIN] 2026/02/05 - 10:11:53 | 200 |   96.685959ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.505ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.315ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[6.884ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 10:11:53 | 200 |      6.9925ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[7.702ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.247ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 10:11:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.250ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 10:11:53 | 200 |    8.282708ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 10:12:55 | 204 |    1.000792ms |       127.0.0.1 | OPTIONS  "/api/v1/departments"
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:27
+[0m[33m[7.090ms] [34;1m[rows:8][0m SELECT * FROM `departments` WHERE `departments`.`deleted_at` IS NULL ORDER BY sort_order, id
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[1.004ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 2 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.388ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 3 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.274ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 4 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.430ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 7 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:182
+[0m[33m[0.288ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 8 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 10:12:55 | 200 |   10.738083ms |       127.0.0.1 | GET      "/api/v1/departments"
+[GIN] 2026/02/05 - 10:12:55 | 204 |           6µs |       127.0.0.1 | OPTIONS  "/api/v1/departments/1/users"
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[0.595ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'user:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 10:12:55 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/department.go:48
+[0m[33m[0.440ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE department_id = '1' AND `users`.`deleted_at` IS NULL
+[GIN] 2026/02/05 - 10:12:55 | 200 |    1.187167ms |       127.0.0.1 | GET      "/api/v1/departments/1/users"
+[GIN] 2026/02/05 - 10:13:00 | 204 |      39.792µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/02/05 10:13:00 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[1.054ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 5 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/02/05 10:13:00 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:73
+[0m[33m[0.906ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/02/05 10:13:00 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:74
+[0m[33m[0.662ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/02/05 - 10:13:00 | 200 |      3.3885ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/02/05 - 12:10:21 | 204 |     3.06775ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/02/05 - 12:10:21 | 401 |    5.598166ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/02/05 - 12:10:21 | 204 |       6.375µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[262.758ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = '9d5f7e2788489a8eed4417e251674e64e4b787cf3c23dd2aab17f3d21a3fbd05' AND revoked_at IS NULL AND expires_at > '2026-02-05 12:10:21.405') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[28.042ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-02-05 10:11:53.588',`updated_at`='2026-02-05 12:10:21.679',`deleted_at`=NULL,`user_id`=5,`token_hash`='9d5f7e2788489a8eed4417e251674e64e4b787cf3c23dd2aab17f3d21a3fbd05',`expires_at`='2026-03-07 10:11:53.588',`revoked_at`='2026-02-05 12:10:21.671' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 109
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[2.874ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-02-05 12:10:21.7','2026-02-05 12:10:21.7',NULL,5,'d06fd0975d46ae2133969728d71bbc57cda73c35130631355ffa2829aeddbd34','2026-03-07 12:10:21.7',NULL)
+[GIN] 2026/02/05 - 12:10:21 | 200 |  299.024541ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.102ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 5
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.590ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/02/05 12:10:21 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[4.621ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 5 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/02/05 - 12:10:21 | 200 |    4.819542ms |       127.0.0.1 | GET      "/api/v1/users/me"

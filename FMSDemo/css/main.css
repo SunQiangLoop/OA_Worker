@@ -241,16 +241,6 @@
     background: #f8f9fb;
 }
 
-.settlement-waybill-table .sticky-status {
-    position: sticky;
-    right: var(--sticky-action, 120px);
-    min-width: var(--sticky-status, 110px);
-    width: var(--sticky-status, 110px);
-    z-index: 7;
-    background: var(--row-bg, #fff);
-    box-shadow: -1px 0 0 #eee;
-}
-
 .settlement-waybill-table .sticky-action {
     position: sticky;
     right: 0;
@@ -261,7 +251,6 @@
     box-shadow: -1px 0 0 #eee;
 }
 
-.settlement-waybill-table th.sticky-status,
 .settlement-waybill-table th.sticky-action {
     background: #f8f9fb;
 }
@@ -308,6 +297,10 @@
     border-radius: 4px;
     font-size: 13px;
     color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .tree-node:hover {
@@ -322,7 +315,9 @@
 /* 层级缩进 */
 .level-1 { font-weight: bold; margin-top: 10px; }
 .level-2 { margin-left: 15px; font-weight: bold; color: #555; }
-.level-3 { margin-left: 30px; font-weight: normal; }
+.level-3 { margin-left: 30px; font-weight: normal; justify-content: flex-start; gap: 6px; }
+.engine-subcategory { margin-left: 4px; }
+.engine-toggle-icon { margin-left: auto; color: #7f8c8d; font-size: 12px; }
 
 /* 右侧：配置详情 */
 .engine-content {

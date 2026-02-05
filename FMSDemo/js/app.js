@@ -643,7 +643,7 @@
 
                 const checks = [
                     { name: '所有凭证已审核', status: 'pass', msg: '无待审核凭证。', link: '' },
-                    { name: '所有业务单据已入账', status: 'warn', msg: '有 2 张运单结算单未自动生成凭证 (不影响结账)。', link: 'EngineMapping' },
+                    { name: '所有业务单据已入账', status: 'warn', msg: '有 2 张运单挂帐单未自动生成凭证 (不影响结账)。', link: 'EngineMapping' },
                     { name: '已完成固定资产折旧计算', status: 'pass', msg: '折旧凭证已生成 (计 38,500.00)。', link: '' },
                     { name: '已完成损益类科目结转', status: profitCheckStatus, msg: profitCheckMsg, link: 'PeriodEndProfit' },
                     { name: '试算平衡检查', status: 'pass', msg: '借贷平衡 (差额 0.00)。', link: '' }
