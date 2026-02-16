@@ -46,6 +46,11 @@ func NewRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	workflowHandler := &handler.WorkflowHandler{Svc: workflowSvc}
 	approvalLogHandler := &handler.ApprovalLogHandler{ReimbSvc: reimbSvc, LogSvc: logSvc}
 
+	// Work (portfolio) module
+	workRepo := repo.NewWorkRepo(db)
+	workSvc := service.NewWorkService(workRepo, "uploads/works")
+	workHandler := &handler.WorkHandler{Svc: workSvc}
+
 	api := r.Group("/api/v1")
 	api.POST("/auth/slider/verify", authHandler.SliderVerify)
 	api.POST("/auth/login", authHandler.Login)
@@ -109,6 +114,19 @@ func NewRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	public := r.Group("/public/v1")
 	{
 		public.GET("/approvals", ticketHandler.PublicList)
+	}
+
+	// Works (portfolio) routes
+	works := api.Group("/works")
+	{
+		works.GET("", workHandler.List)
+		works.GET("/:slug", workHandler.GetBySlug)
+		works.GET("/:slug/files/*filepath", workHandler.ServeFile)
+	}
+	worksAuth := auth.Group("/works")
+	{
+		worksAuth.POST("/upload", workHandler.Upload)
+		worksAuth.DELETE("/:id", workHandler.Delete)
 	}
 
 	return r

@@ -37,6 +37,7 @@ func main() {
 		&models.ProcessNode{},
 		&models.WorkflowInstance{},
 		&models.ApprovalLog{},
+		&models.Work{},
 	); err != nil {
 		log.Fatalf("auto migrate failed: %v", err)
 	}

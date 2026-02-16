@@ -30,11 +30,20 @@ const navGroups = computed(() => {
         { name: '诊断效率', to: '/approvals?tab=insights' },
       ],
     },
+    {
+      title: '展示',
+      items: [
+        { name: '作品集', to: '/portfolio' },
+      ],
+    },
   ]
   if (auth.isAdmin) {
     base.push({
       title: '管理后台',
-      items: [{ name: '组织架构', to: '/organization' }],
+      items: [
+        { name: '组织架构', to: '/organization' },
+        { name: '作品管理', to: '/admin/works' },
+      ],
     })
   }
   return base

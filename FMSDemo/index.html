@@ -36,8 +36,14 @@
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">挂帐管理</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('SettlementWaybill', this)">运单挂帐</div>
+                <div class="sub-menu-item" onclick="loadContent('AbnormalManagement', this)">异动挂账</div>
                 <div class="sub-menu-item" onclick="loadContent('SettlementTrunk', this)">干线批次挂帐</div>
                 <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">短途批次挂帐</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">发车批次挂账</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">到车批次挂账</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">送货批次挂账</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">提货批次挂账</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementShortHaul', this)">应收应付挂账</div>
             </div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">对账管理</div>
@@ -51,17 +57,14 @@
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应收管理</div>
             <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('ARCustomerStatement', this)">客户对账单列表</div>
-                <div class="sub-menu-item" onclick="loadContent('ARPrecollection', this)">预收款单</div>
-                <div class="sub-menu-item" onclick="loadContent('ARCollectionVerify', this)">客户收款结算</div>
-                <div class="sub-menu-item" onclick="loadContent('ARAgeAnalysis', this)">客户账龄分析</div>
+                <div class="sub-menu-item" onclick="loadContent('ARCollectionVerify', this)">运单结算</div>
+                <div class="sub-menu-item" onclick="loadContent('ARAgeAnalysis', this)">账龄分析</div>
             </div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应付管理</div>
             <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('APPaymentApply', this)">供应商付款申请</div>
-                <div class="sub-menu-item" onclick="loadContent('APPrepayment', this)">预付款单</div>
-                <div class="sub-menu-item" onclick="loadContent('APPaymentVerify', this)">付款核销</div>
+                <div class="sub-menu-item" onclick="loadContent('APTrunkBatchSettlement', this)">干线批次结算</div>
+                <div class="sub-menu-item" onclick="loadContent('APShortBatchSettlement', this)">短途批次结算</div>
 
             </div>
 
@@ -79,8 +82,6 @@
                 <div class="sub-menu-item" onclick="loadContent('ExpenseTravel', this)">差旅报销</div>
                 <div class="sub-menu-item" onclick="loadContent('ExpenseCompensation', this)">酬金结算</div>
             </div>
-            
-            <div class="sub-menu-item" onclick="loadContent('AbnormalManagement', this)">异动管理</div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">风控与日志</div>
             <div class="sub-menu">
@@ -93,6 +94,7 @@
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">会计基础</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('AcctSubject', this)">会计科目</div>
+                <div class="sub-menu-item" onclick="loadContent('SettlementEngineConfig',this)">会计引擎</div>
                 <div class="sub-menu-item" onclick="loadContent('AcctSet', this)">会计账套</div>
                 <div class="sub-menu-item" onclick="loadContent('AcctPeriod', this)">会计期间</div>
                 <div class="sub-menu-item" onclick="loadContent('AcctAuxiliary', this)">辅助核算项</div>
@@ -103,7 +105,6 @@
                 <div class="sub-menu-item" onclick="loadContent('VoucherEntryReview', this)">凭证录入</div>
                 <div class="sub-menu-item" onclick="loadContent('FinanceVoucherAudit', this)">凭证审核中心</div>
             </div>
-            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">会计引擎</div>
             <div class="sub-menu">
             </div>
 

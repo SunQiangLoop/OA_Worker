@@ -940,11 +940,6 @@ window.loadEngineConfig = function(itemName) {
                         <option value="记" ${template.voucherWord === "记" ? "selected" : ""}>记</option>
                     </select>
                 </div>
-                <div>
-                    <label style="font-size:12px; color:#7f8c8d;">摘要模板</label>
-                    <input id="engine-summary-template" type="text" value="${template.summaryTemplate || ""}" placeholder="例如：收运单{waybillNo}运费"
-                        style="width:100%; padding:8px; border:1px solid #dfe6e9; border-radius:6px;">
-                </div>
             </div>
 
             <div style="margin-top:16px;">

@@ -227,17 +227,30 @@
     background: #f8f9fb;
 }
 
-.settlement-waybill-table .sticky-left {
+.settlement-waybill-table .sticky-left,
+.settlement-waybill-table .sticky-left-1 {
     position: sticky;
     left: 0;
-    min-width: var(--sticky-left, 46px);
-    width: var(--sticky-left, 46px);
+    min-width: var(--sticky-left-1, var(--sticky-left, 46px));
+    width: var(--sticky-left-1, var(--sticky-left, 46px));
     z-index: 7;
     background: var(--row-bg, #fff);
     box-shadow: 1px 0 0 #eee;
 }
 
-.settlement-waybill-table th.sticky-left {
+.settlement-waybill-table .sticky-left-2 {
+    position: sticky;
+    left: var(--sticky-left-1, 46px);
+    min-width: var(--sticky-left-2, 46px);
+    width: var(--sticky-left-2, 46px);
+    z-index: 7;
+    background: var(--row-bg, #fff);
+    box-shadow: 1px 0 0 #eee;
+}
+
+.settlement-waybill-table th.sticky-left,
+.settlement-waybill-table th.sticky-left-1,
+.settlement-waybill-table th.sticky-left-2 {
     background: #f8f9fb;
 }
 
@@ -253,6 +266,392 @@
 
 .settlement-waybill-table th.sticky-action {
     background: #f8f9fb;
+}
+
+.settlement-waybill-table .sticky-filter {
+    position: sticky;
+    top: 38px;
+    z-index: 5;
+    background: #ffffff;
+}
+
+/* 运单挂账页面（截图样式） */
+.wb-querybar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+    margin-bottom: 10px;
+}
+
+.wb-q-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wb-q-item--date {
+    gap: 10px;
+}
+
+.wb-q-label {
+    font-size: 12px;
+    color: #556;
+    white-space: nowrap;
+}
+
+.wb-q-control {
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid #d7dde3;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fff;
+    outline: none;
+}
+
+.wb-q-control:focus {
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.15);
+}
+
+.wb-q-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wb-q-date__sep {
+    font-size: 12px;
+    color: #99a;
+}
+
+.wb-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+}
+
+.wb-toolbar__left,
+.wb-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wb-toolbar__right {
+    margin-left: auto;
+}
+
+.wb-btn {
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #bcd3f5;
+    background: #fff;
+    color: #2c3e50;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 30px;
+}
+
+.wb-btn:hover {
+    border-color: #409eff;
+    color: #1677ff;
+}
+
+.wb-btn--primary {
+    border-color: #409eff;
+    background: #409eff;
+    color: #fff;
+}
+
+.wb-btn--primary:hover {
+    background: #1677ff;
+    border-color: #1677ff;
+    color: #fff;
+}
+
+.wb-pager {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 8px;
+    border-left: 1px solid #eef2f7;
+}
+
+.wb-pager__btn {
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #d7dde3;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #334;
+}
+
+.wb-pager__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    background: #f5f7fb;
+}
+
+.wb-pager__text,
+.wb-pager__page {
+    font-size: 12px;
+    color: #556;
+    white-space: nowrap;
+}
+
+.wb-pager__page {
+    font-weight: 600;
+    color: #111827;
+}
+
+.wb-pager__size {
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #d7dde3;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fff;
+}
+
+.wb-accrual-table .data-table th,
+.wb-accrual-table .data-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+    border-bottom: 1px solid #eef2f7;
+    border-right: 1px solid #eef2f7;
+}
+
+.wb-accrual-table .data-table thead tr:first-child th {
+    height: 38px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.wb-accrual-table .data-table thead tr:nth-child(2) th {
+    height: 38px;
+    padding: 6px 8px;
+    background: #ffffff;
+}
+
+.wb-accrual-table .data-table th:last-child,
+.wb-accrual-table .data-table td:last-child {
+    border-right: 0;
+}
+
+.wb-accrual-table .data-table th {
+    color: #444;
+    background: #f7f9fc;
+}
+
+.wb-accrual-table .data-table tbody tr:nth-child(even) td {
+    background: #fbfcfe;
+}
+
+.wb-accrual-table .data-table tbody tr:nth-child(even) {
+    --row-bg: #fbfcfe;
+}
+
+.wb-accrual-table .data-table tbody tr.wb-empty-row {
+    --row-bg: #fff;
+}
+
+.wb-accrual-table .data-table tbody tr.wb-empty-row td {
+    background: #fff;
+}
+
+.wb-rowno {
+    text-align: center;
+    color: #667085;
+    background: var(--row-bg, #fff);
+}
+
+.wb-link {
+    color: #1677ff;
+    text-decoration: none;
+}
+
+.wb-link:hover {
+    text-decoration: underline;
+}
+
+.wb-filter-input,
+.wb-filter-select {
+    height: 24px;
+    width: 100%;
+    min-width: 0;
+    padding: 0 6px;
+    border: 1px solid #d7dde3;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.wb-filter-input--batch {
+    min-width: 140px;
+}
+
+.wb-filter-input--blank {
+    background: #fff;
+    border-color: #e4eaf3;
+    color: transparent;
+    caret-color: transparent;
+    pointer-events: none;
+}
+
+.wb-filter-input--blank:disabled {
+    opacity: 1;
+    -webkit-text-fill-color: transparent;
+}
+
+.wb-filter-input:focus,
+.wb-filter-select:focus {
+    outline: none;
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+}
+
+.wb-funnel {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #9bbcf0;
+    border-radius: 3px;
+    position: relative;
+    background: #eef5ff;
+}
+
+.wb-funnel:before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #409eff;
+}
+
+.wb-money.is-pos {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.wb-money.is-settled {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.wb-foot td {
+    background: #f8fafc;
+    border-top: 1px solid #e6ebf2;
+    font-weight: 600;
+    position: sticky;
+    z-index: 3;
+}
+
+.wb-foot--total td { bottom: 0; }
+.wb-foot--sel td { bottom: 30px; }
+
+.wb-foot__label {
+    text-align: center;
+    color: #334;
+}
+
+.wb-foot__count {
+    color: #111827;
+    display: inline-block;
+    min-width: 44px;
+    text-align: center;
+    padding-left: 0;
+}
+
+.wb-foot__amt {
+    display: inline-block;
+    min-width: 56px;
+    text-align: right;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 运单结算：顶部 tabs */
+.ar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #e6ebf2;
+    border-radius: 10px;
+    padding: 6px 8px;
+    margin-bottom: 10px;
+}
+
+.ar-tabs__rail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    flex: 1;
+    padding-bottom: 2px;
+}
+
+.ar-tabs__rail::-webkit-scrollbar {
+    height: 6px;
+}
+.ar-tabs__rail::-webkit-scrollbar-thumb {
+    background: #e6ebf2;
+    border-radius: 999px;
+}
+
+.ar-tab {
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid #e6ebf2;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #334;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ar-tab:hover {
+    border-color: #409eff;
+    color: #1677ff;
+    background: #eef5ff;
+}
+
+.ar-tab.is-active {
+    border-color: #409eff;
+    background: #409eff;
+    color: #fff;
+}
+
+.ar-tabs__select {
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #d7dde3;
+    border-radius: 8px;
+    font-size: 12px;
+    background: #fff;
 }
 
         .btn-primary {
@@ -324,6 +723,154 @@
     flex: 1;
     padding: 20px;
     overflow-y: auto;
+}
+
+/* 计提税金及附加设置 */
+.tax-accrual-panel {
+    background: #fff;
+    border: 1px solid #e6e8ec;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+.tax-accrual-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.tax-accrual-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+.tax-accrual-lock {
+    font-size: 12px;
+    color: #f59e0b;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+.tax-accrual-desc {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+.tax-info-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.tax-info-item label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+.tax-info-item select,
+.tax-info-item input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d7dde3;
+    border-radius: 8px;
+    font-size: 13px;
+}
+.tax-rule-card {
+    margin-top: 18px;
+    border: 1px solid #edf0f4;
+    border-radius: 12px;
+    padding: 16px;
+    background: #f9fafb;
+}
+.tax-rule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.tax-rule-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.tax-rule-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.tax-rule-table th,
+.tax-rule-table td {
+    border-bottom: 1px solid #edf0f4;
+    padding: 10px;
+    font-size: 12px;
+    text-align: left;
+}
+.tax-rule-table th {
+    background: #f3f4f6;
+    color: #4b5563;
+    font-weight: 600;
+}
+.tax-rule-table input[type="text"],
+.tax-rule-table input[type="number"],
+.tax-rule-table select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d7dde3;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fff;
+}
+.tax-direction-group {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+}
+.tax-direction-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.tax-preview {
+    margin-top: 18px;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fff;
+}
+.tax-preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+.tax-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.tax-preview-box {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #374151;
+}
+.tax-preview-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+}
+.tax-rule-footer {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .config-table {

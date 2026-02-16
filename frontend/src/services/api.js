@@ -161,6 +161,29 @@ export const orgApi = {
   },
 }
 
+// 作品集 API
+export const workApi = {
+  list(params) {
+    return api.get('/api/v1/works', { params }).then(unwrap)
+  },
+  get(slug) {
+    return api.get(`/api/v1/works/${slug}`).then(unwrap)
+  },
+  upload(formData, onProgress) {
+    return api.post('/api/v1/works/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+      onUploadProgress: onProgress,
+    }).then(unwrap)
+  },
+  delete(id) {
+    return api.delete(`/api/v1/works/${id}`).then(unwrap)
+  },
+  previewUrl(slug) {
+    return `${baseURL}/api/v1/works/${slug}/files/`
+  },
+}
+
 export function setTokens(access, refresh) {
   tokenStore.set(access, refresh)
 }

@@ -6,3 +6,7 @@
   VITE v7.3.1  ready in 222 ms
 
   ➜  Local:   http://127.0.0.1:44391/
+10:35:58 PM [vite] (client) page reload src/services/api.js
+10:35:58 PM [vite] (client) page reload src/services/api.js
+10:38:02 PM [vite] (client) page reload src/router/index.js
+10:38:17 PM [vite] (client) hmr update /src/components/AppShell.vue

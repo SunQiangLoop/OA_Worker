@@ -43,6 +43,24 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/portfolio',
+    name: 'portfolio',
+    component: () => import('../pages/Portfolio.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/portfolio/:slug',
+    name: 'work-preview',
+    component: () => import('../pages/WorkPreview.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/admin/works',
+    name: 'admin-works',
+    component: () => import('../pages/AdminWorks.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/organization',
     name: 'organization',
     component: () => import('../pages/Organization.vue'),

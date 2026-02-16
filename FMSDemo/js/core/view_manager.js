@@ -13,13 +13,10 @@ function getModuleName(code) {
         ReconCarrier: "承运商对账",
         ReconDriver: "司机对账",
         ReconDiffHandle: "对账差异处理",
-        ARCustomerStatement: "客户对账单列表",
-        ARPrecollection: "预收款单",
-        ARCollectionVerify: "客户收款结算",
+        ARCollectionVerify: "运单结算",
         ARAgeAnalysis: "客户账龄分析",
-        APPaymentApply: "供应商付款申请",
-        APPrepayment: "预付款单",
-        APPaymentVerify: "付款结算",
+        APTrunkBatchSettlement: "干线批次结算",
+        APShortBatchSettlement: "短途批次结算",
         APInvoiceManage: "进项发票台账",
         FundCustomerAcct: "客户资金账户",
         FundWallet: "司机/网点钱包",
@@ -468,7 +465,7 @@ function loadContent(moduleCode, element = null) {
                 modules: [
                     { name: "运单挂帐", code: "SettlementWaybill" },
                     { name: "应收管理", code: "ARCustomerStatement" },
-                    { name: "应付管理", code: "APPaymentApply" },
+                    { name: "应付管理", code: "APTrunkBatchSettlement" },
                     { name: "发票管理", code: "TaxInputInvoice" },
                     { name: "异动管理", code: "AbnormalManagement" },
                     { name: "对帐管理", code: "ReconManage" },
@@ -483,7 +480,8 @@ function loadContent(moduleCode, element = null) {
                 borderColor: "#722ed1",
                 modules: [
                     { name: "资金账户", code: "FundCustomerAcct" },
-                    { name: "付款结算", code: "APPaymentVerify" }, // 原: 付款执行
+                    { name: "干线批次结算", code: "APTrunkBatchSettlement" },
+                    { name: "短途批次结算", code: "APShortBatchSettlement" },
                     { name: "钱包管理", code: "FundWallet" }, // 合并司机/网点钱包
                     { name: "资金流水明细", code: "ARCollectionVerify" } // 或 BankStatementSync
                 ]
@@ -671,39 +669,52 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
     // 1. 运单挂帐 (SettlementWaybill) - [最终版：含货物信息字段]
     // =========================================================================
-    else if (moduleCode === "SettlementWaybill") {
-        // 1. 初始化数据
-        let waybills = JSON.parse(sessionStorage.getItem("BizWaybills"));
+	    else if (moduleCode === "SettlementWaybill") {
+	        // 1. 初始化数据
+	        let waybills = JSON.parse(sessionStorage.getItem("BizWaybills"));
 
-        const excelColumns = [
-            { key: "seq", label: "序号", align: "center" },
-            { key: "orderNo", label: "运单号/订单号" },
-            { key: "creator", label: "建单人" },
-            { key: "auditInfo", label: "审核信息" },
-            { key: "payStatus", label: "支付状态" },
-            { key: "creatorRole", label: "建单人身份" },
-            { key: "driverOrderNo", label: "司机单号" },
-            { key: "driverOrderStatus", label: "司机单状态" },
-            { key: "payConfirm", label: "运单/订单支付确认" },
-            { key: "createdAt", label: "创建时间" },
-            { key: "loadAt", label: "装货时间" },
-            { key: "unloadAt", label: "卸货时间" },
-            { key: "finishAt", label: "完成时间" },
-            { key: "freightAmount", label: "运费金额", align: "right" },
-            { key: "taxRate", label: "支付税率", align: "center" },
-            { key: "taxAmount", label: "支付税金", align: "right" },
-            { key: "driver", label: "司机" },
-            { key: "plate", label: "车牌", align: "center" },
-            { key: "goodsPack", label: "货物名称/包装件数" },
-            { key: "weightVolume", label: "货物重量/体积" },
-            { key: "origin", label: "始发地" },
-            { key: "destination", label: "目的地" },
-            { key: "paidAmount", label: "实际支付金额", align: "right" },
-            { key: "paidAt", label: "支付时间" },
-        ];
+	        // 运单挂账表头字段（按用户给定字段补齐）
+	        const accrualColumns = [
+	            { key: "site", label: "网点" },
+	            { key: "waybillNo", label: "运单号", filter: { id: "wb_f_waybillNos", placeholder: "支持批量搜索" } },
+	            { key: "goodsNo", label: "货号", filter: { id: "wb_f_goodsNos", placeholder: "支持批量搜索" } },
+	            { key: "createdAt", label: "开单时间" },
+	            { key: "originStation", label: "发站" },
+	            { key: "destinationStation", label: "到站" },
+	            { key: "routeLine", label: "路由" },
+	            { key: "shipper", label: "发货人" },
+	            { key: "consignee", label: "收货人" },
+	            { key: "waybillAccrualStatus", label: "运单挂账状态", align: "center", filter: { id: "wb_f_waybill_status", type: "select", options: ["", "未挂账", "已挂账", "对账中", "已开票"] } },
+	            { key: "cashPay", label: "现付", align: "right" },
+	            { key: "cashPayAccrualStatus", label: "现付挂账状态", align: "center" },
+	            { key: "arrivePay", label: "到付", align: "right" },
+	            { key: "arrivePayAccrualStatus", label: "到付挂账状态", align: "center" },
+	            { key: "monthlyPay", label: "月结", align: "right" },
+	            { key: "monthlyPayAccrualStatus", label: "月结挂账状态", align: "center" },
+	            { key: "cashReturn", label: "现返", align: "right" },
+	            { key: "cashReturnAccrualStatus", label: "现返挂账状态", align: "center" },
+	            { key: "debtReturn", label: "欠返", align: "right" },
+	            { key: "debtReturnAccrualStatus", label: "欠返挂账状态", align: "center" },
+	            { key: "transferFeeTotal", label: "中转费合计", align: "right" },
+	            { key: "transferFeeAccrualStatus", label: "中转费挂账状态", align: "center" },
+	            { key: "codAmount", label: "代收货款", align: "right" },
+	            { key: "codAccrualStatus", label: "代收货款挂账状态", align: "center" },
+	            { key: "codServiceFee", label: "货款手续费", align: "right" },
+	            { key: "codServiceFeeAccrualStatus", label: "货款手续费挂账状态", align: "center" },
+	            { key: "pickupFee", label: "单票提货费", align: "right" },
+	            { key: "pickupFeeAccrualStatus", label: "单票提货费挂账状态", align: "center" },
+	            { key: "warehouseFee", label: "到站单票进仓费", align: "right" },
+	            { key: "warehouseFeeAccrualStatus", label: "到站单票进仓费挂账状态", align: "center" },
+	            { key: "advanceFee", label: "开单垫付费", align: "right" },
+	            { key: "advanceFeeAccrualStatus", label: "垫付费挂账状态", align: "center" },
+	            { key: "collectFreight", label: "代收运费", align: "right" },
+	            { key: "collectFreightAccrualStatus", label: "代收运费挂账状态", align: "center" },
+	            { key: "remark", label: "运单备注" },
+	            { key: "flag", label: "运单标识" },
+	        ];
 
-        const excelWaybills =             [
-                        {
+	        const excelWaybills =             [
+	                        {
                                     "seq": "1",
                                     "orderNo": "YD2601131639000125",
                                     "creator": "余风华/13337717906/镇江天地沃华物流有限公司",
@@ -1525,121 +1536,508 @@ function loadContent(moduleCode, element = null) {
             };
         }
 
-        if (!window.settlementWaybillSetPageSize) {
-            window.settlementWaybillSetPageSize = function (size) {
-                window._settlementWaybillPageSize = Number(size) || 10;
-                window._settlementWaybillPage = 1;
-                loadContent("SettlementWaybill");
-            };
-        }
+	        if (!window.settlementWaybillSetPageSize) {
+	            window.settlementWaybillSetPageSize = function (size) {
+	                window._settlementWaybillPageSize = Number(size) || 10;
+	                window._settlementWaybillPage = 1;
+	                loadContent("SettlementWaybill");
+	            };
+	        }
 
-        const pageSize = window._settlementWaybillPageSize || 10;
-        const totalPages = Math.max(1, Math.ceil(waybills.length / pageSize));
-        let currentPage = window._settlementWaybillPage || 1;
-        if (currentPage > totalPages) currentPage = totalPages;
+	        if (!window.settlementWaybillApplyFilters) {
+	            window.settlementWaybillApplyFilters = function () {
+	                const getVal = (id) => {
+	                    const el = document.getElementById(id);
+	                    return el ? (el.value || "").toString().trim() : "";
+	                };
+	                window._settlementWaybillFilters = {
+	                    site: getVal("wb_q_site"),
+	                    dateStart: getVal("wb_q_date_start"),
+	                    dateEnd: getVal("wb_q_date_end"),
+	                    route: getVal("wb_q_route"),
+	                    origin: getVal("wb_q_origin"),
+	                    destination: getVal("wb_q_dest"),
+	                    waybillNos: getVal("wb_f_waybillNos"),
+	                    goodsNos: getVal("wb_f_goodsNos"),
+	                    status: getVal("wb_f_waybill_status"),
+	                };
+	                window._settlementWaybillPage = 1;
+	                loadContent("SettlementWaybill");
+	            };
+	        }
 
-        const pageStart = (currentPage - 1) * pageSize;
-        const pagedWaybills = waybills.slice(pageStart, pageStart + pageSize);
+	        if (!window.settlementWaybillResetFilters) {
+	            window.settlementWaybillResetFilters = function () {
+	                window._settlementWaybillFilters = {};
+	                window._settlementWaybillPage = 1;
+	                loadContent("SettlementWaybill");
+	            };
+	        }
 
-        const stickyLeftWidth = 46;
-        const stickyStatusWidth = 110;
-        const stickyActionWidth = 120;
+	        if (!window.settlementWaybillExport) {
+	            window.settlementWaybillExport = function () {
+	                const cols = window._settlementWaybillExportColumns || [];
+	                const data = window._settlementWaybillExportData || [];
+	                if (!cols.length) return alert("未找到可导出的列。");
+	                const escapeCsv = (val) => {
+	                    const s = (val ?? "").toString();
+	                    if (/[\",\\n\\r]/.test(s)) return `\"${s.replace(/\"/g, '\"\"')}\"`;
+	                    return s;
+	                };
+	                const lines = [];
+	                lines.push(cols.map((c) => escapeCsv(c.label)).join(","));
+	                data.forEach((row) => {
+	                    lines.push(cols.map((c) => escapeCsv(row[c.key] ?? "")).join(","));
+	                });
+	                const blob = new Blob([lines.join("\\n")], { type: "text/csv;charset=utf-8" });
+	                const a = document.createElement("a");
+	                const url = URL.createObjectURL(blob);
+	                a.href = url;
+	                a.download = `运单挂账_${new Date().toISOString().slice(0, 10)}.csv`;
+	                document.body.appendChild(a);
+	                a.click();
+	                a.remove();
+	                setTimeout(() => URL.revokeObjectURL(url), 500);
+	            };
+	        }
 
-        const rows = pagedWaybills
-            .map((w) => {
-                const displayStatus = w.status === "待结算" ? "未挂帐" : (w.status === "已结算" ? "已挂帐" : w.status);
-                const isSettled = displayStatus === "已挂帐";
-                const isRefundBill = w.totalAmount.toString().includes("-");
+	        if (!window.settlementWaybillPrint) {
+	            window.settlementWaybillPrint = function () {
+	                window.print();
+	            };
+	        }
 
-                let statusColor = "#333";
-                let action = "";
+	        if (!window.settlementWaybillToolbarSettle) {
+	            window.settlementWaybillToolbarSettle = function () {
+	                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+	                if (!checked.length) return alert("请先勾选需要挂账的运单。");
+	                if (checked.length > 1) return alert("当前演示版一次只支持对单票挂账，请逐票操作。");
+	                const id = checked[0].value;
+	                if (typeof window.settleWaybill === "function") {
+	                    window.settleWaybill(id);
+	                } else {
+	                    alert("未找到挂账逻辑 (settleWaybill)。");
+	                }
+	            };
+	        }
 
-                if (displayStatus === "未挂帐") {
-                    statusColor = "#f39c12";
-                    action = `<a href="javascript:void(0)" onclick="settleWaybill('${w.id}')" style="color:#27ae60; font-weight:bold;">挂帐</a>`;
-                } else if (isSettled) {
-                    statusColor = "#27ae60";
-                    if (!isRefundBill) {
-                        action = `<a href="javascript:void(0)" onclick="editWaybill('${w.id}')" style="color:#3498db;">编辑</a> | <a href="javascript:void(0)" onclick="handlePartRefund('${w.id}')" style="color:#e74c3c;">异常退款</a> | <a href="javascript:void(0)" onclick="cancelWaybill('${w.id}')" style="color:#e67e22;">取消挂帐</a>`;
-                    } else {
-                        action = `<span style="color:#c0392b; font-size:12px;">(退款抵扣项)</span>`;
-                    }
-                } else {
-                    statusColor = "#3498db";
-                    action = `<span style="color:#ccc;">已入账单</span>`;
-                }
+		        if (!window.settlementWaybillToolbarCancel) {
+		            window.settlementWaybillToolbarCancel = function () {
+		                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+		                if (!checked.length) return alert("请先勾选需要取消挂账的运单。");
+		                if (checked.length > 1) return alert("当前演示版一次只支持对单票取消挂账，请逐票操作。");
+		                const id = checked[0].value;
+		                if (typeof window.cancelWaybill === "function") {
+		                    window.cancelWaybill(id);
+		                } else {
+		                    alert("未找到取消挂账逻辑 (cancelWaybill)。");
+		                }
+		            };
+		        }
 
-                const rowStyle = isRefundBill
-                    ? "background-color:#fff0f0; color:#c0392b;"
-                    : "";
-                const checkboxState = isSettled ? "" : "disabled";
-                const rowBg = isRefundBill ? "#fff0f0" : "#fff";
+		        if (!window.settlementWaybillUpdateSelection) {
+		            window.settlementWaybillUpdateSelection = function () {
+		                const moneyKeys = Array.isArray(window._settlementWaybillMoneyKeys)
+		                    ? window._settlementWaybillMoneyKeys
+		                    : [];
+		                const rowMap = window._settlementWaybillRowMap || {};
+		                const toNumber = (raw) => {
+		                    const s = (raw ?? "").toString().replace(/,/g, "").trim();
+		                    if (!s) return 0;
+		                    const n = Number(s);
+		                    return Number.isFinite(n) ? n : 0;
+		                };
+		                const fmt = (n) => {
+		                    if (!n) return "";
+		                    return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+		                };
 
-                const columnCells = excelColumns
-                    .map((col) => {
-                        const value = w[col.key] || "-";
-                        const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
-                        return `<td${alignStyle}>${value}</td>`;
-                    })
-                    .join("");
+		                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+		                const ids = checked.map((cb) => cb.value).filter(Boolean);
+		                const sums = {};
+		                moneyKeys.forEach((k) => { sums[k] = 0; });
+		                ids.forEach((id) => {
+		                    const row = rowMap[id];
+		                    if (!row) return;
+		                    moneyKeys.forEach((k) => {
+		                        sums[k] += toNumber(row[k]);
+		                    });
+		                });
 
-                return `<tr style="${rowStyle} --row-bg:${rowBg};">
-                        <td class="sticky-left">
-                            <input type="checkbox" class="wb-check" value="${w.id
-                    }" data-client="${w.client}" ${checkboxState}>
-                        </td>
-                        ${columnCells}
-                        <td>
-                            <span style="color:${statusColor}; font-weight:bold;">${displayStatus}</span></td>
-                        <td class="sticky-action">
-                            ${action}
-                        </td>
-                    </tr>`;
-            })
-            .join("");
+		                const countEl = document.getElementById("wb_sel_count");
+		                if (countEl) countEl.textContent = `${ids.length}单`;
+		                moneyKeys.forEach((k) => {
+		                    const el = document.getElementById(`wb_sel_sum_${k}`);
+		                    if (!el) return;
+		                    el.textContent = fmt(sums[k]);
+		                });
+		            };
+		        }
 
-        contentHTML += `
-                    <h2>运单挂帐</h2>
-                    <p style="color:#7f8c8d;">管理运单的应收费用计算。确认无误后请点击“挂帐”锁定金额。</p>
-                    
-                    <div class="filter-area" style="background:white;padding:15px;margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" placeholder="运单号/车牌号/司机手机号" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                            <input type="date" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                        <div>
-                            <button class="btn-primary" style="background-color: #2980b9;" onclick="createReconBill()">📥 批量生成对账单</button>
-                        </div>
-                    </div>
+		        const filters = window._settlementWaybillFilters || {};
 
-                    <div class="settlement-waybill-table" style="--sticky-left:${stickyLeftWidth}px; --sticky-status:${stickyStatusWidth}px; --sticky-action:${stickyActionWidth}px;">
-                        <table class="data-table" style="white-space:nowrap;">
-                            <thead><tr>
-                                <th class="sticky-header sticky-left"><input type="checkbox" onclick="toggleAll(this)"></th>
-                                ${excelColumns.map((col) => `<th class="sticky-header">${col.label}</th>`).join("")}
-                                <th class="sticky-header">结算状态</th>
-                                <th class="sticky-header sticky-action">操作</th>
-                            </tr></thead>
-                            <tbody>${rows}</tbody>
-                        </table>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding:10px 12px; background:#fff; border-radius:8px;">
-                        <div style="color:#666; font-size:12px;">共 ${waybills.length} 条</div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="color:#666; font-size:12px;">每页</span>
-                            <select style="padding:6px 8px; border:1px solid #ccc; border-radius:4px;" onchange="settlementWaybillSetPageSize(this.value)">
-                                <option value="10" ${pageSize === 10 ? "selected" : ""}>10</option>
-                                <option value="30" ${pageSize === 30 ? "selected" : ""}>30</option>
-                            </select>
-                            <span style="color:#666; font-size:12px;">条</span>
-                            <button class="btn-primary" style="padding:6px 10px; background:#95a5a6;" onclick="settlementWaybillSetPage(${Math.max(1, currentPage - 1)})" ${currentPage <= 1 ? "disabled" : ""}>上一页</button>
-                            <span style="font-size:12px; color:#333;">${currentPage} / ${totalPages}</span>
-                            <button class="btn-primary" style="padding:6px 10px;" onclick="settlementWaybillSetPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage >= totalPages ? "disabled" : ""}>下一页</button>
-                        </div>
-                    </div>
-                `;
-    }
+	        const esc = (val) => (val ?? "").toString()
+	            .replace(/&/g, "&amp;")
+	            .replace(/</g, "&lt;")
+	            .replace(/>/g, "&gt;")
+	            .replace(/\"/g, "&quot;")
+	            .replace(/'/g, "&#39;");
+
+	        const parseTokens = (raw) => {
+	            const text = (raw || "").toString().trim();
+	            if (!text) return [];
+	            return text
+	                .split(/[\n,，;；\\s]+/)
+	                .map((t) => t.trim())
+	                .filter(Boolean);
+	        };
+
+	        const parseDateOnly = (raw) => {
+	            const s = (raw || "").toString().trim();
+	            if (!s) return null;
+	            const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+	            if (!m) return null;
+	            const d = new Date(`${m[1]}T00:00:00`);
+	            return Number.isNaN(d.getTime()) ? null : d;
+	        };
+
+	        const normalizeAccrualStatus = (raw) => {
+	            const s = (raw || "").toString().trim();
+	            if (!s) return "";
+	            // 兼容页面老用词：挂帐 -> 挂账
+	            if (s === "未挂帐") return "未挂账";
+	            if (s === "已挂帐") return "已挂账";
+	            return s.replace(/挂帐/g, "挂账");
+	        };
+
+	        const toNumber = (raw) => {
+	            const s = (raw ?? "").toString().replace(/,/g, "").trim();
+	            if (!s) return 0;
+	            const n = Number(s);
+	            return Number.isFinite(n) ? n : 0;
+	        };
+
+	        const formatMoney = (raw) => {
+	            const n = toNumber(raw);
+	            if (!n) return "";
+	            return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+	        };
+
+	        const decoratedWaybills = (Array.isArray(waybills) ? waybills : []).map((w, idx) => {
+	            const site = w && w.site ? w.site : (idx % 2 === 0 ? "专线A" : "专线B");
+	            const waybillNo = (w && (w.id || w.orderNo)) ? (w.id || w.orderNo) : "";
+	            const goodsNo = (w && (w.goodsNo || w.driverOrderNo)) ? (w.goodsNo || w.driverOrderNo) : "";
+	            const createdAt = (w && w.createdAt) ? w.createdAt : (w && w.bizDate ? w.bizDate : "");
+	            const originStation = w && w.origin ? w.origin : "";
+	            const destinationStation = w && w.destination ? w.destination : "";
+	            const routeLine = w && w.routeLine ? w.routeLine : (site === "专线A" ? "专线A->专线B" : "专线B->专线A");
+	            const shipper = w && w.shipper ? w.shipper : (w && w.creator ? (w.creator.split("/")[0] || "") : "");
+	            const consignee = w && w.consignee ? w.consignee : "";
+	            const waybillAccrualStatus = normalizeAccrualStatus(w && w.status ? w.status : "");
+
+	            const baseAmount = (w && (w.totalAmount || w.freightAmount || w.amount || w.paidAmount)) ? (w.totalAmount || w.freightAmount || w.amount || w.paidAmount) : "";
+	            const cashPay = formatMoney(baseAmount);
+	            const cashPayAccrualStatus = waybillAccrualStatus;
+
+	            return {
+	                ...w,
+	                site,
+	                waybillNo,
+	                goodsNo,
+	                createdAt,
+	                originStation,
+	                destinationStation,
+	                routeLine,
+	                shipper,
+	                consignee,
+	                waybillAccrualStatus,
+	                cashPay,
+	                cashPayAccrualStatus,
+	                arrivePay: "",
+	                arrivePayAccrualStatus: "",
+	                monthlyPay: "",
+	                monthlyPayAccrualStatus: "",
+	                cashReturn: "",
+	                cashReturnAccrualStatus: "",
+	                debtReturn: "",
+	                debtReturnAccrualStatus: "",
+	                transferFeeTotal: "",
+	                transferFeeAccrualStatus: "",
+	                codAmount: "",
+	                codAccrualStatus: "",
+	                codServiceFee: "",
+	                codServiceFeeAccrualStatus: "",
+	                pickupFee: "",
+	                pickupFeeAccrualStatus: "",
+	                warehouseFee: "",
+	                warehouseFeeAccrualStatus: "",
+	                advanceFee: "",
+	                advanceFeeAccrualStatus: "",
+	                collectFreight: "",
+	                collectFreightAccrualStatus: "",
+	                remark: (w && w.remark) ? w.remark : "",
+	                flag: (w && w.flag) ? w.flag : "",
+	            };
+	        });
+
+	        const waybillNosFilter = parseTokens(filters.waybillNos);
+	        const goodsNosFilter = parseTokens(filters.goodsNos);
+	        const statusFilter = (filters.status || "").toString().trim();
+	        const siteFilter = (filters.site || "").toString().trim();
+	        const routeFilter = (filters.route || "").toString().trim();
+	        const originFilter = (filters.origin || "").toString().trim();
+	        const destFilter = (filters.destination || "").toString().trim();
+	        const dateStart = parseDateOnly(filters.dateStart);
+	        const dateEnd = parseDateOnly(filters.dateEnd);
+
+	        const filteredWaybills = decoratedWaybills.filter((w) => {
+	            if (siteFilter && w.site !== siteFilter) return false;
+	            if (statusFilter && w.waybillAccrualStatus !== statusFilter) return false;
+	            if (routeFilter && !(w.routeLine || "").includes(routeFilter)) return false;
+	            if (originFilter && !(w.originStation || "").includes(originFilter)) return false;
+	            if (destFilter && !(w.destinationStation || "").includes(destFilter)) return false;
+	            if (waybillNosFilter.length) {
+	                const id = (w.waybillNo || w.id || "").toString();
+	                if (waybillNosFilter.length === 1) {
+	                    if (!id.includes(waybillNosFilter[0])) return false;
+	                } else {
+	                    const set = new Set(waybillNosFilter);
+	                    if (!set.has(id)) return false;
+	                }
+	            }
+	            if (goodsNosFilter.length) {
+	                const id = (w.goodsNo || "").toString();
+	                if (goodsNosFilter.length === 1) {
+	                    if (!id.includes(goodsNosFilter[0])) return false;
+	                } else {
+	                    const set = new Set(goodsNosFilter);
+	                    if (!set.has(id)) return false;
+	                }
+	            }
+	            if (dateStart || dateEnd) {
+	                const d = parseDateOnly(w.createdAt);
+	                if (!d) return false;
+	                if (dateStart && d < dateStart) return false;
+	                if (dateEnd && d > dateEnd) return false;
+	            }
+	            return true;
+	        });
+
+	        const pageSize = window._settlementWaybillPageSize || 10;
+	        const totalPages = Math.max(1, Math.ceil(filteredWaybills.length / pageSize));
+	        let currentPage = window._settlementWaybillPage || 1;
+	        if (currentPage > totalPages) currentPage = totalPages;
+
+	        const pageStart = (currentPage - 1) * pageSize;
+		        const pagedWaybills = filteredWaybills.slice(pageStart, pageStart + pageSize);
+
+		        const moneyKeys = accrualColumns
+		            .filter((c) => c && c.align === "right" && c.key)
+		            .map((c) => c.key);
+
+		        const sumMoney = (list) => {
+		            const sums = {};
+		            moneyKeys.forEach((k) => { sums[k] = 0; });
+		            (Array.isArray(list) ? list : []).forEach((row) => {
+		                moneyKeys.forEach((k) => {
+		                    sums[k] += toNumber(row[k]);
+		                });
+		            });
+		            return sums;
+		        };
+
+		        const totalSums = sumMoney(filteredWaybills);
+		        const fmtSum = (n) => {
+		            if (!n) return "";
+		            return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+		        };
+
+		        // 供导出使用
+		        window._settlementWaybillExportColumns = accrualColumns;
+		        window._settlementWaybillExportData = filteredWaybills;
+		        window._settlementWaybillMoneyKeys = moneyKeys;
+		        window._settlementWaybillRowMap = Object.fromEntries(pagedWaybills.map((w) => [w.id, w]));
+
+		        const renderCell = (w, col) => {
+		            let value = w[col.key];
+		            if (col.key === "waybillNo") {
+		                const id = esc(value || w.id || "");
+		                return `<a class="wb-link" href="javascript:void(0)">${id}</a>`;
+		            }
+		            if (col.align === "right") {
+		                const text = esc(value || "");
+		                const isPos = toNumber(value) > 0;
+		                const isSettled = (w.waybillAccrualStatus || "") === "已挂账";
+		                const cls = isSettled ? "is-settled" : (isPos ? "is-pos" : "");
+		                return `<span class="wb-money ${cls}">${text}</span>`;
+		            }
+		            return esc(value || "");
+		        };
+
+		        const dataRows = pagedWaybills
+		            .map((w, idx) => {
+		                const rowNo = pageStart + idx + 1;
+		                return `<tr>
+		                        <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+		                        <td class="sticky-left-2">
+		                            <input type="checkbox" class="wb-check" value="${esc(w.id)}" data-client="${esc(w.client || "")}" onchange="settlementWaybillUpdateSelection()">
+		                        </td>
+		                        ${accrualColumns.map((col) => {
+		                            const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
+		                            return `<td${alignStyle}>${renderCell(w, col)}</td>`;
+		                        }).join("")}
+		                    </tr>`;
+		            })
+		            .join("");
+
+		        const fillerCount = Math.max(0, pageSize - pagedWaybills.length);
+		        const fillerRows = fillerCount
+		            ? Array.from({ length: fillerCount }).map(() => {
+		                return `<tr class="wb-empty-row">
+		                        <td class="sticky-left-1 wb-rowno">&nbsp;</td>
+		                        <td class="sticky-left-2">&nbsp;</td>
+		                        ${accrualColumns.map((col) => {
+		                            const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
+		                            return `<td${alignStyle}>&nbsp;</td>`;
+		                        }).join("")}
+		                    </tr>`;
+		            }).join("")
+		            : "";
+
+		        const rows = dataRows + fillerRows;
+
+		        const siteOptions = Array.from(new Set(decoratedWaybills.map((w) => w.site))).sort();
+		        const siteSelectHtml = `
+		            <option value="">全部</option>
+		            ${siteOptions.map((opt) => `<option value="${esc(opt)}" ${filters.site === opt ? "selected" : ""}>${esc(opt)}</option>`).join("")}
+		        `;
+
+			        const buildFilterCell = (col) => {
+			            if (!col.filter) {
+			                return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`;
+			            }
+		            const f = col.filter;
+		            if (f.type === "select") {
+		                const opts = Array.isArray(f.options) ? f.options : [""];
+		                const current = (filters.status || "").toString();
+		                return `<th class="sticky-filter"><select id="${esc(f.id)}" class="wb-filter-select">${opts.map((opt) => {
+		                    const label = opt || "全部";
+		                    const selected = opt && current === opt ? "selected" : (!opt && !current ? "selected" : "");
+		                    return `<option value="${esc(opt)}" ${selected}>${esc(label)}</option>`;
+		                }).join("")}</select></th>`;
+		            }
+		            const val = f.id === "wb_f_waybillNos" ? (filters.waybillNos || "") : (f.id === "wb_f_goodsNos" ? (filters.goodsNos || "") : "");
+		            const extraClass = (f.placeholder || "").includes("批量") ? " wb-filter-input--batch" : "";
+		            return `<th class="sticky-filter"><input id="${esc(f.id)}" class="wb-filter-input${extraClass}" placeholder="${esc(f.placeholder || "")}" value="${esc(val)}"></th>`;
+			        };
+
+		        const buildFooterCells = (mode) => {
+		            const isSelected = mode === "sel";
+		            const countId = isSelected ? "wb_sel_count" : "wb_total_count";
+		            const countText = isSelected ? "0单" : `${filteredWaybills.length}单`;
+		            return accrualColumns.map((col) => {
+		                const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
+		                if (col.key === "waybillNo") {
+		                    return `<td${alignStyle}><span id="${esc(countId)}" class="wb-foot__count">${esc(countText)}</span></td>`;
+		                }
+		                if (col.align === "right") {
+		                    const id = isSelected ? `wb_sel_sum_${col.key}` : `wb_total_sum_${col.key}`;
+		                    const val = isSelected ? "" : fmtSum(totalSums[col.key] || 0);
+		                    return `<td${alignStyle}><span id="${esc(id)}" class="wb-foot__amt">${esc(val)}</span></td>`;
+		                }
+		                return `<td${alignStyle}>&nbsp;</td>`;
+		            }).join("");
+		        };
+
+		        contentHTML += `
+		                    <h2>运单挂账</h2>
+
+	                    <div class="wb-querybar">
+	                        <div class="wb-q-item">
+	                            <div class="wb-q-label">网点</div>
+	                            <select id="wb_q_site" class="wb-q-control">
+	                                ${siteSelectHtml}
+	                            </select>
+	                        </div>
+	                        <div class="wb-q-item wb-q-item--date">
+	                            <div class="wb-q-label">开单时间</div>
+	                            <div class="wb-q-date">
+	                                <input id="wb_q_date_start" class="wb-q-control" type="date" value="${esc(filters.dateStart || "")}">
+	                                <span class="wb-q-date__sep">~</span>
+	                                <input id="wb_q_date_end" class="wb-q-control" type="date" value="${esc(filters.dateEnd || "")}">
+	                            </div>
+	                        </div>
+	                        <div class="wb-q-item">
+	                            <div class="wb-q-label">路由</div>
+	                            <input id="wb_q_route" class="wb-q-control" type="text" value="${esc(filters.route || "")}">
+	                        </div>
+	                        <div class="wb-q-item">
+	                            <div class="wb-q-label">发站</div>
+	                            <input id="wb_q_origin" class="wb-q-control" type="text" value="${esc(filters.origin || "")}">
+	                        </div>
+	                        <div class="wb-q-item">
+	                            <div class="wb-q-label">到站</div>
+	                            <input id="wb_q_dest" class="wb-q-control" type="text" value="${esc(filters.destination || "")}">
+	                        </div>
+	                        <button class="wb-btn wb-btn--primary" onclick="settlementWaybillApplyFilters()">查询</button>
+	                        <button class="wb-btn" onclick="settlementWaybillResetFilters()">重置</button>
+	                    </div>
+
+		                    <div class="wb-toolbar">
+		                        <div class="wb-toolbar__left">
+		                            <button class="wb-btn" onclick="settlementWaybillToolbarSettle()">挂账</button>
+		                            <button class="wb-btn" onclick="settlementWaybillToolbarCancel()">取消挂账</button>
+		                        </div>
+		                        <div class="wb-toolbar__right">
+	                            <button class="wb-btn" onclick="settlementWaybillExport()">导出</button>
+	                            <button class="wb-btn" onclick="settlementWaybillPrint()">打印</button>
+		                            <div class="wb-pager">
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(1)" ${currentPage <= 1 ? "disabled" : ""}>|&lt;</button>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.max(1, currentPage - 1)})" ${currentPage <= 1 ? "disabled" : ""}>&lt;</button>
+	                                <span class="wb-pager__text">第</span>
+	                                <span class="wb-pager__page">${currentPage}</span>
+	                                <span class="wb-pager__text">页/共${totalPages}页</span>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;</button>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${totalPages})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;|</button>
+	                                <select class="wb-pager__size" onchange="settlementWaybillSetPageSize(this.value)">
+	                                    <option value="10" ${pageSize === 10 ? "selected" : ""}>0-9</option>
+	                                    <option value="30" ${pageSize === 30 ? "selected" : ""}>0-29</option>
+	                                </select>
+		                            </div>
+		                        </div>
+		                    </div>
+
+		                    <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+		                        <table class="data-table" style="white-space:nowrap;">
+		                            <thead>
+		                                <tr>
+		                                    <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+		                                    <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll(this); settlementWaybillUpdateSelection();"></th>
+		                                    ${accrualColumns.map((col) => `<th class="sticky-header"${col.align ? ` style="text-align:${col.align};"` : ""}>${esc(col.label)}</th>`).join("")}
+		                                </tr>
+		                                <tr>
+		                                    <th class="sticky-filter sticky-left-1">筛选</th>
+		                                    <th class="sticky-filter sticky-left-2"></th>
+		                                    ${accrualColumns.map((col) => buildFilterCell(col)).join("")}
+		                                </tr>
+		                            </thead>
+		                            <tbody>${rows || `<tr><td colspan="${accrualColumns.length + 2}" style="text-align:center; color:#999; padding:18px;">暂无数据</td></tr>`}</tbody>
+		                            <tfoot>
+		                                <tr class="wb-foot wb-foot--sel">
+		                                    <td class="sticky-left-1 wb-foot__label">选中</td>
+		                                    <td class="sticky-left-2"></td>
+		                                    ${buildFooterCells("sel")}
+		                                </tr>
+		                                <tr class="wb-foot wb-foot--total">
+		                                    <td class="sticky-left-1 wb-foot__label">合计</td>
+		                                    <td class="sticky-left-2"></td>
+		                                    ${buildFooterCells("total")}
+		                                </tr>
+		                            </tfoot>
+		                        </table>
+		                    </div>
+		                `;
+		    }
 
     // =========================================================================
     // 5. 干线批次挂帐 (SettlementTrunk) - [数据升级：支持详尽费用明细]
@@ -1896,74 +2294,17 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 15. 供应商付款申请 (APPaymentApply) - [增加：支付与取消逻辑]
+    // 应付管理：仅保留两个子模块（先做空白页）
     // =========================================================================
-    else if (moduleCode === "APPaymentApply") {
-        let apList = JSON.parse(sessionStorage.getItem('APApplications') || "[]");
-
-        const rows = apList.map(row => {
-            let statusHtml = "";
-            let operateHtml = "";
-
-            // 状态与按钮逻辑
-            if (row.status === '已支付') {
-                statusHtml = `<span style="color:#27ae60; background:#f0f9f0; padding:2px 6px; border-radius:4px;">✔ 已支付</span>`;
-                operateHtml = `<button class="btn-primary" style="background:#f39c12; padding:2px 8px; font-size:12px;" onclick="revokePayment('${row.apId}')">撤销支付</button>`;
-            } else {
-                statusHtml = `<span style="color:#f39c12; background:#fff7e6; padding:2px 6px; border-radius:4px;">⏳ 待付款</span>`;
-                operateHtml = `
-                <button class="btn-primary" style="background:#27ae60; padding:2px 8px; font-size:12px;" onclick="confirmPayment('${row.apId}')">确认支付</button>
-                <button class="btn-primary" style="background:#e74c3c; padding:2px 8px; font-size:12px;" onclick="cancelSettlement('${row.apId}', '${row.sourceId}')">取消挂帐</button>
-            `;
-            }
-
-            // 判断来源文字
-            let sourceType = "未知";
-            if (row.sourceId.startsWith('APC')) sourceType = "干线批次";
-            else if (row.sourceId.startsWith('SH')) sourceType = "短途批次"; // ★ 显示短途
-
-            return `
-            <tr>
-                <td>${row.apId}</td>
-                <td>
-                    <a href="javascript:void(0)" onclick="jumpToSourceDetail('${row.sourceId}')" style="font-weight:bold; color:#3498db; text-decoration:underline;">
-                        ${row.sourceId}
-                    </a>
-                    <div style="font-size:12px; color:#999;">来源: ${sourceType}</div>
-                </td>
-                <td>${row.payee}</td>
-                <td style="text-align:right; font-weight:bold; color:#333;">${row.amount.toLocaleString()}</td>
-                <td>${row.applyDate}</td>
-                <td>${statusHtml}</td>
-                <td>${operateHtml}</td>
-            </tr>
-        `;
-        }).join('');
-
-        contentHTML += `
-        <h2>应付管理 / 付款申请 (AP Management)</h2>
-        <div class="filter-area" style="margin-bottom:15px;">
-            <input type="text" placeholder="申请单号/运单号" style="padding:8px; border:1px solid #ccc;">
-            <select style="padding:8px; border:1px solid #ccc;">
-                <option>全部状态</option>
-                <option>待付款</option>
-                <option>已支付</option>
-            </select>
-            <button class="btn-primary">查询</button>
-        </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>申请单号</th><th>运单据号</th><th>收款方</th>
-                    <th style="text-align:right;">应付金额</th><th>申请日期</th><th>状态</th><th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows.length ? rows : '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">暂无应付申请</td></tr>'}
-            </tbody>
-        </table>
-    `;
-
+    else if (moduleCode === "APTrunkBatchSettlement") {
+        contentHTML += `<div style="height:600px;"></div>`;
+    }
+    else if (moduleCode === "APShortBatchSettlement") {
+        contentHTML += `<div style="height:600px;"></div>`;
+    }
+    // 旧模块下线（保留入口以避免老逻辑跳转时报错）
+    else if (moduleCode === "APPaymentApply" || moduleCode === "APPrepayment" || moduleCode === "APPaymentVerify") {
+        contentHTML += `<div style="padding:20px; color:#999;">该模块已下线，请使用【应付管理 > 干线批次结算 / 短途批次结算】。</div>`;
     }
 
 
@@ -2928,279 +3269,523 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 3. 客户对账单列表 (ARCustomerStatement) - [升级版：接收应收数据]
-    // =========================================================================
-    else if (moduleCode === "ARCustomerStatement") {
-        // 1. 读取数据源 (来自客户对账模块的推送)
-        let arList = JSON.parse(sessionStorage.getItem("ARStatements"));
-
-        // 2. 如果没数据，初始化一些老数据撑场面 (模拟期初)
-        if (!arList) {
-            arList = [
-                {
-                    id: "DZ202510-001",
-                    client: "老客户A",
-                    period: "2025-10",
-                    amount: "50,000.00",
-                    verified: "50,000.00",
-                    unverified: "0.00",
-                    status: "已结算",
-                },
-                {
-                    id: "DZ202510-002",
-                    client: "老客户B",
-                    period: "2025-10",
-                    amount: "20,000.00",
-                    verified: "10,000.00",
-                    unverified: "10,000.00",
-                    status: "部分结算",
-                },
-            ];
-            sessionStorage.setItem("ARStatements", JSON.stringify(arList));
-        }
-
-        // 3. 生成表格行
-        const rows = arList
-            .map((item) => {
-                let statusColor = "#333";
-                let action = "";
-
-                // 根据结算状态显示不同颜色和按钮
-                if (item.status === "未结算") {
-                    statusColor = "#e74c3c"; // 红色：催款重点
-                    // 点击跳转到结算页面，并带上单号
-                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60; font-weight:bold;">收款结算</a>`;
-                } else if (item.status === "部分结算") {
-                    statusColor = "#f39c12"; // 黄色
-                    action = `<a href="javascript:void(0)" onclick="goToVerify('${item.id}')" style="color:#27ae60;">继续结算</a>`;
-                } else {
-                    statusColor = "#999"; // 灰色
-                    action = `<span style="color:#ccc;">查看详情</span>`;
-                }
-
-                return `<tr>
-                        <td>${item.id}</td>
-                        <td>${item.client}</td>
-                        <td>${item.period}</td>
-                        <td style="text-align:right; font-weight:bold;">${item.amount}</td>
-                        <td style="text-align:right; color:#27ae60;">${item.verified}</td>
-                        <td style="text-align:right; color:#e74c3c;">${item.unverified}</td>
-                        <td><span style="color:${statusColor}; font-weight:bold;">${item.status}</span></td>
-                        <td>${action}</td>
-                    </tr>`;
-            })
-            .join("");
-
-        contentHTML += `
-                    <h2>客户对账单列表 (应收台账)</h2>
-                    <p style="color: #7f8c8d;">应收管理的核心报表。此处列出所有【已确认】的对账单，等待财务收款结算。</p>
-                    
-                    <div class="filter-area" style="background:white;padding:15px;margin-bottom:20px;">
-                        <div style="display: flex; gap: 15px;">
-                            <input type="text" placeholder="对账单号/客户" style="padding:8px; border:1px solid #ccc;">
-                            <select style="padding:8px; border:1px solid #ccc;">
-                                <option>未结算</option>
-                                <option>已结算</option>
-                            </select>
-                            <button class="btn-primary" onclick="loadContent('ARCustomerStatement')">刷新列表</button>
-                        </div>
-                    </div>
-
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>对账单号</th>
-                                <th>客户名称</th>
-                                <th>账期</th>
-                                <th style="text-align:right;">应收总额</th>
-                                <th style="text-align:right;">已结算</th>
-                                <th style="text-align:right;">待结算</th>
-                                <th>结算状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>${emptyReconRow}</tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 5. 预收款单 (AR Precollection)
-    // =========================================================================
-    else if (moduleCode === "ARPrecollection") {
-        contentHTML += `
-                    <h2>预收款单</h2>
-                    <p style="color: #7f8c8d;">管理客户提前支付的款项，这些款项将在后续运单挂帐时用于结算应收款。</p>
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="预收款单号 / 客户名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">结算状态 (全部)</option>
-                                <option>未结算</option>
-                                <option>部分结算</option>
-                                <option>已结算</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;">+ 新增预收款单</button>
-                    </div>
-
-                    <h3>预收款单列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>预收款单号</th>
-                                <th>客户名称</th>
-                                <th>预收金额 (RMB)</th>
-                                <th>已结算金额 (RMB)</th>
-                                <th>可用余额 (RMB)</th>
-                                <th>结算状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>YSD202511001</td>
-                                <td>北方物流</td>
-                                <td>50,000.00</td>
-                                <td>15,000.00</td>
-                                <td>35,000.00</td>
-                                <td><span style="color: #f39c12;">部分结算</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
-                            </tr>
-                            <tr>
-                                <td>YSD202510002</td>
-                                <td>华南科技</td>
-                                <td>10,000.00</td>
-                                <td>0.00</td>
-                                <td>10,000.00</td>
-                                <td><span style="color: #c0392b;">未结算</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 6. 客户收款结算 (ARCollectionVerify) - [终极闭环：收钱消账]
+    // 6. 运单结算 (ARCollectionVerify)
     // =========================================================================
     else if (moduleCode === "ARCollectionVerify") {
-        // 1. 读取待结算的应收账款
-        const arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
-        const targetId = sessionStorage.getItem("TargetVerifyBill"); // 获取刚才跳转过来的目标ID
+        let waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
 
-        // 2. 过滤出未结算的，并生成表格
-        const rows = arList
-            .filter((item) => item.status !== "已结算")
-            .map((item) => {
-                // 如果是刚才点的单子，给个高亮背景
-                const isTarget = item.id === targetId;
-                const bgStyle = isTarget
-                    ? "background-color: #e6f7ff; border: 2px solid #1890ff;"
-                    : "";
-                const action = `
-                    <button class="btn-primary" style="padding:4px 10px;" onclick="openVerifyModal('AR', '${item.id}', '${item.amount}', '${item.client}')">结算</button>
-                    <button class="btn-primary" style="padding:4px 10px; background:#e67e22; margin-left:6px;" onclick="cancelARSettlement('${item.id}')">取消结算</button>
-                `;
+        if (!window.arWaybillSetTab) {
+            window.arWaybillSetTab = function (tabKey) {
+                window._arWaybillTab = tabKey || "all";
+                window._arWaybillPage = 1;
+                loadContent("ARCollectionVerify");
+            };
+        }
 
-                return `
-                        <tr style="${bgStyle}">
-                            <td>${item.id} ${isTarget
-                        ? '<span style="color:red;font-size:12px;">(当前处理)</span>'
-                        : ""
-                    }</td>
-                            <td>${item.client}</td>
-                            <td>${item.period}</td>
-                            <td style="text-align:right; font-weight:bold;">${item.amount
-                    }</td>
-                            <td style="text-align:right; color:#e74c3c;">${item.unverified
-                    }</td>
-                            <td><span style="color: ${item.status === '已取消结算' ? '#95a5a6' : '#f39c12'};">${item.status === '已取消结算' ? '已取消结算' : '待结算'}</span></td>
-                            <td>${action}</td>
-                        </tr>
-                    `;
-            })
-            .join("");
+        if (!window.arWaybillSetPage) {
+            window.arWaybillSetPage = function (page) {
+                window._arWaybillPage = page;
+                loadContent("ARCollectionVerify");
+            };
+        }
+
+        if (!window.arWaybillSetPageSize) {
+            window.arWaybillSetPageSize = function (size) {
+                window._arWaybillPageSize = Number(size) || 10;
+                window._arWaybillPage = 1;
+                loadContent("ARCollectionVerify");
+            };
+        }
+
+        if (!window.arWaybillApplyFilters) {
+            window.arWaybillApplyFilters = function () {
+                const getVal = (id) => {
+                    const el = document.getElementById(id);
+                    return el ? (el.value || "").toString().trim() : "";
+                };
+                window._arWaybillFilters = {
+                    waybillNos: getVal("ar_f_waybillNos"),
+                    dateStart: getVal("ar_q_date_start"),
+                    dateEnd: getVal("ar_q_date_end"),
+                    destSite: getVal("ar_q_dest_site"),
+                };
+                window._arWaybillPage = 1;
+                loadContent("ARCollectionVerify");
+            };
+        }
+
+        if (!window.arWaybillResetFilters) {
+            window.arWaybillResetFilters = function () {
+                window._arWaybillFilters = {};
+                window._arWaybillPage = 1;
+                loadContent("ARCollectionVerify");
+            };
+        }
+
+        if (!window.arWaybillUpdateSelection) {
+            window.arWaybillUpdateSelection = function () {
+                const moneyKeys = Array.isArray(window._arWaybillMoneyKeys) ? window._arWaybillMoneyKeys : [];
+                const rowMap = window._arWaybillRowMap || {};
+                const toNumber = (raw) => {
+                    const s = (raw ?? "").toString().replace(/,/g, "").trim();
+                    if (!s) return 0;
+                    const n = Number(s);
+                    return Number.isFinite(n) ? n : 0;
+                };
+                const fmt = (n) => {
+                    if (!n) return "";
+                    return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                };
+
+                const checked = Array.from(document.querySelectorAll(".ar-check:checked"));
+                const ids = checked.map((cb) => cb.value).filter(Boolean);
+                const sums = {};
+                moneyKeys.forEach((k) => { sums[k] = 0; });
+                ids.forEach((id) => {
+                    const row = rowMap[id];
+                    if (!row) return;
+                    moneyKeys.forEach((k) => { sums[k] += toNumber(row[k]); });
+                });
+
+                const countEl = document.getElementById("ar_sel_count");
+                if (countEl) countEl.textContent = `${ids.length}单`;
+                moneyKeys.forEach((k) => {
+                    const el = document.getElementById(`ar_sel_sum_${k}`);
+                    if (!el) return;
+                    el.textContent = fmt(sums[k]);
+                });
+            };
+        }
+
+        if (!window.arWaybillToolbarSettle) {
+            window.arWaybillToolbarSettle = function () {
+                const checked = Array.from(document.querySelectorAll(".ar-check:checked"));
+                if (!checked.length) return alert("请先勾选需要结算的运单。");
+                const ids = checked.map((cb) => cb.value).filter(Boolean);
+                const list = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+                let changed = false;
+                list.forEach((item) => {
+                    if (!item || !ids.includes(item.id)) return;
+                    item.settlementStatus = "已结算";
+                    changed = true;
+                });
+                if (changed) sessionStorage.setItem("BizWaybills", JSON.stringify(list));
+                loadContent("ARCollectionVerify");
+            };
+        }
+
+        if (!window.arWaybillAddToBatch) {
+            window.arWaybillAddToBatch = function () {
+                const checked = Array.from(document.querySelectorAll(".ar-check:checked"));
+                if (!checked.length) return alert("请先勾选需要加入批单夹的运单。");
+                alert(`已加入批单夹（演示）：${checked.length} 票`);
+            };
+        }
+
+        if (!window.arWaybillExport) {
+            window.arWaybillExport = function () {
+                const cols = window._arWaybillExportColumns || [];
+                const data = window._arWaybillExportData || [];
+                if (!cols.length) return alert("未找到可导出的列。");
+                const escapeCsv = (val) => {
+                    const s = (val ?? "").toString();
+                    if (/[\",\\n\\r]/.test(s)) return `\"${s.replace(/\"/g, '\"\"')}\"`;
+                    return s;
+                };
+                const lines = [];
+                lines.push(cols.map((c) => escapeCsv(c.label)).join(","));
+                data.forEach((row) => {
+                    lines.push(cols.map((c) => escapeCsv(row[c.key] ?? "")).join(","));
+                });
+                const blob = new Blob([lines.join("\\n")], { type: "text/csv;charset=utf-8" });
+                const a = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = `运单结算_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 500);
+            };
+        }
+
+        if (!window.arWaybillPrint) {
+            window.arWaybillPrint = function () { window.print(); };
+        }
+
+        const filters = window._arWaybillFilters || {};
+        const currentTab = window._arWaybillTab || "all";
+
+        const esc = (val) => (val ?? "").toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+        const parseTokens = (raw) => {
+            const text = (raw || "").toString().trim();
+            if (!text) return [];
+            return text.split(/[\n,，;；\\s]+/).map((t) => t.trim()).filter(Boolean);
+        };
+
+        const parseDateOnly = (raw) => {
+            const s = (raw || "").toString().trim();
+            if (!s) return null;
+            const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (!m) return null;
+            const d = new Date(`${m[1]}T00:00:00`);
+            return Number.isNaN(d.getTime()) ? null : d;
+        };
+
+        const toNumber = (raw) => {
+            const s = (raw ?? "").toString().replace(/,/g, "").trim();
+            if (!s) return 0;
+            const n = Number(s);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        const fmtMoney = (raw) => {
+            const n = toNumber(raw);
+            if (!n) return "";
+            return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        };
+
+        // 顶部费用类型 tabs（样式按截图，逻辑先做筛选展示）
+        const tabItems = [
+            { key: "all", label: "全部" },
+            { key: "cash", label: "现付" },
+            { key: "debt", label: "欠付" },
+            { key: "arrive", label: "到付" },
+            { key: "monthly", label: "月结" },
+            { key: "back", label: "回付" },
+            { key: "card", label: "货到打卡" },
+            { key: "cod", label: "货款扣" },
+            { key: "codFee", label: "货款手续费" },
+            { key: "abn", label: "异动" },
+            { key: "cashReturn", label: "现返" },
+            { key: "debtReturn", label: "欠返" },
+            { key: "rebate", label: "回扣" },
+            { key: "pickup", label: "单票提货费" },
+            { key: "tax", label: "税费" },
+            { key: "transfer", label: "中转费" },
+            { key: "warehouse", label: "到站单票进仓费" },
+            { key: "advance", label: "垫付费" },
+        ];
+
+        // 表头字段（含筛选行空白框、选中/合计、填充空格网格等前面4点）
+	        const cols = [
+	            { key: "site", label: "网点" },
+	            { key: "waybillNo", label: "运单号", filter: { id: "ar_f_waybillNos", placeholder: "支持批量搜索，多个单号用 逗号/加号/回车/空格 分隔" } },
+	            { key: "createdAt", label: "开单时间" },
+	            { key: "destSite", label: "目的网点" },
+	            { key: "operator", label: "经办人" },
+	            { key: "shipper", label: "发货人" },
+	            { key: "consignee", label: "收货人" },
+	            { key: "goodsName", label: "货物名称" },
+	            { key: "cashPay", label: "现付", align: "right" },
+	            { key: "arrivePay", label: "到付", align: "right" },
+	            { key: "backPay", label: "回付", align: "right" },
+	            { key: "monthlyPay", label: "月结", align: "right" },
+	            { key: "cardPay", label: "货到打卡", align: "right" },
+	            { key: "debtPay", label: "欠付", align: "right" },
+	            { key: "cashReturn", label: "现返", align: "right" },
+	            { key: "debtReturn", label: "欠返", align: "right" },
+	            { key: "pickupFee", label: "单票提货费", align: "right" },
+	            { key: "transferFeeTotal", label: "中转费合计", align: "right" },
+	            { key: "warehouseFee", label: "到站单票进仓费", align: "right" },
+	        ];
+
+	        const decorate = (w, idx) => {
+            const site = w && w.site ? w.site : (idx % 2 === 0 ? "专线A" : "专线B");
+            const waybillNo = (w && (w.id || w.orderNo)) ? (w.id || w.orderNo) : "";
+            const createdAt = w && w.createdAt ? w.createdAt : (w && w.bizDate ? w.bizDate : "");
+            const destSite = w && w.destination ? w.destination : "";
+            const operator = w && w.operator ? w.operator : ((idx % 3 === 0) ? "强" : "test");
+            const shipper = w && w.creator ? (w.creator.split("/")[0] || "") : (w && w.shipper ? w.shipper : "");
+            const consignee = w && w.consignee ? w.consignee : (w && w.receiver ? w.receiver : "");
+            const goodsName = w && w.goodsPack ? w.goodsPack : (w && w.goodsName ? w.goodsName : "");
+
+	            const baseAmount = (w && (w.totalAmount || w.freightAmount || w.amount || w.paidAmount)) ? (w.totalAmount || w.freightAmount || w.amount || w.paidAmount) : "";
+	            const baseNum = toNumber(baseAmount) || (200 + (idx % 7) * 100);
+
+	            // 运单结算常见费用类型（用于演示填充金额列）
+	            const feeTypePool = [
+	                "现付",
+	                "到付",
+	                "回付",
+	                "月结",
+	                "货到打卡",
+	                "欠付",
+	                "现返",
+	                "欠返",
+	                "单票提货费",
+	                "中转费合计",
+	                "到站单票进仓费",
+	            ];
+	            const feeType = (w && w.feeType) ? w.feeType : feeTypePool[idx % feeTypePool.length];
+
+	            const cashPay = feeType === "现付" ? fmtMoney(baseNum) : "";
+	            const arrivePay = feeType === "到付" ? fmtMoney(baseNum) : "";
+	            const backPay = feeType === "回付" ? fmtMoney(baseNum) : "";
+	            const monthlyPay = feeType === "月结" ? fmtMoney(baseNum) : "";
+	            const cardPay = feeType === "货到打卡" ? fmtMoney(baseNum) : "";
+	            const debtPay = feeType === "欠付" ? fmtMoney(baseNum) : "";
+	            const cashReturn = feeType === "现返" ? fmtMoney(Math.max(0, baseNum * 0.1)) : "";
+	            const debtReturn = feeType === "欠返" ? fmtMoney(Math.max(0, baseNum * 0.1)) : "";
+	            const pickupFee = feeType === "单票提货费" ? fmtMoney(Math.max(0, baseNum * 0.06)) : "";
+	            const transferFeeTotal = feeType === "中转费合计" ? fmtMoney(Math.max(0, baseNum * 0.2)) : "";
+	            const warehouseFee = feeType === "到站单票进仓费" ? fmtMoney(Math.max(0, baseNum * 0.04)) : "";
+
+            const settlementStatus = w && w.settlementStatus ? w.settlementStatus : "";
+
+	            return {
+	                ...w,
+                site,
+                waybillNo,
+                createdAt,
+                destSite,
+                operator,
+                shipper,
+                consignee,
+                goodsName,
+	                cashPay,
+	                arrivePay,
+	                monthlyPay,
+	                backPay,
+	                cardPay,
+	                debtPay,
+	                cashReturn,
+	                debtReturn,
+	                pickupFee,
+	                transferFeeTotal,
+	                warehouseFee,
+	                settlementStatus,
+	                _feeType: feeType,
+	            };
+	        };
+
+        const decorated = (Array.isArray(waybills) ? waybills : []).map(decorate);
+
+        const waybillNosFilter = parseTokens(filters.waybillNos);
+        const dateStart = parseDateOnly(filters.dateStart);
+        const dateEnd = parseDateOnly(filters.dateEnd);
+        const destSiteFilter = (filters.destSite || "").toString().trim();
+
+	        const matchesTab = (row) => {
+	            if (currentTab === "all") return true;
+	            if (currentTab === "cash") return toNumber(row.cashPay) > 0;
+	            if (currentTab === "debt") return toNumber(row.debtPay) > 0;
+	            if (currentTab === "arrive") return toNumber(row.arrivePay) > 0;
+	            if (currentTab === "monthly") return toNumber(row.monthlyPay) > 0;
+	            if (currentTab === "back") return toNumber(row.backPay) > 0;
+	            if (currentTab === "card") return toNumber(row.cardPay) > 0;
+	            if (currentTab === "cashReturn") return toNumber(row.cashReturn) > 0;
+	            if (currentTab === "debtReturn") return toNumber(row.debtReturn) > 0;
+	            if (currentTab === "pickup") return toNumber(row.pickupFee) > 0;
+	            if (currentTab === "transfer") return toNumber(row.transferFeeTotal) > 0;
+	            if (currentTab === "warehouse") return toNumber(row.warehouseFee) > 0;
+	            return true;
+	        };
+
+        const filtered = decorated.filter((row) => {
+            if (!matchesTab(row)) return false;
+            if (destSiteFilter && !(row.destSite || "").includes(destSiteFilter)) return false;
+            if (waybillNosFilter.length) {
+                const id = (row.waybillNo || row.id || "").toString();
+                if (waybillNosFilter.length === 1) {
+                    if (!id.includes(waybillNosFilter[0])) return false;
+                } else {
+                    const set = new Set(waybillNosFilter);
+                    if (!set.has(id)) return false;
+                }
+            }
+            if (dateStart || dateEnd) {
+                const d = parseDateOnly(row.createdAt);
+                if (!d) return false;
+                if (dateStart && d < dateStart) return false;
+                if (dateEnd && d > dateEnd) return false;
+            }
+            return true;
+        });
+
+        const pageSize = window._arWaybillPageSize || 10;
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        let currentPage = window._arWaybillPage || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const pageStart = (currentPage - 1) * pageSize;
+        const pageRows = filtered.slice(pageStart, pageStart + pageSize);
+
+        const moneyKeys = cols.filter((c) => c.align === "right").map((c) => c.key);
+        const sumMoney = (list) => {
+            const sums = {};
+            moneyKeys.forEach((k) => { sums[k] = 0; });
+            (Array.isArray(list) ? list : []).forEach((row) => {
+                moneyKeys.forEach((k) => { sums[k] += toNumber(row[k]); });
+            });
+            return sums;
+        };
+        const totalSums = sumMoney(filtered);
+        const fmtSum = (n) => (n ? n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : "");
+
+        // 供导出/选中统计使用
+        window._arWaybillExportColumns = cols;
+        window._arWaybillExportData = filtered;
+        window._arWaybillMoneyKeys = moneyKeys;
+        window._arWaybillRowMap = Object.fromEntries(pageRows.map((r) => [r.id, r]));
+
+        const renderCell = (row, col) => {
+            const value = row[col.key];
+            if (col.key === "waybillNo") {
+                const id = esc(value || row.id || "");
+                return `<a class="wb-link" href="javascript:void(0)">${id}</a>`;
+            }
+            if (col.align === "right") {
+                const text = esc(value || "");
+                const isPos = toNumber(value) > 0;
+                const isSettled = (row.settlementStatus || "") === "已结算";
+                const cls = isSettled ? "is-settled" : (isPos ? "is-pos" : "");
+                return `<span class="wb-money ${cls}">${text}</span>`;
+            }
+            return esc(value || "");
+        };
+
+        const dataHtml = pageRows.map((row, idx) => {
+            const rowNo = pageStart + idx + 1;
+            return `<tr>
+                        <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                        <td class="sticky-left-2"><input type="checkbox" class="ar-check" value="${esc(row.id)}" onchange="arWaybillUpdateSelection()"></td>
+                        ${cols.map((c) => `<td${c.align ? ` style="text-align:${c.align};"` : ""}>${renderCell(row, c)}</td>`).join("")}
+                    </tr>`;
+        }).join("");
+
+        const fillerCount = Math.max(0, pageSize - pageRows.length);
+        const fillerHtml = fillerCount ? Array.from({ length: fillerCount }).map(() => {
+            return `<tr class="wb-empty-row">
+                        <td class="sticky-left-1 wb-rowno">&nbsp;</td>
+                        <td class="sticky-left-2">&nbsp;</td>
+                        ${cols.map((c) => `<td${c.align ? ` style="text-align:${c.align};"` : ""}>&nbsp;</td>`).join("")}
+                    </tr>`;
+        }).join("") : "";
+
+        const buildFilterCell = (col) => {
+            if (!col.filter) {
+                return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`;
+            }
+            const f = col.filter;
+            const extraClass = (f.placeholder || "").includes("批量") ? " wb-filter-input--batch" : "";
+            const val = f.id === "ar_f_waybillNos" ? (filters.waybillNos || "") : "";
+            return `<th class="sticky-filter"><input id="${esc(f.id)}" class="wb-filter-input${extraClass}" placeholder="${esc(f.placeholder || "")}" value="${esc(val)}"></th>`;
+        };
+
+        const buildFooterCells = (mode) => {
+            const isSelected = mode === "sel";
+            const countId = isSelected ? "ar_sel_count" : "ar_total_count";
+            const countText = isSelected ? "0单" : `${filtered.length}单`;
+            return cols.map((col) => {
+                const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
+                if (col.key === "waybillNo") {
+                    return `<td${alignStyle}><span id="${esc(countId)}" class="wb-foot__count">${esc(countText)}</span></td>`;
+                }
+                if (col.align === "right") {
+                    const id = isSelected ? `ar_sel_sum_${col.key}` : `ar_total_sum_${col.key}`;
+                    const val = isSelected ? "" : fmtSum(totalSums[col.key] || 0);
+                    return `<td${alignStyle}><span id="${esc(id)}" class="wb-foot__amt">${esc(val)}</span></td>`;
+                }
+                return `<td${alignStyle}>&nbsp;</td>`;
+            }).join("");
+        };
+
+        const tabsHtml = tabItems.map((t) => {
+            const active = t.key === currentTab ? " is-active" : "";
+            return `<button class="ar-tab${active}" onclick="arWaybillSetTab('${esc(t.key)}')">${esc(t.label)}</button>`;
+        }).join("");
 
         contentHTML += `
-                    <h2>客户收款结算 </h2>
-                    <p style="color: #7f8c8d;">财务/出纳在此确认银行流水，并将其与应收账款进行匹配消账。</p>
-                    
-                    <div class="filter-area" style="background-color: white; padding: 15px; margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; align-items: center;">
-                            <span style="font-weight:bold;">银行账户：</span>
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                                <option>工行基本户 (****8888)</option>
-                                <option>支付宝企业户</option>
-                                <option>微信企业户</option>
-                            </select>
-                            <button class="btn-primary" onclick="alert('模拟：已拉取最新银行流水')">📥 拉取银行流水</button>
-                        </div>
-                    </div>
+            <h2>运单结算</h2>
 
-                    <h3>待结算应收列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>对账单号</th>
-                                <th>客户名称</th>
-                                <th>账期</th>
-                                <th style="text-align:right;">应收金额</th>
-                                <th style="text-align:right;">待结算余额</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows.length > 0
-                ? rows
-                : '<tr><td colspan="7" style="text-align:center; color:#ccc; padding:20px;">没有待结算的款项，真棒！👏</td></tr>'
-            }
-                        </tbody>
-                    </table>
+            <div class="ar-tabs">
+                <div class="ar-tabs__rail">${tabsHtml}</div>
+                <select class="ar-tabs__select" onchange="arWaybillSetTab(this.value)">
+                    ${tabItems.map((t) => `<option value="${esc(t.key)}" ${t.key === currentTab ? "selected" : ""}>${esc(t.label)}</option>`).join("")}
+                </select>
+            </div>
 
-                    <div id="verifyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999;">
-                        <div style="position:absolute; top:10%; left:50%; transform:translateX(-50%); width:520px; background:#fff; border-radius:8px; box-shadow:0 5px 25px rgba(0,0,0,0.2); padding:20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <h3 style="margin:0;">结算确认</h3>
-                                <button onclick="closeVerifyModal()" style="border:none; background:transparent; font-size:20px; cursor:pointer;">×</button>
-                            </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                                <div>
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">结算金额</label>
-                                    <input id="verify_amount" type="number" step="0.01" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
-                                <div>
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">收款日期</label>
-                                    <input id="verify_date" type="date" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
-                                <div style="grid-column:1 / -1;">
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">⭐ 收款账户/方式</label>
-                                    <select id="verify_method" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></select>
-                                </div>
-                                <div style="grid-column:1 / -1;">
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">资金流水号</label>
-                                    <input id="verify_ref" type="text" placeholder="银行回单号/流水号" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
-                                <div style="grid-column:1 / -1;">
-                                    <label style="display:block; font-weight:bold; margin-bottom:4px;">备注</label>
-                                    <input id="verify_remark" type="text" placeholder="自动带入凭证摘要" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
-                            </div>
-                            <input type="hidden" id="verify_type">
-                            <input type="hidden" id="verify_bill_id">
-                            <input type="hidden" id="verify_counterparty">
-                            <div style="margin-top:16px; text-align:right;">
-                                <button onclick="closeVerifyModal()" style="padding:8px 14px; border:1px solid #ccc; background:#fff; border-radius:4px; margin-right:8px;">取消</button>
-                                <button class="btn-primary" onclick="confirmVerify()">结算</button>
-                            </div>
-                        </div>
+            <div class="wb-querybar">
+                <div class="wb-q-item">
+                    <div class="wb-q-label">运单号</div>
+                    <input id="ar_f_waybillNos" class="wb-q-control" type="text" value="${esc(filters.waybillNos || "")}" placeholder="支持批量搜索，多个单号用 逗号/加号/回车/空格 分隔">
+                </div>
+                <div class="wb-q-item wb-q-item--date">
+                    <div class="wb-q-label">开单时间</div>
+                    <div class="wb-q-date">
+                        <input id="ar_q_date_start" class="wb-q-control" type="date" value="${esc(filters.dateStart || "")}">
+                        <span class="wb-q-date__sep">~</span>
+                        <input id="ar_q_date_end" class="wb-q-control" type="date" value="${esc(filters.dateEnd || "")}">
                     </div>
-                `;
+                </div>
+                <div class="wb-q-item">
+                    <div class="wb-q-label">目的网点</div>
+                    <input id="ar_q_dest_site" class="wb-q-control" type="text" value="${esc(filters.destSite || "")}">
+                </div>
+                <button class="wb-btn wb-btn--primary" onclick="arWaybillApplyFilters()">查询</button>
+                <button class="wb-btn" onclick="arWaybillResetFilters()">重置</button>
+            </div>
+
+            <div class="wb-toolbar">
+                <div class="wb-toolbar__left">
+                    <button class="wb-btn" onclick="arWaybillToolbarSettle()">结算</button>
+                </div>
+                <div class="wb-toolbar__right">
+                    <button class="wb-btn" onclick="arWaybillExport()">导出</button>
+                    <button class="wb-btn" onclick="arWaybillPrint()">打印</button>
+                    <div class="wb-pager">
+                        <button class="wb-pager__btn" onclick="arWaybillSetPage(1)" ${currentPage <= 1 ? "disabled" : ""}>|&lt;</button>
+                        <button class="wb-pager__btn" onclick="arWaybillSetPage(${Math.max(1, currentPage - 1)})" ${currentPage <= 1 ? "disabled" : ""}>&lt;</button>
+                        <span class="wb-pager__text">第</span>
+                        <span class="wb-pager__page">${currentPage}</span>
+                        <span class="wb-pager__text">页/共${totalPages}页</span>
+                        <button class="wb-pager__btn" onclick="arWaybillSetPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;</button>
+                        <button class="wb-pager__btn" onclick="arWaybillSetPage(${totalPages})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;|</button>
+                        <select class="wb-pager__size" onchange="arWaybillSetPageSize(this.value)">
+                            <option value="10" ${pageSize === 10 ? "selected" : ""}>0-9</option>
+                            <option value="30" ${pageSize === 30 ? "selected" : ""}>0-29</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settlement-waybill-table wb-accrual-table ar-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+                <table class="data-table" style="white-space:nowrap;">
+                    <thead>
+                        <tr>
+                            <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                            <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="document.querySelectorAll('.ar-check').forEach(cb => cb.checked = this.checked); arWaybillUpdateSelection();"></th>
+                            ${cols.map((c) => `<th class="sticky-header"${c.align ? ` style="text-align:${c.align};"` : ""}>${esc(c.label)}</th>`).join("")}
+                        </tr>
+                        <tr>
+                            <th class="sticky-filter sticky-left-1">筛选</th>
+                            <th class="sticky-filter sticky-left-2"></th>
+                            ${cols.map((c) => buildFilterCell(c)).join("")}
+                        </tr>
+                    </thead>
+                    <tbody>${(dataHtml + fillerHtml) || `<tr><td colspan="${cols.length + 2}" style="text-align:center; color:#999; padding:18px;">暂无数据</td></tr>`}</tbody>
+                    <tfoot>
+                        <tr class="wb-foot wb-foot--sel">
+                            <td class="sticky-left-1 wb-foot__label">选中</td>
+                            <td class="sticky-left-2"></td>
+                            ${buildFooterCells("sel")}
+                        </tr>
+                        <tr class="wb-foot wb-foot--total">
+                            <td class="sticky-left-1 wb-foot__label">合计</td>
+                            <td class="sticky-left-2"></td>
+                            ${buildFooterCells("total")}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
     }
 
     // =========================================================================
@@ -3261,124 +3846,7 @@ function loadContent(moduleCode, element = null) {
                 `;
     }
 
-    // =========================================================================
-    // 9. 预付款单 (AP Prepayment)
-    // =========================================================================
-    else if (moduleCode === "APPrepayment") {
-        contentHTML += `
-                    <h2>预付款单</h2>
-                    <p style="color: #7f8c8d;">管理向供应商预先支付的款项，这些款项将在后续应付账款发生时用于结算。</p>
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="预付款单号 / 供应商名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">结算状态 (全部)</option>
-                                <option>未结算</option>
-                                <option>部分结算</option>
-                                <option>已结算</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;">+ 新增预付款单</button>
-                    </div>
-
-                    <h3>预付款单列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>预付款单号</th>
-                                <th>供应商名称</th>
-                                <th>预付金额 (RMB)</th>
-                                <th>已结算金额 (RMB)</th>
-                                <th>可用余额 (RMB)</th>
-                                <th>结算状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>YFD202511001</td>
-                                <td>华北燃油</td>
-                                <td>100,000.00</td>
-                                <td>25,000.00</td>
-                                <td>75,000.00</td>
-                                <td><span style="color: #f39c12;">部分结算</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
-                            </tr>
-                            <tr>
-                                <td>YFD202510002</td>
-                                <td>南方设备</td>
-                                <td>50,000.00</td>
-                                <td>0.00</td>
-                                <td>50,000.00</td>
-                                <td><span style="color: #c0392b;">未结算</span></td>
-                                <td><a href="#" style="color:#3498db;">查看/结算</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 10. 付款结算 (AP Payment Verify)
-    // =========================================================================
-    else if (moduleCode === "APPaymentVerify") {
-        contentHTML += `
-                    <h2>付款结算</h2>
-                    <p style="color: #7f8c8d;">将实际发生的银行付款流水与已批准的应付单据（应付账款、预付款）进行匹配和结算。</p>
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="付款流水号 / 供应商名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">结算状态 (全部)</option>
-                                <option>待结算</option>
-                                <option>已结算</option>
-                            </select>
-                            <input type="date" placeholder="付款日期" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #3498db;">批量自动匹配结算</button>
-                    </div>
-
-                    <h3>待结算付款流水</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>银行流水号</th>
-                                <th>供应商名称</th>
-                                <th>付款金额 (RMB)</th>
-                                <th>已结算金额 (RMB)</th>
-                                <th>待结算余额 (RMB)</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>FK202511010</td>
-                                <td>甲承运商</td>
-                                <td>18,500.00</td>
-                                <td>0.00</td>
-                                <td>18,500.00</td>
-                                <td><a href="javascript:void(0)" style="color:#27ae60;" onclick="openVerifyModal('AP', 'FK202511010', '18500.00', '甲承运商')">立即结算</a></td>
-                            </tr>
-                            <tr>
-                                <td>FK202511011</td>
-                                <td>某设备租赁</td>
-                                <td>5,000.00</td>
-                                <td>5,000.00</td>
-                                <td>0.00</td>
-                                <td><a href="#" style="color:#3498db;">查看结算记录</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
+    // APPrepayment / APPaymentVerify 页面已下线（应付管理仅保留两个批次结算入口）
 
     // =========================================================================
     // 18. 供应商发票管理/进项台账 (APInvoiceManage) - [核心：OCR与认证抵扣]
@@ -6005,7 +6473,7 @@ function loadContent(moduleCode, element = null) {
                     remark: "",
                 },
                 {
-                    code: "6403",
+                    code: "640301",
                     name: "营业税金及附加",
                     type: "损益",
                     direction: "借",
@@ -8845,7 +9313,6 @@ function loadContent(moduleCode, element = null) {
                     <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('reverse')" disabled>冲销</button>
                     <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('void')" disabled>作废</button>
                     <button class="btn-primary btn-ghost voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
-                    <button class="btn-primary btn-ghost" onclick="reloadVoucherSeedData()">Excel导入</button>
                 </div>
                 <div class="voucher-center__seed" style="margin-top:8px; color:#475569; font-size:12px;">${seedNotice}</div>
                 <div class="voucher-center__filters">
@@ -9378,7 +9845,6 @@ function loadContent(moduleCode, element = null) {
                             <label><input type="checkbox" class="perm-chk" value="log" ${isChecked('log')}> 操作日志</label>
                         </div>
                     </div>
-
                 </div>
 
                 <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px; text-align:right;">
@@ -9933,7 +10399,7 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // 46. 利润损益表 (ReportIncomeStatement) - [智能识别版]
+    // 46. 利润损益表 (ReportIncomeStatement) 
     // =========================================================================
     else if (moduleCode === "ReportIncomeStatement") {
         let data = {
@@ -9976,8 +10442,8 @@ function loadContent(moduleCode, element = null) {
                         ) {
                             data.cost += val;
                         }
-                        // 3. 税金 (6403 或 包含"税金")
-                        else if (code.startsWith("6403") || account.includes("税金")) {
+                        // 3. 税金 (640301 或 包含"税金")
+                        else if (code.startsWith("640301") || account.includes("税金")) {
                             data.tax += val;
                         }
                         // 4. 销售费用 (6601 或 包含"销售")
@@ -10060,7 +10526,7 @@ function loadContent(moduleCode, element = null) {
         const rows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : [
             { name: "一、营业总收入", codes: "6001,600110,6051", op: "+" },
             { name: "减：营业成本", codes: "6401,6402", op: "-" },
-            { name: "营业税金及附加", codes: "6403", op: "-" },
+            { name: "营业税金及附加", codes: "640301", op: "-" },
             { name: "销售费用", codes: "6601", op: "-" },
             { name: "管理费用", codes: "6602", op: "-" },
             { name: "财务费用", codes: "6603", op: "-" },
@@ -11908,12 +12374,13 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
     else if (moduleCode === "AccountingStandardSetting") {
         const { standard, locked } = getAccountingStandardState();
+        const taxLocked = localStorage.getItem("TaxAccrualLocked") === "true";
         const subjectSetting = getSubjectCodeSetting();
         const summaryTemplates = getVoucherSummaryTemplates();
         const defaultIncomeTemplate = [
             { name: "一、营业总收入", codes: "6001,600110,6051", op: "+" },
             { name: "减：营业成本", codes: "6401,6402", op: "-" },
-            { name: "营业税金及附加", codes: "6403", op: "-" },
+            { name: "营业税金及附加", codes: "640301", op: "-" },
             { name: "销售费用", codes: "6601", op: "-" },
             { name: "管理费用", codes: "6602", op: "-" },
             { name: "财务费用", codes: "6603", op: "-" },
@@ -12084,7 +12551,7 @@ function loadContent(moduleCode, element = null) {
             `;
         };
 
-        const renderSubjectSelect = (value = "", className = "", id = "") => {
+        const renderSubjectSelect = (value = "", className = "", id = "", disabled = false) => {
             const selected = (value || "").toString().trim();
             const options = allSubjects.length
                 ? allSubjects.map(item => {
@@ -12097,7 +12564,109 @@ function loadContent(moduleCode, element = null) {
                 }).join("")
                 : `<option value="">暂无科目</option>`;
             const idAttr = id ? `id="${id}"` : "";
-            return `<select ${idAttr} class="${className}"><option value="">-请选择-</option>${options}</select>`;
+            const disabledAttr = disabled ? "disabled" : "";
+            return `<select ${idAttr} class="${className}" ${disabledAttr}><option value="">-请选择-</option>${options}</select>`;
+        };
+
+        const TAX_ACCRUAL_RULE_KEY = "TaxAccrualRules";
+        const loadTaxAccrualRules = () => {
+            try {
+                const stored = JSON.parse(sessionStorage.getItem(TAX_ACCRUAL_RULE_KEY) || "[]");
+                if (Array.isArray(stored) && stored.length) return stored;
+            } catch (error) {
+                // ignore
+            }
+            return [
+                {
+                    taxName: "城市维护建设税",
+                    baseCodes: "2221",
+                    direction: "贷方发生额",
+                    rate: "7",
+                    debitCode: "640301",
+                    creditCode: "2221",
+                    aux: "部门"
+                }
+            ];
+        };
+
+        const buildTaxAccrualRow = (row = {}, index = 0) => `
+            <tr data-index="${index}">
+                <td><input type="text" class="tax-name-input" value="${row.taxName || ""}" placeholder="税种名称" ${taxLocked ? "disabled" : ""} oninput="refreshTaxAccrualPreview()"></td>
+                <td>${taxLocked ? `<div style="pointer-events:none; opacity:0.6;">${renderSubjectMultiSelect(row.baseCodes || "")}</div>` : renderSubjectMultiSelect(row.baseCodes || "")}</td>
+                <td>
+                    <div class="tax-direction-group">
+                        <label><input type="radio" name="tax-direction-${index}" value="贷方发生额" ${row.direction === "贷方发生额" ? "checked" : ""} ${taxLocked ? "disabled" : ""} onchange="refreshTaxAccrualPreview()">贷方发生额</label>
+                        <label><input type="radio" name="tax-direction-${index}" value="贷方净额" ${row.direction === "贷方净额" ? "checked" : ""} ${taxLocked ? "disabled" : ""} onchange="refreshTaxAccrualPreview()">贷方净额</label>
+                    </div>
+                </td>
+                <td><input type="number" min="0" step="0.01" value="${row.rate || ""}" placeholder="%" ${taxLocked ? "disabled" : ""} oninput="refreshTaxAccrualPreview()"></td>
+                <td>${renderSubjectSelect(row.debitCode || "", "tax-debit-select", "", taxLocked)}</td>
+                <td>${renderSubjectSelect(row.creditCode || "", "tax-credit-select", "", taxLocked)}</td>
+                <td><input type="text" class="tax-aux-input" value="${row.aux || ""}" placeholder="部门/项目" ${taxLocked ? "disabled" : ""}></td>
+                <td>
+                    <button class="btn-primary btn-ghost" onclick="removeTaxAccrualRuleRow(this)" ${taxLocked ? "disabled" : ""}>删除</button>
+                </td>
+            </tr>
+        `;
+
+        const taxAccrualRules = loadTaxAccrualRules();
+        const taxAccrualRowsHtml = taxAccrualRules.map((row, index) => buildTaxAccrualRow(row, index)).join("");
+
+        window.addTaxAccrualRuleRow = function() {
+            if (taxLocked) return;
+            const tbody = document.getElementById("tax-accrual-body");
+            if (!tbody) return;
+            const index = tbody.querySelectorAll("tr").length;
+            tbody.insertAdjacentHTML("beforeend", buildTaxAccrualRow({}, index));
+            refreshTaxAccrualPreview();
+        };
+
+        window.removeTaxAccrualRuleRow = function(btn) {
+            if (taxLocked) return;
+            const row = btn ? btn.closest("tr") : null;
+            if (row) row.remove();
+            refreshTaxAccrualPreview();
+        };
+
+        window.saveTaxAccrualRules = function() {
+            if (taxLocked) return;
+            const rows = Array.from(document.querySelectorAll("#tax-accrual-body tr"));
+            const data = rows.map((row, idx) => ({
+                taxName: row.querySelector(".tax-name-input")?.value || "",
+                baseCodes: row.querySelector(".subject-multi-input")?.value || "",
+                direction: row.querySelector(`input[name='tax-direction-${idx}']:checked`)?.value || "贷方发生额",
+                rate: row.querySelector("input[type='number']")?.value || "",
+                debitCode: row.querySelector(".tax-debit-select")?.value || "",
+                creditCode: row.querySelector(".tax-credit-select")?.value || "",
+                aux: row.querySelector(".tax-aux-input")?.value || ""
+            }));
+            sessionStorage.setItem(TAX_ACCRUAL_RULE_KEY, JSON.stringify(data));
+            alert("✅ 计提税金及附加设置已保存。");
+        };
+
+        window.toggleTaxAccrualLock = function(input) {
+            const next = !!(input && input.checked);
+            localStorage.setItem("TaxAccrualLocked", next ? "true" : "false");
+            loadContent("AccountingStandardSetting");
+        };
+
+        window.validateTaxAccrualRules = function() {
+            const row = document.querySelector("#tax-accrual-body tr");
+            if (!row) return;
+            const rate = parseFloat(row.querySelector("input[type='number']")?.value || "0");
+            const baseAmount = 100000;
+            const tax = baseAmount * (rate / 100);
+            alert(`✅ 公式验证（模拟）\n\n计提税金 = (贷方发生额 - 借方发生额) × 计提比例\n\n基数：${baseAmount.toLocaleString()}\n比例：${rate || 0}%\n税额：${tax.toFixed(2)}`);
+        };
+
+        window.refreshTaxAccrualPreview = function() {
+            const row = document.querySelector("#tax-accrual-body tr");
+            const debit = row ? row.querySelector(".tax-debit-select")?.selectedOptions?.[0]?.textContent : "";
+            const credit = row ? row.querySelector(".tax-credit-select")?.selectedOptions?.[0]?.textContent : "";
+            const debitBox = document.getElementById("tax-preview-debit");
+            const creditBox = document.getElementById("tax-preview-credit");
+            if (debitBox) debitBox.textContent = debit || "税金及附加（损益类科目）";
+            if (creditBox) creditBox.textContent = credit || "应交税费-各明细税种";
         };
 
         window.openSubjectMultiSelect = function(event, container) {
@@ -12456,12 +13025,12 @@ function loadContent(moduleCode, element = null) {
             ];
             sessionStorage.setItem("FinanceAccountBooks", JSON.stringify(closingBooks));
         }
-        const renderBookSelect = (value = "", className = "") => {
+        const renderBookSelect = (value = "", className = "", disabled = false) => {
             const selected = (value || "").toString().trim();
             const options = closingBooks.length
                 ? closingBooks.map(b => `<option value="${b.id}" ${b.id === selected ? "selected" : ""}>${b.name}</option>`).join("")
                 : `<option value="">暂无账套</option>`;
-            return `<select class="${className}"><option value="">-请选择-</option>${options}</select>`;
+            return `<select class="${className}" ${disabled ? "disabled" : ""}><option value="">-请选择-</option>${options}</select>`;
         };
 
         const createClosingTemplate = (type, index) => {
@@ -12667,13 +13236,86 @@ function loadContent(moduleCode, element = null) {
                         <button class="btn-primary" onclick="saveClosingTemplates()">保存设置</button>
                     </div>
                 </div>
-                <div class="closing-template-group">
-                    <div class="closing-template-group-header">
-                        <div class="closing-template-group-title">① 计提税金及附加</div>
-                        <button class="btn-primary template-row-btn" onclick="addClosingTemplate('tax')">+ 新增模板</button>
-                    </div>
-                    <div class="closing-template-grid" id="closing-template-tax">
-                        ${closingTaxTemplates.map((tpl, idx) => buildClosingCard(tpl, "tax", idx)).join("")}
+                <div style="margin-top:20px;">
+                    <div class="tax-accrual-panel">
+                        <div class="tax-accrual-header">
+                            <div class="tax-accrual-title">计提税金及附加设置</div>
+                            ${taxLocked ? `<div class="tax-accrual-lock">期间已结账 · 设置只读</div>` : ""}
+                        </div>
+                        <div class="tax-accrual-desc">
+                            模块概述：本模块用于预设每月期末处理时“税金及附加”的计算规则。系统将根据此处配置的比例、基数科目，在期末自动计算税额并生成会计凭证。
+                        </div>
+
+                        <div class="tax-info-grid">
+                            <div class="tax-info-item">
+                                <label>账套名称</label>
+                                ${renderBookSelect(closingTaxTemplates[0]?.bookId || "", "tax-book-select", taxLocked)}
+                            </div>
+                            <div class="tax-info-item">
+                                <label>模板名称</label>
+                                <input type="text" value="${closingTaxTemplates[0]?.name || "计提税金及附加-模板1"}" ${taxLocked ? "disabled" : ""} placeholder="模板名称">
+                            </div>
+                            <div class="tax-info-item">
+                                <label>凭证字</label>
+                                <select ${taxLocked ? "disabled" : ""}>
+                                    <option value="记">记</option>
+                                    <option value="结">结</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="tax-rule-card">
+                            <div class="tax-rule-header">
+                                <div style="font-weight:600; color:#374151;">核心规则配置</div>
+                                <div class="tax-rule-actions">
+                                    <label style="font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px;">
+                                        <input type="checkbox" ${taxLocked ? "checked" : ""} onchange="toggleTaxAccrualLock(this)">
+                                        反结转锁定
+                                    </label>
+                                    <button class="btn-primary btn-ghost" onclick="addTaxAccrualRuleRow()" ${taxLocked ? "disabled" : ""}>+ 新增行</button>
+                                    <button class="btn-primary btn-ghost" onclick="validateTaxAccrualRules()">公式验证</button>
+                                </div>
+                            </div>
+                            <table class="tax-rule-table">
+                                <thead>
+                                    <tr>
+                                        <th>税种名称</th>
+                                        <th>计算基数科目</th>
+                                        <th>取数方向</th>
+                                        <th>计提比例(%)</th>
+                                        <th>借方科目</th>
+                                        <th>贷方科目</th>
+                                        <th>辅助核算项</th>
+                                        <th style="width:70px;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tax-accrual-body">
+                                    ${taxAccrualRowsHtml || ""}
+                                </tbody>
+                            </table>
+                            <div class="tax-rule-footer">
+                                <button class="btn-primary" onclick="saveTaxAccrualRules()" ${taxLocked ? "disabled" : ""}>保存设置</button>
+                            </div>
+                        </div>
+
+                        <div class="tax-preview">
+                            <div class="tax-preview-title">凭证预览</div>
+                            <div class="tax-preview-grid">
+                                <div class="tax-preview-box">
+                                    <div style="font-weight:600; margin-bottom:6px;">借方</div>
+                                    <div id="tax-preview-debit">税金及附加（损益类科目）</div>
+                                </div>
+                                <div class="tax-preview-box">
+                                    <div style="font-weight:600; margin-bottom:6px;">贷方</div>
+                                    <div id="tax-preview-credit">应交税费-各明细税种</div>
+                                </div>
+                            </div>
+                            <div class="tax-preview-note">
+                                计算公式：计提税金 = （基数科目贷方发生额 - 基数科目借方发生额） × 计提比例
+                                <br>取数引擎：系统读取会计期间内指定增值税科目（如 2221）的累计发生额。
+                                <br>凭证分录：借：税金及附加；贷：应交税费-各明细税种。
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="closing-template-group">
@@ -13363,6 +14005,20 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
 
     contentArea.innerHTML = contentHTML;
+
+    if (moduleCode === "AccountingStandardSetting") {
+        setTimeout(() => {
+            if (typeof window.refreshTaxAccrualPreview === "function") {
+                const panel = document.querySelector(".tax-accrual-panel");
+                if (panel && !panel.dataset.bound) {
+                    panel.dataset.bound = "1";
+                    panel.addEventListener("change", () => window.refreshTaxAccrualPreview());
+                    panel.addEventListener("input", () => window.refreshTaxAccrualPreview());
+                }
+                window.refreshTaxAccrualPreview();
+            }
+        }, 0);
+    }
 
     if (moduleCode === "ExpenseDaily") {
         setTimeout(() => {
@@ -14275,25 +14931,6 @@ function loadContent(moduleCode, element = null) {
         window.renderTrialBalance({ period });
     };
 
-    function getDefaultPaymentMethods() {
-        return [
-            { id: "pm_cash", name: "现金", subjectCode: "1001", subjectName: "库存现金" },
-            { id: "pm_wx", name: "微信", subjectCode: "1012.01", subjectName: "其他货币资金-微信" },
-            { id: "pm_bank", name: "银行卡", subjectCode: "1002.01", subjectName: "银行存款-基本户" }
-        ];
-    }
-
-    function loadPaymentMethodsWithFallback() {
-        let methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
-        if (!Array.isArray(methods)) methods = [];
-        const hasSubject = methods.some(m => m.subjectCode && m.subjectName);
-        if (!methods.length || !hasSubject) {
-            methods = getDefaultPaymentMethods();
-            sessionStorage.setItem("ConfigPaymentMethods", JSON.stringify(methods));
-        }
-        return methods;
-    }
-
     window.openVerifyModal = function (type, billId, amount, counterparty) {
         const modal = document.getElementById("verifyModal");
         if (!modal) return;
@@ -14308,7 +14945,7 @@ function loadContent(moduleCode, element = null) {
         document.getElementById("verify_remark").value = `${counterparty || ""} 结算`;
 
         const methodSelect = document.getElementById("verify_method");
-        const methods = loadPaymentMethodsWithFallback();
+        const methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
         const options = methods.length
             ? methods.map(m => {
                 const label = m.name || m.id;
@@ -14333,7 +14970,7 @@ function loadContent(moduleCode, element = null) {
         const date = document.getElementById("verify_date").value;
         const remark = document.getElementById("verify_remark").value;
         const methodId = document.getElementById("verify_method").value;
-        const methods = loadPaymentMethodsWithFallback();
+        const methods = JSON.parse(sessionStorage.getItem("ConfigPaymentMethods") || "[]");
         const method = methods.find(m => m.id === methodId);
 
         if (!method || !method.subjectCode || !method.subjectName) {
@@ -14383,23 +15020,7 @@ function loadContent(moduleCode, element = null) {
         alert("✅ 结算完成，已生成凭证。");
         window.closeVerifyModal();
         if (typeof loadContent === "function") {
-            loadContent(type === "AR" ? "ARCollectionVerify" : "APPaymentVerify");
-        }
-    };
-
-    window.cancelARSettlement = function (billId) {
-        const arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
-        const target = arList.find(i => i.id === billId);
-        if (!target) return;
-        if (!confirm(`确认取消结算【${billId}】吗？`)) return;
-        const total = parseFloat((target.amount || "0").toString().replace(/,/g, "")) || 0;
-        target.verified = "0.00";
-        target.unverified = total.toFixed(2);
-        target.status = "已取消结算";
-        sessionStorage.setItem("ARStatements", JSON.stringify(arList));
-        alert("✅ 已取消结算。");
-        if (typeof loadContent === "function") {
-            loadContent("ARCollectionVerify");
+            loadContent(type === "AR" ? "ARCollectionVerify" : "APTrunkBatchSettlement");
         }
     };
 
