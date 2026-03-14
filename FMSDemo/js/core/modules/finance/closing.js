@@ -20,7 +20,7 @@
                 type: "tax",
                 priority: 1,
                 name: "计提税金及附加",
-                voucherWord: "结",
+                voucherWord: "转",
                 bookId: "",
                 vatBaseCodes: ["22210106"],
                 taxExpenseCode: "6403",
@@ -36,7 +36,7 @@
                 type: "income",
                 priority: 2,
                 name: "结转收入",
-                voucherWord: "结",
+                voucherWord: "转",
                 bookId: "",
                 sourceCodes: [
                     "5001",
@@ -55,7 +55,7 @@
                 type: "cost",
                 priority: 3,
                 name: "结转成本费用",
-                voucherWord: "结",
+                voucherWord: "转",
                 bookId: "",
                 sourceCodes: [
                     "6401",
@@ -419,7 +419,7 @@
     }
 
     function buildVoucherObject(template, date, summary, entries, idOverride) {
-        const word = (template.voucherWord || "结").toString().trim() || "结";
+        const word = (template.voucherWord || "转").toString().trim() || "转";
         const id = idOverride || (typeof window.generateSequentialVoucherId === "function"
             ? window.generateSequentialVoucherId(word)
             : `${word}-${Date.now()}`);
@@ -541,7 +541,7 @@
             const priority = typeCounters[type];
             const templateId = card.dataset.templateId || `${type}-${Date.now()}-${priority}`;
             const bookId = card.querySelector(".closing-book-select")?.value || "";
-            const voucherWord = card.querySelector(".closing-word-input")?.value || "结";
+            const voucherWord = card.querySelector(".closing-word-input")?.value || "转";
             const multiInput = (selector) => {
                 const input = card.querySelector(`${selector} .subject-multi-input`);
                 return parseCodes(input ? input.value : "");
@@ -638,7 +638,7 @@
 
         const seqMap = {};
         const nextVoucherId = (word) => {
-            const key = (word || "结").toString().trim() || "结";
+            const key = (word || "转").toString().trim() || "转";
             if (!seqMap[key]) {
                 seqMap[key] = typeof window.getNextVoucherSeqStrict === "function"
                     ? window.getNextVoucherSeqStrict(key)

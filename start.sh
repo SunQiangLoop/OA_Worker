@@ -33,11 +33,13 @@ fi
 if [ -f "$PID_DIR/backend.pid" ] && kill -0 "$(cat "$PID_DIR/backend.pid")" >/dev/null 2>&1; then
   echo "Backend already running (PID $(cat "$PID_DIR/backend.pid"))"
 else
+  echo "Building backend..."
+  (cd "$BACKEND_DIR" && go build -o ./bin/server ./cmd/server)
   echo "Starting backend on ${BACKEND_HOST}:${BACKEND_PORT}..."
   (
     cd "$BACKEND_DIR"
     SERVER_ADDR="${BACKEND_HOST}:${BACKEND_PORT}" \
-    nohup go run ./cmd/server > "$LOG_DIR/backend.log" 2>&1 &
+    nohup ./bin/server > "$LOG_DIR/backend.log" 2>&1 &
     echo $! > "$PID_DIR/backend.pid"
   )
   echo "Backend started (PID $(cat "$PID_DIR/backend.pid"))"

@@ -5,7 +5,6 @@ function getModuleName(code) {
     const names = {
         Dashboard: "首页",
         SettlementWaybill: "运单挂帐",
-        SettlementTrunk: "干线批次挂帐",
         SettlementShortHaul: "短途批次挂帐",
         PriceManagement: "价格管理",
         ReconSite: "网点对账",
@@ -15,14 +14,14 @@ function getModuleName(code) {
         ReconDiffHandle: "对账差异处理",
         ARCollectionVerify: "运单结算",
         ARAgeAnalysis: "客户账龄分析",
+        ReceiptVoucher: "收款单",
         APTrunkBatchSettlement: "干线批次结算",
         APShortBatchSettlement: "短途批次结算",
+        PaymentVoucher: "付款单",
         APInvoiceManage: "进项发票台账",
         FundCustomerAcct: "客户资金账户",
         FundWallet: "司机/网点钱包",
-        ExpenseLoan: "借款单",
         SettlementEngineConfig: "会计引擎配置",
-        ExpenseRepay: "还款单",
         ExpenseDaily: "日常费用报销",
         ExpenseTravel: "差旅报销",
         ExpenseCompensation: "酬金结算",
@@ -68,58 +67,146 @@ function getModuleName(code) {
     return names[code] || "未知模块";
 }
 
+// ============================================================
+// 会计准则科目模板
+// small      = 小企业会计准则（2013）: 所有者权益3xxx / 损益5xxx
+// enterprise = 企业会计准则（2006+）: 所有者权益4xxx / 损益6xxx
+// ============================================================
 const ACCOUNTING_STANDARD_TEMPLATES = {
     small: [
-        { code: "1001", name: "库存现金", type: "资产", direction: "借", aux: "无", status: "启用", remark: "日常现金收付" },
-        { code: "1002", name: "银行存款", type: "资产", direction: "借", aux: "银行账户", status: "启用", remark: "银行往来资金" },
-        { code: "1122", name: "应收账款", type: "资产", direction: "借", aux: "客户", status: "启用", remark: "客户应收款" },
-        { code: "1123", name: "预付账款", type: "资产", direction: "借", aux: "供应商", status: "启用", remark: "预付供应商款项" },
-        { code: "1221", name: "其他应收款", type: "资产", direction: "借", aux: "部门/员工", status: "启用", remark: "押金或借款" },
-        { code: "1403", name: "原材料", type: "资产", direction: "借", aux: "无", status: "启用", remark: "消耗性物料" },
-        { code: "1601", name: "固定资产", type: "资产", direction: "借", aux: "车辆/设备", status: "启用", remark: "车辆与设备" },
-        { code: "1701", name: "累计折旧", type: "资产", direction: "贷", aux: "车辆/设备", status: "启用", remark: "固定资产折旧" },
-        { code: "2001", name: "短期借款", type: "负债", direction: "贷", aux: "无", status: "启用", remark: "银行或机构短贷" },
-        { code: "2202", name: "应付账款", type: "负债", direction: "贷", aux: "供应商/司机", status: "启用", remark: "承运商与供应商" },
-        { code: "2211", name: "应付职工薪酬", type: "负债", direction: "贷", aux: "员工", status: "启用", remark: "工资与福利" },
-        { code: "2221", name: "应交税费", type: "负债", direction: "贷", aux: "税种", status: "启用", remark: "税费计提" },
-        { code: "4001", name: "实收资本", type: "权益", direction: "贷", aux: "股东", status: "启用", remark: "股东出资" },
-        { code: "4101", name: "资本公积", type: "权益", direction: "贷", aux: "无", status: "启用", remark: "资本溢价" },
-        { code: "4104", name: "未分配利润", type: "权益", direction: "贷", aux: "无", status: "启用", remark: "留存收益" },
-        { code: "5001", name: "主营业务成本", type: "成本", direction: "借", aux: "项目/线路", status: "启用", remark: "运输成本" },
-        { code: "6001", name: "主营业务收入", type: "损益", direction: "贷", aux: "客户/项目", status: "启用", remark: "运费收入" },
-        { code: "6601", name: "管理费用", type: "损益", direction: "借", aux: "部门/员工", status: "启用", remark: "管理费用汇总" },
-        { code: "6401", name: "运输成本", type: "成本", direction: "借", aux: "车辆/线路", status: "启用", remark: "车辆运输成本" },
-        { code: "6601-01", name: "管理费用-办公", type: "损益", direction: "借", aux: "部门", status: "启用", remark: "办公与管理支出" }
+        // 资产类
+        { code: "1001", name: "库存现金",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "日常现金收付" },
+        { code: "1002", name: "银行存款",       type: "资产", direction: "借", aux: "银行账户",   status: "启用", remark: "银行往来资金" },
+        { code: "1012", name: "其他货币资金",   type: "资产", direction: "借", aux: "无",         status: "启用", remark: "微信/支付宝/汇票等" },
+        { code: "1121", name: "应收票据",       type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "商业汇票" },
+        { code: "1122", name: "应收账款",       type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "客户应收款" },
+        { code: "1123", name: "预付账款",       type: "资产", direction: "借", aux: "供应商",     status: "启用", remark: "预付供应商款项" },
+        { code: "1221", name: "其他应收款",     type: "资产", direction: "借", aux: "部门/员工",  status: "启用", remark: "押金、备用金或借款" },
+        { code: "1401", name: "存货",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "小企业存货合并核算（含原材料/商品）" },
+        { code: "1501", name: "长期股权投资",   type: "资产", direction: "借", aux: "被投资方",   status: "启用", remark: "对外长期投资" },
+        { code: "1601", name: "固定资产",       type: "资产", direction: "借", aux: "车辆/设备",  status: "启用", remark: "车辆与设备" },
+        { code: "1602", name: "累计折旧",       type: "资产", direction: "贷", aux: "车辆/设备",  status: "启用", remark: "固定资产折旧" },
+        { code: "1604", name: "在建工程",       type: "资产", direction: "借", aux: "项目",       status: "启用", remark: "尚未完工的建设项目" },
+        { code: "1701", name: "无形资产",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "软件、专利等" },
+        { code: "1702", name: "累计摊销",       type: "资产", direction: "贷", aux: "无",         status: "启用", remark: "无形资产摊销" },
+        { code: "1801", name: "长期待摊费用",   type: "资产", direction: "借", aux: "无",         status: "启用", remark: "装修等长期摊销" },
+        { code: "1901", name: "待处理财产损溢", type: "资产", direction: "借", aux: "无",         status: "启用", remark: "盘盈盘亏待处理" },
+        // 负债类
+        { code: "2001", name: "短期借款",       type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年内到期借款" },
+        { code: "2201", name: "应付票据",       type: "负债", direction: "贷", aux: "供应商",     status: "启用", remark: "商业承兑汇票" },
+        { code: "2202", name: "应付账款",       type: "负债", direction: "贷", aux: "供应商/司机",status: "启用", remark: "承运商与供应商" },
+        { code: "2203", name: "预收账款",       type: "负债", direction: "贷", aux: "客户",       status: "启用", remark: "客户预付货款" },
+        { code: "2211", name: "应付职工薪酬",   type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
+        { code: "2221", name: "应交税费",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+        { code: "2231", name: "应付利息",       type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
+        { code: "2241", name: "其他应付款",     type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
+        { code: "2501", name: "长期借款",       type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年以上借款" },
+        { code: "2502", name: "长期应付款",     type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "融资租赁等长期应付" },
+        // 所有者权益类（小企业准则：3xxx，★ 区别于企业准则4xxx ★）
+        { code: "3001", name: "实收资本",       type: "权益", direction: "贷", aux: "股东",       status: "启用", remark: "股东出资" },
+        { code: "3002", name: "资本公积",       type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "资本溢价" },
+        { code: "3101", name: "盈余公积",       type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "法定盈余公积" },
+        { code: "3103", name: "本年利润",       type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "当年损益汇总" },
+        { code: "3104", name: "利润分配",       type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "分红与留存" },
+        // 成本类（小企业准则：4xxx）
+        { code: "4001", name: "生产成本",       type: "成本", direction: "借", aux: "项目/线路",  status: "启用", remark: "直接生产成本" },
+        { code: "4101", name: "制造费用",       type: "成本", direction: "借", aux: "部门",       status: "启用", remark: "间接制造费用" },
+        // 损益类（小企业准则：5xxx，★ 区别于企业准则6xxx ★）
+        { code: "5001", name: "主营业务收入",   type: "损益", direction: "贷", aux: "客户/项目",  status: "启用", remark: "运费等主营收入" },
+        { code: "5051", name: "其他业务收入",   type: "损益", direction: "贷", aux: "客户",       status: "启用", remark: "延伸业务收入" },
+        { code: "5101", name: "投资收益",       type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "股息、利息等投资所得" },
+        { code: "5301", name: "营业外收入",     type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "非经营性收入" },
+        { code: "5401", name: "主营业务成本",   type: "损益", direction: "借", aux: "项目/线路",  status: "启用", remark: "对应主营收入的成本" },
+        { code: "5402", name: "其他业务成本",   type: "损益", direction: "借", aux: "无",         status: "启用", remark: "其他业务对应成本" },
+        { code: "5403", name: "营业税金及附加", type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
+        { code: "5601", name: "销售费用",       type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
+        { code: "5602", name: "管理费用",       type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
+        { code: "5603", name: "财务费用",       type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
+        { code: "5701", name: "资产减值损失",   type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
+        { code: "5801", name: "营业外支出",     type: "损益", direction: "借", aux: "无",         status: "启用", remark: "非经营性支出" },
+        { code: "5901", name: "所得税费用",     type: "损益", direction: "借", aux: "无",         status: "启用", remark: "企业所得税" }
     ],
     enterprise: [
-        { code: "1001", name: "库存现金", type: "资产", direction: "借", aux: "无", status: "启用", remark: "日常现金收付" },
-        { code: "1002", name: "银行存款", type: "资产", direction: "借", aux: "银行账户", status: "启用", remark: "银行往来资金" },
-        { code: "1012", name: "其他货币资金", type: "资产", direction: "借", aux: "无", status: "启用", remark: "汇票/保证金" },
-        { code: "1121", name: "应收票据", type: "资产", direction: "借", aux: "客户", status: "启用", remark: "商业汇票" },
-        { code: "1122", name: "应收账款", type: "资产", direction: "借", aux: "客户", status: "启用", remark: "客户应收款" },
-        { code: "1123", name: "预付账款", type: "资产", direction: "借", aux: "供应商", status: "启用", remark: "预付供应商款项" },
-        { code: "1231", name: "其他应收款", type: "资产", direction: "借", aux: "部门/员工", status: "启用", remark: "押金或借款" },
-        { code: "1405", name: "库存商品", type: "资产", direction: "借", aux: "无", status: "启用", remark: "待销售货物" },
-        { code: "1601", name: "固定资产", type: "资产", direction: "借", aux: "车辆/设备", status: "启用", remark: "车辆与设备" },
-        { code: "1701", name: "累计折旧", type: "资产", direction: "贷", aux: "车辆/设备", status: "启用", remark: "固定资产折旧" },
-        { code: "2001", name: "短期借款", type: "负债", direction: "贷", aux: "无", status: "启用", remark: "银行或机构短贷" },
-        { code: "2202", name: "应付账款", type: "负债", direction: "贷", aux: "供应商/司机", status: "启用", remark: "承运商与供应商" },
-        { code: "2211", name: "应付职工薪酬", type: "负债", direction: "贷", aux: "员工", status: "启用", remark: "工资与福利" },
-        { code: "2221", name: "应交税费", type: "负债", direction: "贷", aux: "税种", status: "启用", remark: "税费计提" },
-        { code: "2241", name: "其他应付款", type: "负债", direction: "贷", aux: "部门/员工", status: "启用", remark: "保证金与应付" },
-        { code: "4001", name: "实收资本", type: "权益", direction: "贷", aux: "股东", status: "启用", remark: "股东出资" },
-        { code: "4101", name: "资本公积", type: "权益", direction: "贷", aux: "无", status: "启用", remark: "资本溢价" },
-        { code: "4103", name: "盈余公积", type: "权益", direction: "贷", aux: "无", status: "启用", remark: "法定盈余" },
-        { code: "4104", name: "未分配利润", type: "权益", direction: "贷", aux: "无", status: "启用", remark: "留存收益" },
-        { code: "5001", name: "主营业务成本", type: "成本", direction: "借", aux: "项目/线路", status: "启用", remark: "运输成本" },
-        { code: "5301", name: "研发支出", type: "成本", direction: "借", aux: "项目", status: "启用", remark: "信息化或研发" },
-        { code: "6001", name: "主营业务收入", type: "损益", direction: "贷", aux: "客户/项目", status: "启用", remark: "运费收入" },
-        { code: "6051", name: "其他业务收入", type: "损益", direction: "贷", aux: "客户", status: "启用", remark: "延伸业务收入" },
-        { code: "6601", name: "管理费用", type: "损益", direction: "借", aux: "部门/员工", status: "启用", remark: "管理费用汇总" },
-        { code: "6602", name: "销售费用", type: "损益", direction: "借", aux: "部门/项目", status: "启用", remark: "市场与销售" },
-        { code: "6701", name: "财务费用", type: "损益", direction: "借", aux: "银行账户", status: "启用", remark: "利息与手续费" }
+        // 资产类
+        { code: "1001", name: "库存现金",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "日常现金收付" },
+        { code: "1002", name: "银行存款",           type: "资产", direction: "借", aux: "银行账户",   status: "启用", remark: "银行往来资金" },
+        { code: "1012", name: "其他货币资金",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "微信/支付宝/汇票等" },
+        { code: "1101", name: "交易性金融资产",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "以公允价值计量的金融资产" },
+        { code: "1121", name: "应收票据",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "商业汇票" },
+        { code: "1122", name: "应收账款",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "客户应收款" },
+        { code: "1123", name: "预付账款",           type: "资产", direction: "借", aux: "供应商",     status: "启用", remark: "预付供应商款项" },
+        { code: "1131", name: "应收股利",           type: "资产", direction: "借", aux: "被投资方",   status: "启用", remark: "宣告但未收到的股利" },
+        { code: "1132", name: "应收利息",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "应计未收利息" },
+        { code: "1221", name: "其他应收款",         type: "资产", direction: "借", aux: "部门/员工",  status: "启用", remark: "押金、备用金或借款" },
+        { code: "1231", name: "坏账准备",           type: "资产", direction: "贷", aux: "客户",       status: "启用", remark: "应收账款坏账备抵" },
+        { code: "1401", name: "材料采购",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "采购中材料" },
+        { code: "1402", name: "在途物资",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "已付款未到货物资" },
+        { code: "1403", name: "原材料",             type: "资产", direction: "借", aux: "物料",       status: "启用", remark: "生产用原材料" },
+        { code: "1404", name: "材料成本差异",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "计划与实际成本差异" },
+        { code: "1405", name: "库存商品",           type: "资产", direction: "借", aux: "商品",       status: "启用", remark: "待销售货物" },
+        { code: "1406", name: "发出商品",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "已发货未确认收入商品" },
+        { code: "1411", name: "包装物及低值易耗品", type: "资产", direction: "借", aux: "无",         status: "启用", remark: "辅助性低值物料" },
+        { code: "1421", name: "长期股权投资",       type: "资产", direction: "借", aux: "被投资方",   status: "启用", remark: "对外长期投资" },
+        { code: "1501", name: "持有至到期投资",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "到期持有的债券" },
+        { code: "1511", name: "可供出售金融资产",   type: "资产", direction: "借", aux: "无",         status: "启用", remark: "可供出售股票/债券" },
+        { code: "1521", name: "投资性房地产",       type: "资产", direction: "借", aux: "房产",       status: "启用", remark: "出租或增值目的房产" },
+        { code: "1531", name: "长期应收款",         type: "资产", direction: "借", aux: "无",         status: "启用", remark: "融资租赁长期应收" },
+        { code: "1601", name: "固定资产",           type: "资产", direction: "借", aux: "车辆/设备",  status: "启用", remark: "车辆与设备" },
+        { code: "1602", name: "累计折旧",           type: "资产", direction: "贷", aux: "车辆/设备",  status: "启用", remark: "固定资产折旧" },
+        { code: "1604", name: "在建工程",           type: "资产", direction: "借", aux: "项目",       status: "启用", remark: "尚未完工的建设项目" },
+        { code: "1605", name: "工程物资",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "为工程准备的物资" },
+        { code: "1606", name: "固定资产清理",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "处置中的固定资产" },
+        { code: "1701", name: "无形资产",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "软件、专利等" },
+        { code: "1702", name: "累计摊销",           type: "资产", direction: "贷", aux: "无",         status: "启用", remark: "无形资产摊销" },
+        { code: "1801", name: "长期待摊费用",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "装修等长期摊销" },
+        { code: "1811", name: "递延所得税资产",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "可抵扣暂时性差异" },
+        { code: "1901", name: "待处理财产损溢",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "盘盈盘亏待处理" },
+        // 负债类
+        { code: "2001", name: "短期借款",           type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年内到期借款" },
+        { code: "2002", name: "交易性金融负债",     type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "以公允价值计量的负债" },
+        { code: "2201", name: "应付票据",           type: "负债", direction: "贷", aux: "供应商",     status: "启用", remark: "商业承兑汇票" },
+        { code: "2202", name: "应付账款",           type: "负债", direction: "贷", aux: "供应商/司机",status: "启用", remark: "承运商与供应商" },
+        { code: "2203", name: "预收账款",           type: "负债", direction: "贷", aux: "客户",       status: "启用", remark: "客户预付货款" },
+        { code: "2211", name: "应付职工薪酬",       type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
+        { code: "2221", name: "应交税费",           type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+        { code: "2231", name: "应付利息",           type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
+        { code: "2232", name: "应付股利",           type: "负债", direction: "贷", aux: "股东",       status: "启用", remark: "已宣告未发放股利" },
+        { code: "2241", name: "其他应付款",         type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
+        { code: "2501", name: "长期借款",           type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年以上借款" },
+        { code: "2502", name: "应付债券",           type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "发行的债券" },
+        { code: "2511", name: "长期应付款",         type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "融资租赁等长期应付" },
+        { code: "2601", name: "递延收益",           type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "政府补助递延确认" },
+        { code: "2701", name: "递延所得税负债",     type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应纳税暂时性差异" },
+        // 所有者权益类（企业准则：4xxx，★ 区别于小企业准则3xxx ★）
+        { code: "4001", name: "实收资本",           type: "权益", direction: "贷", aux: "股东",       status: "启用", remark: "股东出资" },
+        { code: "4002", name: "资本公积",           type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "资本溢价" },
+        { code: "4101", name: "盈余公积",           type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "法定盈余公积" },
+        { code: "4103", name: "本年利润",           type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "当年损益汇总" },
+        { code: "4104", name: "利润分配",           type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "分红与留存" },
+        // 成本类（企业准则：5xxx）
+        { code: "5001", name: "生产成本",           type: "成本", direction: "借", aux: "项目",       status: "启用", remark: "直接生产成本" },
+        { code: "5101", name: "制造费用",           type: "成本", direction: "借", aux: "部门",       status: "启用", remark: "间接制造费用" },
+        { code: "5201", name: "劳务成本",           type: "成本", direction: "借", aux: "项目",       status: "启用", remark: "劳务合同成本" },
+        { code: "5301", name: "研发支出",           type: "成本", direction: "借", aux: "项目",       status: "启用", remark: "信息化或技术研发" },
+        // 损益类（企业准则：6xxx，★ 区别于小企业准则5xxx ★）
+        { code: "6001", name: "主营业务收入",       type: "损益", direction: "贷", aux: "客户/项目",  status: "启用", remark: "运费等主营收入" },
+        { code: "6051", name: "其他业务收入",       type: "损益", direction: "贷", aux: "客户",       status: "启用", remark: "延伸业务收入" },
+        { code: "6101", name: "公允价值变动损益",   type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "交易性金融资产公允价值变动" },
+        { code: "6111", name: "投资收益",           type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "股息、利息等投资所得" },
+        { code: "6301", name: "营业外收入",         type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "非经营性收入" },
+        { code: "6401", name: "主营业务成本",       type: "损益", direction: "借", aux: "项目/线路",  status: "启用", remark: "对应主营收入的成本" },
+        { code: "6402", name: "其他业务成本",       type: "损益", direction: "借", aux: "无",         status: "启用", remark: "其他业务对应成本" },
+        { code: "6403", name: "营业税金及附加",     type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
+        { code: "6601", name: "销售费用",           type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
+        { code: "6602", name: "管理费用",           type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
+        { code: "6603", name: "财务费用",           type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
+        { code: "6701", name: "资产减值损失",       type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
+        { code: "6711", name: "营业外支出",         type: "损益", direction: "借", aux: "无",         status: "启用", remark: "非经营性支出" },
+        { code: "6801", name: "所得税费用",         type: "损益", direction: "借", aux: "无",         status: "启用", remark: "企业所得税" },
+        { code: "6901", name: "以前年度损益调整",   type: "损益", direction: "借", aux: "无",         status: "启用", remark: "前期差错更正" }
     ]
 };
+
 
 const DEFAULT_VOUCHER_SUMMARY_TEMPLATES = [
     { code: "001", summary: "支付司机运费", mnemonic: "ZFSJYF", category: "自动保存摘要" },
@@ -376,8 +463,8 @@ function applyAccountingStandardSetting() {
     localStorage.setItem("AccountingStandard", nextStandard);
     sessionStorage.setItem("AcctSubjects", JSON.stringify(template));
     localStorage.setItem("AcctSubjects", JSON.stringify(template));
-    alert("会计准则已保存，系统已初始化科目模板。");
-    loadContent("AccountingStandardSetting");
+    alert("会计准则已保存，科目列表已更新。");
+    loadContent("AcctSubject");
 }
 
 // ============================================
@@ -442,228 +529,476 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
 
     if (moduleCode === "Dashboard") {
-        // ===============================================
-        // 1. 定义数据结构
-        // ===============================================
 
-        // A. 模拟顶部的核心财务指标 (让老板第一眼看到钱)
-        const kpiData = [
-            { label: "本月预估营收", value: "¥ 1,285,400.00", trend: "+12.5%", trendType: "up", icon: "💰", bg: "linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%)" },
-            { label: "待付运费总额", value: "¥ 432,100.00", trend: "+5.2%", trendType: "down", icon: "📉", bg: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)" },
-            { label: "当前资金池余额", value: "¥ 892,000.00", trend: "安全", trendType: "safe", icon: "🛡️", bg: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)" },
-            { label: "本月待处理单据", value: "128 笔", trend: "需关注", trendType: "warn", icon: "🔔", bg: "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)" }
-        ];
-
-        // B. 系统架构导航 (四大支柱)
-        const systemArch = [
-            {
-                title: "财务管理中心",
-                icon: "💴",
-                theme: "blue",
-                color: "#e6f7ff",
-                borderColor: "#1890ff",
-                modules: [
-                    { name: "运单挂帐", code: "SettlementWaybill" },
-                    { name: "应收管理", code: "ARCustomerStatement" },
-                    { name: "应付管理", code: "APTrunkBatchSettlement" },
-                    { name: "发票管理", code: "TaxInputInvoice" },
-                    { name: "异动管理", code: "AbnormalManagement" },
-                    { name: "对帐管理", code: "ReconManage" },
-                    { name: "计费报价", code: "PriceManagement" }
-                ]
-            },
-            {
-                title: "出纳管理中心",
-                icon: "🏦",
-                theme: "purple",
-                color: "#f9f0ff",
-                borderColor: "#722ed1",
-                modules: [
-                    { name: "资金账户", code: "FundCustomerAcct" },
-                    { name: "干线批次结算", code: "APTrunkBatchSettlement" },
-                    { name: "短途批次结算", code: "APShortBatchSettlement" },
-                    { name: "钱包管理", code: "FundWallet" }, // 合并司机/网点钱包
-                    { name: "资金流水明细", code: "ARCollectionVerify" } // 或 BankStatementSync
-                ]
-            },
-            {
-                title: "总账中心",
-                icon: "📈",
-                theme: "green",
-                color: "#f6ffed",
-                borderColor: "#52c41a",
-                modules: [
-                    { name: "会计基础", code: "AcctSubject" }, // 原: 会计基础
-                    { name: "凭证管理", code: "VoucherQueryPrint" },
-                    { name: "会计引擎", code: "SettlementEngineConfig" },
-                    { name: "期末处理", code: "PeriodEndClose" },
-                    { name: "会计报表", code: "ReportBalanceSheet" }, // 原: 法定报表
-                    { name: "总账", code: "ReportGeneralLedger" },
-                    { name: "管理报表", code: "ReportIncomeStatement" } // 原: 管理报表
-                ]
-            },
-            {
-                title: "系统配置",
-                icon: "⚙️",
-                theme: "orange",
-                color: "#fff7e6",
-                borderColor: "#fa8c16",
-                modules: [
-                    { name: "基础设置", code: "AccountingStandardSetting" },
-                    { name: "收支方式配置", code: "PaymentMethodConfig" },
-                    { name: "权限分配", code: "Permission" },
-                    { name: "操作日志", code: "RiskSensitiveLog" }
-                ]
-            }
-        ];
-
-        const styleFix = `
-        <style>
-            /* 顶部 KPI 卡片区 */
-            .kpi-wrapper {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-            .kpi-card {
-                border-radius: 10px;
-                padding: 20px;
-                color: white;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-                position: relative;
-                overflow: hidden;
-                transition: transform 0.3s;
-            }
-            .kpi-card:hover { transform: translateY(-5px); }
-            .kpi-label { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-            .kpi-value { font-size: 24px; font-weight: bold; margin-bottom: 5px; font-family: 'Helvetica Neue', sans-serif; }
-            .kpi-footer { font-size: 12px; opacity: 0.8; display: flex; align-items: center; }
-            .kpi-icon { position: absolute; right: 20px; top: 20px; font-size: 40px; opacity: 0.2; }
-
-            /* 核心导航卡片区 */
-            .nav-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr); /* 两列布局，看起来更稳重 */
-                gap: 24px;
-            }
-            .nav-card {
-                background: #fff;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-                padding: 24px;
-                border: 1px solid #f0f0f0;
-                transition: all 0.3s;
-            }
-            .nav-card:hover {
-                box-shadow: 0 12px 24px rgba(0,0,0,0.12);
-            }
-            
-            /* 导航卡片头部 */
-            .nav-header {
-                display: flex;
-                align-items: flex-start;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 1px solid #f5f5f5;
-            }
-            .nav-icon-box {
-                width: 48px; height: 48px;
-                border-radius: 10px;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 24px;
-                margin-right: 15px;
-                background: #f0f5ff;
-            }
-            .nav-title-group h3 { margin: 11px; font-size: 18px; color: #333; }
-            .nav-title-group p { margin: 4px 0 0 0; font-size: 13px; color: #999; }
-
-            /* 模块列表 */
-            .module-list {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr); /* 内部三列 */
-                gap: 12px;
-            }
-            .module-item {
-                display: flex;
-                align-items: center;
-                font-size: 13px;
-                color: #555;
-                padding: 8px 10px;
-                border-radius: 6px;
-                cursor: pointer;
-                background: #f9f9f9;
-                transition: all 0.2s;
-            }
-            .module-item:hover {
-                background: #e6f7ff;
-                color: #1890ff;
-                padding-left: 15px; /* 悬停右移效果 */
-            }
-            .module-item::before {
-                content: "•";
-                color: #ccc;
-                margin-right: 8px;
-                font-size: 16px;
-            }
-            .module-item:hover::before { color: #1890ff; }
-
-            @media (max-width: 1200px) { .nav-grid { grid-template-columns: 1fr; } .kpi-wrapper { grid-template-columns: repeat(2, 1fr); } }
-        </style>
-    `;
-
-        // ===============================================
-        // 3. 生成 HTML
-        // ===============================================
-
-        // 生成 KPI HTML
-        const kpiHTML = kpiData.map(k => `
-        <div class="kpi-card" style="background: ${k.bg}">
-            <div class="kpi-label">${k.label}</div>
-            <div class="kpi-value">${k.value}</div>
-            <div class="kpi-footer">
-                <span>${k.trendType === 'up' ? '▲' : (k.trendType === 'down' ? '▼' : '●')} ${k.trend}</span>
-            </div>
-            <div class="kpi-icon">${k.icon}</div>
-        </div>
-    `).join('');
-
-        // 生成导航卡片 HTML
-        // 生成导航卡片 HTML
-        const navHTML = systemArch.map(group => `
-        <div class="nav-card">
-            <div class="nav-header">
-                <div class="nav-icon-box" style="color: ${group.color}; background: ${group.color}15;">
-                    ${group.icon}
-                </div>
-                <div class="nav-title-group">
-                    <h3>${group.title}</h3>
-                </div>
-            </div>
-            <div class="module-list">
-                ${group.modules.map(mod => `
-                    <div class="module-item" onclick="loadContent('${mod.code}')">
-                        ${mod.name}
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
+        // 动态获取当前日期
+        const now = new Date();
+        const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+        const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+        const weekStr = weekDays[now.getDay()];
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+        const quarter = Math.ceil((now.getMonth() + 1) / 3);
 
         contentHTML = `
-        ${styleFix}
-        <div style="margin-bottom: 25px;">
-            <h2 style="margin: 0; font-size: 22px; color: #333;">首页</h2>
-        </div>
+        <style>
+            /* ---- 工作台整体 ---- */
+            .ws { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #2c3e50; }
 
-        <div class="kpi-wrapper">
-            ${kpiHTML}
-        </div>
+            /* ---- 顶部标题行 ---- */
+            .ws-topbar {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                margin-bottom: 18px;
+                padding-bottom: 14px;
+                border-bottom: 1px solid #e8ecef;
+            }
+            .ws-topbar__left { display: flex; align-items: baseline; gap: 14px; }
+            .ws-topbar__title { font-size: 20px; font-weight: 700; color: #2c3e50; letter-spacing: -0.3px; }
+            .ws-topbar__meta { font-size: 13px; color: #95a5a6; }
+            .ws-topbar__period {
+                font-size: 12px;
+                color: #7f8c8d;
+                background: #f0f4f8;
+                border: 1px solid #dde3ea;
+                padding: 3px 10px;
+                border-radius: 12px;
+            }
 
-        <div class="nav-grid">
-            ${navHTML}
+            /* ---- 指标条（与 header 同色调） ---- */
+            .ws-metrics {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                background: #2c3e50;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                overflow: hidden;
+            }
+            .ws-metric {
+                padding: 18px 24px;
+                border-right: 1px solid rgba(255,255,255,0.08);
+                position: relative;
+            }
+            .ws-metric:last-child { border-right: none; }
+            .ws-metric__label {
+                font-size: 11px;
+                color: rgba(255,255,255,0.5);
+                text-transform: uppercase;
+                letter-spacing: 0.7px;
+                margin-bottom: 7px;
+            }
+            .ws-metric__value {
+                font-size: 24px;
+                font-weight: 700;
+                color: #fff;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: -0.5px;
+                line-height: 1;
+                margin-bottom: 7px;
+            }
+            .ws-metric__value sup { font-size: 13px; font-weight: 400; opacity: 0.7; margin-right: 2px; }
+            .ws-metric__trend {
+                font-size: 11px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-weight: 500;
+            }
+            .ws-metric__trend--up   { background: rgba(46,204,113,0.18); color: #2ecc71; }
+            .ws-metric__trend--down { background: rgba(231,76,60,0.18);  color: #e67e80; }
+            .ws-metric__trend--safe { background: rgba(52,152,219,0.2);  color: #74b9d8; }
+            .ws-metric__trend--warn { background: rgba(241,196,15,0.2);  color: #f4d03f; }
+
+            /* ---- 主体两列 ---- */
+            .ws-body {
+                display: flex;
+                gap: 18px;
+                align-items: flex-start;
+            }
+            .ws-nav-panel { flex: 1; min-width: 0; }
+            .ws-aside { width: 290px; flex-shrink: 0; }
+
+            /* ---- 导航卡片网格 ---- */
+            .ws-nav-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 14px;
+            }
+            .ws-card {
+                background: #fff;
+                border: 1px solid #e4e8ed;
+                border-radius: 8px;
+                overflow: hidden;
+                transition: box-shadow 0.18s, border-color 0.18s;
+            }
+            .ws-card:hover {
+                box-shadow: 0 4px 14px rgba(44,62,80,0.1);
+                border-color: #bdc8d4;
+            }
+            .ws-card__head {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                padding: 13px 16px;
+                background: #f8fafb;
+                border-bottom: 1px solid #edf1f5;
+            }
+            .ws-card__stripe {
+                width: 3px;
+                height: 32px;
+                border-radius: 2px;
+                margin-right: 12px;
+                flex-shrink: 0;
+            }
+            .ws-card__title { font-size: 14px; font-weight: 700; color: #2c3e50; margin-bottom: 1px; }
+            .ws-card__sub   { font-size: 11px; color: #95a5a6; }
+            .ws-card__body  { padding: 10px 14px 12px; }
+
+            /* 模块链接行 */
+            .ws-link {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 13px;
+                color: #34495e;
+                padding: 7px 6px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background 0.14s, color 0.14s;
+                border-bottom: 1px solid transparent;
+            }
+            .ws-link:hover { background: #eaf3fc; color: #2980b9; }
+            .ws-link:last-child { border-bottom: none; }
+            .ws-link__right { display: flex; align-items: center; gap: 6px; }
+            .ws-badge {
+                font-size: 10px;
+                padding: 1px 6px;
+                border-radius: 8px;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+            .ws-badge--warn { background: #fef9e7; color: #d68910; border: 1px solid #f9e4a0; }
+            .ws-badge--info { background: #eaf3fb; color: #2471a3; border: 1px solid #aed6f1; }
+            .ws-badge--ok   { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+            .ws-link__arrow { color: #bdc3c7; font-size: 11px; transition: color 0.14s, transform 0.14s; }
+            .ws-link:hover .ws-link__arrow { color: #2980b9; transform: translateX(2px); }
+
+            /* ---- 右侧面板 ---- */
+            .ws-aside-card {
+                background: #fff;
+                border: 1px solid #e4e8ed;
+                border-radius: 8px;
+                overflow: hidden;
+                margin-bottom: 14px;
+            }
+            .ws-aside-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                border-bottom: 1px solid #edf1f5;
+                background: #f8fafb;
+            }
+            .ws-aside-head__title { font-size: 13px; font-weight: 700; color: #2c3e50; }
+            .ws-aside-head__count { font-size: 11px; color: #95a5a6; }
+
+            /* 待办列表 */
+            .ws-todo { }
+            .ws-todo-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 16px;
+                cursor: pointer;
+                border-left: 3px solid transparent;
+                transition: background 0.14s;
+            }
+            .ws-todo-item:hover { background: #f5f8fa; }
+            .ws-todo-item--red    { border-left-color: #e74c3c; }
+            .ws-todo-item--amber  { border-left-color: #e67e22; }
+            .ws-todo-item--blue   { border-left-color: #3498db; }
+            .ws-todo-item--gray   { border-left-color: #bdc3c7; }
+            .ws-todo-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+            .ws-todo-item--red   .ws-todo-dot { background: #e74c3c; }
+            .ws-todo-item--amber .ws-todo-dot { background: #e67e22; }
+            .ws-todo-item--blue  .ws-todo-dot { background: #3498db; }
+            .ws-todo-item--gray  .ws-todo-dot { background: #bdc3c7; }
+            .ws-todo-body { flex: 1; min-width: 0; }
+            .ws-todo-name { font-size: 13px; font-weight: 600; color: #2c3e50; margin-bottom: 2px; }
+            .ws-todo-meta { font-size: 11px; color: #95a5a6; }
+            .ws-todo-arrow { color: #dde3ea; font-size: 12px; transition: color 0.14s; }
+            .ws-todo-item:hover .ws-todo-arrow { color: #3498db; }
+
+            /* 账期进度 */
+            .ws-progress-list { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; }
+            .ws-prog-row { display: flex; align-items: center; gap: 10px; }
+            .ws-prog-label { font-size: 12px; color: #7f8c8d; width: 60px; flex-shrink: 0; }
+            .ws-prog-track {
+                flex: 1; height: 5px; background: #edf1f5;
+                border-radius: 3px; overflow: hidden;
+            }
+            .ws-prog-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+            .ws-prog-val { font-size: 12px; font-weight: 600; color: #34495e; width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+        </style>
+
+        <div class="ws">
+
+            <!-- 顶部标题行 -->
+            <div class="ws-topbar">
+                <div class="ws-topbar__left">
+                    <span class="ws-topbar__title">财务工作台</span>
+                    <span class="ws-topbar__meta">${dateStr} · ${weekStr}</span>
+                </div>
+                <span class="ws-topbar__period">${now.getFullYear()} 财年 · Q${quarter} · 第 ${weekNum} 周</span>
+            </div>
+
+            <!-- 指标条 -->
+            <div class="ws-metrics">
+                <div class="ws-metric">
+                    <div class="ws-metric__label">本月预估营收</div>
+                    <div class="ws-metric__value"><sup>¥</sup>1,285,400</div>
+                    <span class="ws-metric__trend ws-metric__trend--up">▲ 12.5% 较上月</span>
+                </div>
+                <div class="ws-metric">
+                    <div class="ws-metric__label">待付运费总额</div>
+                    <div class="ws-metric__value"><sup>¥</sup>432,100</div>
+                    <span class="ws-metric__trend ws-metric__trend--down">▼ 5.2% 较上月</span>
+                </div>
+                <div class="ws-metric">
+                    <div class="ws-metric__label">当前资金池余额</div>
+                    <div class="ws-metric__value"><sup>¥</sup>892,000</div>
+                    <span class="ws-metric__trend ws-metric__trend--safe">◆ 安全范围内</span>
+                </div>
+                <div class="ws-metric">
+                    <div class="ws-metric__label">本月待处理单据</div>
+                    <div class="ws-metric__value">128 <sup style="font-size:13px">笔</sup></div>
+                    <span class="ws-metric__trend ws-metric__trend--warn">⚡ 需关注</span>
+                </div>
+            </div>
+
+            <!-- 主体 -->
+            <div class="ws-body">
+
+                <!-- 左侧导航卡片 -->
+                <div class="ws-nav-panel">
+                    <div class="ws-nav-grid">
+
+                        <!-- 财务管理中心 -->
+                        <div class="ws-card">
+                            <div class="ws-card__head">
+                                <div class="ws-card__stripe" style="background:#3498db"></div>
+                                <div>
+                                    <div class="ws-card__title">财务管理中心</div>
+                                    <div class="ws-card__sub">应收 · 应付 · 对账 · 发票</div>
+                                </div>
+                            </div>
+                            <div class="ws-card__body">
+                                <div class="ws-link" onclick="loadContent('SettlementWaybill')">
+                                    运单挂帐
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--warn">3 待确认</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('ReconCustomer')">
+                                    客户对账
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--info">月结</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('ARCollectionVerify')">
+                                    应收结算 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('APTrunkBatchSettlement')">
+                                    应付管理 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('TaxInputInvoice')">
+                                    发票管理 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('AbnormalManagement')">
+                                    异动处理 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 出纳管理中心 -->
+                        <div class="ws-card">
+                            <div class="ws-card__head">
+                                <div class="ws-card__stripe" style="background:#8e44ad"></div>
+                                <div>
+                                    <div class="ws-card__title">出纳管理中心</div>
+                                    <div class="ws-card__sub">资金账户 · 批次结算 · 流水</div>
+                                </div>
+                            </div>
+                            <div class="ws-card__body">
+                                <div class="ws-link" onclick="loadContent('FundCustomerAcct')">
+                                    客户资金账户 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('APTrunkBatchSettlement')">
+                                    干线批次结算
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--info">本周</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('APShortBatchSettlement')">
+                                    短途批次结算 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('FundWallet')">
+                                    司机 / 网点钱包 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('ExpenseDaily')">
+                                    日常费用报销
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--warn">3 待批</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 总账中心 -->
+                        <div class="ws-card">
+                            <div class="ws-card__head">
+                                <div class="ws-card__stripe" style="background:#27ae60"></div>
+                                <div>
+                                    <div class="ws-card__title">总账中心</div>
+                                    <div class="ws-card__sub">凭证 · 科目 · 期末 · 报表</div>
+                                </div>
+                            </div>
+                            <div class="ws-card__body">
+                                <div class="ws-link" onclick="loadContent('VoucherEntryReview')">
+                                    凭证录入 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('FinanceVoucherAudit')">
+                                    凭证审核中心
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--warn">7 待审</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('AcctSubject')">
+                                    会计科目 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('PeriodEndClose')">
+                                    月末结账
+                                    <div class="ws-link__right"><span class="ws-badge ws-badge--info">2月未完成</span><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('ReportBalanceSheet')">
+                                    资产负债表 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('ReportIncomeStatement')">
+                                    利润损益表 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系统设置 -->
+                        <div class="ws-card">
+                            <div class="ws-card__head">
+                                <div class="ws-card__stripe" style="background:#e67e22"></div>
+                                <div>
+                                    <div class="ws-card__title">系统设置</div>
+                                    <div class="ws-card__sub">基础配置 · 权限 · 日志</div>
+                                </div>
+                            </div>
+                            <div class="ws-card__body">
+                                <div class="ws-link" onclick="loadContent('AccountingStandardSetting')">
+                                    基础设置 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('SettlementEngineConfig')">
+                                    会计引擎配置 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('AcctSet')">
+                                    会计账套 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('Permission')">
+                                    权限管理 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                                <div class="ws-link" onclick="loadContent('RiskSensitiveLog')">
+                                    操作日志 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 右侧面板 -->
+                <div class="ws-aside">
+
+                    <!-- 今日待办 -->
+                    <div class="ws-aside-card">
+                        <div class="ws-aside-head">
+                            <span class="ws-aside-head__title">今日待办</span>
+                            <span class="ws-aside-head__count">5 项</span>
+                        </div>
+                        <div class="ws-todo">
+                            <div class="ws-todo-item ws-todo-item--red" onclick="loadContent('FinanceVoucherAudit')">
+                                <div class="ws-todo-dot"></div>
+                                <div class="ws-todo-body">
+                                    <div class="ws-todo-name">凭证待审核</div>
+                                    <div class="ws-todo-meta">7 笔 · 最早提交 08:12</div>
+                                </div>
+                                <span class="ws-todo-arrow">›</span>
+                            </div>
+                            <div class="ws-todo-item ws-todo-item--amber" onclick="loadContent('PeriodEndClose')">
+                                <div class="ws-todo-dot"></div>
+                                <div class="ws-todo-body">
+                                    <div class="ws-todo-name">2月月末结账</div>
+                                    <div class="ws-todo-meta">试算差额 ¥320 · 未结清</div>
+                                </div>
+                                <span class="ws-todo-arrow">›</span>
+                            </div>
+                            <div class="ws-todo-item ws-todo-item--amber" onclick="loadContent('ReconCustomer')">
+                                <div class="ws-todo-dot"></div>
+                                <div class="ws-todo-body">
+                                    <div class="ws-todo-name">客户月度对账</div>
+                                    <div class="ws-todo-meta">3月对账单 · 截止 3/10</div>
+                                </div>
+                                <span class="ws-todo-arrow">›</span>
+                            </div>
+                            <div class="ws-todo-item ws-todo-item--blue" onclick="loadContent('APTrunkBatchSettlement')">
+                                <div class="ws-todo-dot"></div>
+                                <div class="ws-todo-body">
+                                    <div class="ws-todo-name">干线批次结算</div>
+                                    <div class="ws-todo-meta">2 笔 · 2月份未结清</div>
+                                </div>
+                                <span class="ws-todo-arrow">›</span>
+                            </div>
+                            <div class="ws-todo-item ws-todo-item--blue" onclick="loadContent('ExpenseDaily')">
+                                <div class="ws-todo-dot"></div>
+                                <div class="ws-todo-body">
+                                    <div class="ws-todo-name">费用报销审批</div>
+                                    <div class="ws-todo-meta">3 笔待批 · 合计 ¥4,800</div>
+                                </div>
+                                <span class="ws-todo-arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2月账期进度 -->
+                    <div class="ws-aside-card">
+                        <div class="ws-aside-head">
+                            <span class="ws-aside-head__title">2月账期进度</span>
+                            <span class="ws-aside-head__count">结账中</span>
+                        </div>
+                        <div class="ws-progress-list">
+                            <div class="ws-prog-row">
+                                <span class="ws-prog-label">应收确认</span>
+                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:82%;background:#3498db"></div></div>
+                                <span class="ws-prog-val">82%</span>
+                            </div>
+                            <div class="ws-prog-row">
+                                <span class="ws-prog-label">应付结算</span>
+                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:67%;background:#8e44ad"></div></div>
+                                <span class="ws-prog-val">67%</span>
+                            </div>
+                            <div class="ws-prog-row">
+                                <span class="ws-prog-label">凭证完成</span>
+                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:91%;background:#27ae60"></div></div>
+                                <span class="ws-prog-val">91%</span>
+                            </div>
+                            <div class="ws-prog-row">
+                                <span class="ws-prog-label">结账进度</span>
+                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:45%;background:#e67e22"></div></div>
+                                <span class="ws-prog-val">45%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
-    `;
+        `;
     }
 
     // =========================================================================
@@ -711,6 +1046,7 @@ function loadContent(moduleCode, element = null) {
 	            { key: "collectFreightAccrualStatus", label: "代收运费挂账状态", align: "center" },
 	            { key: "remark", label: "运单备注" },
 	            { key: "flag", label: "运单标识" },
+	            { key: "invoiceStatus", label: "开票状态", align: "center" },
 	        ];
 
 	        const excelWaybills =             [
@@ -1777,6 +2113,7 @@ function loadContent(moduleCode, element = null) {
 	                collectFreightAccrualStatus: "",
 	                remark: (w && w.remark) ? w.remark : "",
 	                flag: (w && w.flag) ? w.flag : "",
+	                invoiceStatus: (w && w.invoiceStatus) ? w.invoiceStatus : "",
 	            };
 	        });
 
@@ -1863,6 +2200,13 @@ function loadContent(moduleCode, element = null) {
 		            if (col.key === "waybillNo") {
 		                const id = esc(value || w.id || "");
 		                return `<a class="wb-link" href="javascript:void(0)">${id}</a>`;
+		            }
+		            if (col.key === "invoiceStatus") {
+		                const s = (value || "").toString();
+		                if (s === "已核销") return `<span style="color:#27ae60;font-weight:bold;">已核销</span>`;
+		                if (s === "已开票") return `<span style="color:#2980b9;font-weight:bold;">已开票</span>`;
+		                if (s === "申请中") return `<span style="color:#f39c12;">申请中</span>`;
+		                return `<span style="color:#bdc3c7;">-</span>`;
 		            }
 		            if (col.align === "right") {
 		                const text = esc(value || "");
@@ -2039,269 +2383,6 @@ function loadContent(moduleCode, element = null) {
 		                `;
 		    }
 
-    // =========================================================================
-    // 5. 干线批次挂帐 (SettlementTrunk) - [数据升级：支持详尽费用明细]
-    // =========================================================================
-    else if (moduleCode === "SettlementTrunk") {
-        let trunkBatches = JSON.parse(sessionStorage.getItem('TrunkBatches'));
-
-        // 如果数据结构里没有 unloading (卸车费)，强制刷新数据
-        if (trunkBatches && trunkBatches.length > 0 && trunkBatches[0].fees.unloading === undefined) {
-            trunkBatches = null;
-        }
-
-        if (!trunkBatches || trunkBatches.length < 5) {
-            trunkBatches = [];
-            const routeMap = [
-                { r: "上海->北京", b: "上海浦东分拨中心", dest: "北京顺义转运场" },
-                { r: "广州->武汉", b: "广州白云转运中心", dest: "武汉东西湖分拨" },
-                { r: "成都->西安", b: "成都双流集散仓", dest: "西安沣东转运中心" },
-                { r: "深圳->长沙", b: "深圳宝安分拨中心", dest: "长沙雨花集散地" },
-                { r: "杭州->郑州", b: "杭州萧山转运场", dest: "郑州经开分拨" }
-            ];
-            const drivers = ["张三", "李四", "王五", "赵六", "钱七", "孙八", "周九", "吴十", "郑十一", "卫十二"];
-            const batchStatuses = ["运输中", "已到达", "已卸车", "已发车"];
-            const payTypes = ["现付", "到付", "回单付", "月结"];
-
-            for (let i = 1; i <= 10; i++) {
-                const isSettled = i <= 3;
-                const currentPayType = payTypes[i % 4];
-                const routeInfo = routeMap[i % 5];
-                const dateBase = `2025-11-${10 + i}`;
-
-                // ★★★ 费用构成模拟 ★★★
-                const baseFee = 2500 + (i * 100); // 干线费
-                const loadFee = 200;              // 装车费
-                const unloadFee = i % 2 === 0 ? 150 : 0; // 卸车费 (偶数行有)
-                const abnFee = i % 3 === 0 ? 50 : 0;     // 异动费 (每3行有)
-                const otherFee = i % 5 === 0 ? 100 : 0;  // 其他费 (每5行有)
-
-                const total = baseFee + loadFee + unloadFee + abnFee + otherFee;
-
-                trunkBatches.push({
-                    id: `APC2511${i.toString().padStart(3, '0')}`,
-                    branch: routeInfo.b,
-                    route: routeInfo.r,
-                    plate: `沪A${1000 + i}`,
-                    driver: drivers[i - 1],
-                    date: dateBase,
-                    batchStatus: batchStatuses[i % 4],
-                    settlementStatus: isSettled ? "已挂帐" : "未挂帐",
-                    paymentType: currentPayType,
-
-                    totalAmount: total,
-                    paidAmount: isSettled ? total : 0,
-
-                    // ★★★ 详细费用结构 ★★★
-                    fees: {
-                        trunk: baseFee,         // 干线费
-                        loading: loadFee,       // 装车费
-                        unloading: unloadFee,   // 卸车费
-                        abnormal: abnFee,       // 异动费
-                        abnormalDesc: "停车费", // 异动说明
-                        other: otherFee,        // 其他费
-                        otherDesc: "雨布耗材"   // 其他说明
-                    },
-
-                    timeline: [
-                        { time: `${dateBase} 08:30`, event: "创建批次，等待装车" },
-                        { time: `${dateBase} 10:30`, event: "司机已发车" },
-                        { time: `${dateBase} 23:45`, event: `预计到达【${routeInfo.dest}】` }
-                    ]
-                });
-            }
-            sessionStorage.setItem('TrunkBatches', JSON.stringify(trunkBatches));
-        }
-
-        // 渲染表格 (保持原样，只做简单展示)
-        const rows = trunkBatches.map(row => {
-            let batchBadge = "";
-            switch (row.batchStatus) {
-                case '已卸车': batchBadge = `<span style="color:#27ae60; border:1px solid #27ae60; padding:1px 4px; border-radius:3px; font-size:11px;"> 已卸车</span>`; break;
-                case '运输中': batchBadge = `<span style="color:#3498db; border:1px solid #3498db; padding:1px 4px; border-radius:3px; font-size:11px;"> 运输中</span>`; break;
-                default: batchBadge = `<span style="color:#f39c12; border:1px solid #f39c12; padding:1px 4px; border-radius:3px; font-size:11px;">${row.batchStatus}</span>`;
-            }
-
-            let typeBadge = "";
-            if (row.paymentType === '现付') typeBadge = `<span style="color:#e67e22; background:#fff7e6; padding:2px 6px; border-radius:4px;"> 现付</span>`;
-            else if (row.paymentType === '到付') typeBadge = `<span style="color:#2980b9; background:#e6f7ff; padding:2px 6px; border-radius:4px;"> 到付</span>`;
-            else if (row.paymentType === '回单付') typeBadge = `<span style="color:#8e44ad; background:#f3e5f5; padding:2px 6px; border-radius:4px;"> 回单付</span>`;
-            else typeBadge = `<span style="color:#16a085; background:#e8f8f5; padding:2px 6px; border-radius:4px;"> 月结</span>`;
-
-            const moneyHtml = row.settlementStatus === '已挂帐'
-                ? `<div style="color:#27ae60; font-weight:bold; font-size:15px;">${row.totalAmount.toLocaleString()} <span style="font-size:12px">✔</span></div>`
-                : `<div style="color:#e74c3c; font-weight:bold; font-size:15px;">${row.totalAmount.toLocaleString()}</div>`;
-
-            let actionBtn = row.settlementStatus === '已挂帐'
-                ? `<span style="color:#ccc; font-size:12px;">已转应付</span>`
-                : `<button class="btn-primary" style="padding:4px 10px; font-size:12px;" onclick="sendToAP('${row.id}')">挂帐</button>`;
-
-            return `
-            <tr>
-                <td><a href="javascript:void(0)" onclick="viewTrunkDetail('${row.id}')" style="font-weight:bold; color:#3498db;">${row.id}</a></td>
-                <td>${row.branch}</td>
-                <td><span style="color:#333; font-weight:500;">${row.route}</span></td>
-                <td><div style="font-weight:bold;">${row.plate}</div><div style="font-size:12px; color:#666;">${row.driver}</div></td>
-                <td>${batchBadge}</td>
-                <td>${typeBadge}</td>
-                <td style="text-align:right;">${moneyHtml}</td>
-                <td style="text-align:right; font-size:12px; color:#999;"> </td>
-                <td>${row.settlementStatus === '已挂帐' ? '<span style="color:#27ae60;">已挂帐</span>' : '<span style="color:#e74c3c;">未挂帐</span>'}</td>
-                <td>${actionBtn}</td>
-            </tr>
-        `;
-        }).join('');
-
-        contentHTML += `
-        <h2>干线批次挂帐 (Trunk Settlement)</h2>
-        <div class="filter-area" style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" placeholder="批次号/车牌" style="padding:8px; border:1px solid #ccc;">
-            <select style="padding:8px; border:1px solid #ccc;"><option>全部支付方式</option><option>现付</option><option>到付</option><option>回单付</option><option>月结</option></select>
-            <button class="btn-primary">查询</button>
-        </div>
-        <table class="data-table">
-            <thead><tr><th>批次号</th><th>出发网点</th><th>线路</th><th>车辆/司机</th><th>批次状态</th><th>支付方式</th><th style="text-align:right;">总运费</th><th style="text-align:right;">费用备注</th><th>结算状态</th><th>操作</th></tr></thead>
-            <tbody>${rows}</tbody>
-        </table>
-    `;
-    }
-
-    // =========================================================================
-    // 5.1 干线批次详情页 (SettlementTrunkDetail) - [全字段固定展示版]
-    // =========================================================================
-    else if (moduleCode === "SettlementTrunkDetail") {
-        const id = window.g_currentTrunkId;
-        const list = JSON.parse(sessionStorage.getItem('TrunkBatches') || "[]");
-        const item = list.find(i => i.id === id);
-
-        if (!item) {
-            contentHTML += `<div style="padding:20px;"><h3>⚠️ 数据缺失</h3><button class="btn-primary" onclick="loadContent('SettlementTrunk')">返回列表</button></div>`;
-        } else {
-            // 1. 时间轴 (保持不变)
-            const timelineHtml = item.timeline ? item.timeline.map((t, index) => {
-                const isLast = index === item.timeline.length - 1;
-                const color = isLast ? '#27ae60' : '#3498db';
-                return `
-              <div style="display:flex; margin-bottom:0;">
-                  <div style="width:140px; text-align:right; padding-right:15px; color:#999; font-size:12px; padding-top:2px;">${t.time}</div>
-                  <div style="position:relative; border-left:2px solid #eee; padding-left:20px; padding-bottom:20px;">
-                      <div style="position:absolute; left:-6px; top:4px; width:10px; height:10px; border-radius:50%; background:${color}; border:2px solid white; box-shadow:0 0 0 1px ${color};"></div>
-                      <div style="font-size:13px; color:#333; font-weight:${isLast ? 'bold' : 'normal'}">${t.event}</div>
-                  </div>
-              </div>`}).join('') : '';
-
-            // ★★★ 2. 费用明细 (核心修改：全字段列举，0元留空) ★★★
-            const fees = item.fees || {};
-            let feeRows = "";
-
-            // 辅助函数：如果金额>0显示金额，否则显示 "-"；说明栏同理
-            const fmtVal = (val) => (val && val > 0) ? val.toLocaleString() : '-';
-            const fmtDesc = (val, desc) => (val && val > 0) ? desc : '';
-
-            // (1) 干线费
-            feeRows += `
-            <tr>
-                <td>干线运费</td>
-                <td style="text-align:right; font-weight:bold;">${fmtVal(fees.trunk)}</td>
-                <td style="text-align:right; color:#999;">${fmtDesc(fees.trunk, '基础运费')}</td>
-            </tr>`;
-
-            // (2) 装车费
-            feeRows += `
-            <tr>
-                <td>装车费</td>
-                <td style="text-align:right;">${fmtVal(fees.loading)}</td>
-                <td style="text-align:right; color:#999;">${fmtDesc(fees.loading, '始发操作')}</td>
-            </tr>`;
-
-            // (3) 卸车费
-            feeRows += `
-            <tr>
-                <td>卸车费</td>
-                <td style="text-align:right;">${fmtVal(fees.unloading)}</td>
-                <td style="text-align:right; color:#999;">${fmtDesc(fees.unloading, '到达操作')}</td>
-            </tr>`;
-
-            // (4) 异动费用
-            feeRows += `
-            <tr>
-                <td style="${fees.abnormal > 0 ? 'color:#d35400;' : ''}">异动费用</td>
-                <td style="text-align:right; ${fees.abnormal > 0 ? 'color:#d35400;' : ''}">${fmtVal(fees.abnormal)}</td>
-                <td style="text-align:right; color:#999;">${fmtDesc(fees.abnormal, fees.abnormalDesc)}</td>
-            </tr>`;
-
-            // (5) 其他费用
-            feeRows += `
-            <tr>
-                <td>其他费用</td>
-                <td style="text-align:right;">${fmtVal(fees.other)}</td>
-                <td style="text-align:right; color:#999;">${fmtDesc(fees.other, fees.otherDesc)}</td>
-            </tr>`;
-
-
-            const actionBtn = item.settlementStatus === '已挂帐'
-                ? `<button class="btn-primary" disabled style="background:#ccc; cursor:not-allowed;">已转应付</button>`
-                : `<button class="btn-primary" style="background:#27ae60;" onclick="sendToAP('${item.id}')">发起挂帐</button>`;
-
-            contentHTML += `
-            <div style="margin-bottom:20px;">
-                <button class="btn-primary" style="background:#95a5a6; padding:5px 15px;" onclick="loadContent('SettlementTrunk')"> < 返回列表</button>
-                <h2 style="display:inline-block; margin-left:15px; vertical-align:middle;">批次详情：<span style="color:#2980b9;">${item.id}</span></h2>
-            </div>
-
-            <div style="display:flex; gap:20px;">
-                <div style="flex:1;">
-                    <div style="background:white; padding:20px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">🚛 运输信息</h3>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px;">
-                            <div><label style="color:#999;">出发网点：</label> <b>${item.branch}</b></div>
-                            <div><label style="color:#999;">线路：</label> <b>${item.route}</b></div>
-                            <div><label style="color:#999;">状态：</label> <b style="color:#2980b9">${item.batchStatus}</b></div>
-                            <div><label style="color:#999;">车牌：</label> ${item.plate}</div>
-                            <div><label style="color:#999;">司机：</label> ${item.driver}</div>
-                            <div><label style="color:#999;">发车时间：</label> ${item.date}</div>
-                        </div>
-                    </div>
-                    <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">📍 运输轨迹 (Tracking)</h3>
-                        <div style="padding-top:10px;">${timelineHtml}</div>
-                    </div>
-                </div>
-
-                <div style="flex:1; height:fit-content; background:white; padding:20px; border-radius:8px; border-top:4px solid #e67e22; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="margin-top:0;">💰 费用结算</h3>
-                        <span style="padding:4px 8px; border-radius:4px; font-size:12px; ${item.settlementStatus === '已挂帐' ? 'background:#e6f7ff;color:#2980b9' : 'background:#fff7e6;color:#e67e22'}">
-                            ${item.settlementStatus}
-                        </span>
-                    </div>
-                    <table class="data-table">
-                        <thead><tr><th>费用项目</th><th style="text-align:right">金额 (RMB)</th><th style="text-align:right">备注</th></tr></thead>
-                        <tbody>
-                            ${feeRows}
-                            <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #eee;">
-                                <td>应付总额</td>
-                                <td style="text-align:right; font-size:18px; color:#e74c3c;">${item.totalAmount.toLocaleString()}</td>
-                                <td style="text-align:right;">${item.paymentType}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div style="margin-top:30px; text-align:right;">${actionBtn}</div>
-                </div>
-            </div>
-          `;
-        }
-    }
-
-    // =========================================================================
-    // 应付管理：仅保留两个子模块（先做空白页）
-    // =========================================================================
-    else if (moduleCode === "APTrunkBatchSettlement") {
-        contentHTML += `<div style="height:600px;"></div>`;
-    }
-    else if (moduleCode === "APShortBatchSettlement") {
-        contentHTML += `<div style="height:600px;"></div>`;
-    }
     // 旧模块下线（保留入口以避免老逻辑跳转时报错）
     else if (moduleCode === "APPaymentApply" || moduleCode === "APPrepayment" || moduleCode === "APPaymentVerify") {
         contentHTML += `<div style="padding:20px; color:#999;">该模块已下线，请使用【应付管理 > 干线批次结算 / 短途批次结算】。</div>`;
@@ -2309,132 +2390,337 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // ★★★ [优化版] 科目余额表 (含方向判断 + 借贷平衡) ★★★
+    // ★★★ [完整版] 科目余额表 (双模式 + 完整筛选条件) ★★★
     // =========================================================================
     else if (moduleCode === "AcctSubjectBalance") {
-        let vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-        let balanceMap = {};
-        let totalDebit = 0; // 借方总计
-        let totalCredit = 0; // 贷方总计
+        // ── 读取所有筛选状态 ──
+        const sbMode     = sessionStorage.getItem("AcctSubjectMode")       || "balance";
+        const periodFrom = sessionStorage.getItem("AcctSubjectPeriodFrom") || "";
+        const periodTo   = sessionStorage.getItem("AcctSubjectPeriodTo")   || "";
+        const sbCategory = sessionStorage.getItem("AcctSubjectCategory")   || "";
+        const sbSubjCode = sessionStorage.getItem("AcctSubjectFilterCode") || "";
+        const levelMode  = sessionStorage.getItem("AcctSubjectLevelMode")  || "level";
+        const levelFrom  = parseInt(sessionStorage.getItem("AcctSubjectLevelFrom") || "1");
+        const levelTo    = parseInt(sessionStorage.getItem("AcctSubjectLevelTo")   || "4");
+        const inclUnpost = sessionStorage.getItem("AcctSubjectInclUnpost") !== "false";
+        const showCumul  = sessionStorage.getItem("AcctSubjectShowCumul")  === "true";
 
-        // 1. 汇总逻辑
-        vouchers.forEach(v => {
-            if (v.lines) {
-                v.lines.forEach(line => {
-                    let fullAccount = line.account || "9999 未知科目";
-                    let code = fullAccount.split(' ')[0];
-                    let name = fullAccount.split(' ')[1] || fullAccount;
+        const allVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
+        const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
 
-                    if (!balanceMap[code]) {
-                        // 初始化：direction 1为借(Asset/Cost), -1为贷(Liability/Equity/Income)
-                        // 简单规则：1/5/6开头通常在借方(成本费用)，2/3/4/6(收入)开头通常在贷方
-                        // 这里做个简易判断：
-                        let dir = 1;
-                        if (code.startsWith('2') || code.startsWith('3') || code.startsWith('4') || (code.startsWith('6') && name.includes('收入'))) {
-                            dir = -1;
-                        }
+        // 科目信息表（快速查 type / direction / name）
+        const subjInfoMap = {};
+        allSubjects.forEach(s => { subjInfoMap[s.code] = s; });
 
-                        balanceMap[code] = {
-                            name: name,
-                            dir: dir, // 方向
-                            open: 0, // 模拟期初
-                            debit: 0,
-                            credit: 0
-                        };
-                    }
+        // 可用期间列表
+        const allPeriods = Array.from(new Set(
+            allVouchers.map(v => v.date).filter(Boolean).map(d => d.slice(0, 7))
+        )).sort();
+        const mkPeriodOpts = (sel) =>
+            `<option value="">--</option>` +
+            allPeriods.map(p => `<option value="${p}" ${sel === p ? 'selected' : ''}>${p.replace('-','.')}</option>`).join('');
 
-                    balanceMap[code].debit += parseFloat(line.debit || 0);
-                    balanceMap[code].credit += parseFloat(line.credit || 0);
-                });
+        // 科目类别列表
+        const allCategories = Array.from(new Set(allSubjects.map(s => s.type).filter(Boolean)));
+        const catOpts = `<option value="">全部</option>` +
+            allCategories.map(c => `<option value="${c}" ${sbCategory===c?'selected':''}>${c}</option>`).join('');
+
+        // 科目列表
+        const subjOpts = `<option value="">全部</option>` +
+            allSubjects.map(s => `<option value="${s.code}" ${sbSubjCode===s.code?'selected':''}>${s.code} ${s.name}</option>`).join('');
+
+        // 级次辅助
+        const getLevel = code => (String(code).match(/\./g) || []).length + 1;
+        const lvOpts = (sel) => [1,2,3,4,5].map(n =>
+            `<option value="${n}" ${sel===n?'selected':''}>${n}</option>`).join('');
+
+        // ── 凭证筛选（期间 + 是否含未记账） ──
+        const vouchers = allVouchers.filter(v => {
+            if (!v.date) return false;
+            const p = v.date.slice(0, 7);
+            if (periodFrom && p < periodFrom) return false;
+            if (periodTo   && p > periodTo)   return false;
+            if (!inclUnpost) {
+                const s = (v.status || "");
+                if (s && !["已记账","已审核","已提交"].includes(s)) return false;
             }
+            return true;
         });
 
-        // 2. 生成行
-        let rows = Object.keys(balanceMap).sort().map(code => {
-            let item = balanceMap[code];
+        // ── 汇总发生额 ──
+        const balanceMap = {};
+        vouchers.forEach(v => {
+            if (!v.lines) return;
+            v.lines.forEach(line => {
+                const parts = (line.account || "9999 未知科目").split(' ');
+                const code = parts[0], name = parts[1] || parts[0];
+                if (!balanceMap[code]) {
+                    const si = subjInfoMap[code];
+                    const dir = si
+                        ? (si.direction === "贷" ? -1 : 1)
+                        : (code.startsWith('2')||code.startsWith('3')||code.startsWith('4')||
+                           (code.startsWith('6')&&name.includes('收入'))) ? -1 : 1;
+                    balanceMap[code] = { name: si ? si.name : name, type: si ? si.type : '', dir, open: 0, debit: 0, credit: 0 };
+                }
+                balanceMap[code].debit  += parseFloat(line.debit  || 0);
+                balanceMap[code].credit += parseFloat(line.credit || 0);
+            });
+        });
 
-            // ★★★ 核心：根据方向计算期末余额 ★★★
-            // 如果是借方科目：期初 + 借 - 贷
-            // 如果是贷方科目：期初 + 贷 - 借
-            let close = 0;
-            let dirText = "";
+        // 平衡校验模式：补全所有科目
+        if (sbMode === "trial") {
+            allSubjects.forEach(s => {
+                if (!balanceMap[s.code]) balanceMap[s.code] = {
+                    name: s.name, type: s.type, dir: s.direction === "贷" ? -1 : 1, open: 0, debit: 0, credit: 0
+                };
+            });
+        }
 
-            if (item.dir === 1) {
-                dirText = "借";
-                close = item.open + item.debit - item.credit;
+        // 所有科目的历史发生集合（用于"累计有发生"过滤）
+        const cumulCodes = new Set();
+        if (showCumul) {
+            allVouchers.forEach(v => {
+                if (!v.lines) return;
+                v.lines.forEach(line => { cumulCodes.add((line.account||"").split(' ')[0]); });
+            });
+        }
+
+        // 叶子科目判断（无子科目）
+        const allCodes = Object.keys(balanceMap);
+        const isLeaf = code => !allCodes.some(c => c !== code && c.startsWith(code + '.'));
+
+        // ── 应用筛选条件 ──
+        const filteredCodes = allCodes.filter(code => {
+            const item = balanceMap[code];
+            if (sbCategory && item.type !== sbCategory) return false;
+            if (sbSubjCode && !code.startsWith(sbSubjCode)) return false;
+            const lv = getLevel(code);
+            if (levelMode === "level") {
+                if (lv < levelFrom || lv > levelTo) return false;
             } else {
-                dirText = "贷";
-                close = item.open + item.credit - item.debit;
+                if (!isLeaf(code)) return false;
             }
+            const hasActivity = item.debit || item.credit || item.open;
+            if (!hasActivity) {
+                if (showCumul && cumulCodes.has(code)) return true; // 累计有发生也显示
+                return false;
+            }
+            return true;
+        }).sort();
 
-            // 累加总计
-            totalDebit += item.debit;
-            totalCredit += item.credit;
+        // ── 生成行 ──
+        const fmt  = n => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        const blue = n => n ? `<span style="color:#2196f3">${fmt(n)}</span>` : '';
+        let totOD=0, totOC=0, totD=0, totC=0, totED=0, totEC=0, rowNum=0;
 
-            return `
-            <tr>
-                <td><b>${code}</b></td>
-                <td>${item.name}</td>
-                <td style="text-align:center; color:#999; font-size:12px;">${dirText}</td>
-                <td style="text-align:right; color:#999;">${item.open.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td style="text-align:right;">${item.debit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td style="text-align:right;">${item.credit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td style="text-align:right; font-weight:bold; color:#2c3e50;">${close.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td>
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#fff; color:#3498db; border:1px solid #3498db;" 
-                        onclick="window.openSubjectDetail('${code}', '${item.name}')">
-                        明细
-                    </button>
-                </td>
-            </tr>
-        `;
+        const rows = filteredCodes.map(code => {
+            rowNum++;
+            const item  = balanceMap[code];
+            const close = item.dir === 1
+                ? item.open + item.debit - item.credit
+                : item.open + item.credit - item.debit;
+            const openD = item.dir===1 && item.open>0 ? item.open : 0;
+            const openC = item.dir===-1 && item.open>0 ? item.open : 0;
+            const closeD = close>0 ? close : 0;
+            const closeC = close<0 ? -close : 0;
+            totOD+=openD; totOC+=openC; totD+=item.debit; totC+=item.credit; totED+=closeD; totEC+=closeC;
+
+            if (sbMode === "balance") {
+                return `<tr>
+                    <td style="text-align:center;color:#aaa;">${rowNum}</td>
+                    <td style="font-family:monospace;font-size:13px;">${code}</td>
+                    <td>${item.name}</td>
+                    <td style="text-align:right;">${blue(openD)}</td>
+                    <td style="text-align:right;">${blue(openC)}</td>
+                    <td style="text-align:right;">${blue(item.debit)}</td>
+                    <td style="text-align:right;">${blue(item.credit)}</td>
+                    <td style="text-align:right;">${blue(closeD)}</td>
+                    <td style="text-align:right;">${blue(closeC)}</td>
+                    <td style="text-align:center;"><a href="javascript:void(0)" style="color:#3498db;font-size:13px;"
+                        onclick="window.openSubjectDetail('${code}','${item.name}')">明细</a></td>
+                </tr>`;
+            } else {
+                const g = n => `<span style="color:${n?'#333':'#bbb'}">${fmt(n)}</span>`;
+                return `<tr>
+                    <td style="font-family:monospace;font-size:13px;">${code}</td>
+                    <td>${item.name}</td>
+                    <td style="text-align:right;">${g(openD)}</td><td style="text-align:right;">${g(openC)}</td>
+                    <td style="text-align:right;">${g(item.debit)}</td><td style="text-align:right;">${g(item.credit)}</td>
+                    <td style="text-align:right;">${g(closeD)}</td><td style="text-align:right;">${g(closeC)}</td>
+                </tr>`;
+            }
         }).join('');
 
-        // 3. 试算平衡行 (Footer)
-        let balanceColor = Math.abs(totalDebit - totalCredit) < 0.01 ? '#27ae60' : '#e74c3c';
-        let balanceText = Math.abs(totalDebit - totalCredit) < 0.01 ? '✔ 试算平衡' : '❌ 不平衡';
+        // ── 合计行 ──
+        const isBalanced = Math.abs(totD - totC) < 0.01;
+        const balColor   = isBalanced ? '#52c41a' : '#e74c3c';
+        const balText    = isBalanced ? '试算结果平衡' : `不平衡，差额 ${fmt(Math.abs(totD-totC))}`;
+        const numStyle   = sbMode==='balance' ? 'color:#2196f3;' : '';
+        const totalCols  = `${sbMode==='balance'?'<td></td>':''}<td colspan="2" style="text-align:center;font-weight:bold;">合计</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totOD)}</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totOC)}</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totD)}</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totC)}</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totED)}</td>
+            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totEC)}</td>
+            ${sbMode==='balance'?'<td></td>':''}`;
 
-        rows += `
-        <tr style="background:#f9f9f9; font-weight:bold; border-top:2px solid #ddd;">
-            <td colspan="3" style="text-align:center;">合计 (Total)</td>
-            <td>-</td>
-            <td style="text-align:right; color:#2980b9;">${totalDebit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-            <td style="text-align:right; color:#2980b9;">${totalCredit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-            <td style="text-align:right; color:${balanceColor};">${balanceText}</td>
-            <td></td>
-        </tr>
-    `;
+        // ── 期间显示 ──
+        const pFrom = periodFrom ? periodFrom.replace('-','.') : (allPeriods[0]||'').replace('-','.');
+        const pTo   = periodTo   ? periodTo.replace('-','.')   : (allPeriods[allPeriods.length-1]||'').replace('-','.');
+        const periodLabel = (pFrom || pTo) ? `${pFrom||'--'} - ${pTo||'--'}` : '全部';
+
+        // ── 表头 ──
+        const seqTh    = sbMode==='balance' ? '<th rowspan="2" style="width:46px;text-align:center;">序号</th>' : '';
+        const detailTh = sbMode==='balance' ? '<th rowspan="2" style="width:52px;text-align:center;">操作</th>' : '';
+        const detailTd = sbMode==='balance' ? '<th></th>' : '';
 
         contentHTML += `
-        <h2>📊 科目余额表 (Subject Balance Sheet)</h2>
-        <div style="margin-bottom:15px; display:flex; gap:10px;">
-            <div style="background:#fff; padding:10px 20px; border-left:4px solid #3498db; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color:#7f8c8d; font-size:12px;">资产总额</span><br>
-                <b>${(totalDebit).toLocaleString()}</b>
+        <style>
+            .sb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+            .sb-seg{display:flex;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;}
+            .sb-seg button{padding:6px 18px;border:none;font-size:14px;cursor:pointer;background:#fff;color:#555;}
+            .sb-seg button.on{background:#1890ff;color:#fff;}
+            .sb-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-bottom:12px;padding:0 0 4px;}
+            .sb-frow{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f0f0;gap:10px;}
+            .sb-frow:last-child{border-bottom:none;}
+            .sb-flabel{font-size:14px;color:#555;min-width:70px;white-space:nowrap;}
+            .sb-flabel.req::before{content:"* ";color:#e74c3c;}
+            .sb-frow select,.sb-frow input[type=text]{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
+            .sb-lv-box{border:1px solid #e0e0e0;border-radius:6px;padding:8px 12px;display:flex;flex-direction:column;gap:8px;margin:0 4px;}
+            .sb-lv-row{display:flex;align-items:center;gap:8px;font-size:14px;color:#333;}
+            .sb-chk-row{display:flex;align-items:center;gap:6px;font-size:14px;color:#333;padding:8px 16px;}
+            .sb-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
+            .sb-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;}
+            .sb-card-title{text-align:center;font-size:22px;font-weight:bold;padding:22px 0 2px;color:#222;}
+            .sb-card-period{font-size:13px;color:#888;padding:4px 20px 14px;}
+            .sb-tbl{width:100%;border-collapse:collapse;font-size:14px;}
+            .sb-tbl th{padding:9px 12px;font-weight:500;color:#444;background:#f5f6f8;border-bottom:1px solid #e8e8e8;white-space:nowrap;}
+            .sb-tbl td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+            .sb-tbl tbody tr:hover{background:#f9fbff;}
+            .sb-tbl tfoot tr{background:#f5f6f8;}
+        </style>
+
+        <!-- 顶部模式切换 -->
+        <div class="sb-top">
+            <div class="sb-seg">
+                <button class="${sbMode==='balance'?'on':''}"
+                    onclick="sessionStorage.setItem('AcctSubjectMode','balance');loadContent('AcctSubjectBalance')">余额查询</button>
+                <button class="${sbMode==='trial'?'on':''}"
+                    onclick="sessionStorage.setItem('AcctSubjectMode','trial');loadContent('AcctSubjectBalance')">平衡校验</button>
             </div>
-            <div style="background:#fff; padding:10px 20px; border-left:4px solid #27ae60; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                <span style="color:#7f8c8d; font-size:12px;">凭证张数</span><br>
-                <b>${vouchers.length} 张</b>
-            </div>
-             <button class="btn-primary" onclick="initDemoFinanceData()" style="margin-left:auto; background:#95a5a6;">🔄 重置测试数据</button>
+            ${sbMode==='trial' ? `<input type="text" value="${balText}" readonly
+                style="padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;min-width:200px;color:${balColor};background:#fafafa;">` : ''}
         </div>
 
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:100px;">科目编码</th>
-                    <th>科目名称</th>
-                    <th style="width:50px;">方向</th>
-                    <th style="text-align:right;">期初余额</th>
-                    <th style="text-align:right;">本期借方</th>
-                    <th style="text-align:right;">本期贷方</th>
-                    <th style="text-align:right;">期末余额</th>
-                    <th style="width:80px;">操作</th>
-                </tr>
-            </thead>
-            <tbody>${rows || '<tr><td colspan="8" style="text-align:center">暂无数据，请点击右上角重置数据</td></tr>'}</tbody>
-        </table>
-    `;
+        <!-- 筛选条件面板 -->
+        <div class="sb-fcard">
+            <div class="sb-frow">
+                <span class="sb-flabel req">期间</span>
+                <select id="sb-pf">${mkPeriodOpts(periodFrom)}</select>
+                <span style="color:#999;padding:0 4px;">-</span>
+                <select id="sb-pt">${mkPeriodOpts(periodTo)}</select>
+            </div>
+            <div class="sb-frow">
+                <span class="sb-flabel">科目类别</span>
+                <select id="sb-cat" style="min-width:160px;">${catOpts}</select>
+            </div>
+            <div class="sb-frow">
+                <span class="sb-flabel">科目</span>
+                <select id="sb-subj" style="min-width:240px;">${subjOpts}</select>
+            </div>
+            <div class="sb-frow">
+                <div class="sb-lv-box">
+                    <div class="sb-lv-row">
+                        <input type="radio" name="sb-lv-mode" id="sb-lv-mode-level" value="level" ${levelMode==='level'?'checked':''}>
+                        <label for="sb-lv-mode-level" style="cursor:pointer;">
+                            <span class="sb-flabel req" style="min-width:auto;">级次</span>
+                        </label>
+                        <select id="sb-lv-from" style="min-width:60px;">${lvOpts(levelFrom)}</select>
+                        <span style="color:#999;">-</span>
+                        <select id="sb-lv-to" style="min-width:60px;">${lvOpts(levelTo)}</select>
+                    </div>
+                    <div class="sb-lv-row">
+                        <input type="radio" name="sb-lv-mode" id="sb-lv-mode-leaf" value="leaf" ${levelMode==='leaf'?'checked':''}>
+                        <label for="sb-lv-mode-leaf" style="cursor:pointer;">末级科目</label>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;">
+                <label class="sb-chk-row">
+                    <input type="checkbox" id="sb-unpost" ${inclUnpost?'checked':''}>
+                    <span>包含未记账</span>
+                </label>
+                <label class="sb-chk-row">
+                    <input type="checkbox" id="sb-cumul" ${showCumul?'checked':''}>
+                    <span>显示无余额无发生、累计有发生</span>
+                </label>
+            </div>
+            <div class="sb-actions">
+                <button onclick="window.sbReset()" style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
+                <button class="btn-primary" onclick="window.sbQuery()">查询</button>
+            </div>
+        </div>
+
+        <!-- 数据卡片 -->
+        <div class="sb-card">
+            ${sbMode==='balance' ? `
+            <div class="sb-card-title">发生额及余额表</div>
+            <div class="sb-card-period">期间：${periodLabel}</div>` : ''}
+            <table class="sb-tbl">
+                <thead>
+                    <tr>
+                        ${seqTh}
+                        <th rowspan="2" style="width:110px;">科目编码</th>
+                        <th rowspan="2">科目名称</th>
+                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">期初余额</th>
+                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">本期发生</th>
+                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">期末余额</th>
+                        ${detailTh}
+                    </tr>
+                    <tr>
+                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
+                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
+                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
+                        ${detailTd}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows || `<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">暂无符合条件的数据</td></tr>`}
+                </tbody>
+                <tfoot><tr>${totalCols}</tr></tfoot>
+            </table>
+        </div>
+
+        ${sbMode==='trial' ? `
+        <div style="margin-top:10px;padding:10px 14px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:13px;color:#7c5a00;">
+            说明：三组合计（期初借=期初贷、发生借=发生贷、期末借=期末贷）全部相等方为完全平衡。
+        </div>` : ''}
+        `;
+
+        // 挂载查询函数
+        setTimeout(() => {
+            window.sbQuery = function() {
+                sessionStorage.setItem('AcctSubjectPeriodFrom', document.getElementById('sb-pf').value);
+                sessionStorage.setItem('AcctSubjectPeriodTo',   document.getElementById('sb-pt').value);
+                sessionStorage.setItem('AcctSubjectCategory',   document.getElementById('sb-cat').value);
+                sessionStorage.setItem('AcctSubjectFilterCode', document.getElementById('sb-subj').value);
+                sessionStorage.setItem('AcctSubjectLevelMode',
+                    document.querySelector('input[name="sb-lv-mode"]:checked').value);
+                sessionStorage.setItem('AcctSubjectLevelFrom',  document.getElementById('sb-lv-from').value);
+                sessionStorage.setItem('AcctSubjectLevelTo',    document.getElementById('sb-lv-to').value);
+                sessionStorage.setItem('AcctSubjectInclUnpost', document.getElementById('sb-unpost').checked ? 'true' : 'false');
+                sessionStorage.setItem('AcctSubjectShowCumul',  document.getElementById('sb-cumul').checked  ? 'true' : 'false');
+                loadContent('AcctSubjectBalance');
+            };
+            window.sbReset = function() {
+                ['AcctSubjectPeriodFrom','AcctSubjectPeriodTo','AcctSubjectCategory',
+                 'AcctSubjectFilterCode','AcctSubjectLevelMode','AcctSubjectLevelFrom',
+                 'AcctSubjectLevelTo','AcctSubjectInclUnpost','AcctSubjectShowCumul']
+                .forEach(k => sessionStorage.removeItem(k));
+                loadContent('AcctSubjectBalance');
+            };
+        }, 0);
     }
 
     // =========================================================================
@@ -2722,6 +3008,1657 @@ function loadContent(moduleCode, element = null) {
         }
     }
 
+
+    // =========================================================================
+    // 6.5 到车批次挂帐 (ArrivalBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "ArrivalBatchAccrual") {
+        const _aresc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // --- 列定义 ---
+        const arCols = [
+            { key: "site",                  label: "网点",                w: 110, siteFilter: true },
+            { key: "batchNo",               label: "发车批次",            w: 160, batchFilter: "ar_f_batch" },
+            { key: "route",                 label: "车辆线路",            w: 140, textFilter: "ar_f_route" },
+            { key: "createdAt",             label: "创建时间",            w: 160, dateFilter: "create" },
+            { key: "departTime",            label: "发车时间",            w: 160, dateFilter: "depart" },
+            { key: "plate",                 label: "车牌号",              w: 100, textFilter: "ar_f_plate" },
+            { key: "driver",                label: "主驾司机",            w:  90, textFilter: "ar_f_driver" },
+            { key: "arrStationFee",         label: "到站其他费",          w: 110, align: "right" },
+            { key: "arrStationFeeConfirm",  label: "到站其他费确认状态",  w: 150, align: "center", statusFilter: "ar_f_st_asc" },
+            { key: "arrStationFeeAccrual",  label: "到站其他费挂账状态",  w: 150, align: "center", statusFilter: "ar_f_st_asa" },
+            { key: "unloadFee",             label: "到站卸车费",          w: 110, align: "right" },
+            { key: "unloadFeeConfirm",      label: "到站卸车费确认状态",  w: 150, align: "center", statusFilter: "ar_f_st_ufc" },
+            { key: "unloadFeeAccrual",      label: "到站卸车费挂账状态",  w: 150, align: "center", statusFilter: "ar_f_st_ufa" },
+            { key: "arrFreight",            label: "到付运输费",          w: 110, align: "right" },
+            { key: "arrFreightConfirm",     label: "到付运输费确认状态",  w: 150, align: "center", statusFilter: "ar_f_st_afc" },
+            { key: "arrFreightAccrual",     label: "到付运输费挂账状态",  w: 150, align: "center", statusFilter: "ar_f_st_afa" },
+            { key: "trailerPlate",          label: "挂车牌号",            w: 110 },
+            { key: "arriveTime",            label: "到达时间",            w: 160, dateFilter: "arrive" },
+            { key: "batchStatus",           label: "批次状态",            w: 100, align: "center", statusFilter: "ar_f_st_bs" },
+            { key: "driverPhone",           label: "主驾电话",            w: 120 },
+            { key: "pieces",                label: "件数",                w:  80, align: "right" },
+            { key: "weight",                label: "重量",                w:  90, align: "right" },
+            { key: "volume",                label: "体积",                w:  90, align: "right" },
+            { key: "remark",                label: "备注",                w: 140 },
+            { key: "batchTag",              label: "批次标识",            w: 100, statusFilter: "ar_f_st_tag" },
+        ];
+
+        // --- 初始化模拟数据 ---
+        sessionStorage.removeItem('ArrivalBatches');
+        let arData = null;
+        if (!arData) {
+            const sites    = ["上海浦东网点","上海徐汇网点","上海宝山网点","苏州园区网点","南京鼓楼网点"];
+            const routes   = ["上海→南京干线","上海→苏州专线","南京→杭州干线","苏州→无锡专线","上海→合肥干线"];
+            const drivers  = ["王建国","李志强","张明辉","刘凯","陈伟","赵磊","孙海洋","周鹏"];
+            const phones   = ["13812345678","15987654321","18911112222","13611223344","15811234567","13712345678","15012345678","18712345678"];
+            const plates   = ["沪A12345","沪B23456","苏E34567","沪C45678","苏F56789","沪D67890","苏G78901","沪E89012"];
+            const trailers = ["沪A挂0001","沪B挂0002","苏E挂0003","","沪C挂0005","","苏G挂0007","沪E挂0008"];
+            const cSt = ["已确认","已确认","未确认","已确认","已确认","已确认","未确认","已确认"];
+            const aSt = ["已挂账","未挂账","未挂账","已挂账","未挂账","已挂账","未挂账","已挂账"];
+            const bSt = ["已完成","已完成","运输中","已完成","已完成","已取消","已完成","已完成"];
+            const tags = ["正常","加急","正常","正常","特殊","正常","正常","加急"];
+            arData = [];
+            for (let i = 1; i <= 8; i++) {
+                const day = (i * 3 + 1).toString().padStart(2,'0');
+                const sh  = (8 + i).toString().padStart(2,'0');
+                const ah  = (14 + i).toString().padStart(2,'0');
+                const cs = cSt[i-1]; const as_ = aSt[i-1];
+                const asf = i % 2 === 0 ? (120 + i * 20).toFixed(2) : "";
+                const ulf = i % 3 !== 0 ? (90 + i * 15).toFixed(2)  : "";
+                const arf = (800 + i * 200).toFixed(2);
+                arData.push({
+                    id: `AR26010${i.toString().padStart(3,'0')}`,
+                    site: sites[i % sites.length],
+                    batchNo: `DC26010${i.toString().padStart(3,'0')}`,
+                    route: routes[i % routes.length],
+                    createdAt: `2026-01-${day} ${sh}:00`,
+                    departTime: `2026-01-${day} ${sh}:30`,
+                    arriveTime: `2026-01-${day} ${ah}:45`,
+                    plate: plates[i-1],
+                    trailerPlate: trailers[i-1],
+                    driver: drivers[i-1],
+                    driverPhone: phones[i-1],
+                    batchStatus: bSt[i-1],
+                    batchTag: tags[i-1],
+                    arrStationFee: asf,   arrStationFeeConfirm: asf?cs:"",  arrStationFeeAccrual: asf?as_:"",
+                    unloadFee: ulf,       unloadFeeConfirm: ulf?cs:"",       unloadFeeAccrual: ulf?as_:"",
+                    arrFreight: arf,      arrFreightConfirm: cs,             arrFreightAccrual: as_,
+                    pieces: 15 + i * 4,
+                    weight: (600 + i * 150).toFixed(1),
+                    volume: (3.2 + i * 0.9).toFixed(3),
+                    remark: i % 5 === 0 ? "加急到达" : "",
+                });
+            }
+            sessionStorage.setItem('ArrivalBatches', JSON.stringify(arData));
+        }
+
+        // --- 筛选状态 & 分页 ---
+        const arF    = window._arBatchFilters   || {};
+        const arPS   = window._arBatchPageSize  || 10;
+        const arPage = window._arBatchPage      || 1;
+        const _arToday = new Date().toISOString().split('T')[0];
+        const _arStart = new Date(Date.now() - 28*24*60*60*1000).toISOString().split('T')[0];
+        const arCreateS = arF.createStart !== undefined ? arF.createStart : _arStart;
+        const arCreateE = arF.createEnd   !== undefined ? arF.createEnd   : _arToday;
+        const arDepartS = arF.departStart !== undefined ? arF.departStart : "";
+        const arDepartE = arF.departEnd   !== undefined ? arF.departEnd   : "";
+        const arArriveS = arF.arriveStart !== undefined ? arF.arriveStart : "";
+        const arArriveE = arF.arriveEnd   !== undefined ? arF.arriveEnd   : "";
+
+        // --- 过滤 ---
+        let arFiltered = arData.filter(row => {
+            if (arF.batchNos) {
+                const ns = arF.batchNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.batchNo.includes(n))) return false;
+            }
+            if (arF.site   && row.site   !== arF.site)   return false;
+            if (arF.route  && !row.route.includes(arF.route))  return false;
+            if (arF.plate  && !row.plate.includes(arF.plate))  return false;
+            if (arF.driver && !row.driver.includes(arF.driver)) return false;
+            const rowCreate = row.createdAt.split(' ')[0];
+            if (arCreateS && rowCreate < arCreateS) return false;
+            if (arCreateE && rowCreate > arCreateE) return false;
+            const rowDepart = row.departTime.split(' ')[0];
+            if (arDepartS && rowDepart < arDepartS) return false;
+            if (arDepartE && rowDepart > arDepartE) return false;
+            const rowArrive = row.arriveTime.split(' ')[0];
+            if (arArriveS && rowArrive < arArriveS) return false;
+            if (arArriveE && rowArrive > arArriveE) return false;
+            return true;
+        });
+
+        // --- 分页 ---
+        const arTotal     = arFiltered.length;
+        const arTotalPage = Math.max(1, Math.ceil(arTotal / arPS));
+        const arSafePage  = Math.min(arPage, arTotalPage);
+        const arPageRows  = arFiltered.slice((arSafePage-1)*arPS, arSafePage*arPS);
+
+        // --- 网点下拉 ---
+        const arAllSites = [...new Set(arData.map(r => r.site))];
+        const arSiteOpts = `<option value="">全部</option>` + arAllSites.map(s =>
+            `<option value="${_aresc(s)}" ${arF.site===s?'selected':''}>${_aresc(s)}</option>`).join('');
+
+        // --- 合计 ---
+        const arSumKeys = ['arrStationFee','unloadFee','arrFreight'];
+        const arSums = {};
+        arSumKeys.forEach(k => { arSums[k] = arFiltered.reduce((acc,r) => acc+(parseFloat(r[k])||0), 0); });
+
+        // --- 构建行 ---
+        const arStColor = (s) => s==='已挂账'?'#27ae60':s==='未挂账'?'#e67e22':s==='已确认'?'#2980b9':s==='未确认'?'#e67e22':s==='已完成'?'#27ae60':s==='运输中'?'#2980b9':s==='已取消'?'#999':'';
+        const arRows = arPageRows.map((row, idx) => {
+            const rowNo = (arSafePage-1)*arPS + idx + 1;
+            return `<tr>
+                <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="ar-check" value="${_aresc(row.id)}"></td>
+                ${arCols.map(col => {
+                    const st = `${col.align?'text-align:'+col.align+';':''}min-width:${col.w||100}px;`;
+                    const v  = row[col.key] || '';
+                    let cell = col.key==='batchNo'
+                        ? `<a class="wb-link" href="javascript:void(0)" onclick="alert('到车批次详情：${_aresc(v)}')">${_aresc(v)}</a>`
+                        : col.statusFilter ? `<span style="color:${arStColor(v)};">${_aresc(v)}</span>`
+                        : _aresc(v);
+                    return `<td style="${st}">${cell}</td>`;
+                }).join('')}
+            </tr>`;
+        }).join('');
+
+        // --- 合计 footer ---
+        const arTotalRow = `<tr class="wb-foot wb-foot--total">
+            <td class="sticky-left-1 wb-foot__label">合计</td>
+            <td class="sticky-left-2"></td>
+            ${arCols.map(col => {
+                if (arSumKeys.includes(col.key) && arSums[col.key]) {
+                    return `<td style="text-align:right;min-width:${col.w||100}px;font-weight:600;">${arSums[col.key].toFixed(2)}</td>`;
+                }
+                return `<td style="min-width:${col.w||100}px;"></td>`;
+            }).join('')}
+        </tr>`;
+
+        // --- 筛选行 ---
+        const arFilterCell = (col) => {
+            const st = `min-width:${col.w||100}px;`;
+            if (col.siteFilter)  return `<th class="sticky-filter"><select id="ar_f_site" class="wb-filter-select" style="${st}"><option value="" ${!arF.site?'selected':''}>全部</option>${arAllSites.map(s=>`<option value="${_aresc(s)}" ${arF.site===s?'selected':''}>${_aresc(s)}</option>`).join('')}</select></th>`;
+            if (col.batchFilter) return `<th class="sticky-filter"><input id="${col.batchFilter}" class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索" style="${st}" value="${_aresc(arF.batchNos||'')}"></th>`;
+            if (col.textFilter)  return `<th class="sticky-filter"><input id="${col.textFilter}" class="wb-filter-input" style="${st}"></th>`;
+            if (col.dateFilter==='create') return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="ar_f_create_s" type="date" class="wb-filter-input" style="min-width:110px;" value="${_aresc(arCreateS)}"><span style="font-size:11px;color:#aaa;">~</span><input id="ar_f_create_e" type="date" class="wb-filter-input" style="min-width:110px;" value="${_aresc(arCreateE)}"></div></th>`;
+            if (col.dateFilter==='depart') return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="ar_f_depart_s" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期" value="${_aresc(arDepartS)}"><span style="font-size:11px;color:#aaa;">~</span><input id="ar_f_depart_e" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期" value="${_aresc(arDepartE)}"></div></th>`;
+            if (col.dateFilter==='arrive') return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="ar_f_arrive_s" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期" value="${_aresc(arArriveS)}"><span style="font-size:11px;color:#aaa;">~</span><input id="ar_f_arrive_e" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期" value="${_aresc(arArriveE)}"></div></th>`;
+            if (col.statusFilter) return `<th class="sticky-filter"><select id="${col.statusFilter}" class="wb-filter-select" style="${st}"><option value="">--</option><option value="已挂账">已挂账</option><option value="未挂账">未挂账</option></select></th>`;
+            return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled style="${st}"></th>`;
+        };
+
+        // --- 空态 ---
+        const arEmptyState = `
+        <tr><td colspan="${arCols.length+2}" style="padding:80px 0;text-align:center;background:#fff;border:none;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <svg width="84" height="84" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="12" width="66" height="82" rx="6" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <line x1="30" y1="36" x2="72" y2="36" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="50" x2="72" y2="50" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="64" x2="52" y2="64" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="83" cy="83" r="23" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <text x="83" y="91" text-anchor="middle" font-size="24" fill="#c0c4cc" font-family="sans-serif">?</text>
+                    <line x1="98" y1="98" x2="110" y2="110" stroke="#dcdfe6" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+                <div style="font-size:14px;color:#606266;margin-top:4px;">没有对应的数据</div>
+                <div style="font-size:12px;color:#909399;">请检查查询筛选条件后重新进行数据查询</div>
+            </div>
+        </td></tr>`;
+
+        // --- 注册函数 ---
+        window.arBatchApplyFilters = function() {
+            window._arBatchFilters = {
+                batchNos:    document.getElementById('ar_f_batch')?.value    || '',
+                site:        document.getElementById('ar_f_site')?.value     || '',
+                route:       document.getElementById('ar_f_route')?.value    || '',
+                createStart: document.getElementById('ar_q_create_s')?.value || '',
+                createEnd:   document.getElementById('ar_q_create_e')?.value || '',
+                departStart: document.getElementById('ar_q_depart_s')?.value || '',
+                departEnd:   document.getElementById('ar_q_depart_e')?.value || '',
+                plate:       document.getElementById('ar_q_plate')?.value    || '',
+                driver:      document.getElementById('ar_q_driver')?.value   || '',
+            };
+            window._arBatchPage = 1;
+            loadContent('ArrivalBatchAccrual');
+        };
+        window.arBatchSetPage = function(p) { window._arBatchPage = p; loadContent('ArrivalBatchAccrual'); };
+        window.arBatchSetPageSize = function(s) { window._arBatchPageSize = parseInt(s); window._arBatchPage = 1; loadContent('ArrivalBatchAccrual'); };
+        window.toggleAll_ar = function(src) { document.querySelectorAll('.ar-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.arBatchToolbarSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
+            if (!checked.length) return alert('请先勾选需要挂账的到车批次。');
+            let list = JSON.parse(sessionStorage.getItem('ArrivalBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) { item.arrFreightAccrual = '已挂账'; item.arrStationFeeAccrual = item.arrStationFee ? '已挂账' : ''; item.unloadFeeAccrual = item.unloadFee ? '已挂账' : ''; }
+            });
+            sessionStorage.setItem('ArrivalBatches', JSON.stringify(list));
+            alert(`✅ 挂账成功！共 ${checked.length} 条到车批次已挂账。`);
+            loadContent('ArrivalBatchAccrual');
+        };
+        window.arBatchToolbarCancel = function() {
+            const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
+            if (!checked.length) return alert('请先勾选需要取消挂账的到车批次。');
+            let list = JSON.parse(sessionStorage.getItem('ArrivalBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) { item.arrFreightAccrual = '未挂账'; item.arrStationFeeAccrual = item.arrStationFee ? '未挂账' : ''; item.unloadFeeAccrual = item.unloadFee ? '未挂账' : ''; }
+            });
+            sessionStorage.setItem('ArrivalBatches', JSON.stringify(list));
+            alert(`✅ 已取消挂账！共 ${checked.length} 条到车批次状态回滚。`);
+            loadContent('ArrivalBatchAccrual');
+        };
+
+        // --- HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item" style="flex:1; max-width:380px;">
+                <div class="wb-q-label" style="white-space:nowrap;">发车批次</div>
+                <input id="ar_q_batch" class="wb-q-control" style="flex:1;min-width:200px;"
+                    placeholder="支持批量搜索，多个单号用逗号/加号/回车/空格 分隔"
+                    value="${_aresc(arF.batchNos||'')}">
+                <span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="ar_q_site" class="wb-q-control" style="min-width:120px;">${arSiteOpts}</select>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">创建时间</div>
+                <div class="wb-q-date">
+                    <input id="ar_q_create_s" class="wb-q-control" type="date" value="${_aresc(arCreateS)}" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="ar_q_create_e" class="wb-q-control" type="date" value="${_aresc(arCreateE)}" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">发车时间</div>
+                <div class="wb-q-date">
+                    <input id="ar_q_depart_s" class="wb-q-control" type="date" value="${_aresc(arDepartS)}" placeholder="开始日期" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="ar_q_depart_e" class="wb-q-control" type="date" value="${_aresc(arDepartE)}" placeholder="结束日期" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">车牌号</div>
+                <input id="ar_q_plate" class="wb-q-control" type="text" value="${_aresc(arF.plate||'')}" style="width:90px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">主驾司机</div>
+                <input id="ar_q_driver" class="wb-q-control" type="text" value="${_aresc(arF.driver||'')}" style="width:80px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="arBatchApplyFilters()">&#x1F50D; 查询</button>
+        </div>
+
+        <div class="wb-toolbar">
+            <div class="wb-toolbar__left">
+                <button class="wb-btn" onclick="arBatchToolbarSettle()">挂账</button>
+                <button class="wb-btn" onclick="arBatchToolbarCancel()">取消挂账</button>
+            </div>
+            <div class="wb-toolbar__right">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#x2193; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#x1F5A8; 打印</button>
+                <div class="wb-pager">
+                    <button class="wb-pager__btn" onclick="arBatchSetPage(1)" ${arSafePage<=1?'disabled':''}>|&lt;</button>
+                    <button class="wb-pager__btn" onclick="arBatchSetPage(${Math.max(1,arSafePage-1)})" ${arSafePage<=1?'disabled':''}>&lt;</button>
+                    <span class="wb-pager__text">第</span>
+                    <span class="wb-pager__page">${arSafePage}</span>
+                    <span class="wb-pager__text">页/共${arTotalPage}页</span>
+                    <button class="wb-pager__btn" onclick="arBatchSetPage(${Math.min(arTotalPage,arSafePage+1)})" ${arSafePage>=arTotalPage?'disabled':''}>&gt;</button>
+                    <button class="wb-pager__btn" onclick="arBatchSetPage(${arTotalPage})" ${arSafePage>=arTotalPage?'disabled':''}>&gt;|</button>
+                    <select class="wb-pager__size" onchange="arBatchSetPageSize(this.value)">
+                        <option value="10" ${arPS===10?'selected':''}>0-9</option>
+                        <option value="30" ${arPS===30?'selected':''}>0-29</option>
+                    </select>
+                </div>
+                <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>
+            </div>
+        </div>
+
+        <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+            <table class="data-table" style="white-space:nowrap; min-width:3400px;">
+                <thead>
+                    <tr>
+                        <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                        <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll_ar(this)"></th>
+                        ${arCols.map(col=>`<th class="sticky-header" style="${col.align?'text-align:'+col.align+';':''}min-width:${col.w||100}px;">${_aresc(col.label)}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th class="sticky-filter sticky-left-1">筛选</th>
+                        <th class="sticky-filter sticky-left-2"></th>
+                        ${arCols.map(col=>arFilterCell(col)).join('')}
+                    </tr>
+                </thead>
+                <tbody>${arRows || arEmptyState}</tbody>
+                <tfoot>${arTotalRow}</tfoot>
+            </table>
+        </div>`;
+    }
+
+    // =========================================================================
+    // 6.6 送货批次挂帐 (DeliveryBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "DeliveryBatchAccrual") {
+        const _dlesc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // --- 列定义 ---
+        const dlCols = [
+            { key: "site",               label: "网点",          w: 110, siteFilter: true },
+            { key: "batchNo",            label: "送货批次",      w: 180, batchFilter: true },
+            { key: "batchStatus",        label: "批次状态",      w: 100, statusFilter: "status" },
+            { key: "startTime",          label: "送货开始时间",  w: 160, dateFilter: "start" },
+            { key: "plateNo",            label: "车牌号",        w: 110, fkey: "plateNo" },
+            { key: "driver",             label: "主驾司机",      w: 100, fkey: "driver" },
+            { key: "deliveryFee",        label: "送货费 ⓘ",     w: 110, fkey: "fee",    align: "right" },
+            { key: "deliveryFeeConfirm", label: "送货费确认状态",w: 120, statusFilter: "feeConfirm" },
+            { key: "deliveryFeeAccrual", label: "送货费挂账状态",w: 120, statusFilter: "feeAccrual" },
+            { key: "finishTime",         label: "送货完成时间",  w: 160, dateFilter: "finish" },
+            { key: "driverPhone",        label: "主驾电话",      w: 120, fkey: "driverPhone" },
+            { key: "deliveryPcs",        label: "送货件数",      w: 90,  fkey: "deliveryPcs",    align: "right" },
+            { key: "deliveryWeight",     label: "送货重量",      w: 90,  fkey: "deliveryWeight", align: "right" },
+            { key: "deliveryVolume",     label: "送货体积",      w: 90,  fkey: "deliveryVolume", align: "right" },
+            { key: "deliveryOrders",     label: "送货运单数",    w: 100, fkey: "deliveryOrders", align: "right" },
+            { key: "totalPcs",           label: "件数",          w: 80,  fkey: "totalPcs",       align: "right" },
+            { key: "totalWeight",        label: "总重量",        w: 80,  fkey: "totalWeight",    align: "right" },
+            { key: "totalVolume",        label: "总体积",        w: 80,  fkey: "totalVolume",    align: "right" },
+            { key: "remark",             label: "备注",          w: 140, fkey: "remark" },
+            { key: "batchTag",           label: "批次标识",      w: 100, statusFilter: "tag" },
+        ];
+
+        // --- 读取/生成数据（仅首次） ---
+        let dlData = JSON.parse(sessionStorage.getItem('DeliveryBatches') || 'null');
+        if (!dlData) {
+            const sites = ['上海总部','北京分公司','广州分公司','深圳分公司','成都分公司','武汉分公司'];
+            const drivers = [['张伟','138-0001-0001'],['李强','139-0002-0002'],['王磊','137-0003-0003'],['刘洋','136-0004-0004'],['陈龙','135-0005-0005']];
+            const plates = ['沪A12345','京B23456','粤C34567','粤D45678','川E56789'];
+            const statuses = ['配送中','已完成','待分配'];
+            const tags = ['正常','加急','特殊'];
+            dlData = [];
+            for (let i = 1; i <= 60; i++) {
+                const di = drivers[i % drivers.length];
+                const d = String((i % 28) + 1).padStart(2,'0');
+                const hh = String(8 + (i % 10)).padStart(2,'0');
+                const mm = String((i * 7) % 60).padStart(2,'0');
+                const startDt = `2026-01-${d} ${hh}:${mm}`;
+                const feeAmt = i % 3 === 0 ? 0 : Math.round((100 + (i * 13.7) % 800) * 10) / 10;
+                const dpcs = 5 + (i * 3) % 50;
+                dlData.push({
+                    id: `DL202601${String(i).padStart(4,'0')}`,
+                    site: sites[i % sites.length],
+                    batchNo: `DL202601${String(i).padStart(4,'0')}`,
+                    batchStatus: statuses[i % statuses.length],
+                    startTime: startDt,
+                    plateNo: plates[i % plates.length],
+                    driver: di[0],
+                    deliveryFee: feeAmt,
+                    deliveryFeeConfirm: feeAmt > 0 ? (i % 3 === 1 ? '已确认' : '未确认') : '',
+                    deliveryFeeAccrual: feeAmt > 0 ? (i % 2 === 0 ? '已挂账' : '未挂账') : '',
+                    finishTime: i % 4 !== 0 ? `2026-01-${d} ${String(14 + (i % 6)).padStart(2,'0')}:${String((i * 11) % 60).padStart(2,'0')}` : '',
+                    driverPhone: di[1],
+                    deliveryPcs: dpcs,
+                    deliveryWeight: Math.round(dpcs * (0.5 + (i % 5) * 0.4) * 10) / 10,
+                    deliveryVolume: Math.round(dpcs * (0.02 + (i % 4) * 0.01) * 100) / 100,
+                    deliveryOrders: Math.floor(dpcs / 3) + 1,
+                    totalPcs: dpcs + (i % 10),
+                    totalWeight: Math.round((dpcs + (i % 10)) * (0.5 + (i % 5) * 0.4) * 10) / 10,
+                    totalVolume: Math.round((dpcs + (i % 10)) * (0.02 + (i % 4) * 0.01) * 100) / 100,
+                    remark: i % 5 === 0 ? '客户要求指定时间' : '',
+                    batchTag: tags[i % tags.length],
+                });
+            }
+            sessionStorage.setItem('DeliveryBatches', JSON.stringify(dlData));
+        }
+
+        // --- 筛选状态 ---
+        const today = new Date();
+        const d28 = new Date(today); d28.setDate(today.getDate() - 28);
+        const fmt = d => d.toISOString().slice(0,10);
+        const dlF = {
+            batchNos:    window._dlF_batchNos    ?? '',
+            site:        window._dlF_site         ?? '',
+            startFrom:   window._dlF_startFrom    ?? fmt(d28),
+            startTo:     window._dlF_startTo      ?? fmt(today),
+            plateNo:     window._dlF_plateNo      ?? '',
+            driver:      window._dlF_driver       ?? '',
+            status:      window._dlF_status       ?? '',
+            feeConfirm:  window._dlF_feeConfirm   ?? '',
+            feeAccrual:  window._dlF_feeAccrual   ?? '',
+            finishFrom:  window._dlF_finishFrom   ?? '',
+            finishTo:    window._dlF_finishTo     ?? '',
+            tag:         window._dlF_tag          ?? '',
+            fee:         window._dlF_fee          ?? '',
+            driverPhone: window._dlF_driverPhone  ?? '',
+            deliveryPcs: window._dlF_deliveryPcs  ?? '',
+            deliveryWeight: window._dlF_deliveryWeight ?? '',
+            deliveryVolume: window._dlF_deliveryVolume ?? '',
+            deliveryOrders: window._dlF_deliveryOrders ?? '',
+            totalPcs:    window._dlF_totalPcs     ?? '',
+            totalWeight: window._dlF_totalWeight  ?? '',
+            totalVolume: window._dlF_totalVolume  ?? '',
+            remark:      window._dlF_remark       ?? '',
+        };
+
+        // --- 筛选逻辑 ---
+        const dlFiltered = dlData.filter(r => {
+            if (dlF.batchNos) {
+                const nos = dlF.batchNos.split(/[,+\s\n]+/).map(s=>s.trim()).filter(Boolean);
+                if (nos.length && !nos.some(n => r.batchNo.toLowerCase().includes(n.toLowerCase()))) return false;
+            }
+            if (dlF.site && r.site !== dlF.site) return false;
+            if (dlF.plateNo && !r.plateNo.toLowerCase().includes(dlF.plateNo.toLowerCase())) return false;
+            if (dlF.driver && !r.driver.toLowerCase().includes(dlF.driver.toLowerCase())) return false;
+            if (dlF.status && r.batchStatus !== dlF.status) return false;
+            if (dlF.feeConfirm && r.deliveryFeeConfirm !== dlF.feeConfirm) return false;
+            if (dlF.feeAccrual && r.deliveryFeeAccrual !== dlF.feeAccrual) return false;
+            if (dlF.tag && r.batchTag !== dlF.tag) return false;
+            if (dlF.driverPhone && !r.driverPhone.toLowerCase().includes(dlF.driverPhone.toLowerCase())) return false;
+            if (dlF.remark && !r.remark.toLowerCase().includes(dlF.remark.toLowerCase())) return false;
+            const st = r.startTime ? r.startTime.slice(0,10) : '';
+            if (dlF.startFrom && st < dlF.startFrom) return false;
+            if (dlF.startTo && st > dlF.startTo) return false;
+            const ft = r.finishTime ? r.finishTime.slice(0,10) : '';
+            if (dlF.finishFrom && ft < dlF.finishFrom) return false;
+            if (dlF.finishTo && ft > dlF.finishTo) return false;
+            return true;
+        });
+
+        // --- 分页 ---
+        const dlPage = window._dlBatchPage || 1;
+        const dlPageSize = window._dlBatchPageSize || 20;
+        const dlTotal = dlFiltered.length;
+        const dlPageCount = Math.max(1, Math.ceil(dlTotal / dlPageSize));
+        const dlPageData = dlFiltered.slice((dlPage-1)*dlPageSize, dlPage*dlPageSize);
+
+        // --- 合计 ---
+        let dlSumFee = 0;
+        dlFiltered.forEach(r => { dlSumFee += Number(r.deliveryFee) || 0; });
+
+        // --- 状态颜色 ---
+        const dlStatusColor = s => ({'已确认':'color:#52c41a','未确认':'color:#faad14','已挂账':'color:#1890ff','未挂账':'color:#ff4d4f','已完成':'color:#52c41a','配送中':'color:#1890ff','待分配':'color:#faad14'}[s]||'');
+
+        // --- 空状态 ---
+        const dlEmptyState = `<tr><td colspan="${dlCols.length+1}" style="padding:80px 0;text-align:center;">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.25;display:block;margin:0 auto 12px;">
+                <rect x="10" y="10" width="60" height="60" rx="8" stroke="#b0c4d8" stroke-width="3" fill="#eaf3fb"/>
+                <circle cx="40" cy="36" r="13" stroke="#b0c4d8" stroke-width="3" fill="none"/>
+                <line x1="49" y1="47" x2="62" y2="60" stroke="#b0c4d8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="56" cy="24" r="8" fill="#fff" stroke="#b0c4d8" stroke-width="2"/>
+                <text x="52" y="28" font-size="10" fill="#b0c4d8" font-family="Arial">?</text>
+            </svg>
+            <div style="color:#b0c4d8;font-size:14px;margin-bottom:4px;">没有对应的数据</div>
+            <div style="color:#c8d8e8;font-size:12px;">请检查查询筛选条件后重新进行数据查询</div>
+        </td></tr>`;
+
+        // --- 构建数据行 ---
+        const dlRows = dlPageData.map(r => `<tr>
+            <td><input type="checkbox" class="dl-check" value="${_dlesc(r.id)}"></td>
+            ${dlCols.map(col => {
+                let v = r[col.key];
+                let style = col.align === 'right' ? 'text-align:right;' : '';
+                if (['deliveryFeeConfirm','deliveryFeeAccrual','batchStatus'].includes(col.key)) style += dlStatusColor(v);
+                if (col.key === 'deliveryFee') v = v > 0 ? Number(v).toFixed(2) : '';
+                return `<td style="${style}">${_dlesc(v ?? '')}</td>`;
+            }).join('')}
+        </tr>`).join('');
+
+        // --- 构建筛选行 ---
+        const dlAllSites = [...new Set(dlData.map(r=>r.site))];
+        const dlFilterRow = dlCols.map(col => {
+            if (col.siteFilter) return `<td class="sticky-left-1"><select class="wb-filter-select" id="dl_f_site" onchange="dlBatchApplyFilters()">
+                <option value=""></option>${dlAllSites.map(s=>`<option value="${_dlesc(s)}" ${dlF.site===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.batchFilter) return `<td class="sticky-left-2"><input class="wb-filter-input wb-filter-input--batch" id="dl_f_batch" placeholder="支持批量搜索" value="${_dlesc(dlF.batchNos)}" onchange="dlBatchApplyFilters()"></td>`;
+            if (col.statusFilter === 'status') return `<td><select class="wb-filter-select" id="dl_f_status" onchange="dlBatchApplyFilters()">
+                <option value=""></option>${['配送中','已完成','待分配'].map(s=>`<option value="${_dlesc(s)}" ${dlF.status===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.dateFilter === 'start') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input" id="dl_f_startFrom" value="${_dlesc(dlF.startFrom)}" onchange="dlBatchApplyFilters()" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input" id="dl_f_startTo" value="${_dlesc(dlF.startTo)}" onchange="dlBatchApplyFilters()" style="width:108px;">
+            </div></td>`;
+            if (col.statusFilter === 'feeConfirm') return `<td><select class="wb-filter-select" id="dl_f_feeConfirm" onchange="dlBatchApplyFilters()">
+                <option value=""></option>${['已确认','未确认'].map(s=>`<option value="${_dlesc(s)}" ${dlF.feeConfirm===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.statusFilter === 'feeAccrual') return `<td><select class="wb-filter-select" id="dl_f_feeAccrual" onchange="dlBatchApplyFilters()">
+                <option value=""></option>${['已挂账','未挂账'].map(s=>`<option value="${_dlesc(s)}" ${dlF.feeAccrual===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.dateFilter === 'finish') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="dl_f_finishFrom" value="${_dlesc(dlF.finishFrom)}" onchange="dlBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="dl_f_finishTo" value="${_dlesc(dlF.finishTo)}" onchange="dlBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
+            </div></td>`;
+            if (col.statusFilter === 'tag') return `<td><select class="wb-filter-select" id="dl_f_tag" onchange="dlBatchApplyFilters()">
+                <option value=""></option>${['正常','加急','特殊'].map(s=>`<option value="${_dlesc(s)}" ${dlF.tag===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.fkey) return `<td><input class="wb-filter-input" id="dl_f_${col.fkey}" value="${_dlesc(dlF[col.fkey]||'')}" onchange="dlBatchApplyFilters()"></td>`;
+            return `<td></td>`;
+        }).join('');
+
+        // --- 合计行 ---
+        const dlTotalRow = `<tr class="wb-foot wb-foot--total">
+            <td></td>
+            ${dlCols.map(col => {
+                if (col.key === 'site') return `<td style="font-weight:600;">合计</td>`;
+                if (col.key === 'deliveryFee') return `<td style="text-align:right;font-weight:600;">${dlSumFee.toFixed(2)}</td>`;
+                return `<td></td>`;
+            }).join('')}
+        </tr>`;
+
+        // --- 分页器 ---
+        const dlPager = `<div class="wb-pager">
+            <button class="wb-pager__btn" onclick="dlBatchSetPage(1)" ${dlPage<=1?'disabled':''}>|&lt;</button>
+            <button class="wb-pager__btn" onclick="dlBatchSetPage(${Math.max(1,dlPage-1)})" ${dlPage<=1?'disabled':''}>&lt;</button>
+            <span class="wb-pager__text">第</span>
+            <span class="wb-pager__page">${dlPage}</span>
+            <span class="wb-pager__text">页/共${dlPageCount}页</span>
+            <button class="wb-pager__btn" onclick="dlBatchSetPage(${Math.min(dlPageCount,dlPage+1)})" ${dlPage>=dlPageCount?'disabled':''}>&gt;</button>
+            <button class="wb-pager__btn" onclick="dlBatchSetPage(${dlPageCount})" ${dlPage>=dlPageCount?'disabled':''}>&gt;|</button>
+            <select class="wb-pager__size" onchange="dlBatchSetPageSize(this.value)">
+                <option value="20" ${dlPageSize===20?'selected':''}>0-19</option>
+                <option value="50" ${dlPageSize===50?'selected':''}>0-49</option>
+            </select>
+        </div>
+        <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>`;
+
+        // --- 注册窗口函数 ---
+        window.dlBatchApplyFilters = function() {
+            const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+            window._dlF_batchNos       = g('dl_f_batch');
+            window._dlF_site           = g('dl_f_site');
+            window._dlF_startFrom      = g('dl_f_startFrom');
+            window._dlF_startTo        = g('dl_f_startTo');
+            window._dlF_status         = g('dl_f_status');
+            window._dlF_plateNo        = g('dl_f_plateNo');
+            window._dlF_driver         = g('dl_f_driver');
+            window._dlF_fee            = g('dl_f_fee');
+            window._dlF_feeConfirm     = g('dl_f_feeConfirm');
+            window._dlF_feeAccrual     = g('dl_f_feeAccrual');
+            window._dlF_finishFrom     = g('dl_f_finishFrom');
+            window._dlF_finishTo       = g('dl_f_finishTo');
+            window._dlF_driverPhone    = g('dl_f_driverPhone');
+            window._dlF_deliveryPcs    = g('dl_f_deliveryPcs');
+            window._dlF_deliveryWeight = g('dl_f_deliveryWeight');
+            window._dlF_deliveryVolume = g('dl_f_deliveryVolume');
+            window._dlF_deliveryOrders = g('dl_f_deliveryOrders');
+            window._dlF_totalPcs       = g('dl_f_totalPcs');
+            window._dlF_totalWeight    = g('dl_f_totalWeight');
+            window._dlF_totalVolume    = g('dl_f_totalVolume');
+            window._dlF_remark         = g('dl_f_remark');
+            window._dlF_tag            = g('dl_f_tag');
+            window._dlBatchPage = 1;
+            loadContent('DeliveryBatchAccrual');
+        };
+        window.dlBatchSetPage = function(p) { window._dlBatchPage = p; loadContent('DeliveryBatchAccrual'); };
+        window.dlBatchSetPageSize = function(s) { window._dlBatchPageSize = parseInt(s); window._dlBatchPage = 1; loadContent('DeliveryBatchAccrual'); };
+        window.toggleAll_dl = function(src) { document.querySelectorAll('.dl-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.dlBatchToolbarSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.dl-check:checked'));
+            if (!checked.length) return alert('请先勾选需要挂账的送货批次。');
+            let list = JSON.parse(sessionStorage.getItem('DeliveryBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item && item.deliveryFee > 0) { item.deliveryFeeAccrual = '已挂账'; item.deliveryFeeConfirm = item.deliveryFeeConfirm || '已确认'; }
+            });
+            sessionStorage.setItem('DeliveryBatches', JSON.stringify(list));
+            alert(`✅ 挂账成功！共 ${checked.length} 条送货批次已挂账。`);
+            loadContent('DeliveryBatchAccrual');
+        };
+        window.dlBatchToolbarCancel = function() {
+            const checked = Array.from(document.querySelectorAll('.dl-check:checked'));
+            if (!checked.length) return alert('请先勾选需要取消挂账的送货批次。');
+            let list = JSON.parse(sessionStorage.getItem('DeliveryBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) { item.deliveryFeeAccrual = '未挂账'; }
+            });
+            sessionStorage.setItem('DeliveryBatches', JSON.stringify(list));
+            alert(`✅ 已取消挂账！共 ${checked.length} 条送货批次状态回滚。`);
+            loadContent('DeliveryBatchAccrual');
+        };
+
+        // --- HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item" style="flex:1;max-width:380px;">
+                <div class="wb-q-label" style="white-space:nowrap;">送货批次</div>
+                <input id="dl_q_batch" class="wb-q-control" style="flex:1;min-width:200px;"
+                    placeholder="支持批量搜索，多个单号用逗号/加号/回车/空格 分隔"
+                    value="${_dlesc(dlF.batchNos)}">
+                <span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="dl_q_site" class="wb-q-control" style="width:130px;">
+                    <option value=""></option>${dlAllSites.map(s=>`<option value="${_dlesc(s)}" ${dlF.site===s?'selected':''}>${_dlesc(s)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">送货开始时间</div>
+                <input type="date" id="dl_q_startFrom" class="wb-q-control" value="${_dlesc(dlF.startFrom)}" style="width:130px;">
+                <span style="color:#bbb;margin:0 2px;">~</span>
+                <input type="date" id="dl_q_startTo" class="wb-q-control" value="${_dlesc(dlF.startTo)}" style="width:130px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">车牌号</div>
+                <input id="dl_q_plate" class="wb-q-control" value="${_dlesc(dlF.plateNo)}" style="width:110px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">主驾司机</div>
+                <input id="dl_q_driver" class="wb-q-control" value="${_dlesc(dlF.driver)}" style="width:110px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="
+                window._dlF_batchNos = document.getElementById('dl_q_batch').value.trim();
+                window._dlF_site = document.getElementById('dl_q_site').value;
+                window._dlF_startFrom = document.getElementById('dl_q_startFrom').value;
+                window._dlF_startTo = document.getElementById('dl_q_startTo').value;
+                window._dlF_plateNo = document.getElementById('dl_q_plate').value.trim();
+                window._dlF_driver = document.getElementById('dl_q_driver').value.trim();
+                window._dlBatchPage = 1;
+                loadContent('DeliveryBatchAccrual');
+            ">&#128269; 查询</button>
+        </div>
+        <div class="wb-toolbar">
+            <div style="display:flex;gap:6px;">
+                <button class="wb-btn wb-btn--primary" onclick="dlBatchToolbarSettle()">&#128204; 挂账</button>
+                <button class="wb-btn" onclick="dlBatchToolbarCancel()">&#10006; 取消挂账</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#128196; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#128424; 打印</button>
+                ${dlPager}
+            </div>
+        </div>
+        <div class="settlement-waybill-table" style="--sticky-left-1:40px;--sticky-left-2:150px;">
+            <table>
+                <thead>
+                    <tr class="sticky-header">
+                        <th style="width:40px;min-width:40px;"><input type="checkbox" id="dl-check-all" onchange="toggleAll_dl(this)"></th>
+                        ${dlCols.map(col=>`<th style="width:${col.w}px;min-width:${col.w}px;${col.align==='right'?'text-align:right;':''}" class="${col.siteFilter?'sticky-left-1':col.batchFilter?'sticky-left-2':''}">${col.label}</th>`).join('')}
+                    </tr>
+                    <tr class="sticky-filter">
+                        <td class="wb-funnel"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2h14l-5 6v5l-4-2V8z" fill="none" stroke="#8aa0b8" stroke-width="1.5"/></svg></td>
+                        ${dlFilterRow}
+                    </tr>
+                </thead>
+                <tbody>${dlRows || dlEmptyState}</tbody>
+                <tfoot>${dlTotalRow}</tfoot>
+            </table>
+        </div>`;
+    }
+
+    // =========================================================================
+    // 6.4 发车批次挂帐 (DepartureBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "DepartureBatchAccrual") {
+        const _desc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // --- 列定义 ---
+        const depCols = [
+            { key: "site",                    label: "网点",                w: 110, siteFilter: true },
+            { key: "batchNo",                 label: "发车批次",            w: 160, batchFilter: "dep_f_batch" },
+            { key: "depStationFee",           label: "发站其他费",          w: 110, align: "right" },
+            { key: "depStationFeeConfirm",    label: "发站其他费确认状态",  w: 150, align: "center", statusFilter: "dep_f_st_dfc" },
+            { key: "depStationFeeAccrual",    label: "发站其他费挂账状态",  w: 150, align: "center", statusFilter: "dep_f_st_dfa" },
+            { key: "depLoadFee",              label: "发站装车费",          w: 110, align: "right" },
+            { key: "depLoadFeeConfirm",       label: "发站装车费确认状态",  w: 150, align: "center", statusFilter: "dep_f_st_lfc" },
+            { key: "depLoadFeeAccrual",       label: "发站装车费挂账状态",  w: 150, align: "center", statusFilter: "dep_f_st_lfa" },
+            { key: "arrFreightConfirm",       label: "到付运输费确认状态",  w: 150, align: "center", statusFilter: "dep_f_st_afc" },
+            { key: "arrFreightAccrual",       label: "到付运输费挂账状态",  w: 150, align: "center", statusFilter: "dep_f_st_afa" },
+            { key: "fullTruckInsurance",      label: "整车保险费",          w: 110, align: "right" },
+            { key: "fullTruckInsuranceConfirm", label: "整车保险费确认状态", w: 150, align: "center", statusFilter: "dep_f_st_ifc" },
+            { key: "fullTruckInsuranceAccrual", label: "整车保险费挂账状态", w: 150, align: "center", statusFilter: "dep_f_st_ifa" },
+            { key: "fullTruckInfoFee",        label: "整车信息费",          w: 110, align: "right" },
+            { key: "fullTruckInfoFeeConfirm", label: "整车信息费确认状态",  w: 150, align: "center", statusFilter: "dep_f_st_nfc" },
+            { key: "fullTruckInfoFeeAccrual", label: "整车信息费挂账状态",  w: 150, align: "center", statusFilter: "dep_f_st_nfa" },
+            { key: "trailerPlate",            label: "挂车牌号",            w: 110 },
+            { key: "arriveTime",              label: "到达时间",            w: 160 },
+            { key: "batchStatus",             label: "批次状态",            w: 100, align: "center", statusFilter: "dep_f_st_bs" },
+            { key: "driverPhone",             label: "主驾电话",            w: 120 },
+            { key: "remark",                  label: "备注",                w: 140 },
+            { key: "batchTag",                label: "批次标识",            w: 100, statusFilter: "dep_f_st_tag" },
+        ];
+
+        // --- 初始化模拟数据 (2026-01，默认日期范围外，初始呈空态) ---
+        // 强制重建以匹配新字段
+        sessionStorage.removeItem('DepartureBatches');
+        let depData = null;
+        if (!depData) {
+            const sites    = ["上海浦东网点","上海徐汇网点","上海宝山网点","苏州园区网点","南京鼓楼网点"];
+            const drivers  = ["王建国","李志强","张明辉","刘凯","陈伟","赵磊","孙海洋","周鹏"];
+            const phones   = ["13812345678","15987654321","18911112222","13611223344","15811234567","13712345678","15012345678","18712345678"];
+            const plates   = ["沪A12345","沪B23456","苏E34567","沪C45678","苏F56789","沪D67890","苏G78901","沪E89012"];
+            const trailers = ["沪A挂0001","沪B挂0002","苏E挂0003","","沪C挂0005","","苏G挂0007","沪E挂0008"];
+            const cSt = ["已确认","已确认","未确认","已确认","已确认","已确认","未确认","已确认"];
+            const aSt = ["已挂账","未挂账","未挂账","已挂账","未挂账","已挂账","未挂账","已挂账"];
+            const bSt = ["已完成","已完成","运输中","已完成","已完成","已取消","已完成","已完成"];
+            const tags = ["正常","加急","正常","正常","特殊","正常","正常","加急"];
+            depData = [];
+            for (let i = 1; i <= 8; i++) {
+                const day = (i * 3 + 1).toString().padStart(2,'0');
+                const sh  = (8 + i).toString().padStart(2,'0');
+                const ah  = (14 + i).toString().padStart(2,'0');
+                const cs  = cSt[i-1]; const as_ = aSt[i-1];
+                const dsf = i % 2 === 0 ? (100 + i * 20).toFixed(2) : "";
+                const dlf = i % 3 !== 0 ? (80 + i * 15).toFixed(2)  : "";
+                const ins = (150 + i * 30).toFixed(2);
+                const inf = i % 2 !== 0 ? (50 + i * 10).toFixed(2)  : "";
+                depData.push({
+                    id: `DC26010${i.toString().padStart(3,'0')}`,
+                    site: sites[i % sites.length],
+                    batchNo: `DC26010${i.toString().padStart(3,'0')}`,
+                    createdAt: `2026-01-${day} ${sh}:00`,
+                    departTime: `2026-01-${day} ${sh}:30`,
+                    arriveTime: `2026-01-${day} ${ah}:45`,
+                    plate: plates[i-1],
+                    trailerPlate: trailers[i-1],
+                    driver: drivers[i-1],
+                    driverPhone: phones[i-1],
+                    batchStatus: bSt[i-1],
+                    batchTag: tags[i-1],
+                    depStationFee: dsf,           depStationFeeConfirm: dsf?cs:"",  depStationFeeAccrual: dsf?as_:"",
+                    depLoadFee: dlf,              depLoadFeeConfirm: dlf?cs:"",      depLoadFeeAccrual: dlf?as_:"",
+                    arrFreightConfirm: cs,        arrFreightAccrual: as_,
+                    fullTruckInsurance: ins,      fullTruckInsuranceConfirm: cs,     fullTruckInsuranceAccrual: as_,
+                    fullTruckInfoFee: inf,        fullTruckInfoFeeConfirm: inf?cs:"", fullTruckInfoFeeAccrual: inf?as_:"",
+                    remark: i % 5 === 0 ? "加急批次" : "",
+                });
+            }
+            sessionStorage.setItem('DepartureBatches', JSON.stringify(depData));
+        }
+
+        // --- 筛选状态 & 分页 ---
+        const depF    = window._depBatchFilters   || {};
+        const depPS   = window._depBatchPageSize  || 10;
+        const depPage = window._depBatchPage      || 1;
+        const _depToday = new Date().toISOString().split('T')[0];
+        const _depStart = new Date(Date.now() - 28*24*60*60*1000).toISOString().split('T')[0];
+        const depCreateS = depF.createStart !== undefined ? depF.createStart : _depStart;
+        const depCreateE = depF.createEnd   !== undefined ? depF.createEnd   : _depToday;
+        const depDepartS = depF.departStart !== undefined ? depF.departStart : "";
+        const depDepartE = depF.departEnd   !== undefined ? depF.departEnd   : "";
+
+        // --- 过滤 ---
+        let depFiltered = depData.filter(row => {
+            if (depF.batchNos) {
+                const ns = depF.batchNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.batchNo.includes(n))) return false;
+            }
+            if (depF.site   && row.site   !== depF.site)   return false;
+            if (depF.route  && !row.route.includes(depF.route))  return false;
+            if (depF.plate  && !row.plate.includes(depF.plate))  return false;
+            if (depF.driver && !row.driver.includes(depF.driver)) return false;
+            const rowCreate = row.createdAt.split(' ')[0];
+            if (depCreateS && rowCreate < depCreateS) return false;
+            if (depCreateE && rowCreate > depCreateE) return false;
+            const rowDepart = row.departTime.split(' ')[0];
+            if (depDepartS && rowDepart < depDepartS) return false;
+            if (depDepartE && rowDepart > depDepartE) return false;
+            return true;
+        });
+
+        // --- 分页 ---
+        const depTotal     = depFiltered.length;
+        const depTotalPage = Math.max(1, Math.ceil(depTotal / depPS));
+        const depSafePage  = Math.min(depPage, depTotalPage);
+        const depPageRows  = depFiltered.slice((depSafePage-1)*depPS, depSafePage*depPS);
+
+        // --- 网点下拉 ---
+        const depAllSites = [...new Set(depData.map(r => r.site))];
+        const depSiteOpts = `<option value="">全部</option>` + depAllSites.map(s =>
+            `<option value="${_desc(s)}" ${depF.site===s?'selected':''}>${_desc(s)}</option>`).join('');
+
+        // --- 合计行数据 ---
+        const depSumKeys = ['depStationFee','depLoadFee','fullTruckInsurance','fullTruckInfoFee'];
+        const depSums = {};
+        depSumKeys.forEach(k => { depSums[k] = depFiltered.reduce((acc, r) => acc + (parseFloat(r[k])||0), 0); });
+
+        // --- 构建行 ---
+        const stColor = (s) => s === '已挂账' ? '#27ae60' : s === '未挂账' ? '#e67e22' : s === '已确认' ? '#2980b9' : s === '未确认' ? '#e67e22' : '';
+        const depRows = depPageRows.map((row, idx) => {
+            const rowNo = (depSafePage-1)*depPS + idx + 1;
+            return `<tr>
+                <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="dep-check" value="${_desc(row.id)}" onchange="depUpdateSel&&depUpdateSel()"></td>
+                ${depCols.map(col => {
+                    const st = `${col.align?'text-align:'+col.align+';':''}min-width:${col.w||100}px;`;
+                    const v  = row[col.key] || '';
+                    let cell;
+                    if (col.key === 'batchNo') cell = `<a class="wb-link" href="javascript:void(0)" onclick="alert('发车批次详情：${_desc(v)}')">${_desc(v)}</a>`;
+                    else if (col.statusFilter) cell = `<span style="color:${stColor(v)};">${_desc(v)}</span>`;
+                    else cell = _desc(v);
+                    return `<td style="${st}">${cell}</td>`;
+                }).join('')}
+            </tr>`;
+        }).join('');
+
+        // --- 合计 footer 行 ---
+        const depTotalRow = `<tr class="wb-foot wb-foot--total">
+            <td class="sticky-left-1 wb-foot__label">合计</td>
+            <td class="sticky-left-2"></td>
+            ${depCols.map(col => {
+                if (depSumKeys.includes(col.key) && depSums[col.key]) {
+                    return `<td style="text-align:right;min-width:${col.w||100}px;font-weight:600;">${depSums[col.key].toFixed(2)}</td>`;
+                }
+                return `<td style="min-width:${col.w||100}px;"></td>`;
+            }).join('')}
+        </tr>`;
+
+        // --- 筛选行 ---
+        const depFilterCell = (col) => {
+            const st = `min-width:${col.w||100}px;`;
+            if (col.siteFilter) return `<th class="sticky-filter"><select id="dep_f_site" class="wb-filter-select" style="${st}"><option value="" ${!depF.site?'selected':''}>全部</option>${depAllSites.map(s=>`<option value="${_desc(s)}" ${depF.site===s?'selected':''}>${_desc(s)}</option>`).join('')}</select></th>`;
+            if (col.batchFilter) return `<th class="sticky-filter"><input id="${col.batchFilter}" class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索" style="${st}" value="${_desc(depF.batchNos||'')}"></th>`;
+            if (col.textFilter)  return `<th class="sticky-filter"><input id="${col.textFilter}" class="wb-filter-input" style="${st}" value="${_desc(depF[col.textFilter.replace('dep_f_','')] || '')}"></th>`;
+            if (col.dateFilter === 'create') return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="dep_f_create_s" type="date" class="wb-filter-input" style="min-width:110px;" value="${_desc(depCreateS)}"><span style="font-size:11px;color:#aaa;">~</span><input id="dep_f_create_e" type="date" class="wb-filter-input" style="min-width:110px;" value="${_desc(depCreateE)}"></div></th>`;
+            if (col.dateFilter === 'depart') return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="dep_f_depart_s" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期" value="${_desc(depDepartS)}"><span style="font-size:11px;color:#aaa;">~</span><input id="dep_f_depart_e" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期" value="${_desc(depDepartE)}"></div></th>`;
+            if (col.statusFilter) return `<th class="sticky-filter"><select id="${col.statusFilter}" class="wb-filter-select" style="${st}"><option value="">--</option><option value="已挂账">已挂账</option><option value="未挂账">未挂账</option></select></th>`;
+            return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled style="${st}"></th>`;
+        };
+
+        // --- 空态 ---
+        const depEmptyState = `
+        <tr><td colspan="${depCols.length + 2}" style="padding:80px 0;text-align:center;background:#fff;border:none;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <svg width="84" height="84" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="12" width="66" height="82" rx="6" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <line x1="30" y1="36" x2="72" y2="36" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="50" x2="72" y2="50" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="64" x2="52" y2="64" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="83" cy="83" r="23" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <text x="83" y="91" text-anchor="middle" font-size="24" fill="#c0c4cc" font-family="sans-serif">?</text>
+                    <line x1="98" y1="98" x2="110" y2="110" stroke="#dcdfe6" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+                <div style="font-size:14px;color:#606266;margin-top:4px;">没有对应的数据</div>
+                <div style="font-size:12px;color:#909399;">请检查查询筛选条件后重新进行数据查询</div>
+            </div>
+        </td></tr>`;
+
+        // --- 注册函数 ---
+        window.depBatchApplyFilters = function() {
+            window._depBatchFilters = {
+                batchNos:    document.getElementById('dep_f_batch')?.value    || '',
+                site:        document.getElementById('dep_f_site')?.value     || '',
+                route:       document.getElementById('dep_f_route')?.value    || '',
+                createStart: document.getElementById('dep_q_create_s')?.value || '',
+                createEnd:   document.getElementById('dep_q_create_e')?.value || '',
+                departStart: document.getElementById('dep_q_depart_s')?.value || '',
+                departEnd:   document.getElementById('dep_q_depart_e')?.value || '',
+                plate:       document.getElementById('dep_q_plate')?.value    || '',
+                driver:      document.getElementById('dep_q_driver')?.value   || '',
+            };
+            window._depBatchPage = 1;
+            loadContent('DepartureBatchAccrual');
+        };
+        window.depBatchSetPage = function(p) { window._depBatchPage = p; loadContent('DepartureBatchAccrual'); };
+        window.depBatchSetPageSize = function(s) { window._depBatchPageSize = parseInt(s); window._depBatchPage = 1; loadContent('DepartureBatchAccrual'); };
+        window.toggleAll_dep = function(src) { document.querySelectorAll('.dep-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.depUpdateSel = function() {};
+        window.depBatchToolbarSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.dep-check:checked'));
+            if (!checked.length) return alert('请先勾选需要挂账的发车批次。');
+            let list = JSON.parse(sessionStorage.getItem('DepartureBatches') || '[]');
+            const ids = checked.map(cb => cb.value);
+            ids.forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) { item.cashFreightAccrual = '已挂账'; item.cashOilFeeAccrual = '已挂账'; }
+            });
+            sessionStorage.setItem('DepartureBatches', JSON.stringify(list));
+            alert(`✅ 挂账成功！共 ${ids.length} 条发车批次已挂账。`);
+            loadContent('DepartureBatchAccrual');
+        };
+        window.depBatchToolbarCancel = function() {
+            const checked = Array.from(document.querySelectorAll('.dep-check:checked'));
+            if (!checked.length) return alert('请先勾选需要取消挂账的发车批次。');
+            let list = JSON.parse(sessionStorage.getItem('DepartureBatches') || '[]');
+            const ids = checked.map(cb => cb.value);
+            ids.forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) { item.cashFreightAccrual = '未挂账'; item.cashOilFeeAccrual = '未挂账'; }
+            });
+            sessionStorage.setItem('DepartureBatches', JSON.stringify(list));
+            alert(`✅ 已取消挂账！共 ${ids.length} 条发车批次状态回滚。`);
+            loadContent('DepartureBatchAccrual');
+        };
+
+        // --- 生成 HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item" style="flex:1; max-width:380px;">
+                <div class="wb-q-label" style="white-space:nowrap;">发车批次</div>
+                <input id="dep_q_batch" class="wb-q-control" style="flex:1; min-width:200px;"
+                    placeholder="支持批量搜索，多个单号用逗号/回车/空格 分隔"
+                    value="${_desc(depF.batchNos||'')}">
+                <span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;" title="批量编辑">&#9998;</span>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="dep_q_site" class="wb-q-control" style="min-width:120px;">${depSiteOpts}</select>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">创建时间</div>
+                <div class="wb-q-date">
+                    <input id="dep_q_create_s" class="wb-q-control" type="date" value="${_desc(depCreateS)}" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="dep_q_create_e" class="wb-q-control" type="date" value="${_desc(depCreateE)}" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">发车时间</div>
+                <div class="wb-q-date">
+                    <input id="dep_q_depart_s" class="wb-q-control" type="date" value="${_desc(depDepartS)}" placeholder="开始日期" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="dep_q_depart_e" class="wb-q-control" type="date" value="${_desc(depDepartE)}" placeholder="结束日期" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">车牌号</div>
+                <input id="dep_q_plate" class="wb-q-control" type="text" value="${_desc(depF.plate||'')}" style="width:90px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">主驾司机</div>
+                <input id="dep_q_driver" class="wb-q-control" type="text" value="${_desc(depF.driver||'')}" style="width:80px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="depBatchApplyFilters()">&#x1F50D; 查询</button>
+        </div>
+
+        <div class="wb-toolbar">
+            <div class="wb-toolbar__left">
+                <button class="wb-btn" onclick="depBatchToolbarSettle()">挂账</button>
+                <button class="wb-btn" onclick="depBatchToolbarCancel()">取消挂账</button>
+            </div>
+            <div class="wb-toolbar__right">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#x2193; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#x1F5A8; 打印</button>
+                <div class="wb-pager">
+                    <button class="wb-pager__btn" onclick="depBatchSetPage(1)" ${depSafePage<=1?'disabled':''}>|&lt;</button>
+                    <button class="wb-pager__btn" onclick="depBatchSetPage(${Math.max(1,depSafePage-1)})" ${depSafePage<=1?'disabled':''}>&lt;</button>
+                    <span class="wb-pager__text">第</span>
+                    <span class="wb-pager__page">${depSafePage}</span>
+                    <span class="wb-pager__text">页/共${depTotalPage}页</span>
+                    <button class="wb-pager__btn" onclick="depBatchSetPage(${Math.min(depTotalPage,depSafePage+1)})" ${depSafePage>=depTotalPage?'disabled':''}>&gt;</button>
+                    <button class="wb-pager__btn" onclick="depBatchSetPage(${depTotalPage})" ${depSafePage>=depTotalPage?'disabled':''}>&gt;|</button>
+                    <select class="wb-pager__size" onchange="depBatchSetPageSize(this.value)">
+                        <option value="10" ${depPS===10?'selected':''}>0-9</option>
+                        <option value="30" ${depPS===30?'selected':''}>0-29</option>
+                    </select>
+                </div>
+                <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>
+            </div>
+        </div>
+
+        <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+            <table class="data-table" style="white-space:nowrap; min-width:3800px;">
+                <thead>
+                    <tr>
+                        <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                        <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll_dep(this)"></th>
+                        ${depCols.map(col => `<th class="sticky-header" style="${col.align?'text-align:'+col.align+';':''}min-width:${col.w||100}px;">${_desc(col.label)}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th class="sticky-filter sticky-left-1">筛选</th>
+                        <th class="sticky-filter sticky-left-2"></th>
+                        ${depCols.map(col => depFilterCell(col)).join('')}
+                    </tr>
+                </thead>
+                <tbody>${depRows || depEmptyState}</tbody>
+                <tfoot>${depTotalRow}</tfoot>
+            </table>
+        </div>`;
+    }
+
+    // =========================================================================
+    // 6.3 短驳批次挂帐 (ShuttleBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "ShuttleBatchAccrual") {
+        const _sesc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // --- 1. 初始化模拟数据 (2026-01，默认日期范围外，初始呈空态) ---
+        let shuttleBatches = JSON.parse(sessionStorage.getItem('ShuttleBatches'));
+        if (!shuttleBatches || shuttleBatches.length === 0) {
+            const sites      = ["上海浦东网点","上海徐汇网点","上海宝山网点","苏州园区网点","南京鼓楼网点"];
+            const drivers    = ["王建国","李志强","张明辉","刘凯","陈伟","赵磊","孙海洋","周鹏"];
+            const phones     = ["13812345678","15987654321","18911112222","13611223344","15811234567","13712345678","15012345678","18712345678"];
+            const plates     = ["沪A12345","沪B23456","苏E34567","沪C45678","苏F56789","沪D67890","苏G78901","沪E89012"];
+            const fromStations = ["上海浦东分拨","上海宝山中转","苏州工业园分拨","南京江北分拨","上海徐汇中转"];
+            const toStations   = ["上海徐汇配送","苏州园区配送","南京鼓楼配送","上海宝山配送","苏州吴中配送"];
+            const bStatuses  = ["已完成","已完成","配送中","已完成","已完成","已取消","已完成","已完成"];
+            const cStatuses  = ["已确认","已确认","未确认","已确认","已确认","已确认","已确认","未确认"];
+            const aStatuses  = ["已挂账","已挂账","未挂账","未挂账","已挂账","未挂账","已挂账","未挂账"];
+            shuttleBatches = [];
+            for (let i = 1; i <= 8; i++) {
+                const day = (i * 3 + 1).toString().padStart(2,'0');
+                const sh  = (8 + i).toString().padStart(2,'0');
+                const rh  = (10 + i).toString().padStart(2,'0');
+                const pieces = 15 + i * 6;
+                const wt  = (80 + i * 40).toFixed(1);
+                const vol = (0.8 + i * 0.4).toFixed(3);
+                shuttleBatches.push({
+                    id: `SB26010${i.toString().padStart(3,'0')}`,
+                    site: sites[i % sites.length],
+                    status: bStatuses[i-1],
+                    time: `2026-01-${day} ${sh}:30`,
+                    receiveTime: `2026-01-${day} ${rh}:50`,
+                    plate: plates[i-1],
+                    driver: drivers[i-1],
+                    driverPhone: phones[i-1],
+                    fee: (300 + i * 60).toFixed(2),
+                    feeConfirmStatus: cStatuses[i-1],
+                    feeAccrualStatus: aStatuses[i-1],
+                    fromStation: fromStations[i % fromStations.length],
+                    toStation: toStations[i % toStations.length],
+                    pieces: pieces,
+                    weight: wt,
+                    volume: vol,
+                    totalOrders: 4 + i,
+                    totalPieces: pieces + Math.floor(i * 3),
+                    totalWeight: (parseFloat(wt) + i * 20).toFixed(1),
+                    totalVolume: (parseFloat(vol) + i * 0.25).toFixed(3),
+                    remark: i % 4 === 0 ? "需冷链运输" : ""
+                });
+            }
+            sessionStorage.setItem('ShuttleBatches', JSON.stringify(shuttleBatches));
+        }
+
+        // --- 2. 筛选状态 & 分页 ---
+        const sbFilters  = window._shuttleBatchFilters  || {};
+        const sbPageSize = window._shuttleBatchPageSize || 10;
+        const sbPage     = window._shuttleBatchPage     || 1;
+        const _sbToday   = new Date().toISOString().split('T')[0];
+        const _sbStart   = new Date(Date.now() - 28*24*60*60*1000).toISOString().split('T')[0];
+        const sbDateStart = sbFilters.dateStart !== undefined ? sbFilters.dateStart : _sbStart;
+        const sbDateEnd   = sbFilters.dateEnd   !== undefined ? sbFilters.dateEnd   : _sbToday;
+
+        // --- 3. 过滤 ---
+        let sbFiltered = shuttleBatches.filter(row => {
+            if (sbFilters.batchNos) {
+                const ns = sbFilters.batchNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.id.includes(n))) return false;
+            }
+            if (sbFilters.site   && row.site   !== sbFilters.site)   return false;
+            if (sbFilters.plate  && !row.plate.includes(sbFilters.plate))  return false;
+            if (sbFilters.driver && !row.driver.includes(sbFilters.driver)) return false;
+            if (sbFilters.status && row.status !== sbFilters.status)  return false;
+            if (sbFilters.feeConfirmStatus && row.feeConfirmStatus !== sbFilters.feeConfirmStatus) return false;
+            if (sbFilters.feeAccrualStatus && row.feeAccrualStatus !== sbFilters.feeAccrualStatus) return false;
+            if (sbFilters.fromStation && !row.fromStation.includes(sbFilters.fromStation)) return false;
+            if (sbFilters.toStation   && !row.toStation.includes(sbFilters.toStation))     return false;
+            const rowDate = row.time.split(' ')[0];
+            if (sbDateStart && rowDate < sbDateStart) return false;
+            if (sbDateEnd   && rowDate > sbDateEnd)   return false;
+            return true;
+        });
+
+        // --- 4. 分页计算 ---
+        const sbTotal     = sbFiltered.length;
+        const sbTotalPage = Math.max(1, Math.ceil(sbTotal / sbPageSize));
+        const sbSafePage  = Math.min(sbPage, sbTotalPage);
+        const sbPageRows  = sbFiltered.slice((sbSafePage-1)*sbPageSize, sbSafePage*sbPageSize);
+
+        // --- 5. 网点下拉 ---
+        const sbAllSites = [...new Set(shuttleBatches.map(r => r.site))];
+        const sbSiteOpts = `<option value="">全部</option>` + sbAllSites.map(s =>
+            `<option value="${_sesc(s)}" ${sbFilters.site===s?'selected':''}>${_sesc(s)}</option>`).join('');
+
+        // --- 6. 构建行 ---
+        const sbRows = sbPageRows.map((row, idx) => {
+            const rowNo = (sbSafePage-1)*sbPageSize + idx + 1;
+            const accrualColor = row.feeAccrualStatus === '已挂账' ? '#27ae60' : '#e67e22';
+            const statusColor  = row.status === '已完成' ? '#27ae60' : row.status === '配送中' ? '#2980b9' : '#999';
+            return `
+            <tr>
+                <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="shuttle-check" value="${_sesc(row.id)}" onchange="shuttleBatchUpdateSelection && shuttleBatchUpdateSelection()"></td>
+                <td>${_sesc(row.site)}</td>
+                <td><a class="wb-link" href="javascript:void(0)" onclick="alert('短驳批次详情：${_sesc(row.id)}')">${_sesc(row.id)}</a></td>
+                <td><span style="color:${statusColor};">${_sesc(row.status)}</span></td>
+                <td style="white-space:nowrap;">${_sesc(row.time)}</td>
+                <td>${_sesc(row.plate)}</td>
+                <td>${_sesc(row.driver)}</td>
+                <td style="text-align:right; color:${accrualColor}; font-weight:600;">${_sesc(row.fee)}</td>
+                <td style="text-align:center;">${_sesc(row.feeConfirmStatus)}</td>
+                <td style="text-align:center;"><span style="color:${accrualColor};">${_sesc(row.feeAccrualStatus)}</span></td>
+                <td>${_sesc(row.fromStation)}</td>
+                <td>${_sesc(row.toStation)}</td>
+                <td style="white-space:nowrap;">${_sesc(row.receiveTime)}</td>
+                <td>${_sesc(row.driverPhone)}</td>
+                <td style="text-align:right;">${row.pieces}</td>
+                <td style="text-align:right;">${_sesc(row.weight)}</td>
+                <td style="text-align:right;">${_sesc(row.volume)}</td>
+                <td style="text-align:right;">${row.totalOrders}</td>
+                <td style="text-align:right;">${row.totalPieces}</td>
+                <td style="text-align:right;">${_sesc(row.totalWeight)}</td>
+                <td style="text-align:right;">${_sesc(row.totalVolume)}</td>
+                <td>${_sesc(row.remark)}</td>
+            </tr>`;
+        }).join('');
+
+        // --- 7. 空态 ---
+        const sbEmptyState = `
+        <tr>
+            <td colspan="25" style="padding:80px 0; text-align:center; background:#fff; border:none;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                    <svg width="84" height="84" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="18" y="12" width="66" height="82" rx="6" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                        <line x1="30" y1="36" x2="72" y2="36" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="30" y1="50" x2="72" y2="50" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="30" y1="64" x2="52" y2="64" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="83" cy="83" r="23" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                        <text x="83" y="91" text-anchor="middle" font-size="24" fill="#c0c4cc" font-family="sans-serif">?</text>
+                        <line x1="98" y1="98" x2="110" y2="110" stroke="#dcdfe6" stroke-width="3.5" stroke-linecap="round"/>
+                    </svg>
+                    <div style="font-size:14px;color:#606266;margin-top:4px;">没有对应的数据</div>
+                    <div style="font-size:12px;color:#909399;">请检查查询筛选条件后重新进行数据查询</div>
+                </div>
+            </td>
+        </tr>`;
+
+        // --- 8. 注册事件函数 ---
+        window.shuttleBatchApplyFilters = function() {
+            window._shuttleBatchFilters = {
+                batchNos:         document.getElementById('sb_q_batchNos')?.value       || '',
+                site:             document.getElementById('sb_q_site')?.value           || '',
+                dateStart:        document.getElementById('sb_q_date_start')?.value     || '',
+                dateEnd:          document.getElementById('sb_q_date_end')?.value       || '',
+                plate:            document.getElementById('sb_q_plate')?.value          || '',
+                driver:           document.getElementById('sb_q_driver')?.value         || '',
+                status:           document.getElementById('sb_f_status')?.value         || '',
+                feeConfirmStatus: document.getElementById('sb_f_fee_confirm')?.value    || '',
+                feeAccrualStatus: document.getElementById('sb_f_fee_accrual')?.value    || '',
+                fromStation:      document.getElementById('sb_f_from')?.value           || '',
+                toStation:        document.getElementById('sb_f_to')?.value             || '',
+            };
+            window._shuttleBatchPage = 1;
+            loadContent('ShuttleBatchAccrual');
+        };
+        window.shuttleBatchSetPage = function(p) {
+            window._shuttleBatchPage = p;
+            loadContent('ShuttleBatchAccrual');
+        };
+        window.shuttleBatchSetPageSize = function(s) {
+            window._shuttleBatchPageSize = parseInt(s);
+            window._shuttleBatchPage = 1;
+            loadContent('ShuttleBatchAccrual');
+        };
+        window.toggleAll_sb = function(src) {
+            document.querySelectorAll('.shuttle-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; });
+        };
+        window.shuttleBatchUpdateSelection = function() {};
+
+        // --- 9. 生成HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item" style="flex:1; max-width:380px;">
+                <div class="wb-q-label" style="white-space:nowrap;">短驳批次</div>
+                <input id="sb_q_batchNos" class="wb-q-control" style="flex:1; min-width:200px;"
+                    placeholder="支持批量搜索，多个单号用逗号/回车/空格 分隔"
+                    value="${_sesc(sbFilters.batchNos||'')}">
+                <span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;" title="批量编辑">&#9998;</span>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="sb_q_site" class="wb-q-control" style="min-width:120px;">${sbSiteOpts}</select>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">短驳时间</div>
+                <div class="wb-q-date">
+                    <input id="sb_q_date_start" class="wb-q-control" type="date" value="${_sesc(sbDateStart)}" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="sb_q_date_end" class="wb-q-control" type="date" value="${_sesc(sbDateEnd)}" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">车牌号</div>
+                <input id="sb_q_plate" class="wb-q-control" type="text" value="${_sesc(sbFilters.plate||'')}" style="width:90px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">主驾司机</div>
+                <input id="sb_q_driver" class="wb-q-control" type="text" value="${_sesc(sbFilters.driver||'')}" style="width:80px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="shuttleBatchApplyFilters()">&#x1F50D; 查询</button>
+        </div>
+
+        <div class="wb-toolbar">
+            <div class="wb-toolbar__left">
+                <button class="wb-btn" onclick="shuttleBatchToolbarSettle()">挂账</button>
+                <button class="wb-btn" onclick="shuttleBatchToolbarCancel()">取消挂账</button>
+            </div>
+            <div class="wb-toolbar__right">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#x2193; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#x1F5A8; 打印</button>
+                <div class="wb-pager">
+                    <button class="wb-pager__btn" onclick="shuttleBatchSetPage(1)" ${sbSafePage<=1?'disabled':''}>|&lt;</button>
+                    <button class="wb-pager__btn" onclick="shuttleBatchSetPage(${Math.max(1,sbSafePage-1)})" ${sbSafePage<=1?'disabled':''}>&lt;</button>
+                    <span class="wb-pager__text">第</span>
+                    <span class="wb-pager__page">${sbSafePage}</span>
+                    <span class="wb-pager__text">页/共${sbTotalPage}页</span>
+                    <button class="wb-pager__btn" onclick="shuttleBatchSetPage(${Math.min(sbTotalPage,sbSafePage+1)})" ${sbSafePage>=sbTotalPage?'disabled':''}>&gt;</button>
+                    <button class="wb-pager__btn" onclick="shuttleBatchSetPage(${sbTotalPage})" ${sbSafePage>=sbTotalPage?'disabled':''}>&gt;|</button>
+                    <select class="wb-pager__size" onchange="shuttleBatchSetPageSize(this.value)">
+                        <option value="10" ${sbPageSize===10?'selected':''}>0-9</option>
+                        <option value="30" ${sbPageSize===30?'selected':''}>0-29</option>
+                    </select>
+                </div>
+                <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>
+            </div>
+        </div>
+
+        <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+            <table class="data-table" style="white-space:nowrap; min-width:2800px;">
+                <thead>
+                    <tr>
+                        <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                        <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll_sb(this)"></th>
+                        <th class="sticky-header">网点</th>
+                        <th class="sticky-header">短驳批次</th>
+                        <th class="sticky-header">批次状态</th>
+                        <th class="sticky-header">短驳时间</th>
+                        <th class="sticky-header">车牌号</th>
+                        <th class="sticky-header">主驾司机</th>
+                        <th class="sticky-header" style="text-align:right;">短驳费 <span title="本批次短驳运费合计" style="color:#bbb;cursor:help;font-size:12px;">&#9432;</span></th>
+                        <th class="sticky-header">短驳费确认状态</th>
+                        <th class="sticky-header">短驳费挂账状态</th>
+                        <th class="sticky-header">短驳发站</th>
+                        <th class="sticky-header">短驳到站</th>
+                        <th class="sticky-header">接收时间</th>
+                        <th class="sticky-header">主驾电话</th>
+                        <th class="sticky-header" style="text-align:right;">短驳件数</th>
+                        <th class="sticky-header" style="text-align:right;">短驳重量</th>
+                        <th class="sticky-header" style="text-align:right;">短驳体积</th>
+                        <th class="sticky-header" style="text-align:right;">总单数</th>
+                        <th class="sticky-header" style="text-align:right;">件数</th>
+                        <th class="sticky-header" style="text-align:right;">总重量</th>
+                        <th class="sticky-header" style="text-align:right;">总体积</th>
+                        <th class="sticky-header">备注</th>
+                    </tr>
+                    <tr>
+                        <th class="sticky-filter sticky-left-1">筛选</th>
+                        <th class="sticky-filter sticky-left-2"></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索"></th>
+                        <th class="sticky-filter"><input id="sb_f_batchNos" class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索" value="${_sesc(sbFilters.batchNos||'')}"></th>
+                        <th class="sticky-filter">
+                            <select id="sb_f_status" class="wb-filter-select">
+                                <option value="" ${!sbFilters.status?'selected':''}>--</option>
+                                <option value="已完成" ${sbFilters.status==='已完成'?'selected':''}>已完成</option>
+                                <option value="配送中" ${sbFilters.status==='配送中'?'selected':''}>配送中</option>
+                                <option value="已取消" ${sbFilters.status==='已取消'?'selected':''}>已取消</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter">
+                            <div style="display:flex;align-items:center;gap:3px;">
+                                <input id="sb_f_time_s" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期">
+                                <span style="font-size:11px;color:#aaa;">~</span>
+                                <input id="sb_f_time_e" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期">
+                            </div>
+                        </th>
+                        <th class="sticky-filter"><input class="wb-filter-input" placeholder=""></th>
+                        <th class="sticky-filter"><input class="wb-filter-input" placeholder=""></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter">
+                            <select id="sb_f_fee_confirm" class="wb-filter-select">
+                                <option value="" ${!sbFilters.feeConfirmStatus?'selected':''}>--</option>
+                                <option value="已确认" ${sbFilters.feeConfirmStatus==='已确认'?'selected':''}>已确认</option>
+                                <option value="未确认" ${sbFilters.feeConfirmStatus==='未确认'?'selected':''}>未确认</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter">
+                            <select id="sb_f_fee_accrual" class="wb-filter-select">
+                                <option value="" ${!sbFilters.feeAccrualStatus?'selected':''}>--</option>
+                                <option value="已挂账" ${sbFilters.feeAccrualStatus==='已挂账'?'selected':''}>已挂账</option>
+                                <option value="未挂账" ${sbFilters.feeAccrualStatus==='未挂账'?'selected':''}>未挂账</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter"><input id="sb_f_from" class="wb-filter-input" placeholder="" value="${_sesc(sbFilters.fromStation||'')}"></th>
+                        <th class="sticky-filter"><input id="sb_f_to" class="wb-filter-input" placeholder="" value="${_sesc(sbFilters.toStation||'')}"></th>
+                        <th class="sticky-filter">
+                            <div style="display:flex;align-items:center;gap:3px;">
+                                <input type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期">
+                                <span style="font-size:11px;color:#aaa;">~</span>
+                                <input type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期">
+                            </div>
+                        </th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                    </tr>
+                </thead>
+                <tbody>${sbRows || sbEmptyState}</tbody>
+            </table>
+        </div>`;
+    }
+
+    // =========================================================================
+    // 6.2 提货批次挂帐 (PickupBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "PickupBatchAccrual") {
+        const _esc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+        // --- 1. 初始化模拟数据 (生成在2026-01，默认日期筛选范围外，初始呈空态) ---
+        let pickupBatches = JSON.parse(sessionStorage.getItem('PickupBatches'));
+        if (!pickupBatches || pickupBatches.length === 0) {
+            const sites    = ["上海浦东网点","上海徐汇网点","上海宝山网点","苏州园区网点","南京鼓楼网点"];
+            const drivers  = ["王建国","李志强","张明辉","刘凯","陈伟","赵磊","孙海洋","周鹏"];
+            const phones   = ["13812345678","15987654321","18911112222","13611223344","15811234567","13712345678","15012345678","18712345678"];
+            const plates   = ["沪A12345","沪B23456","苏E34567","沪C45678","苏F56789","沪D67890","苏G78901","沪E89012"];
+            const bStatuses = ["已完成","已完成","配送中","已完成","已完成","已取消","已完成","已完成"];
+            const cStatuses = ["已确认","已确认","未确认","已确认","已确认","已确认","已确认","未确认"];
+            const aStatuses = ["已挂账","已挂账","未挂账","未挂账","已挂账","未挂账","已挂账","未挂账"];
+            const tags      = ["正常","加急","正常","正常","特殊","正常","正常","加急"];
+            pickupBatches = [];
+            for (let i = 1; i <= 8; i++) {
+                const day = (i * 3 + 1).toString().padStart(2,'0');
+                const sh  = (8 + i).toString().padStart(2,'0');
+                const eh  = (10 + i).toString().padStart(2,'0');
+                const pieces = 10 + i * 5;
+                const wt = (50 + i * 30).toFixed(1);
+                const vol = (0.5 + i * 0.3).toFixed(3);
+                pickupBatches.push({
+                    id: `PU26010${i.toString().padStart(3,'0')}`,
+                    site: sites[i % sites.length],
+                    status: bStatuses[i-1],
+                    startTime: `2026-01-${day} ${sh}:30`,
+                    endTime:   `2026-01-${day} ${eh}:45`,
+                    plate: plates[i-1],
+                    driver: drivers[i-1],
+                    driverPhone: phones[i-1],
+                    fee: (200 + i * 50).toFixed(2),
+                    feeConfirmStatus: cStatuses[i-1],
+                    feeAccrualStatus: aStatuses[i-1],
+                    pieces: pieces,
+                    weight: wt,
+                    volume: vol,
+                    totalOrders: 3 + i,
+                    totalPieces: pieces + Math.floor(i * 2.5),
+                    totalWeight: (parseFloat(wt) + i * 15).toFixed(1),
+                    totalVolume: (parseFloat(vol) + i * 0.2).toFixed(3),
+                    remark: i % 3 === 0 ? "需上楼搬运" : "",
+                    tag: tags[i-1]
+                });
+            }
+            sessionStorage.setItem('PickupBatches', JSON.stringify(pickupBatches));
+        }
+
+        // --- 2. 筛选状态 & 分页 ---
+        const pbFilters  = window._pickupBatchFilters  || {};
+        const pbPageSize = window._pickupBatchPageSize || 10;
+        const pbPage     = window._pickupBatchPage     || 1;
+        // 默认日期：过去28天 到 今天
+        const _todayStr  = new Date().toISOString().split('T')[0];
+        const _startDefault = new Date(Date.now() - 28*24*60*60*1000).toISOString().split('T')[0];
+        const pbDateStart = pbFilters.dateStart !== undefined ? pbFilters.dateStart : _startDefault;
+        const pbDateEnd   = pbFilters.dateEnd   !== undefined ? pbFilters.dateEnd   : _todayStr;
+
+        // --- 3. 过滤 ---
+        let pbFiltered = pickupBatches.filter(row => {
+            if (pbFilters.batchNos) {
+                const ns = pbFilters.batchNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.id.includes(n))) return false;
+            }
+            if (pbFilters.site   && row.site   !== pbFilters.site)   return false;
+            if (pbFilters.plate  && !row.plate.includes(pbFilters.plate))  return false;
+            if (pbFilters.driver && !row.driver.includes(pbFilters.driver)) return false;
+            if (pbFilters.status && row.status !== pbFilters.status)  return false;
+            if (pbFilters.feeConfirmStatus && row.feeConfirmStatus !== pbFilters.feeConfirmStatus) return false;
+            if (pbFilters.feeAccrualStatus && row.feeAccrualStatus !== pbFilters.feeAccrualStatus) return false;
+            if (pbFilters.tag    && row.tag    !== pbFilters.tag)     return false;
+            const rowDate = row.startTime.split(' ')[0];
+            if (pbDateStart && rowDate < pbDateStart) return false;
+            if (pbDateEnd   && rowDate > pbDateEnd)   return false;
+            return true;
+        });
+
+        // --- 4. 分页计算 ---
+        const pbTotal     = pbFiltered.length;
+        const pbTotalPage = Math.max(1, Math.ceil(pbTotal / pbPageSize));
+        const pbSafePage  = Math.min(pbPage, pbTotalPage);
+        const pbPageRows  = pbFiltered.slice((pbSafePage-1)*pbPageSize, pbSafePage*pbPageSize);
+
+        // --- 5. 网点下拉 ---
+        const pbAllSites = [...new Set(pickupBatches.map(r => r.site))];
+        const pbSiteOpts = `<option value="">全部</option>` + pbAllSites.map(s =>
+            `<option value="${_esc(s)}" ${pbFilters.site===s?'selected':''}>${_esc(s)}</option>`).join('');
+
+        // --- 6. 构建行 ---
+        const pbRows = pbPageRows.map((row, idx) => {
+            const rowNo = (pbSafePage-1)*pbPageSize + idx + 1;
+            const accrualColor = row.feeAccrualStatus === '已挂账' ? '#27ae60' : '#e67e22';
+            const statusColor  = row.status === '已完成' ? '#27ae60' : row.status === '配送中' ? '#2980b9' : '#999';
+            return `
+            <tr>
+                <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="pickup-check" value="${_esc(row.id)}" onchange="pickupBatchUpdateSelection && pickupBatchUpdateSelection()"></td>
+                <td>${_esc(row.site)}</td>
+                <td><a class="wb-link" href="javascript:void(0)" onclick="alert('提货批次详情：${_esc(row.id)}')">${_esc(row.id)}</a></td>
+                <td><span style="color:${statusColor};">${_esc(row.status)}</span></td>
+                <td style="white-space:nowrap;">${_esc(row.startTime)}</td>
+                <td>${_esc(row.plate)}</td>
+                <td>${_esc(row.driver)}</td>
+                <td style="text-align:right; color:${accrualColor}; font-weight:600;">${_esc(row.fee)}</td>
+                <td style="text-align:center;">${_esc(row.feeConfirmStatus)}</td>
+                <td style="text-align:center;"><span style="color:${accrualColor};">${_esc(row.feeAccrualStatus)}</span></td>
+                <td style="white-space:nowrap;">${_esc(row.endTime)}</td>
+                <td>${_esc(row.driverPhone)}</td>
+                <td style="text-align:right;">${row.pieces}</td>
+                <td style="text-align:right;">${_esc(row.weight)}</td>
+                <td style="text-align:right;">${_esc(row.volume)}</td>
+                <td style="text-align:right;">${row.totalOrders}</td>
+                <td style="text-align:right;">${row.totalPieces}</td>
+                <td style="text-align:right;">${_esc(row.totalWeight)}</td>
+                <td style="text-align:right;">${_esc(row.totalVolume)}</td>
+                <td>${_esc(row.remark)}</td>
+                <td>${_esc(row.tag)}</td>
+            </tr>`;
+        }).join('');
+
+        // --- 7. 空态 ---
+        const pbEmptyState = `
+        <tr>
+            <td colspan="22" style="padding:80px 0; text-align:center; background:#fff; border:none;">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                    <svg width="84" height="84" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="18" y="12" width="66" height="82" rx="6" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                        <line x1="30" y1="36" x2="72" y2="36" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="30" y1="50" x2="72" y2="50" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="30" y1="64" x2="52" y2="64" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="83" cy="83" r="23" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                        <text x="83" y="91" text-anchor="middle" font-size="24" fill="#c0c4cc" font-family="sans-serif">?</text>
+                        <line x1="98" y1="98" x2="110" y2="110" stroke="#dcdfe6" stroke-width="3.5" stroke-linecap="round"/>
+                    </svg>
+                    <div style="font-size:14px;color:#606266;margin-top:4px;">没有对应的数据</div>
+                    <div style="font-size:12px;color:#909399;">请检查查询筛选条件后重新进行数据查询</div>
+                </div>
+            </td>
+        </tr>`;
+
+        // --- 8. 注册事件函数 ---
+        window.pickupBatchApplyFilters = function() {
+            window._pickupBatchFilters = {
+                batchNos:          document.getElementById('pb_q_batchNos')?.value        || '',
+                site:              document.getElementById('pb_q_site')?.value            || '',
+                dateStart:         document.getElementById('pb_q_date_start')?.value      || '',
+                dateEnd:           document.getElementById('pb_q_date_end')?.value        || '',
+                plate:             document.getElementById('pb_q_plate')?.value           || '',
+                driver:            document.getElementById('pb_q_driver')?.value          || '',
+                status:            document.getElementById('pb_f_status')?.value          || '',
+                feeConfirmStatus:  document.getElementById('pb_f_fee_confirm')?.value     || '',
+                feeAccrualStatus:  document.getElementById('pb_f_fee_accrual')?.value     || '',
+                tag:               document.getElementById('pb_f_tag')?.value             || '',
+            };
+            window._pickupBatchPage = 1;
+            loadContent('PickupBatchAccrual');
+        };
+        window.pickupBatchSetPage = function(p) {
+            window._pickupBatchPage = p;
+            loadContent('PickupBatchAccrual');
+        };
+        window.pickupBatchSetPageSize = function(s) {
+            window._pickupBatchPageSize = parseInt(s);
+            window._pickupBatchPage = 1;
+            loadContent('PickupBatchAccrual');
+        };
+        window.toggleAll_pb = function(src) {
+            document.querySelectorAll('.pickup-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; });
+        };
+        window.pickupBatchUpdateSelection = function() {};
+
+        // --- 9. 生成HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item" style="flex:1; max-width:380px;">
+                <div class="wb-q-label" style="white-space:nowrap;">提货批次</div>
+                <input id="pb_q_batchNos" class="wb-q-control" style="flex:1; min-width:200px;"
+                    placeholder="支持批量搜索，多个单号用逗号/回车/空格 分隔"
+                    value="${_esc(pbFilters.batchNos||'')}">
+                <span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;" title="批量编辑">&#9998;</span>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="pb_q_site" class="wb-q-control" style="min-width:120px;">${pbSiteOpts}</select>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">开始提货时间</div>
+                <div class="wb-q-date">
+                    <input id="pb_q_date_start" class="wb-q-control" type="date" value="${_esc(pbDateStart)}" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="pb_q_date_end" class="wb-q-control" type="date" value="${_esc(pbDateEnd)}" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">车牌号</div>
+                <input id="pb_q_plate" class="wb-q-control" type="text" value="${_esc(pbFilters.plate||'')}" style="width:90px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">主驾司机</div>
+                <input id="pb_q_driver" class="wb-q-control" type="text" value="${_esc(pbFilters.driver||'')}" style="width:80px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="pickupBatchApplyFilters()">&#x1F50D; 查询</button>
+        </div>
+
+        <div class="wb-toolbar">
+            <div class="wb-toolbar__left">
+                <button class="wb-btn" onclick="pickupBatchToolbarSettle()">挂账</button>
+                <button class="wb-btn" onclick="pickupBatchToolbarCancel()">取消挂账</button>
+            </div>
+            <div class="wb-toolbar__right">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#x2193; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#x1F5A8; 打印</button>
+                <div class="wb-pager">
+                    <button class="wb-pager__btn" onclick="pickupBatchSetPage(1)" ${pbSafePage<=1?'disabled':''}>|&lt;</button>
+                    <button class="wb-pager__btn" onclick="pickupBatchSetPage(${Math.max(1,pbSafePage-1)})" ${pbSafePage<=1?'disabled':''}>&lt;</button>
+                    <span class="wb-pager__text">第</span>
+                    <span class="wb-pager__page">${pbSafePage}</span>
+                    <span class="wb-pager__text">页/共${pbTotalPage}页</span>
+                    <button class="wb-pager__btn" onclick="pickupBatchSetPage(${Math.min(pbTotalPage,pbSafePage+1)})" ${pbSafePage>=pbTotalPage?'disabled':''}>&gt;</button>
+                    <button class="wb-pager__btn" onclick="pickupBatchSetPage(${pbTotalPage})" ${pbSafePage>=pbTotalPage?'disabled':''}>&gt;|</button>
+                    <select class="wb-pager__size" onchange="pickupBatchSetPageSize(this.value)">
+                        <option value="10" ${pbPageSize===10?'selected':''}>0-9</option>
+                        <option value="30" ${pbPageSize===30?'selected':''}>0-29</option>
+                    </select>
+                </div>
+                <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>
+            </div>
+        </div>
+
+        <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+            <table class="data-table" style="white-space:nowrap; min-width:2600px;">
+                <thead>
+                    <tr>
+                        <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                        <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll_pb(this)"></th>
+                        <th class="sticky-header">网点</th>
+                        <th class="sticky-header">提货批次</th>
+                        <th class="sticky-header">批次状态</th>
+                        <th class="sticky-header">开始提货时间</th>
+                        <th class="sticky-header">车牌号</th>
+                        <th class="sticky-header">主驾司机</th>
+                        <th class="sticky-header" style="text-align:right;">提货费 <span title="本批次提货运费合计" style="color:#bbb;cursor:help;font-size:12px;">&#9432;</span></th>
+                        <th class="sticky-header">提货费确认状态</th>
+                        <th class="sticky-header">提货费挂账状态</th>
+                        <th class="sticky-header">提货完成时间</th>
+                        <th class="sticky-header">主驾电话</th>
+                        <th class="sticky-header" style="text-align:right;">提货件数</th>
+                        <th class="sticky-header" style="text-align:right;">提货重量</th>
+                        <th class="sticky-header" style="text-align:right;">提货体积</th>
+                        <th class="sticky-header" style="text-align:right;">总单数</th>
+                        <th class="sticky-header" style="text-align:right;">件数</th>
+                        <th class="sticky-header" style="text-align:right;">总重量</th>
+                        <th class="sticky-header" style="text-align:right;">总体积</th>
+                        <th class="sticky-header">备注</th>
+                        <th class="sticky-header">批次标识</th>
+                    </tr>
+                    <tr>
+                        <th class="sticky-filter sticky-left-1">筛选</th>
+                        <th class="sticky-filter sticky-left-2"></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索"></th>
+                        <th class="sticky-filter"><input id="pb_f_batchNos" class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索" value="${_esc(pbFilters.batchNos||'')}"></th>
+                        <th class="sticky-filter">
+                            <select id="pb_f_status" class="wb-filter-select">
+                                <option value="" ${!pbFilters.status?'selected':''}>--</option>
+                                <option value="已完成" ${pbFilters.status==='已完成'?'selected':''}>已完成</option>
+                                <option value="配送中" ${pbFilters.status==='配送中'?'selected':''}>配送中</option>
+                                <option value="已取消" ${pbFilters.status==='已取消'?'selected':''}>已取消</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter">
+                            <div style="display:flex;align-items:center;gap:3px;">
+                                <input id="pb_f_start_s" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期">
+                                <span style="font-size:11px;color:#aaa;">~</span>
+                                <input id="pb_f_start_e" type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期">
+                            </div>
+                        </th>
+                        <th class="sticky-filter"><input class="wb-filter-input" placeholder=""></th>
+                        <th class="sticky-filter"><input class="wb-filter-input" placeholder=""></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter">
+                            <select id="pb_f_fee_confirm" class="wb-filter-select">
+                                <option value="" ${!pbFilters.feeConfirmStatus?'selected':''}>--</option>
+                                <option value="已确认" ${pbFilters.feeConfirmStatus==='已确认'?'selected':''}>已确认</option>
+                                <option value="未确认" ${pbFilters.feeConfirmStatus==='未确认'?'selected':''}>未确认</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter">
+                            <select id="pb_f_fee_accrual" class="wb-filter-select">
+                                <option value="" ${!pbFilters.feeAccrualStatus?'selected':''}>--</option>
+                                <option value="已挂账" ${pbFilters.feeAccrualStatus==='已挂账'?'selected':''}>已挂账</option>
+                                <option value="未挂账" ${pbFilters.feeAccrualStatus==='未挂账'?'selected':''}>未挂账</option>
+                            </select>
+                        </th>
+                        <th class="sticky-filter">
+                            <div style="display:flex;align-items:center;gap:3px;">
+                                <input type="date" class="wb-filter-input" style="min-width:110px;" placeholder="开始日期">
+                                <span style="font-size:11px;color:#aaa;">~</span>
+                                <input type="date" class="wb-filter-input" style="min-width:110px;" placeholder="结束日期">
+                            </div>
+                        </th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>
+                        <th class="sticky-filter">
+                            <select id="pb_f_tag" class="wb-filter-select">
+                                <option value="" ${!pbFilters.tag?'selected':''}>--</option>
+                                <option value="正常" ${pbFilters.tag==='正常'?'selected':''}>正常</option>
+                                <option value="加急" ${pbFilters.tag==='加急'?'selected':''}>加急</option>
+                                <option value="特殊" ${pbFilters.tag==='特殊'?'selected':''}>特殊</option>
+                            </select>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>${pbRows || pbEmptyState}</tbody>
+            </table>
+        </div>`;
+    }
 
     // =========================================================================
     //  网点对账 (ReconSite) - [增强版：含催办/明细/调整/自动结算方向]
@@ -3269,10 +5206,720 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
+    // AP-1. 干线批次结算 (APTrunkBatchSettlement)
+    // =========================================================================
+    else if (moduleCode === "APTrunkBatchSettlement") {
+        function _apesc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+        // --- Tab 定义 ---
+        const apTabs = ['发车汇总','到车汇总','现付运输费','现付油卡费','到付运输费','回付运输费','司机定金','挂车使用费','发站装车费','发站其他费','整车保险费','到站卸车费','到站其他费','整车信息费','发站整车落货费','到站整车落货费'];
+        const apActiveTab = window._apTrunkTab || '发车汇总';
+
+        // --- 列定义 ---
+        const apCols = [
+            { key: "site",               label: "网点",            w: 110, siteFilter: true },
+            { key: "batchNo",            label: "发车批次",        w: 180, batchFilter: true },
+            { key: "route",              label: "车辆线路",        w: 140, fkey: "route" },
+            { key: "createTime",         label: "创建时间",        w: 160, dateFilter: "create" },
+            { key: "departTime",         label: "发车时间",        w: 160, dateFilter: "depart" },
+            { key: "plateNo",            label: "车牌号",          w: 110, fkey: "plateNo" },
+            { key: "driver",             label: "主驾司机",        w: 100, fkey: "driver" },
+            { key: "cashFreight",        label: "现付运输费",      w: 110, align: "right" },
+            { key: "cashFreightUnpaid",  label: "未结现付运输费",  w: 130, align: "right" },
+            { key: "cashFuelCard",       label: "现付油卡费",      w: 110, align: "right" },
+            { key: "cashFuelCardUnpaid", label: "未结现付油卡费",  w: 130, align: "right" },
+            { key: "returnFreight",      label: "回付运输费",      w: 110, align: "right" },
+            { key: "returnFreightUnpaid",label: "未结回付运输费",  w: 130, align: "right" },
+            { key: "trailerFee",         label: "挂车使用费",      w: 110, align: "right" },
+            { key: "trailerFeeUnpaid",   label: "未结挂车使用费",  w: 130, align: "right" },
+            { key: "depStationFee",      label: "发站其他费",      w: 110, align: "right" },
+            { key: "depStationFeeUnpaid",label: "未结发站其他费",  w: 130, align: "right" },
+            { key: "depLoadFee",         label: "发站装车费",      w: 110, align: "right" },
+            { key: "depLoadFeeUnpaid",   label: "未结发站装车费",  w: 130, align: "right" },
+            { key: "insurance",          label: "整车保险费",      w: 110, align: "right" },
+            { key: "insuranceUnpaid",    label: "未结整车保险费",  w: 130, align: "right" },
+            { key: "infoFee",            label: "整车信息费",      w: 110, align: "right" },
+            { key: "infoFeeUnpaid",      label: "未结整车信息费",  w: 130, align: "right" },
+            { key: "arrFreightUnpaid",   label: "未结到付运输费",  w: 130, align: "right" },
+            { key: "cashFreightAbnUnpaid",label:"未结现付运输费异动",w:145,align: "right" },
+            { key: "trailerPlate",       label: "挂车牌号",        w: 110, fkey: "trailerPlate" },
+            { key: "arriveTime",         label: "到达时间",        w: 160, dateFilter: "arrive" },
+            { key: "latestSite",         label: "最新操作网点",    w: 130, fkey: "latestSite" },
+            { key: "batchStatus",        label: "批次状态",        w: 100, statusFilter: "status" },
+            { key: "driverPhone",        label: "主驾电话",        w: 120, fkey: "driverPhone" },
+            { key: "remark",             label: "备注",            w: 140, fkey: "remark" },
+            { key: "batchTag",           label: "批次标识",        w: 100, statusFilter: "tag" },
+        ];
+
+        // --- 生成数据（仅首次） ---
+        let apData = JSON.parse(sessionStorage.getItem('APTrunkBatches') || 'null');
+        if (!apData) {
+            const sites = ['上海总部','北京分公司','广州分公司','深圳分公司','成都分公司'];
+            const routes = ['沪京线','沪广线','京广线','广深线','成渝线','沪汉线'];
+            const drivers = [['张伟','138-0001-0001'],['李强','139-0002-0002'],['王磊','137-0003-0003'],['刘洋','136-0004-0004'],['陈龙','135-0005-0005']];
+            const plates = ['沪A12345','京B23456','粤C34567','粤D45678','川E56789'];
+            const trailers = ['沪A挂001','京B挂002','粤C挂003','','粤D挂004'];
+            const statuses = ['已发车','已到达','待结算'];
+            const tags = ['正常','加急','特殊'];
+            apData = [];
+            for (let i = 1; i <= 80; i++) {
+                const di = drivers[i % drivers.length];
+                const d = String((i % 28) + 1).padStart(2,'0');
+                const hh = String(8 + (i % 10)).padStart(2,'0');
+                const mm = String((i * 7) % 60).padStart(2,'0');
+                const createDt = `2026-01-${d} ${hh}:${mm}`;
+                const departDt = `2026-01-${d} ${String(10 + (i % 8)).padStart(2,'0')}:${String((i * 11) % 60).padStart(2,'0')}`;
+                const arriveDt = i % 5 !== 0 ? `2026-01-${String(Math.min(28, Number(d) + 1 + (i % 3))).padStart(2,'0')} ${String(8 + (i % 6)).padStart(2,'0')}:${String((i * 13) % 60).padStart(2,'0')}` : '';
+                const cf = i % 4 === 0 ? 0 : Math.round((500 + (i * 37.3) % 3000) * 10) / 10;
+                const cfc = i % 5 === 0 ? 0 : Math.round((100 + (i * 19.1) % 800) * 10) / 10;
+                const rf = i % 3 === 0 ? 0 : Math.round((200 + (i * 23.7) % 1500) * 10) / 10;
+                const tf = i % 6 === 0 ? 0 : Math.round((50 + (i * 11.3) % 400) * 10) / 10;
+                const dsf = i % 7 === 0 ? 0 : Math.round((30 + (i * 7.9) % 300) * 10) / 10;
+                const dlf = i % 4 === 0 ? 0 : Math.round((80 + (i * 13.1) % 500) * 10) / 10;
+                const ins = i % 5 === 0 ? 0 : Math.round((100 + (i * 17.3) % 600) * 10) / 10;
+                const inf = i % 8 === 0 ? 0 : Math.round((50 + (i * 9.7) % 300) * 10) / 10;
+                const af = i % 3 === 0 ? 0 : Math.round((300 + (i * 29.1) % 2000) * 10) / 10;
+                apData.push({
+                    id: `AP202601${String(i).padStart(4,'0')}`,
+                    site: sites[i % sites.length],
+                    batchNo: `AP202601${String(i).padStart(4,'0')}`,
+                    route: routes[i % routes.length],
+                    createTime: createDt,
+                    departTime: departDt,
+                    plateNo: plates[i % plates.length],
+                    driver: di[0],
+                    cashFreight: cf,
+                    cashFreightUnpaid: cf > 0 ? Math.round(cf * (i % 3 === 1 ? 0 : 0.5) * 10) / 10 : 0,
+                    cashFuelCard: cfc,
+                    cashFuelCardUnpaid: cfc > 0 ? Math.round(cfc * (i % 2 === 0 ? 0 : 1) * 10) / 10 : 0,
+                    returnFreight: rf,
+                    returnFreightUnpaid: rf > 0 ? Math.round(rf * (i % 4 === 0 ? 0 : 0.5) * 10) / 10 : 0,
+                    trailerFee: tf,
+                    trailerFeeUnpaid: tf,
+                    depStationFee: dsf,
+                    depStationFeeUnpaid: dsf > 0 ? Math.round(dsf * (i % 2 === 0 ? 0.5 : 1) * 10) / 10 : 0,
+                    depLoadFee: dlf,
+                    depLoadFeeUnpaid: dlf > 0 ? Math.round(dlf * (i % 3 === 0 ? 0 : 0.5) * 10) / 10 : 0,
+                    insurance: ins,
+                    insuranceUnpaid: ins,
+                    infoFee: inf,
+                    infoFeeUnpaid: inf > 0 ? Math.round(inf * (i % 2 === 0 ? 0 : 1) * 10) / 10 : 0,
+                    arrFreightUnpaid: af,
+                    cashFreightAbnUnpaid: i % 9 === 0 ? Math.round((i * 7.3) % 200 * 10) / 10 : 0,
+                    trailerPlate: trailers[i % trailers.length],
+                    arriveTime: arriveDt,
+                    latestSite: sites[(i + 1) % sites.length],
+                    batchStatus: statuses[i % statuses.length],
+                    driverPhone: di[1],
+                    remark: i % 6 === 0 ? '需特殊处理' : '',
+                    batchTag: tags[i % tags.length],
+                });
+            }
+            sessionStorage.setItem('APTrunkBatches', JSON.stringify(apData));
+        }
+
+        // --- 筛选状态 ---
+        const today = new Date();
+        const d28 = new Date(today); d28.setDate(today.getDate() - 28);
+        const fmt = d => d.toISOString().slice(0, 10);
+        const apF = {
+            batchNos:     window._apF_batchNos    ?? '',
+            site:         window._apF_site         ?? '',
+            createFrom:   window._apF_createFrom   ?? fmt(d28),
+            createTo:     window._apF_createTo     ?? fmt(today),
+            departFrom:   window._apF_departFrom   ?? '',
+            departTo:     window._apF_departTo     ?? '',
+            arriveFrom:   window._apF_arriveFrom   ?? '',
+            arriveTo:     window._apF_arriveTo     ?? '',
+            plateNo:      window._apF_plateNo      ?? '',
+            driver:       window._apF_driver       ?? '',
+            route:        window._apF_route        ?? '',
+            status:       window._apF_status       ?? '',
+            tag:          window._apF_tag          ?? '',
+            trailerPlate: window._apF_trailerPlate ?? '',
+            latestSite:   window._apF_latestSite   ?? '',
+            driverPhone:  window._apF_driverPhone  ?? '',
+            remark:       window._apF_remark       ?? '',
+        };
+
+        // --- 筛选逻辑 ---
+        const apFiltered = apData.filter(r => {
+            if (apF.batchNos) {
+                const nos = apF.batchNos.split(/[,+\s\n]+/).map(s=>s.trim()).filter(Boolean);
+                if (nos.length && !nos.some(n => r.batchNo.toLowerCase().includes(n.toLowerCase()))) return false;
+            }
+            if (apF.site && r.site !== apF.site) return false;
+            if (apF.route && !r.route.toLowerCase().includes(apF.route.toLowerCase())) return false;
+            if (apF.plateNo && !r.plateNo.toLowerCase().includes(apF.plateNo.toLowerCase())) return false;
+            if (apF.driver && !r.driver.toLowerCase().includes(apF.driver.toLowerCase())) return false;
+            if (apF.status && r.batchStatus !== apF.status) return false;
+            if (apF.tag && r.batchTag !== apF.tag) return false;
+            if (apF.trailerPlate && !r.trailerPlate.toLowerCase().includes(apF.trailerPlate.toLowerCase())) return false;
+            if (apF.latestSite && !r.latestSite.toLowerCase().includes(apF.latestSite.toLowerCase())) return false;
+            if (apF.driverPhone && !r.driverPhone.toLowerCase().includes(apF.driverPhone.toLowerCase())) return false;
+            if (apF.remark && !r.remark.toLowerCase().includes(apF.remark.toLowerCase())) return false;
+            const ct = r.createTime ? r.createTime.slice(0,10) : '';
+            if (apF.createFrom && ct < apF.createFrom) return false;
+            if (apF.createTo && ct > apF.createTo) return false;
+            const dt = r.departTime ? r.departTime.slice(0,10) : '';
+            if (apF.departFrom && dt < apF.departFrom) return false;
+            if (apF.departTo && dt > apF.departTo) return false;
+            const at = r.arriveTime ? r.arriveTime.slice(0,10) : '';
+            if (apF.arriveFrom && at < apF.arriveFrom) return false;
+            if (apF.arriveTo && at > apF.arriveTo) return false;
+            return true;
+        });
+
+        // --- 分页 ---
+        const apPage = window._apBatchPage || 1;
+        const apPageSize = window._apBatchPageSize || 20;
+        const apTotal = apFiltered.length;
+        const apPageCount = Math.max(1, Math.ceil(apTotal / apPageSize));
+        const apPageData = apFiltered.slice((apPage-1)*apPageSize, apPage*apPageSize);
+
+        // --- 合计 ---
+        const apSumKeys = ['cashFreight','cashFreightUnpaid','cashFuelCard','cashFuelCardUnpaid','returnFreight','returnFreightUnpaid','trailerFee','trailerFeeUnpaid','depStationFee','depStationFeeUnpaid','depLoadFee','depLoadFeeUnpaid','insurance','insuranceUnpaid','infoFee','infoFeeUnpaid','arrFreightUnpaid','cashFreightAbnUnpaid'];
+        const apSums = {};
+        apSumKeys.forEach(k => { apSums[k] = 0; });
+        apFiltered.forEach(r => { apSumKeys.forEach(k => { apSums[k] += Number(r[k]) || 0; }); });
+
+        // --- 状态颜色 ---
+        const apStatusColor = s => ({'已发车':'color:#1890ff','已到达':'color:#52c41a','待结算':'color:#faad14'}[s]||'');
+
+        // --- 空状态 ---
+        const apEmptyState = `<tr><td colspan="${apCols.length+1}" style="padding:80px 0;text-align:center;">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.25;display:block;margin:0 auto 12px;">
+                <rect x="10" y="10" width="60" height="60" rx="8" stroke="#b0c4d8" stroke-width="3" fill="#eaf3fb"/>
+                <circle cx="40" cy="36" r="13" stroke="#b0c4d8" stroke-width="3" fill="none"/>
+                <line x1="49" y1="47" x2="62" y2="60" stroke="#b0c4d8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="56" cy="24" r="8" fill="#fff" stroke="#b0c4d8" stroke-width="2"/>
+                <text x="52" y="28" font-size="10" fill="#b0c4d8" font-family="Arial">?</text>
+            </svg>
+            <div style="color:#b0c4d8;font-size:14px;margin-bottom:4px;">没有对应的数据</div>
+            <div style="color:#c8d8e8;font-size:12px;">请检查查询筛选条件后重新进行数据查询</div>
+        </td></tr>`;
+
+        // --- 数据行 ---
+        const apRows = apPageData.map(r => `<tr>
+            <td><input type="checkbox" class="ap-check" value="${_apesc(r.id)}"></td>
+            ${apCols.map(col => {
+                let v = r[col.key];
+                let style = col.align === 'right' ? 'text-align:right;' : '';
+                if (col.key === 'batchStatus') style += apStatusColor(v);
+                if (apSumKeys.includes(col.key)) v = v > 0 ? Number(v).toFixed(2) : '';
+                return `<td style="${style}">${_apesc(v ?? '')}</td>`;
+            }).join('')}
+        </tr>`).join('');
+
+        // --- 筛选行 ---
+        const apAllSites = [...new Set(apData.map(r=>r.site))];
+        const apFilterRow = apCols.map(col => {
+            if (col.siteFilter) return `<td class="sticky-left-1"><select class="wb-filter-select" id="ap_f_site" onchange="apBatchApplyFilters()">
+                <option value=""></option>${apAllSites.map(s=>`<option value="${_apesc(s)}" ${apF.site===s?'selected':''}>${_apesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.batchFilter) return `<td class="sticky-left-2"><input class="wb-filter-input wb-filter-input--batch" id="ap_f_batch" placeholder="支持批量搜索" value="${_apesc(apF.batchNos)}" onchange="apBatchApplyFilters()"></td>`;
+            if (col.dateFilter === 'create') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input" id="ap_f_createFrom" value="${_apesc(apF.createFrom)}" onchange="apBatchApplyFilters()" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input" id="ap_f_createTo" value="${_apesc(apF.createTo)}" onchange="apBatchApplyFilters()" style="width:108px;">
+            </div></td>`;
+            if (col.dateFilter === 'depart') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_departFrom" value="${_apesc(apF.departFrom)}" onchange="apBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_departTo" value="${_apesc(apF.departTo)}" onchange="apBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
+            </div></td>`;
+            if (col.dateFilter === 'arrive') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_arriveFrom" value="${_apesc(apF.arriveFrom)}" onchange="apBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_arriveTo" value="${_apesc(apF.arriveTo)}" onchange="apBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
+            </div></td>`;
+            if (col.statusFilter === 'status') return `<td><select class="wb-filter-select" id="ap_f_status" onchange="apBatchApplyFilters()">
+                <option value=""></option>${['已发车','已到达','待结算'].map(s=>`<option value="${_apesc(s)}" ${apF.status===s?'selected':''}>${_apesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.statusFilter === 'tag') return `<td><select class="wb-filter-select" id="ap_f_tag" onchange="apBatchApplyFilters()">
+                <option value=""></option>${['正常','加急','特殊'].map(s=>`<option value="${_apesc(s)}" ${apF.tag===s?'selected':''}>${_apesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.fkey) return `<td><input class="wb-filter-input" id="ap_f_${col.fkey}" value="${_apesc(apF[col.fkey]||'')}" onchange="apBatchApplyFilters()"></td>`;
+            return `<td></td>`;
+        }).join('');
+
+        // --- 合计行 ---
+        const apTotalRow = `<tr class="wb-foot wb-foot--total">
+            <td></td>
+            ${apCols.map(col => {
+                if (col.key === 'site') return `<td style="font-weight:600;">合计</td>`;
+                if (apSumKeys.includes(col.key)) return `<td style="text-align:right;font-weight:600;">${apSums[col.key] > 0 ? apSums[col.key].toFixed(2) : ''}</td>`;
+                return `<td></td>`;
+            }).join('')}
+        </tr>`;
+
+        // --- 注册窗口函数 ---
+        window.apBatchApplyFilters = function() {
+            const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+            window._apF_batchNos    = g('ap_f_batch');
+            window._apF_site        = g('ap_f_site');
+            window._apF_createFrom  = g('ap_f_createFrom');
+            window._apF_createTo    = g('ap_f_createTo');
+            window._apF_departFrom  = g('ap_f_departFrom');
+            window._apF_departTo    = g('ap_f_departTo');
+            window._apF_arriveFrom  = g('ap_f_arriveFrom');
+            window._apF_arriveTo    = g('ap_f_arriveTo');
+            window._apF_plateNo     = g('ap_f_plateNo');
+            window._apF_driver      = g('ap_f_driver');
+            window._apF_route       = g('ap_f_route');
+            window._apF_status      = g('ap_f_status');
+            window._apF_tag         = g('ap_f_tag');
+            window._apF_trailerPlate= g('ap_f_trailerPlate');
+            window._apF_latestSite  = g('ap_f_latestSite');
+            window._apF_driverPhone = g('ap_f_driverPhone');
+            window._apF_remark      = g('ap_f_remark');
+            window._apBatchPage = 1;
+            loadContent('APTrunkBatchSettlement');
+        };
+        window.apBatchSetPage = function(p) { window._apBatchPage = p; loadContent('APTrunkBatchSettlement'); };
+        window.apBatchSetPageSize = function(s) { window._apBatchPageSize = parseInt(s); window._apBatchPage = 1; loadContent('APTrunkBatchSettlement'); };
+        window.apBatchSetTab = function(t) { window._apTrunkTab = t; loadContent('APTrunkBatchSettlement'); };
+        window.toggleAll_ap = function(src) { document.querySelectorAll('.ap-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.apBatchSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.ap-check:checked'));
+            if (!checked.length) return alert('请先勾选需要结算的批次。');
+            let list = JSON.parse(sessionStorage.getItem('APTrunkBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) {
+                    item.cashFreightUnpaid = 0; item.cashFuelCardUnpaid = 0;
+                    item.returnFreightUnpaid = 0; item.trailerFeeUnpaid = 0;
+                    item.depStationFeeUnpaid = 0; item.depLoadFeeUnpaid = 0;
+                    item.insuranceUnpaid = 0; item.infoFeeUnpaid = 0;
+                    item.arrFreightUnpaid = 0; item.cashFreightAbnUnpaid = 0;
+                    item.batchStatus = '已到达';
+                }
+            });
+            sessionStorage.setItem('APTrunkBatches', JSON.stringify(list));
+            alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
+            loadContent('APTrunkBatchSettlement');
+        };
+
+        // --- 预构建所有HTML片段（避免 contentHTML+= 里嵌套太深）---
+
+        // Tab 栏
+        var apTabsHtml = '<div style="display:flex;gap:0;border-bottom:2px solid #e8edf2;overflow-x:auto;background:#f7fafc;padding:0 12px;flex-shrink:0;">';
+        for (var _ti = 0; _ti < apTabs.length; _ti++) {
+            var _t = apTabs[_ti];
+            var _tActive = (_t === apActiveTab) ? 'border-bottom:2px solid #1890ff;color:#1890ff;font-weight:600;background:#fff;' : '';
+            apTabsHtml += '<div style="padding:9px 14px;font-size:13px;color:#5a7a99;cursor:pointer;white-space:nowrap;margin-bottom:-2px;user-select:none;' + _tActive + '" onclick="apBatchSetTab(\'' + _apesc(_t) + '\')">' + _apesc(_t) + '</div>';
+        }
+        apTabsHtml += '<div style="padding:9px 10px;color:#8aa0b8;cursor:pointer;">&#9660;</div></div>';
+
+        // 查询栏网点选项
+        var apSiteOptions = '<option value=""></option>';
+        for (var _si = 0; _si < apAllSites.length; _si++) {
+            var _s = apAllSites[_si];
+            apSiteOptions += '<option value="' + _apesc(_s) + '"' + (apF.site === _s ? ' selected' : '') + '>' + _apesc(_s) + '</option>';
+        }
+
+        // 表头
+        var apTheadHtml = '<th style="width:40px;min-width:40px;"><input type="checkbox" onchange="toggleAll_ap(this)"></th>';
+        for (var _ci = 0; _ci < apCols.length; _ci++) {
+            var _col = apCols[_ci];
+            var _cls = _col.siteFilter ? 'sticky-left-1' : (_col.batchFilter ? 'sticky-left-2' : '');
+            var _align = _col.align === 'right' ? 'text-align:right;' : '';
+            apTheadHtml += '<th style="width:' + _col.w + 'px;min-width:' + _col.w + 'px;' + _align + '" class="' + _cls + '">' + _apesc(_col.label) + '</th>';
+        }
+
+        // 分页按钮
+        var apPrevDisabled = apPage <= 1 ? ' disabled' : '';
+        var apNextDisabled = apPage >= apPageCount ? ' disabled' : '';
+        var apPagerHtml = '<div class="wb-pager">'
+            + '<button class="wb-pager__btn"' + apPrevDisabled + ' onclick="apBatchSetPage(1)">|&lt;</button>'
+            + '<button class="wb-pager__btn"' + apPrevDisabled + ' onclick="apBatchSetPage(' + Math.max(1,apPage-1) + ')">&lt;</button>'
+            + '<span class="wb-pager__text">第</span>'
+            + '<span class="wb-pager__page">' + apPage + '</span>'
+            + '<span class="wb-pager__text">页/共' + apPageCount + '页</span>'
+            + '<button class="wb-pager__btn"' + apNextDisabled + ' onclick="apBatchSetPage(' + Math.min(apPageCount,apPage+1) + ')">&gt;</button>'
+            + '<button class="wb-pager__btn"' + apNextDisabled + ' onclick="apBatchSetPage(' + apPageCount + ')">&gt;|</button>'
+            + '<select class="wb-pager__size" onchange="apBatchSetPageSize(this.value)">'
+            + '<option value="20"' + (apPageSize===20?' selected':'') + '>0-19</option>'
+            + '<option value="50"' + (apPageSize===50?' selected':'') + '>0-49</option>'
+            + '</select></div>'
+            + '<span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>';
+
+        // --- HTML ---
+        contentHTML += apTabsHtml;
+        contentHTML += '<div class="wb-querybar">'
+            + '<div class="wb-q-item" style="flex:1;max-width:380px;">'
+            + '<div class="wb-q-label" style="white-space:nowrap;">发车批次</div>'
+            + '<input id="ap_q_batch" class="wb-q-control" style="flex:1;min-width:180px;" placeholder="支持批量搜索，多个单号用逗号/加号/回车/空格 分隔" value="' + _apesc(apF.batchNos) + '">'
+            + '<span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>'
+            + '</div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">网点</div>'
+            + '<select id="ap_q_site" class="wb-q-control" style="width:120px;">' + apSiteOptions + '</select></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">创建时间</div>'
+            + '<input type="date" id="ap_q_createFrom" class="wb-q-control" value="' + _apesc(apF.createFrom) + '" style="width:128px;">'
+            + '<span style="color:#bbb;margin:0 2px;">~</span>'
+            + '<input type="date" id="ap_q_createTo" class="wb-q-control" value="' + _apesc(apF.createTo) + '" style="width:128px;"></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">发车时间</div>'
+            + '<input type="date" id="ap_q_departFrom" class="wb-q-control" value="' + _apesc(apF.departFrom) + '" style="width:128px;">'
+            + '<span style="color:#bbb;margin:0 2px;">~</span>'
+            + '<input type="date" id="ap_q_departTo" class="wb-q-control" value="' + _apesc(apF.departTo) + '" style="width:128px;"></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">车牌号</div>'
+            + '<input id="ap_q_plate" class="wb-q-control" value="' + _apesc(apF.plateNo) + '" style="width:100px;"></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">主驾司机</div>'
+            + '<input id="ap_q_driver" class="wb-q-control" value="' + _apesc(apF.driver) + '" style="width:90px;"></div>'
+            + '<button class="wb-btn wb-btn--primary" onclick="window._apF_batchNos=document.getElementById(\'ap_q_batch\').value.trim();window._apF_site=document.getElementById(\'ap_q_site\').value;window._apF_createFrom=document.getElementById(\'ap_q_createFrom\').value;window._apF_createTo=document.getElementById(\'ap_q_createTo\').value;window._apF_departFrom=document.getElementById(\'ap_q_departFrom\').value;window._apF_departTo=document.getElementById(\'ap_q_departTo\').value;window._apF_plateNo=document.getElementById(\'ap_q_plate\').value.trim();window._apF_driver=document.getElementById(\'ap_q_driver\').value.trim();window._apBatchPage=1;loadContent(\'APTrunkBatchSettlement\');">&#128269; 查询</button>'
+            + '</div>';
+        contentHTML += '<div class="wb-toolbar">'
+            + '<div style="display:flex;gap:6px;">'
+            + '<button class="wb-btn wb-btn--primary" onclick="apBatchSettle()">&#128196; 结算</button>'
+            + '</div>'
+            + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
+            + '<button class="wb-btn" onclick="alert(\'导出功能开发中\')">&#8593; 导出</button>'
+            + '<button class="wb-btn" onclick="window.print()">&#128424; 打印</button>'
+            + apPagerHtml
+            + '</div></div>';
+        contentHTML += '<div class="settlement-waybill-table" style="--sticky-left-1:40px;--sticky-left-2:150px;">'
+            + '<table><thead>'
+            + '<tr class="sticky-header">' + apTheadHtml + '</tr>'
+            + '<tr class="sticky-filter"><td class="wb-funnel"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2h14l-5 6v5l-4-2V8z" fill="none" stroke="#8aa0b8" stroke-width="1.5"/></svg></td>'
+            + apFilterRow + '</tr>'
+            + '</thead>'
+            + '<tbody>' + (apRows || apEmptyState) + '</tbody>'
+            + '<tfoot>' + apTotalRow + '</tfoot>'
+            + '</table></div>';
+    }
+
+    // =========================================================================
+    // AP-2. 短途批次结算 (APShortBatchSettlement)
+    // =========================================================================
+    else if (moduleCode === "APShortBatchSettlement") {
+        function _sbesc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+        // --- Tab 定义 ---
+        const sbTabs = ['送货费','短驳费','提货费','司机定金','提货费异动','送货费异动'];
+        const sbActiveTab = window._sbShortTab || '送货费';
+
+        // --- 列定义 ---
+        const sbCols = [
+            { key: "site",             label: "网点",         w: 100, siteFilter: true },
+            { key: "batchNo",          label: "送货批次",     w: 160, batchFilter: true },
+            { key: "deliveryFee",      label: "送货费",       w: 100, align: "right", tipIcon: true },
+            { key: "settleStatus",     label: "送货费结算状态", w: 120, statusFilter: "status" },
+            { key: "settledFee",       label: "已结送货费",   w: 110, align: "right" },
+            { key: "unsettledFee",     label: "未结送货费",   w: 110, align: "right" },
+            { key: "finishTime",       label: "送货完成时间", w: 155, dateFilter: "finish" },
+            { key: "driverPhone",      label: "主驾电话",     w: 120, fkey: "driverPhone" },
+            { key: "deliveryPieces",   label: "送货件数",     w: 90,  align: "right" },
+            { key: "deliveryWeight",   label: "送货重量",     w: 90,  align: "right" },
+            { key: "deliveryVolume",   label: "送货体积",     w: 90,  align: "right" },
+            { key: "deliveryOrders",   label: "送货运单数",   w: 95,  align: "right" },
+            { key: "pieces",           label: "件数",         w: 80,  align: "right" },
+            { key: "totalWeight",      label: "总重量",       w: 80,  align: "right" },
+            { key: "totalVolume",      label: "总体积",       w: 80,  align: "right" },
+            { key: "remark",           label: "备注",         w: 130, fkey: "remark" },
+            { key: "batchTag",         label: "批次标识",     w: 100, statusFilter: "tag" },
+        ];
+
+        // --- 生成数据（仅首次） ---
+        let sbData = JSON.parse(sessionStorage.getItem('APShortBatches') || 'null');
+        if (!sbData) {
+            const sbSites = ['上海总部','北京分公司','广州分公司','深圳分公司','成都分公司'];
+            const sbDrivers = [['张伟','138-0001-0001'],['李强','139-0002-0002'],['王磊','137-0003-0003'],['刘洋','136-0004-0004'],['陈龙','135-0005-0005']];
+            const sbPlates  = ['沪A12345','京B23456','粤C34567','粤D45678','川E56789'];
+            const sbStatuses = ['未结算','已结算','部分结算'];
+            const sbTags    = ['正常','加急','特殊'];
+            sbData = [];
+            for (let i = 1; i <= 60; i++) {
+                const di = sbDrivers[i % sbDrivers.length];
+                const d  = String((i % 28) + 1).padStart(2,'0');
+                const hh = String(8 + (i % 10)).padStart(2,'0');
+                const mm = String((i * 7) % 60).padStart(2,'0');
+                const finishDt = `2026-01-${d} ${hh}:${mm}`;
+                const fee      = Math.round((80 + (i * 31.7) % 800) * 10) / 10;
+                const settled  = i % 3 === 0 ? fee : (i % 3 === 1 ? 0 : Math.round(fee * 0.5 * 10) / 10);
+                const unsettled = Math.round((fee - settled) * 10) / 10;
+                const pieces   = 5 + (i * 3) % 50;
+                const weight   = Math.round((50 + (i * 17.3) % 500) * 10) / 10;
+                const volume   = Math.round((0.3 + (i * 0.13) % 5) * 100) / 100;
+                const orders   = 1 + (i % 8);
+                sbData.push({
+                    id:              `SB202601${String(i).padStart(4,'0')}`,
+                    site:            sbSites[i % sbSites.length],
+                    batchNo:         `SB202601${String(i).padStart(4,'0')}`,
+                    deliveryFee:     fee,
+                    settleStatus:    sbStatuses[i % sbStatuses.length],
+                    settledFee:      settled,
+                    unsettledFee:    unsettled,
+                    finishTime:      finishDt,
+                    driverPhone:     di[1],
+                    deliveryPieces:  pieces,
+                    deliveryWeight:  weight,
+                    deliveryVolume:  volume,
+                    deliveryOrders:  orders,
+                    pieces:          pieces,
+                    totalWeight:     weight,
+                    totalVolume:     volume,
+                    remark:          i % 7 === 0 ? '需特殊处理' : '',
+                    batchTag:        sbTags[i % sbTags.length],
+                    plateNo:         sbPlates[i % sbPlates.length],
+                    driver:          di[0],
+                });
+            }
+            sessionStorage.setItem('APShortBatches', JSON.stringify(sbData));
+        }
+
+        // --- 筛选状态 ---
+        const sbToday = new Date();
+        const sbD28   = new Date(sbToday); sbD28.setDate(sbToday.getDate() - 28);
+        const sbFmt   = d => d.toISOString().slice(0, 10);
+        const sbF = {
+            batchNos:   window._sbF_batchNos  ?? '',
+            site:       window._sbF_site       ?? '',
+            finishFrom: window._sbF_finishFrom ?? sbFmt(sbD28),
+            finishTo:   window._sbF_finishTo   ?? sbFmt(sbToday),
+            plateNo:    window._sbF_plateNo    ?? '',
+            driver:     window._sbF_driver     ?? '',
+            status:     window._sbF_status     ?? '',
+            tag:        window._sbF_tag        ?? '',
+            driverPhone:window._sbF_driverPhone?? '',
+            remark:     window._sbF_remark     ?? '',
+        };
+
+        // --- 筛选逻辑 ---
+        const sbFiltered = sbData.filter(r => {
+            if (sbF.batchNos) {
+                const nos = sbF.batchNos.split(/[,+\s\n]+/).map(s=>s.trim()).filter(Boolean);
+                if (nos.length && !nos.some(n => r.batchNo.toLowerCase().includes(n.toLowerCase()))) return false;
+            }
+            if (sbF.site && r.site !== sbF.site) return false;
+            if (sbF.plateNo && !r.plateNo.toLowerCase().includes(sbF.plateNo.toLowerCase())) return false;
+            if (sbF.driver && !r.driver.toLowerCase().includes(sbF.driver.toLowerCase())) return false;
+            if (sbF.status && r.settleStatus !== sbF.status) return false;
+            if (sbF.tag && r.batchTag !== sbF.tag) return false;
+            if (sbF.driverPhone && !r.driverPhone.toLowerCase().includes(sbF.driverPhone.toLowerCase())) return false;
+            if (sbF.remark && !r.remark.toLowerCase().includes(sbF.remark.toLowerCase())) return false;
+            const ft = r.finishTime ? r.finishTime.slice(0,10) : '';
+            if (sbF.finishFrom && ft < sbF.finishFrom) return false;
+            if (sbF.finishTo   && ft > sbF.finishTo)   return false;
+            return true;
+        });
+
+        // --- 分页 ---
+        const sbPage     = window._sbBatchPage     || 1;
+        const sbPageSize = window._sbBatchPageSize || 20;
+        const sbTotal    = sbFiltered.length;
+        const sbPageCount= Math.max(1, Math.ceil(sbTotal / sbPageSize));
+        const sbPageData = sbFiltered.slice((sbPage-1)*sbPageSize, sbPage*sbPageSize);
+
+        // --- 合计 ---
+        const sbSumKeys = ['deliveryFee','settledFee','unsettledFee','deliveryPieces','deliveryWeight','deliveryVolume','deliveryOrders','pieces','totalWeight','totalVolume'];
+        const sbSums = {};
+        sbSumKeys.forEach(k => { sbSums[k] = 0; });
+        sbFiltered.forEach(r => { sbSumKeys.forEach(k => { sbSums[k] += Number(r[k]) || 0; }); });
+
+        // --- 状态颜色 ---
+        const sbStatusColor = s => ({'未结算':'color:#ff4d4f','已结算':'color:#52c41a','部分结算':'color:#faad14'}[s]||'');
+
+        // --- 空状态 ---
+        const sbEmptyState = `<tr><td colspan="${sbCols.length+1}" style="padding:80px 0;text-align:center;">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.25;display:block;margin:0 auto 12px;">
+                <rect x="10" y="10" width="60" height="60" rx="8" stroke="#b0c4d8" stroke-width="3" fill="#eaf3fb"/>
+                <circle cx="40" cy="36" r="13" stroke="#b0c4d8" stroke-width="3" fill="none"/>
+                <line x1="49" y1="47" x2="62" y2="60" stroke="#b0c4d8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="56" cy="24" r="8" fill="#fff" stroke="#b0c4d8" stroke-width="2"/>
+                <text x="52" y="28" font-size="10" fill="#b0c4d8" font-family="Arial">?</text>
+            </svg>
+            <div style="color:#b0c4d8;font-size:14px;margin-bottom:4px;">没有对应的数据</div>
+            <div style="color:#c8d8e8;font-size:12px;">请检查筛选条件后重新进行数据查询</div>
+        </td></tr>`;
+
+        // --- 数据行 ---
+        const sbRows = sbPageData.map(r => `<tr>
+            <td><input type="checkbox" class="sb-check" value="${_sbesc(r.id)}"></td>
+            ${sbCols.map(col => {
+                let v = r[col.key];
+                let style = col.align === 'right' ? 'text-align:right;' : '';
+                if (col.key === 'settleStatus') style += sbStatusColor(v);
+                if (sbSumKeys.includes(col.key) && ['deliveryFee','settledFee','unsettledFee','deliveryWeight','deliveryVolume','totalWeight','totalVolume'].includes(col.key)) {
+                    v = v > 0 ? Number(v).toFixed(2) : '';
+                }
+                let cell = `<td style="${style}">${_sbesc(v ?? '')}`;
+                if (col.tipIcon) cell += ' <span style="color:#b0c4d8;font-size:11px;cursor:help;" title="含短驳、提货等附加费">?</span>';
+                cell += `</td>`;
+                return cell;
+            }).join('')}
+        </tr>`).join('');
+
+        // --- 所有网点选项 ---
+        const sbAllSites = [...new Set(sbData.map(r=>r.site))];
+
+        // --- 筛选行 ---
+        const sbFilterRow = sbCols.map(col => {
+            if (col.siteFilter) return `<td class="sticky-left-1"><select class="wb-filter-select" id="sb_f_site" onchange="sbBatchApplyFilters()">
+                <option value=""></option>${sbAllSites.map(s=>`<option value="${_sbesc(s)}" ${sbF.site===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.batchFilter) return `<td class="sticky-left-2"><input class="wb-filter-input wb-filter-input--batch" id="sb_f_batch" placeholder="支持批量搜索" value="${_sbesc(sbF.batchNos)}" onchange="sbBatchApplyFilters()"></td>`;
+            if (col.dateFilter === 'finish') return `<td><div style="display:flex;gap:2px;align-items:center;">
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="sb_f_finishFrom" value="${_sbesc(sbF.finishFrom)}" onchange="sbBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
+                <span style="color:#bbb;">~</span>
+                <input type="date" class="wb-filter-input wb-filter-input--blank" id="sb_f_finishTo" value="${_sbesc(sbF.finishTo)}" onchange="sbBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
+            </div></td>`;
+            if (col.statusFilter === 'status') return `<td><select class="wb-filter-select" id="sb_f_status" onchange="sbBatchApplyFilters()">
+                <option value=""></option>${['未结算','已结算','部分结算'].map(s=>`<option value="${_sbesc(s)}" ${sbF.status===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.statusFilter === 'tag') return `<td><select class="wb-filter-select" id="sb_f_tag" onchange="sbBatchApplyFilters()">
+                <option value=""></option>${['正常','加急','特殊'].map(s=>`<option value="${_sbesc(s)}" ${sbF.tag===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
+            </select></td>`;
+            if (col.fkey) return `<td><input class="wb-filter-input" id="sb_f_${col.fkey}" value="${_sbesc(sbF[col.fkey]||'')}" onchange="sbBatchApplyFilters()"></td>`;
+            return `<td></td>`;
+        }).join('');
+
+        // --- 合计行 ---
+        const sbTotalRow = `<tr class="wb-foot wb-foot--total">
+            <td></td>
+            ${sbCols.map(col => {
+                if (col.key === 'site') return `<td style="font-weight:600;">合计</td>`;
+                if (sbSumKeys.includes(col.key)) {
+                    const v = sbSums[col.key];
+                    const isDecimal = ['deliveryFee','settledFee','unsettledFee','deliveryWeight','deliveryVolume','totalWeight','totalVolume'].includes(col.key);
+                    return `<td style="text-align:right;font-weight:600;">${v > 0 ? (isDecimal ? v.toFixed(2) : v) : ''}</td>`;
+                }
+                return `<td></td>`;
+            }).join('')}
+        </tr>`;
+
+        // --- 注册窗口函数 ---
+        window.sbBatchApplyFilters = function() {
+            const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+            window._sbF_batchNos   = g('sb_f_batch');
+            window._sbF_site       = g('sb_f_site');
+            window._sbF_finishFrom = g('sb_f_finishFrom');
+            window._sbF_finishTo   = g('sb_f_finishTo');
+            window._sbF_status     = g('sb_f_status');
+            window._sbF_tag        = g('sb_f_tag');
+            window._sbF_driverPhone= g('sb_f_driverPhone');
+            window._sbF_remark     = g('sb_f_remark');
+            window._sbBatchPage = 1;
+            loadContent('APShortBatchSettlement');
+        };
+        window.sbBatchSetPage     = function(p) { window._sbBatchPage = p; loadContent('APShortBatchSettlement'); };
+        window.sbBatchSetPageSize = function(s) { window._sbBatchPageSize = parseInt(s); window._sbBatchPage = 1; loadContent('APShortBatchSettlement'); };
+        window.sbBatchSetTab      = function(t) { window._sbShortTab = t; loadContent('APShortBatchSettlement'); };
+        window.toggleAll_sb       = function(src) { document.querySelectorAll('.sb-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.sbBatchSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.sb-check:checked'));
+            if (!checked.length) return alert('请先勾选需要结算的批次。');
+            let list = JSON.parse(sessionStorage.getItem('APShortBatches') || '[]');
+            checked.map(cb => cb.value).forEach(id => {
+                const item = list.find(i => i.id === id);
+                if (item) {
+                    item.settledFee   = item.deliveryFee;
+                    item.unsettledFee = 0;
+                    item.settleStatus = '已结算';
+                }
+            });
+            sessionStorage.setItem('APShortBatches', JSON.stringify(list));
+            alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
+            loadContent('APShortBatchSettlement');
+        };
+
+        // --- Tab 栏 ---
+        var sbTabsHtml = '<div style="display:flex;gap:0;border-bottom:2px solid #e8edf2;overflow-x:auto;background:#f7fafc;padding:0 12px;flex-shrink:0;">';
+        for (var _sti = 0; _sti < sbTabs.length; _sti++) {
+            var _st = sbTabs[_sti];
+            var _stActive = (_st === sbActiveTab) ? 'border-bottom:2px solid #1890ff;color:#1890ff;font-weight:600;background:#fff;' : '';
+            sbTabsHtml += '<div style="padding:9px 14px;font-size:13px;color:#5a7a99;cursor:pointer;white-space:nowrap;margin-bottom:-2px;user-select:none;' + _stActive + '" onclick="sbBatchSetTab(\'' + _sbesc(_st) + '\')">' + _sbesc(_st) + '</div>';
+        }
+        sbTabsHtml += '<div style="padding:9px 10px;color:#8aa0b8;cursor:pointer;">&#9660;</div></div>';
+
+        // --- 查询栏网点选项 ---
+        var sbSiteOptions = '<option value=""></option>';
+        for (var _ssi = 0; _ssi < sbAllSites.length; _ssi++) {
+            var _ss = sbAllSites[_ssi];
+            sbSiteOptions += '<option value="' + _sbesc(_ss) + '"' + (sbF.site === _ss ? ' selected' : '') + '>' + _sbesc(_ss) + '</option>';
+        }
+
+        // --- 表头 ---
+        var sbTheadHtml = '<th style="width:40px;min-width:40px;"><input type="checkbox" onchange="toggleAll_sb(this)"></th>';
+        for (var _sci = 0; _sci < sbCols.length; _sci++) {
+            var _scol = sbCols[_sci];
+            var _scls = _scol.siteFilter ? 'sticky-left-1' : (_scol.batchFilter ? 'sticky-left-2' : '');
+            var _salign = _scol.align === 'right' ? 'text-align:right;' : '';
+            sbTheadHtml += '<th style="width:' + _scol.w + 'px;min-width:' + _scol.w + 'px;' + _salign + '" class="' + _scls + '">'
+                + _sbesc(_scol.label)
+                + (_scol.tipIcon ? ' <span style="color:#b0c4d8;font-size:11px;cursor:help;" title="含短驳、提货等附加费">?</span>' : '')
+                + '</th>';
+        }
+
+        // --- 分页按钮 ---
+        var sbPrevDisabled = sbPage <= 1 ? ' disabled' : '';
+        var sbNextDisabled = sbPage >= sbPageCount ? ' disabled' : '';
+        var sbPagerHtml = '<div class="wb-pager">'
+            + '<button class="wb-pager__btn"' + sbPrevDisabled + ' onclick="sbBatchSetPage(1)">|&lt;</button>'
+            + '<button class="wb-pager__btn"' + sbPrevDisabled + ' onclick="sbBatchSetPage(' + Math.max(1,sbPage-1) + ')">&lt;</button>'
+            + '<span class="wb-pager__text">第</span>'
+            + '<span class="wb-pager__page">' + sbPage + '</span>'
+            + '<span class="wb-pager__text">页/共' + sbPageCount + '页</span>'
+            + '<button class="wb-pager__btn"' + sbNextDisabled + ' onclick="sbBatchSetPage(' + Math.min(sbPageCount,sbPage+1) + ')">&gt;</button>'
+            + '<button class="wb-pager__btn"' + sbNextDisabled + ' onclick="sbBatchSetPage(' + sbPageCount + ')">&gt;|</button>'
+            + '<select class="wb-pager__size" onchange="sbBatchSetPageSize(this.value)">'
+            + '<option value="20"' + (sbPageSize===20?' selected':'') + '>0-19</option>'
+            + '<option value="50"' + (sbPageSize===50?' selected':'') + '>0-49</option>'
+            + '</select></div>'
+            + '<span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>';
+
+        // --- 组装 HTML ---
+        contentHTML += sbTabsHtml;
+        contentHTML += '<div class="wb-querybar">'
+            + '<div class="wb-q-item" style="flex:1;max-width:380px;">'
+            + '<div class="wb-q-label" style="white-space:nowrap;">送货批次</div>'
+            + '<input id="sb_q_batch" class="wb-q-control" style="flex:1;min-width:180px;" placeholder="支持批量搜索，多个单号用 运号/加号/回车/空格 分隔" value="' + _sbesc(sbF.batchNos) + '">'
+            + '<span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>'
+            + '</div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">网点</div>'
+            + '<select id="sb_q_site" class="wb-q-control" style="width:120px;">' + sbSiteOptions + '</select></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">送货开始时间</div>'
+            + '<input type="date" id="sb_q_finishFrom" class="wb-q-control" value="' + _sbesc(sbF.finishFrom) + '" style="width:128px;">'
+            + '<span style="color:#bbb;margin:0 2px;">~</span>'
+            + '<input type="date" id="sb_q_finishTo" class="wb-q-control" value="' + _sbesc(sbF.finishTo) + '" style="width:128px;">'
+            + '<span style="font-size:13px;color:#aaa;margin-left:4px;cursor:pointer;" title="选择日期">&#128197;</span>'
+            + '</div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">车牌号</div>'
+            + '<input id="sb_q_plate" class="wb-q-control" value="' + _sbesc(sbF.plateNo) + '" style="width:100px;"></div>'
+            + '<div class="wb-q-item"><div class="wb-q-label">主驾司机</div>'
+            + '<input id="sb_q_driver" class="wb-q-control" value="' + _sbesc(sbF.driver) + '" style="width:90px;"></div>'
+            + '<button class="wb-btn wb-btn--primary" onclick="window._sbF_batchNos=document.getElementById(\'sb_q_batch\').value.trim();window._sbF_site=document.getElementById(\'sb_q_site\').value;window._sbF_finishFrom=document.getElementById(\'sb_q_finishFrom\').value;window._sbF_finishTo=document.getElementById(\'sb_q_finishTo\').value;window._sbF_plateNo=document.getElementById(\'sb_q_plate\').value.trim();window._sbF_driver=document.getElementById(\'sb_q_driver\').value.trim();window._sbBatchPage=1;loadContent(\'APShortBatchSettlement\');">&#128269; 查询</button>'
+            + '</div>';
+        contentHTML += '<div class="wb-toolbar">'
+            + '<div style="display:flex;gap:6px;">'
+            + '<button class="wb-btn wb-btn--primary" onclick="sbBatchSettle()">&#128196; 结算</button>'
+            + '</div>'
+            + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
+            + '<button class="wb-btn" onclick="alert(\'导出功能开发中\')">&#8593; 导出</button>'
+            + '<button class="wb-btn" onclick="window.print()">&#128424; 打印</button>'
+            + sbPagerHtml
+            + '</div></div>';
+        contentHTML += '<div class="settlement-waybill-table" style="--sticky-left-1:40px;--sticky-left-2:200px;">'
+            + '<table><thead>'
+            + '<tr class="sticky-header">' + sbTheadHtml + '</tr>'
+            + '<tr class="sticky-filter"><td class="wb-funnel"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2h14l-5 6v5l-4-2V8z" fill="none" stroke="#8aa0b8" stroke-width="1.5"/></svg>筛选</td>'
+            + sbFilterRow + '</tr>'
+            + '</thead>'
+            + '<tbody>' + (sbRows || sbEmptyState) + '</tbody>'
+            + '<tfoot>' + sbTotalRow + '</tfoot>'
+            + '</table></div>';
+    }
+
+    // =========================================================================
     // 6. 运单结算 (ARCollectionVerify)
     // =========================================================================
     else if (moduleCode === "ARCollectionVerify") {
         let waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+
+        // 只展示已挂账的运单（status = 已挂帐 / 已挂账），这是结算的前提
+        waybills = waybills.filter(w => {
+            const s = (w.status || "").replace(/挂帐/g, "挂账");
+            return s === "已挂账" || s === "对账中" || w.settlementStatus === "已结算";
+        });
 
         if (!window.arWaybillSetTab) {
             window.arWaybillSetTab = function (tabKey) {
@@ -3308,6 +5955,8 @@ function loadContent(moduleCode, element = null) {
                     dateStart: getVal("ar_q_date_start"),
                     dateEnd: getVal("ar_q_date_end"),
                     destSite: getVal("ar_q_dest_site"),
+                    settlementStatus: getVal("ar_q_settlement_status"),
+                    invoiceStatus: getVal("ar_q_invoice_status"),
                 };
                 window._arWaybillPage = 1;
                 loadContent("ARCollectionVerify");
@@ -3357,22 +6006,21 @@ function loadContent(moduleCode, element = null) {
             };
         }
 
-        if (!window.arWaybillToolbarSettle) {
-            window.arWaybillToolbarSettle = function () {
-                const checked = Array.from(document.querySelectorAll(".ar-check:checked"));
-                if (!checked.length) return alert("请先勾选需要结算的运单。");
-                const ids = checked.map((cb) => cb.value).filter(Boolean);
-                const list = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
-                let changed = false;
-                list.forEach((item) => {
-                    if (!item || !ids.includes(item.id)) return;
-                    item.settlementStatus = "已结算";
-                    changed = true;
-                });
-                if (changed) sessionStorage.setItem("BizWaybills", JSON.stringify(list));
-                loadContent("ARCollectionVerify");
-            };
-        }
+        window.arWaybillToolbarSettle = function () {
+            if (typeof window.arSettleWaybillsBatch === "function") {
+                window.arSettleWaybillsBatch();
+            } else {
+                alert("结算功能未加载，请刷新页面。");
+            }
+        };
+
+        window.arWaybillToolbarRequestInvoice = function () {
+            if (typeof window.arRequestInvoiceBatch === "function") {
+                window.arRequestInvoiceBatch();
+            } else {
+                alert("申请开票功能未加载，请刷新页面。");
+            }
+        };
 
         if (!window.arWaybillAddToBatch) {
             window.arWaybillAddToBatch = function () {
@@ -3494,6 +6142,8 @@ function loadContent(moduleCode, element = null) {
 	            { key: "pickupFee", label: "单票提货费", align: "right" },
 	            { key: "transferFeeTotal", label: "中转费合计", align: "right" },
 	            { key: "warehouseFee", label: "到站单票进仓费", align: "right" },
+	            { key: "settlementStatus", label: "结算状态", align: "center" },
+	            { key: "invoiceStatus", label: "开票状态", align: "center" },
 	        ];
 
 	        const decorate = (w, idx) => {
@@ -3561,6 +6211,7 @@ function loadContent(moduleCode, element = null) {
 	                transferFeeTotal,
 	                warehouseFee,
 	                settlementStatus,
+	                invoiceStatus: (w && w.invoiceStatus) ? w.invoiceStatus : "",
 	                _feeType: feeType,
 	            };
 	        };
@@ -3571,6 +6222,8 @@ function loadContent(moduleCode, element = null) {
         const dateStart = parseDateOnly(filters.dateStart);
         const dateEnd = parseDateOnly(filters.dateEnd);
         const destSiteFilter = (filters.destSite || "").toString().trim();
+        const settlementStatusFilter = (filters.settlementStatus || "").toString().trim();
+        const invoiceStatusFilter = (filters.invoiceStatus || "").toString().trim();
 
 	        const matchesTab = (row) => {
 	            if (currentTab === "all") return true;
@@ -3591,6 +6244,15 @@ function loadContent(moduleCode, element = null) {
         const filtered = decorated.filter((row) => {
             if (!matchesTab(row)) return false;
             if (destSiteFilter && !(row.destSite || "").includes(destSiteFilter)) return false;
+            if (settlementStatusFilter) {
+                if (settlementStatusFilter === "未结算" && (row.settlementStatus || "") === "已结算") return false;
+                if (settlementStatusFilter === "已结算" && (row.settlementStatus || "") !== "已结算") return false;
+            }
+            if (invoiceStatusFilter) {
+                const inv = (row.invoiceStatus || "").toString();
+                if (invoiceStatusFilter === "未开票" && (inv === "已开票" || inv === "已核销" || inv === "申请中")) return false;
+                if (invoiceStatusFilter !== "未开票" && inv !== invoiceStatusFilter) return false;
+            }
             if (waybillNosFilter.length) {
                 const id = (row.waybillNo || row.id || "").toString();
                 if (waybillNosFilter.length === 1) {
@@ -3640,6 +6302,18 @@ function loadContent(moduleCode, element = null) {
             if (col.key === "waybillNo") {
                 const id = esc(value || row.id || "");
                 return `<a class="wb-link" href="javascript:void(0)">${id}</a>`;
+            }
+            if (col.key === "settlementStatus") {
+                const s = (value || "").toString();
+                if (s === "已结算") return `<span style="color:#27ae60;font-weight:bold;">已结算</span>`;
+                return `<span style="color:#e67e22;">未结算</span>`;
+            }
+            if (col.key === "invoiceStatus") {
+                const s = (value || "").toString();
+                if (s === "已核销") return `<span style="color:#27ae60;font-weight:bold;">已核销</span>`;
+                if (s === "已开票") return `<span style="color:#2980b9;font-weight:bold;">已开票</span>`;
+                if (s === "申请中") return `<span style="color:#f39c12;">申请中</span>`;
+                return `<span style="color:#bdc3c7;">-</span>`;
             }
             if (col.align === "right") {
                 const text = esc(value || "");
@@ -3729,13 +6403,33 @@ function loadContent(moduleCode, element = null) {
                     <div class="wb-q-label">目的网点</div>
                     <input id="ar_q_dest_site" class="wb-q-control" type="text" value="${esc(filters.destSite || "")}">
                 </div>
+                <div class="wb-q-item">
+                    <div class="wb-q-label">结算状态</div>
+                    <select id="ar_q_settlement_status" class="wb-q-control">
+                        <option value="" ${!filters.settlementStatus ? "selected" : ""}>全部</option>
+                        <option value="未结算" ${filters.settlementStatus === "未结算" ? "selected" : ""}>未结算</option>
+                        <option value="已结算" ${filters.settlementStatus === "已结算" ? "selected" : ""}>已结算</option>
+                    </select>
+                </div>
+                <div class="wb-q-item">
+                    <div class="wb-q-label">开票状态</div>
+                    <select id="ar_q_invoice_status" class="wb-q-control">
+                        <option value="" ${!filters.invoiceStatus ? "selected" : ""}>全部</option>
+                        <option value="未开票" ${filters.invoiceStatus === "未开票" ? "selected" : ""}>未开票</option>
+                        <option value="申请中" ${filters.invoiceStatus === "申请中" ? "selected" : ""}>申请中</option>
+                        <option value="已开票" ${filters.invoiceStatus === "已开票" ? "selected" : ""}>已开票</option>
+                        <option value="已核销" ${filters.invoiceStatus === "已核销" ? "selected" : ""}>已核销</option>
+                    </select>
+                </div>
                 <button class="wb-btn wb-btn--primary" onclick="arWaybillApplyFilters()">查询</button>
                 <button class="wb-btn" onclick="arWaybillResetFilters()">重置</button>
             </div>
 
             <div class="wb-toolbar">
                 <div class="wb-toolbar__left">
-                    <button class="wb-btn" onclick="arWaybillToolbarSettle()">结算</button>
+                    <button class="wb-btn wb-btn--primary" onclick="arWaybillToolbarSettle()" title="对选中运单生成收款凭证，状态变为已结算">结算</button>
+                    <button class="wb-btn" style="background:#2980b9;color:#fff;border-color:#2980b9;" onclick="arWaybillToolbarRequestInvoice()" title="将已结算运单推送到销项发票台账进行开票">申请开票</button>
+                    <button class="wb-btn" onclick="arWaybillAddToBatch()">加入批单夹</button>
                 </div>
                 <div class="wb-toolbar__right">
                     <button class="wb-btn" onclick="arWaybillExport()">导出</button>
@@ -3770,7 +6464,7 @@ function loadContent(moduleCode, element = null) {
                             ${cols.map((c) => buildFilterCell(c)).join("")}
                         </tr>
                     </thead>
-                    <tbody>${(dataHtml + fillerHtml) || `<tr><td colspan="${cols.length + 2}" style="text-align:center; color:#999; padding:18px;">暂无数据</td></tr>`}</tbody>
+                    <tbody>${(dataHtml + fillerHtml) || `<tr><td colspan="${cols.length + 2}" style="text-align:center; color:#999; padding:24px;">暂无已挂账的运单数据。<br><span style="font-size:12px;">请先前往【运单挂账】页面，选中运单后点击【挂账】，挂账后的运单将出现在此处。</span></td></tr>`}</tbody>
                     <tfoot>
                         <tr class="wb-foot wb-foot--sel">
                             <td class="sticky-left-1 wb-foot__label">选中</td>
@@ -3788,65 +6482,883 @@ function loadContent(moduleCode, element = null) {
         `;
     }
 
-    // =========================================================================
-    // 7. 客户账龄分析 (AR Age Analysis)
+    // 7. 账龄分析 - 重新设计版
     // =========================================================================
     else if (moduleCode === "ARAgeAnalysis") {
-        contentHTML += `
-                    <h2>客户账龄分析</h2>
-                    <p style="color: #7f8c8d;">分析应收账款的账期分布，帮助管理层识别坏账风险。</p>
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="客户名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">截止日期 (本月)</option>
-                                <option>上月</option>
-                                <option>本季度</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                            <button style="background-color: #34495e; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;">生成分析报表</button>
-                        </div>
-                    </div>
-                    
-                    <h3>应收账款账龄分布 (截止 2025-11-30)</h3>
-                    <table class="data-table">
+        // ── 1. 数据加载 ─────────────────────────────────────────────────────
+        const today = new Date();
+        const toNum = v => { const n = parseFloat((v || '').toString().replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+        const fmt  = n => n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const pct  = (a, b) => b > 0 ? ((a / b) * 100).toFixed(1) : '0.0';
+
+        const arList   = JSON.parse(sessionStorage.getItem('ARStatements')   || '[]');
+        const waybills = JSON.parse(sessionStorage.getItem('BizWaybills')    || '[]');
+        const receipts = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
+
+        // ── 2. 构建账龄明细记录 ─────────────────────────────────────────────
+        let agingRecs = [];
+
+        if (arList.length > 0) {
+            arList.forEach(ar => {
+                const unverified = toNum(ar.unverified);
+                if (unverified < 0.01) return;
+                const wb = waybills.find(w => w.id === ar.id || w.waybillNo === ar.id);
+                let dateStr = (wb && (wb.bizDate || wb.createdAt)) || (ar.period ? ar.period + '-01' : '');
+                const ageDays = dateStr ? Math.max(0, Math.floor((today - new Date(dateStr)) / 86400000)) : 60;
+                agingRecs.push({ id: ar.id, client: ar.client || '未知', amount: unverified, ageDays, dateStr });
+            });
+        }
+
+        // 兜底：从已挂帐运单派生
+        if (agingRecs.length === 0) {
+            waybills.filter(w => {
+                const s = (w.status || w.waybillAccrualStatus || '').replace(/帐/g, '账');
+                return s.includes('已挂账') || s.includes('对账中');
+            }).forEach(w => {
+                const amt = toNum(w.totalAmount || w.freightAmount || w.amount || w.monthlyPay || 0);
+                if (amt < 0.01) return;
+                const dateStr = w.bizDate || w.createdAt || '';
+                const ageDays = dateStr ? Math.max(0, Math.floor((today - new Date(dateStr)) / 86400000)) : 45;
+                agingRecs.push({ id: w.id || w.waybillNo, client: w.client || w.consignee || '未知', amount: amt, ageDays, dateStr });
+            });
+        }
+
+        // 演示数据：若仍无数据
+        if (agingRecs.length === 0) {
+            const demoBase = today.getTime();
+            const demo = [
+                { id: 'WB-001', client: '阳光制造有限公司', amount: 28000, ageDays: 18,  dateStr: new Date(demoBase - 18*86400000).toISOString().slice(0,10) },
+                { id: 'WB-002', client: '阳光制造有限公司', amount: 15000, ageDays: 52,  dateStr: new Date(demoBase - 52*86400000).toISOString().slice(0,10) },
+                { id: 'WB-003', client: '阳光制造有限公司', amount: 9800,  ageDays: 97,  dateStr: new Date(demoBase - 97*86400000).toISOString().slice(0,10) },
+                { id: 'WB-004', client: '远景贸易集团',     amount: 42000, ageDays: 8,   dateStr: new Date(demoBase -  8*86400000).toISOString().slice(0,10) },
+                { id: 'WB-005', client: '远景贸易集团',     amount: 13500, ageDays: 35,  dateStr: new Date(demoBase - 35*86400000).toISOString().slice(0,10) },
+                { id: 'WB-006', client: '华宇物资供应商',   amount: 6700,  ageDays: 75,  dateStr: new Date(demoBase - 75*86400000).toISOString().slice(0,10) },
+                { id: 'WB-007', client: '华宇物资供应商',   amount: 11200, ageDays: 145, dateStr: new Date(demoBase -145*86400000).toISOString().slice(0,10) },
+                { id: 'WB-008', client: '华宇物资供应商',   amount: 5500,  ageDays: 210, dateStr: new Date(demoBase -210*86400000).toISOString().slice(0,10) },
+                { id: 'WB-009', client: '鑫盛运输公司',     amount: 19800, ageDays: 22,  dateStr: new Date(demoBase - 22*86400000).toISOString().slice(0,10) },
+                { id: 'WB-010', client: '鑫盛运输公司',     amount: 8400,  ageDays: 65,  dateStr: new Date(demoBase - 65*86400000).toISOString().slice(0,10) },
+            ];
+            agingRecs = demo;
+        }
+
+        // 扣除收款单中已收款项
+        receipts.filter(r => ['已审核', '待审核'].includes(r.status)).forEach(r => {
+            (r.details || []).forEach(d => {
+                const rec = agingRecs.find(a => a.id === d.waybillNo);
+                if (rec) rec.amount = Math.max(0, rec.amount - toNum(d.recvAmount));
+            });
+        });
+
+        // ── 3. 筛选条件（从全局状态读取）─────────────────────────────────
+        const filterClient = (window._ageFilterClient || '').toLowerCase();
+        const filterRisk   = window._ageFilterRisk || '';
+
+        // ── 4. 按客户分桶 ───────────────────────────────────────────────────
+        const cmap = {};
+        agingRecs.filter(r => r.amount > 0).forEach(r => {
+            const c = r.client;
+            if (!cmap[c]) cmap[c] = { client: c, items: [], b0:0, b30:0, b60:0, b90:0, b180:0 };
+            const g = cmap[c];
+            if      (r.ageDays <=  30) g.b0   += r.amount;
+            else if (r.ageDays <=  60) g.b30  += r.amount;
+            else if (r.ageDays <=  90) g.b60  += r.amount;
+            else if (r.ageDays <= 180) g.b90  += r.amount;
+            else                       g.b180 += r.amount;
+            g.items.push(r);
+        });
+
+        let customers = Object.values(cmap).map(c => {
+            c.total = c.b0 + c.b30 + c.b60 + c.b90 + c.b180;
+            const hr = c.b90 + c.b180;
+            if      (c.b180 > 0 || hr / c.total > 0.3) c.risk = '高';
+            else if (c.b60 > 0  || hr / c.total > 0.1) c.risk = '中';
+            else                                         c.risk = '低';
+            return c;
+        }).sort((a, b) => b.total - a.total);
+
+        // 应用筛选
+        if (filterClient) customers = customers.filter(c => c.client.toLowerCase().includes(filterClient));
+        if (filterRisk)   customers = customers.filter(c => c.risk === filterRisk);
+
+        // ── 5. 汇总 ──────────────────────────────────────────────────────────
+        const T = { b0:0, b30:0, b60:0, b90:0, b180:0, total:0 };
+        customers.forEach(c => { T.b0+=c.b0; T.b30+=c.b30; T.b60+=c.b60; T.b90+=c.b90; T.b180+=c.b180; T.total+=c.total; });
+
+        const COLORS = { b0:'#27ae60', b30:'#f39c12', b60:'#e67e22', b90:'#e74c3c', b180:'#7b241c' };
+        const LABELS = { b0:'≤30天', b30:'31-60天', b60:'61-90天', b90:'91-180天', b180:'>180天' };
+        const RISK_COLOR = { '高':'#e74c3c', '中':'#e67e22', '低':'#27ae60' };
+
+        // 汇总进度条
+        const totalBarSegs = ['b0','b30','b60','b90','b180'].map(k => {
+            const w = T.total > 0 ? (T[k] / T.total * 100).toFixed(2) : 0;
+            return `<div style="width:${w}%;background:${COLORS[k]};height:100%;min-width:${T[k]>0?'2px':'0'};" title="${LABELS[k]}: ¥${fmt(T[k])}"></div>`;
+        }).join('');
+
+        // 指标卡
+        const metricCards = ['b0','b30','b60','b90','b180'].map(k => `
+            <div style="flex:1;background:#fff;border:1px solid #edf1f5;border-top:3px solid ${COLORS[k]};border-radius:8px;padding:14px 16px;">
+                <div style="font-size:11px;color:#7f8c8d;margin-bottom:6px;">${LABELS[k]}</div>
+                <div style="font-size:18px;font-weight:700;color:#2c3e50;">¥${fmt(T[k])}</div>
+                <div style="font-size:12px;color:#aaa;margin-top:4px;">${pct(T[k], T.total)}% 占比</div>
+            </div>
+        `).join('');
+
+        // 客户明细行
+        const custRows = customers.length === 0
+            ? `<tr><td colspan="9" style="text-align:center;padding:30px;color:#aaa;">暂无应收账款数据</td></tr>`
+            : customers.map((c, idx) => {
+                const riskColor = RISK_COLOR[c.risk] || '#aaa';
+                const bar = ['b0','b30','b60','b90','b180'].map(k => {
+                    const w = c.total > 0 ? (c[k] / c.total * 100).toFixed(1) : 0;
+                    return `<div style="width:${w}%;background:${COLORS[k]};height:8px;border-radius:2px;min-width:${c[k]>0?'3px':'0'};" title="${LABELS[k]}: ¥${fmt(c[k])}"></div>`;
+                }).join('');
+                const detailRows = c.items.map(r => `
+                    <tr style="background:#fafbfc;">
+                        <td style="padding:6px 10px 6px 48px;font-size:12px;color:#7f8c8d;">${r.id}</td>
+                        <td colspan="2" style="padding:6px 10px;font-size:12px;color:#7f8c8d;">${r.dateStr || '-'}</td>
+                        <td colspan="4" style="padding:6px 10px;font-size:12px;text-align:right;">¥${fmt(r.amount)}</td>
+                        <td style="padding:6px 10px;font-size:12px;text-align:center;">
+                            <span style="background:#f0f4f8;color:#5a6a7a;padding:1px 8px;border-radius:8px;font-size:11px;">${r.ageDays}天</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                `).join('');
+                return `
+                <tr style="border-bottom:1px solid #edf1f5;cursor:pointer;" onclick="(function(el){var next=el.nextElementSibling;next.style.display=next.style.display==='none'?'':'none';})(this)">
+                    <td style="padding:10px 12px;">
+                        <span style="font-size:11px;color:#95a5a6;margin-right:6px;">▶</span>
+                        <strong>${c.client}</strong>
+                    </td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;">¥${fmt(c.total)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b0};">${c.b0 > 0 ? '¥'+fmt(c.b0) : '—'}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b30};">${c.b30 > 0 ? '¥'+fmt(c.b30) : '—'}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b60};">${c.b60 > 0 ? '¥'+fmt(c.b60) : '—'}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b90};">${c.b90 > 0 ? '¥'+fmt(c.b90) : '—'}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b180};">${c.b180 > 0 ? '¥'+fmt(c.b180) : '—'}</td>
+                    <td style="padding:10px 12px;text-align:center;">
+                        <span style="background:${riskColor};color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;">${c.risk}风险</span>
+                    </td>
+                    <td style="padding:10px 12px;white-space:nowrap;">
+                        <button onclick="event.stopPropagation();window._rcvPrefillCustomer='${c.client}';loadContent('ReceiptVoucher')"
+                            style="padding:3px 8px;border:1px solid #27ae60;color:#27ae60;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;">发起收款</button>
+                        <button onclick="event.stopPropagation();loadContent('ReconCustomer')"
+                            style="padding:3px 8px;border:1px solid #3498db;color:#3498db;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">查对账单</button>
+                    </td>
+                </tr>
+                <tr style="display:none;"><td colspan="9" style="padding:0;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
                         <thead>
-                            <tr>
-                                <th>客户名称</th>
-                                <th>总应收 (RMB)</th>
-                                <th>< 30天 (RMB)</th>
-                                <th>30-60天 (RMB)</th>
-                                <th>60-90天 (RMB)</th>
-                                <th>> 90天 (RMB)</th>
-                                <th>风险等级</th>
+                            <tr style="background:#f4f6f8;">
+                                <th style="padding:6px 10px 6px 48px;text-align:left;color:#7f8c8d;">运单/单据号</th>
+                                <th colspan="2" style="padding:6px 10px;text-align:left;color:#7f8c8d;">挂帐日期</th>
+                                <th colspan="4" style="padding:6px 10px;text-align:right;color:#7f8c8d;">未收金额</th>
+                                <th style="padding:6px 10px;text-align:center;color:#7f8c8d;">账龄</th>
+                                <th></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>阳光制造</td>
-                                <td>35,000.00</td>
-                                <td>15,000.00</td>
-                                <td>10,000.00</td>
-                                <td>5,000.00</td>
-                                <td>5,000.00</td>
-                                <td><span style="color: #e74c3c; font-weight: bold;">高</span></td>
-                            </tr>
-                            <tr>
-                                <td>远景贸易</td>
-                                <td>12,000.00</td>
-                                <td>12,000.00</td>
-                                <td>0.00</td>
-                                <td>0.00</td>
-                                <td>0.00</td>
-                                <td><span style="color: #27ae60;">低</span></td>
-                            </tr>
-                        </tbody>
+                        <tbody>${detailRows}</tbody>
                     </table>
-                    <p style="margin-top: 15px; color: #7f8c8d;">* 图表区域（饼图或柱状图）可在此处展示。</p>
-                `;
+                </td></tr>`;
+            }).join('');
+
+        // ── 6. 联动缺失提示 ─────────────────────────────────────────────────
+        const missingModules = [
+            { name: '客户档案', desc: '账期、信用额度设置，用于判断是否逾期', page: null },
+            { name: '催收管理', desc: '记录催款进度、跟进人、催收备注', page: null },
+            { name: '坏账计提', desc: '按账龄比例自动计提坏账准备', page: null },
+        ];
+        const missingHtml = missingModules.map(m =>
+            `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;">
+                <span style="background:#fef0f0;color:#e74c3c;padding:2px 8px;border-radius:4px;font-size:11px;white-space:nowrap;">待建</span>
+                <strong style="font-size:13px;">${m.name}</strong>
+                <span style="color:#7f8c8d;font-size:12px;">${m.desc}</span>
+             </div>`
+        ).join('');
+
+        contentHTML = `
+        <style>
+            .age-metric-row { display:flex; gap:12px; margin-bottom:16px; }
+            .age-bar-row { background:#fff; border:1px solid #edf1f5; border-radius:8px; padding:16px; margin-bottom:16px; }
+            .age-filter-bar { background:#fff; border:1px solid #edf1f5; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+            .age-filter-bar input, .age-filter-bar select { padding:7px 10px; border:1px solid #dde3ea; border-radius:6px; font-size:13px; }
+            .age-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; border-radius:8px; overflow:hidden; border:1px solid #edf1f5; }
+            .age-table thead tr { background:#f8fafb; }
+            .age-table thead th { padding:10px 12px; text-align:left; font-weight:600; color:#5a6a7a; border-bottom:2px solid #edf1f5; white-space:nowrap; }
+            .age-table tbody tr:hover > td { background:#f8fafb; }
+            .age-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; }
+            .age-legend-item { display:flex; align-items:center; gap:5px; font-size:12px; color:#5a6a7a; }
+        </style>
+
+        <!-- 指标卡 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <div>
+                <div style="font-size:11px;color:#7f8c8d;margin-bottom:2px;">应收账款总额</div>
+                <div style="font-size:26px;font-weight:700;color:#2c3e50;">¥${fmt(T.total)}</div>
+            </div>
+            <div style="font-size:12px;color:#95a5a6;">截止 ${today.toISOString().slice(0,10)} | 应收管理 / 账龄分析</div>
+        </div>
+
+        <div class="age-metric-row">${metricCards}</div>
+
+        <!-- 总汇总进度条 -->
+        <div class="age-bar-row">
+            <div style="font-size:12px;color:#7f8c8d;margin-bottom:8px;">账龄分布（全部客户汇总）</div>
+            <div style="display:flex;width:100%;height:16px;border-radius:8px;overflow:hidden;background:#f0f0f0;">${T.total > 0 ? totalBarSegs : '<div style="width:100%;background:#f0f0f0;border-radius:8px;"></div>'}</div>
+            <div class="age-legend" style="margin-top:10px;">
+                ${['b0','b30','b60','b90','b180'].map(k => `
+                    <div class="age-legend-item">
+                        <div style="width:10px;height:10px;border-radius:2px;background:${COLORS[k]};"></div>
+                        <span>${LABELS[k]}</span>
+                        <span style="font-weight:600;">¥${fmt(T[k])}</span>
+                        <span style="color:#aaa;">(${pct(T[k],T.total)}%)</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="age-filter-bar">
+            <input type="text" id="age_filter_client" placeholder="🔍 客户名称" value="${window._ageFilterClient||''}"
+                style="width:180px;" onkeyup="if(event.key==='Enter')window.ageApplyFilter()">
+            <select id="age_filter_risk" onchange="window.ageApplyFilter()">
+                <option value="">全部风险等级</option>
+                <option value="高" ${filterRisk==='高'?'selected':''}>高风险</option>
+                <option value="中" ${filterRisk==='中'?'selected':''}>中风险</option>
+                <option value="低" ${filterRisk==='低'?'selected':''}>低风险</option>
+            </select>
+            <button onclick="window.ageApplyFilter()"
+                style="padding:7px 16px;background:#2c3e50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">查询</button>
+            <button onclick="window._ageFilterClient='';window._ageFilterRisk='';loadContent('ARAgeAnalysis')"
+                style="padding:7px 12px;border:1px solid #dde3ea;background:#f8fafb;border-radius:6px;cursor:pointer;font-size:13px;">重置</button>
+            <div style="margin-left:auto;font-size:12px;color:#7f8c8d;">共 ${customers.length} 家客户 · 点击客户行展开明细</div>
+        </div>
+
+        <!-- 明细表 -->
+        <table class="age-table">
+            <thead>
+                <tr>
+                    <th>客户名称</th>
+                    <th style="text-align:right;">总应收</th>
+                    <th style="text-align:right;color:${COLORS.b0};">≤30天</th>
+                    <th style="text-align:right;color:${COLORS.b30};">31-60天</th>
+                    <th style="text-align:right;color:${COLORS.b60};">61-90天</th>
+                    <th style="text-align:right;color:${COLORS.b90};">91-180天</th>
+                    <th style="text-align:right;color:${COLORS.b180};">>180天</th>
+                    <th style="text-align:center;">风险</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>${custRows}</tbody>
+            <tfoot>
+                <tr style="background:#f8fafb;font-weight:700;border-top:2px solid #dde3ea;">
+                    <td style="padding:10px 12px;">合计</td>
+                    <td style="padding:10px 12px;text-align:right;">¥${fmt(T.total)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b0};">¥${fmt(T.b0)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b30};">¥${fmt(T.b30)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b60};">¥${fmt(T.b60)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b90};">¥${fmt(T.b90)}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${COLORS.b180};">¥${fmt(T.b180)}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- 联动缺失提示 -->
+        <div style="margin-top:16px;background:#fff;border:1px solid #edf1f5;border-radius:8px;padding:16px;">
+            <div style="font-size:13px;font-weight:600;color:#2c3e50;margin-bottom:8px;">📋 完整联动尚需以下模块</div>
+            ${missingHtml}
+            <div style="margin-top:10px;font-size:12px;color:#7f8c8d;">当前已联动：运单挂帐（BizWaybills）→ 应收台账（ARStatements）→ 收款单（ReceiptVouchers）→ 客户对账（ReconCustomer）</div>
+        </div>
+        `;
+
+        setTimeout(() => {
+            window.ageApplyFilter = function () {
+                window._ageFilterClient = (document.getElementById('age_filter_client') || {}).value || '';
+                window._ageFilterRisk   = (document.getElementById('age_filter_risk')   || {}).value || '';
+                loadContent('ARAgeAnalysis');
+            };
+        }, 0);
     }
 
     // APPrepayment / APPaymentVerify 页面已下线（应付管理仅保留两个批次结算入口）
+
+    // =========================================================================
+    // 应收核销 (ARWriteOff)
+    // =========================================================================
+    else if (moduleCode === "ARWriteOff") {
+        // ── 数据来源：以 ARStatements（应收账款台账）为主表 ──────────────────
+        const arList        = JSON.parse(sessionStorage.getItem('ARStatements')    || '[]');
+        const rcvList       = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
+        const outputInvoices= JSON.parse(sessionStorage.getItem('OutputInvoices')  || '[]');
+        const woList        = JSON.parse(sessionStorage.getItem('WriteOffRecords')  || '[]');
+        const arWoList      = woList.filter(w => w.type === 'AR');
+
+        const _woFmt = (n) => {
+            const v = parseFloat((n || '0').toString().replace(/,/g, ''));
+            return isNaN(v) ? '0.00' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        // 未结清的应收账款（包括从未核销 + 部分核销）
+        const pendingAR = arList.filter(ar => {
+            const unv = parseFloat((ar.unverified || ar.amount || '0').toString().replace(/,/g, ''));
+            return unv > 0;
+        });
+
+        const pendingRows = pendingAR.length === 0
+            ? `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">
+                    暂无待核销应收账款。<br>
+                    <span style="font-size:12px;">请先在【运单挂帐】中完成挂帐操作，挂帐后的运单将在此显示。</span>
+               </td></tr>`
+            : pendingAR.map(ar => {
+                const arId     = ar.id || '';
+                const client   = ar.client || '';
+                const total    = parseFloat((ar.amount    || '0').toString().replace(/,/g, '')) || 0;
+                const verified = parseFloat((ar.verified  || '0').toString().replace(/,/g, '')) || 0;
+                const unverif  = parseFloat((ar.unverified|| '0').toString().replace(/,/g, '')) || 0;
+
+                // 查找关联发票（通过 waybillIds 或 remark 匹配）
+                const relInv = outputInvoices.find(inv =>
+                    (Array.isArray(inv.waybillIds) && inv.waybillIds.includes(arId)) ||
+                    inv.remark === arId ||
+                    (inv.client === client && inv.status !== '已核销')
+                );
+                const invBadge = relInv
+                    ? (relInv.status === '已核销'
+                        ? `<span style="color:#27ae60;font-size:11px;">✔ 已开票已核销</span>`
+                        : `<span style="color:#2980b9;font-size:11px;">📄 已开票 ${relInv.no}</span>`)
+                    : `<span style="color:#e67e22;font-size:11px;">未开票</span>`;
+
+                // 查找关联收款单（通过 details.waybillNo 或 customer 匹配）
+                const relRcv = rcvList.find(r =>
+                    r.status === '已审核' &&
+                    (r.customer === client ||
+                     (Array.isArray(r.details) && r.details.some(d => d.waybillNo === arId)))
+                );
+                const rcvBadge = relRcv
+                    ? `<span style="color:#27ae60;font-size:11px;">💰 ${relRcv.id}</span>`
+                    : `<span style="color:#aaa;font-size:11px;">无收款单</span>`;
+
+                const statusBadge = unverif <= 0
+                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已结清</span>`
+                    : verified > 0
+                        ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
+                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
+
+                // 将关联信息编码传入弹窗
+                const rcvIdEnc  = relRcv  ? encodeURIComponent(relRcv.id)  : '';
+                const invNoEnc  = relInv  ? encodeURIComponent(relInv.no)  : '';
+
+                return `<tr>
+                    <td style="font-family:monospace;color:#2c3e50;font-size:12px;">${arId}</td>
+                    <td>${client}</td>
+                    <td style="color:#2980b9;font-size:12px;">${ar.period || '-'}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(total)}</td>
+                    <td style="text-align:right;color:#27ae60;">¥${_woFmt(verified)}</td>
+                    <td style="text-align:right;color:#e74c3c;font-weight:bold;">¥${_woFmt(unverif)}</td>
+                    <td>${invBadge}&nbsp;&nbsp;${rcvBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button onclick="window.openARWriteOffModal('${arId}','${client}','${unverif.toFixed(2)}','${rcvIdEnc}','${invNoEnc}')"
+                            style="padding:3px 10px;background:#2980b9;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+        const woRows = arWoList.length === 0
+            ? `<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;">暂无核销记录。</td></tr>`
+            : arWoList.map(w => {
+                const pathBadge = w.invoicePath === 'A'
+                    ? `<span style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先核销后补票</span>`
+                    : `<span style="background:#8e44ad;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先开票后核销</span>`;
+                const invBadge = w.invoiceStatus === '已关联'
+                    ? `<span style="color:#27ae60;">✔ ${w.invoiceNo}</span>`
+                    : `<span style="color:#e67e22;">⏳ 待补票
+                        <button onclick="window.openLinkInvoiceModal('${w.id}','AR')"
+                            style="padding:1px 6px;background:#e67e22;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-left:4px;">关联发票</button>
+                    </span>`;
+                return `<tr>
+                    <td style="font-family:monospace;font-size:12px;color:#2c3e50;">${w.id}</td>
+                    <td style="font-family:monospace;font-size:11px;">${w.billId}</td>
+                    <td style="font-size:11px;color:#7f8c8d;">${w.rcvId || '-'}</td>
+                    <td>${w.counterparty}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(w.writeOffAmount)}</td>
+                    <td>${w.date}</td>
+                    <td>${pathBadge}</td>
+                    <td>${invBadge}</td>
+                    <td style="font-family:monospace;font-size:11px;color:#7f8c8d;">${w.voucherId || '-'}</td>
+                </tr>`;
+            }).join('');
+
+        const totalAR    = pendingAR.reduce((s, ar) => s + parseFloat((ar.amount    || '0').toString().replace(/,/g, '')), 0);
+        const totalUnver = pendingAR.reduce((s, ar) => s + parseFloat((ar.unverified|| '0').toString().replace(/,/g, '')), 0);
+
+        contentHTML += `
+            <div style="padding:10px 0 14px 0;">
+                <h2 style="margin:0 0 4px 0;color:#2c3e50;">应收核销</h2>
+                <p style="color:#7f8c8d;margin:0;">以应收账款台账为基础，将收款单、发票与应收账款进行核销匹配。支持先核销后补票、先开票后核销两种路径。</p>
+            </div>
+
+            <div style="background:#eaf4ff;border:1px solid #bee3f8;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;gap:30px;flex-wrap:wrap;">
+                <div><span style="color:#7f8c8d;font-size:12px;">应收账款笔数</span><br><strong style="font-size:20px;color:#2c3e50;">${arList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">待核销余额</span><br><strong style="font-size:20px;color:#e74c3c;">¥${_woFmt(totalUnver)}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${arWoList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">待补票笔数</span><br><strong style="font-size:20px;color:#e67e22;">${arWoList.filter(w=>w.invoiceStatus==='待补票').length}</strong></div>
+            </div>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:6px;margin-bottom:12px;">
+                应收账款台账
+                <span style="font-size:12px;font-weight:normal;color:#7f8c8d;margin-left:8px;">来源：运单挂帐 / 运单结算</span>
+            </h3>
+            <table class="data-table" style="margin-bottom:24px;">
+                <thead><tr>
+                    <th>运单/账款号</th><th>客户</th><th>账期</th><th>应收金额</th><th>已核销</th><th>未核销余额</th><th>发票/收款状态</th><th>核销状态</th><th>操作</th>
+                </tr></thead>
+                <tbody>${pendingRows}</tbody>
+            </table>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">核销记录</h3>
+            <table class="data-table">
+                <thead><tr>
+                    <th>核销单号</th><th>应收账款号</th><th>关联收款单</th><th>客户</th><th>核销金额</th><th>核销日期</th><th>核销路径</th><th>发票状态</th><th>凭证号</th>
+                </tr></thead>
+                <tbody>${woRows}</tbody>
+            </table>
+        `;
+    }
+
+    // =========================================================================
+    // 收款单 (ReceiptVoucher)
+    // =========================================================================
+    else if (moduleCode === "ReceiptVoucher") {
+        const rcvList = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
+        const payMethods = ['银行转账', '现金', '微信', '支付宝', '承兑汇票', '其他'];
+
+        const rows = rcvList.map(r => {
+            const statusColor = { '草稿': '#95a5a6', '待审核': '#e67e22', '已审核': '#27ae60' }[r.status] || '#bdc3c7';
+            const amt = parseFloat(r.totalAmount);
+            const fmtAmt = isNaN(amt) ? r.totalAmount : amt.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+            const detailCount = Array.isArray(r.details) ? r.details.length : 0;
+            const voucherCell = r.relatedVoucherId
+                ? `<a href="javascript:void(0)" onclick="loadContent('VoucherEntryReview')" style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</a>`
+                : '<span style="color:#ccc;">—</span>';
+
+            let actions = '';
+            if (r.status === '草稿') {
+                actions += `<button onclick="window.openReceiptForm('${r.id}')" style="padding:3px 8px;border:1px solid #3498db;color:#3498db;background:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">编辑</button>`;
+                actions += `<button onclick="window.submitReceiptForReview('${r.id}')" style="padding:3px 8px;border:1px solid #e67e22;color:#e67e22;background:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">提交审核</button>`;
+                actions += `<button onclick="window.deleteReceipt('${r.id}')" style="padding:3px 8px;border:1px solid #e74c3c;color:#e74c3c;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">删除</button>`;
+            } else if (r.status === '待审核') {
+                actions += `<button onclick="window.approveReceipt('${r.id}')" style="padding:3px 8px;border:none;background:#27ae60;color:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">审核通过</button>`;
+                if (!r.relatedVoucherId) {
+                    actions += `<button onclick="window.generateReceiptVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
+                }
+            } else if (r.status === '已审核') {
+                if (!r.relatedVoucherId) {
+                    actions += `<button onclick="window.generateReceiptVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
+                } else {
+                    actions += `<span style="color:#27ae60;font-size:12px;">✓ 已完成</span>`;
+                }
+            }
+
+            return `<tr>
+                <td style="font-family:monospace;font-size:12px;color:#3498db;">${r.id}</td>
+                <td>${r.date || ''}</td>
+                <td><strong>${r.customer || ''}</strong></td>
+                <td>${r.payMethod || ''}</td>
+                <td style="text-align:right;font-weight:600;">¥${fmtAmt}</td>
+                <td style="text-align:center;">${detailCount > 0 ? `<span style="background:#eaf4fb;color:#3498db;padding:2px 8px;border-radius:10px;font-size:12px;">${detailCount}张</span>` : '<span style="color:#ccc;">—</span>'}</td>
+                <td><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${r.status}</span></td>
+                <td style="font-size:12px;">${voucherCell}</td>
+                <td style="white-space:nowrap;">${actions}</td>
+            </tr>`;
+        }).join('') || `<tr><td colspan="9" style="text-align:center;color:#aaa;padding:30px;">暂无收款单，点击【新建收款单】开始录入</td></tr>`;
+
+        const payMethodOptions = payMethods.map(m => `<option value="${m}">${m}</option>`).join('');
+
+        contentHTML = `
+        <style>
+            .pm-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+            .pm-toolbar-left { display:flex; gap:10px; align-items:center; }
+            .pm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center; }
+            .pm-modal { background:#fff; border-radius:10px; padding:28px; width:700px; max-width:96vw; max-height:90vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+            .pm-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #edf1f5; }
+            .pm-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+            .pm-form-group label { display:block; font-size:12px; color:#7f8c8d; margin-bottom:4px; }
+            .pm-form-group input, .pm-form-group select { width:100%; padding:8px 10px; border:1px solid #dde3ea; border-radius:6px; font-size:13px; box-sizing:border-box; }
+            .pm-detail-section { margin-top:16px; border:1px solid #edf1f5; border-radius:8px; overflow:hidden; }
+            .pm-detail-header { background:#f8fafb; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf1f5; }
+            .pm-detail-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .pm-detail-table th { background:#f4f6f8; padding:8px 10px; text-align:left; font-size:12px; color:#7f8c8d; border-bottom:1px solid #edf1f5; }
+            .pm-detail-table td { padding:6px 10px; border-bottom:1px solid #f4f6f8; vertical-align:middle; }
+            .pm-modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #edf1f5; }
+        </style>
+
+        <div class="pm-toolbar">
+            <div class="pm-toolbar-left">
+                <button onclick="window.openReceiptForm(null)"
+                    style="padding:8px 18px;background:#27ae60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">+ 新建收款单</button>
+                <span style="font-size:13px;color:#7f8c8d;">共 ${rcvList.length} 条</span>
+            </div>
+            <div style="font-size:12px;color:#95a5a6;">应收管理 / 收款单</div>
+        </div>
+
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:hidden;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#f8fafb;">
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;white-space:nowrap;">收款单号</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">收款日期</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">客户</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">收款方式</th>
+                        <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">收款金额</th>
+                        <th style="padding:10px 12px;text-align:center;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联运单</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">状态</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联凭证</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:12px;padding:12px 16px;background:#fffbf0;border:1px solid #fdebd0;border-radius:8px;font-size:12px;color:#7d6608;line-height:1.8;">
+            <strong>操作流程：</strong>
+            新建收款单（录入客户+运单明细）→ 提交审核 → 审核通过 → 生成凭证（需先在<strong>会计引擎 → 收付款单 → 收款单</strong>配置模板）→ 凭证审核中心过账
+        </div>
+
+        <!-- 收款单录入弹窗 -->
+        <div id="receipt-modal" class="pm-modal-overlay" onclick="if(event.target===this)window.closeReceiptModal()">
+            <div class="pm-modal">
+                <div class="pm-modal-header">
+                    <h3 id="rcv-modal-title" style="margin:0;font-size:17px;color:#2c3e50;">新建收款单</h3>
+                    <button onclick="window.closeReceiptModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#aaa;">×</button>
+                </div>
+
+                <div class="pm-form-grid">
+                    <div class="pm-form-group">
+                        <label>收款单号（自动生成）</label>
+                        <input type="text" id="rcv-id" readonly style="background:#f8fafb;color:#7f8c8d;">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>收款日期 *</label>
+                        <input type="date" id="rcv-date">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>客户名称 *</label>
+                        <input type="text" id="rcv-customer" placeholder="请输入客户名称">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>收款方式 *</label>
+                        <select id="rcv-method">${payMethodOptions}</select>
+                    </div>
+                    <div class="pm-form-group">
+                        <label>收款总额（自动汇总或手动填写）*</label>
+                        <input type="number" id="rcv-total" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>摘要备注</label>
+                        <input type="text" id="rcv-summary" placeholder="如：3月运费收款">
+                    </div>
+                </div>
+
+                <div class="pm-detail-section">
+                    <div class="pm-detail-header">
+                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联运单明细</span>
+                        <button onclick="window.addReceiptDetail()"
+                            style="padding:4px 12px;border:1px solid #3498db;color:#3498db;background:#fff;border-radius:5px;cursor:pointer;font-size:12px;">+ 添加运单</button>
+                    </div>
+                    <table class="pm-detail-table">
+                        <thead>
+                            <tr>
+                                <th>运单号</th>
+                                <th>应收金额</th>
+                                <th>本次收款</th>
+                                <th style="text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcv-detail-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="pm-modal-footer">
+                    <button onclick="window.closeReceiptModal()"
+                        style="padding:8px 20px;border:1px solid #dde3ea;background:#f8fafb;border-radius:6px;cursor:pointer;">取消</button>
+                    <button onclick="window.saveReceipt()"
+                        style="padding:8px 24px;background:#27ae60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">保存</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    // =========================================================================
+    // 付款单 (PaymentVoucher)
+    // =========================================================================
+    else if (moduleCode === "PaymentVoucher") {
+        const payList = JSON.parse(sessionStorage.getItem('PaymentVouchers') || '[]');
+        const payMethods2 = ['银行转账', '现金', '微信', '支付宝', '承兑汇票', '其他'];
+        const vendorTypes = ['承运商', '司机', '供应商', '网点', '其他'];
+
+        const rows = payList.map(r => {
+            const statusColor = { '草稿': '#95a5a6', '待审核': '#e67e22', '已审核': '#27ae60' }[r.status] || '#bdc3c7';
+            const amt = parseFloat(r.totalAmount);
+            const fmtAmt = isNaN(amt) ? r.totalAmount : amt.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+            const detailCount = Array.isArray(r.details) ? r.details.length : 0;
+            const voucherCell = r.relatedVoucherId
+                ? `<a href="javascript:void(0)" onclick="loadContent('VoucherEntryReview')" style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</a>`
+                : '<span style="color:#ccc;">—</span>';
+
+            let actions = '';
+            if (r.status === '草稿') {
+                actions += `<button onclick="window.openPaymentForm('${r.id}')" style="padding:3px 8px;border:1px solid #3498db;color:#3498db;background:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">编辑</button>`;
+                actions += `<button onclick="window.submitPaymentForReview('${r.id}')" style="padding:3px 8px;border:1px solid #e67e22;color:#e67e22;background:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">提交审核</button>`;
+                actions += `<button onclick="window.deletePayment('${r.id}')" style="padding:3px 8px;border:1px solid #e74c3c;color:#e74c3c;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">删除</button>`;
+            } else if (r.status === '待审核') {
+                actions += `<button onclick="window.approvePayment('${r.id}')" style="padding:3px 8px;border:none;background:#27ae60;color:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">审核通过</button>`;
+                if (!r.relatedVoucherId) {
+                    actions += `<button onclick="window.generatePaymentVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
+                }
+            } else if (r.status === '已审核') {
+                if (!r.relatedVoucherId) {
+                    actions += `<button onclick="window.generatePaymentVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
+                } else {
+                    actions += `<span style="color:#27ae60;font-size:12px;">✓ 已完成</span>`;
+                }
+            }
+
+            return `<tr>
+                <td style="font-family:monospace;font-size:12px;color:#e67e22;">${r.id}</td>
+                <td>${r.date || ''}</td>
+                <td><strong>${r.vendor || ''}</strong><br><span style="font-size:11px;color:#95a5a6;">${r.vendorType || ''}</span></td>
+                <td>${r.payMethod || ''}</td>
+                <td style="text-align:right;font-weight:600;">¥${fmtAmt}</td>
+                <td style="text-align:center;">${detailCount > 0 ? `<span style="background:#fef9e7;color:#e67e22;padding:2px 8px;border-radius:10px;font-size:12px;">${detailCount}条</span>` : '<span style="color:#ccc;">—</span>'}</td>
+                <td><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${r.status}</span></td>
+                <td style="font-size:12px;">${voucherCell}</td>
+                <td style="white-space:nowrap;">${actions}</td>
+            </tr>`;
+        }).join('') || `<tr><td colspan="9" style="text-align:center;color:#aaa;padding:30px;">暂无付款单，点击【新建付款单】开始录入</td></tr>`;
+
+        const pmOpts2 = payMethods2.map(m => `<option value="${m}">${m}</option>`).join('');
+        const vtOpts = vendorTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        contentHTML = `
+        <style>
+            .pm-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+            .pm-toolbar-left { display:flex; gap:10px; align-items:center; }
+            .pm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center; }
+            .pm-modal { background:#fff; border-radius:10px; padding:28px; width:700px; max-width:96vw; max-height:90vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+            .pm-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #edf1f5; }
+            .pm-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+            .pm-form-group label { display:block; font-size:12px; color:#7f8c8d; margin-bottom:4px; }
+            .pm-form-group input, .pm-form-group select { width:100%; padding:8px 10px; border:1px solid #dde3ea; border-radius:6px; font-size:13px; box-sizing:border-box; }
+            .pm-detail-section { margin-top:16px; border:1px solid #edf1f5; border-radius:8px; overflow:hidden; }
+            .pm-detail-header { background:#f8fafb; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #edf1f5; }
+            .pm-detail-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .pm-detail-table th { background:#f4f6f8; padding:8px 10px; text-align:left; font-size:12px; color:#7f8c8d; border-bottom:1px solid #edf1f5; }
+            .pm-detail-table td { padding:6px 10px; border-bottom:1px solid #f4f6f8; vertical-align:middle; }
+            .pm-modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #edf1f5; }
+        </style>
+
+        <div class="pm-toolbar">
+            <div class="pm-toolbar-left">
+                <button onclick="window.openPaymentForm(null)"
+                    style="padding:8px 18px;background:#e67e22;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">+ 新建付款单</button>
+                <span style="font-size:13px;color:#7f8c8d;">共 ${payList.length} 条</span>
+            </div>
+            <div style="font-size:12px;color:#95a5a6;">应付管理 / 付款单</div>
+        </div>
+
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:hidden;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:#f8fafb;">
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;white-space:nowrap;">付款单号</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款日期</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款对象</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款方式</th>
+                        <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款金额</th>
+                        <th style="padding:10px 12px;text-align:center;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">明细条数</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">状态</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联凭证</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:12px;padding:12px 16px;background:#fef9f0;border:1px solid #fdebd0;border-radius:8px;font-size:12px;color:#7d6608;line-height:1.8;">
+            <strong>操作流程：</strong>
+            新建付款单（录入承运商/司机+批次明细）→ 提交审核 → 审核通过 → 生成凭证（需先在<strong>会计引擎 → 收付款单 → 付款单</strong>配置模板）→ 凭证审核中心过账
+        </div>
+
+        <!-- 付款单录入弹窗 -->
+        <div id="payment-modal" class="pm-modal-overlay" onclick="if(event.target===this)window.closePaymentModal()">
+            <div class="pm-modal">
+                <div class="pm-modal-header">
+                    <h3 id="pay-modal-title" style="margin:0;font-size:17px;color:#2c3e50;">新建付款单</h3>
+                    <button onclick="window.closePaymentModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#aaa;">×</button>
+                </div>
+
+                <div class="pm-form-grid">
+                    <div class="pm-form-group">
+                        <label>付款单号（自动生成）</label>
+                        <input type="text" id="pay-id" readonly style="background:#f8fafb;color:#7f8c8d;">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>付款日期 *</label>
+                        <input type="date" id="pay-date">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>付款对象 *</label>
+                        <input type="text" id="pay-vendor" placeholder="承运商/司机/供应商名称">
+                    </div>
+                    <div class="pm-form-group">
+                        <label>对象类型</label>
+                        <select id="pay-vendortype">${vtOpts}</select>
+                    </div>
+                    <div class="pm-form-group">
+                        <label>付款方式 *</label>
+                        <select id="pay-method">${pmOpts2}</select>
+                    </div>
+                    <div class="pm-form-group">
+                        <label>付款总额（自动汇总或手动填写）*</label>
+                        <input type="number" id="pay-total" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="pm-form-group" style="grid-column:1/-1;">
+                        <label>摘要备注</label>
+                        <input type="text" id="pay-summary" placeholder="如：3月干线运费结算">
+                    </div>
+                </div>
+
+                <div class="pm-detail-section">
+                    <div class="pm-detail-header">
+                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联运单/批次明细</span>
+                        <button onclick="window.addPaymentDetail()"
+                            style="padding:4px 12px;border:1px solid #e67e22;color:#e67e22;background:#fff;border-radius:5px;cursor:pointer;font-size:12px;">+ 添加明细</button>
+                    </div>
+                    <table class="pm-detail-table">
+                        <thead>
+                            <tr>
+                                <th>运单号/批次号</th>
+                                <th>应付金额</th>
+                                <th>本次付款</th>
+                                <th style="text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pay-detail-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="pm-modal-footer">
+                    <button onclick="window.closePaymentModal()"
+                        style="padding:8px 20px;border:1px solid #dde3ea;background:#f8fafb;border-radius:6px;cursor:pointer;">取消</button>
+                    <button onclick="window.savePayment()"
+                        style="padding:8px 24px;background:#e67e22;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">保存</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    // =========================================================================
+    // 应付核销 (APWriteOff)
+    // =========================================================================
+    else if (moduleCode === "APWriteOff") {
+        const payList = JSON.parse(sessionStorage.getItem('PaymentVouchers') || '[]');
+        const woList = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
+        const inputInvoices = JSON.parse(sessionStorage.getItem('InputInvoices') || '[]');
+        const apWoList = woList.filter(w => w.type === 'AP');
+
+        const pendingList = payList.filter(r => r.status === '已审核');
+
+        const _woFmt = (n) => {
+            const v = parseFloat(n);
+            return isNaN(v) ? '0.00' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const pendingRows = pendingList.length === 0
+            ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">暂无待核销付款单。请先在【付款单】中录入并审核付款记录。</td></tr>`
+            : pendingList.map(r => {
+                const woRecords = apWoList.filter(w => w.billId === r.id);
+                const woAmount = woRecords.reduce((s, w) => s + parseFloat(w.writeOffAmount || 0), 0);
+                const remaining = Math.max(parseFloat(r.totalAmount) - woAmount, 0);
+                const woStatusBadge = remaining <= 0
+                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已全额核销</span>`
+                    : woAmount > 0
+                        ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
+                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
+                const canWriteOff = remaining > 0;
+                return `<tr>
+                    <td style="font-family:monospace;color:#2c3e50;">${r.id}</td>
+                    <td>${r.vendor}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(r.totalAmount)}</td>
+                    <td style="text-align:right;color:#27ae60;">¥${_woFmt(woAmount)}</td>
+                    <td style="text-align:right;color:#e74c3c;">¥${_woFmt(remaining)}</td>
+                    <td>${woStatusBadge}</td>
+                    <td>
+                        ${canWriteOff
+                            ? `<button onclick="window.openWriteOffModal('AP','${r.id}','${r.vendor}','${remaining.toFixed(2)}')"
+                                style="padding:3px 10px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>`
+                            : `<span style="color:#aaa;font-size:12px;">已完成</span>`}
+                    </td>
+                </tr>`;
+            }).join('');
+
+        const woRows = apWoList.length === 0
+            ? `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">暂无核销记录。</td></tr>`
+            : apWoList.map(w => {
+                const pathBadge = w.invoicePath === 'A'
+                    ? `<span style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先核销后取票</span>`
+                    : `<span style="background:#8e44ad;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先取票后核销</span>`;
+                const invBadge = w.invoiceStatus === '已关联'
+                    ? `<span style="color:#27ae60;">✔ ${w.invoiceNo}</span>`
+                    : `<span style="color:#e67e22;">⏳ 待取票
+                        <button onclick="window.openLinkInvoiceModal('${w.id}','AP')"
+                            style="padding:1px 6px;background:#e67e22;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-left:4px;">关联</button>
+                    </span>`;
+                return `<tr>
+                    <td style="font-family:monospace;color:#2c3e50;">${w.id}</td>
+                    <td>${w.billId}</td>
+                    <td>${w.counterparty}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(w.writeOffAmount)}</td>
+                    <td>${w.date}</td>
+                    <td>${pathBadge}</td>
+                    <td>${invBadge}</td>
+                    <td style="font-family:monospace;font-size:11px;color:#7f8c8d;">${w.voucherId || '-'}</td>
+                </tr>`;
+            }).join('');
+
+        contentHTML += `
+            <div style="padding:10px 0 18px 0;">
+                <h2 style="margin:0 0 4px 0;color:#2c3e50;">应付核销</h2>
+                <p style="color:#7f8c8d;margin:0;">将已审核的付款单与应付账款、发票进行核销匹配。支持先核销后取票、先取票后核销两种路径。</p>
+            </div>
+
+            <div style="background:#eafff4;border:1px solid #b7e4c7;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;gap:30px;">
+                <div><span style="color:#7f8c8d;font-size:12px;">付款单总数</span><br><strong style="font-size:20px;color:#2c3e50;">${payList.filter(r=>r.status==='已审核').length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${apWoList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">待取票笔数</span><br><strong style="font-size:20px;color:#e67e22;">${apWoList.filter(w=>w.invoiceStatus==='待补票').length}</strong></div>
+            </div>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">待核销付款单</h3>
+            <table class="data-table" style="margin-bottom:24px;">
+                <thead><tr>
+                    <th>付款单号</th><th>付款对象</th><th>付款金额</th><th>已核销</th><th>未核销</th><th>核销状态</th><th>操作</th>
+                </tr></thead>
+                <tbody>${pendingRows}</tbody>
+            </table>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">核销记录</h3>
+            <table class="data-table">
+                <thead><tr>
+                    <th>核销单号</th><th>来源付款单</th><th>付款对象</th><th>核销金额</th><th>核销日期</th><th>核销路径</th><th>发票状态</th><th>凭证号</th>
+                </tr></thead>
+                <tbody>${woRows}</tbody>
+            </table>
+        `;
+    }
 
     // =========================================================================
     // 18. 供应商发票管理/进项台账 (APInvoiceManage) - [核心：OCR与认证抵扣]
@@ -4202,67 +7714,6 @@ function loadContent(moduleCode, element = null) {
                 `;
     }
 
-
-    // =========================================================================
-    // 13. 还款单 (Expense Repay)
-    // =========================================================================
-    else if (moduleCode === "ExpenseRepay") {
-        contentHTML += `
-                    <h2>还款单</h2>
-                    <p style="color: #7f8c8d;">记录员工对已批准的借款进行归还的单据，用于结清借款余额。</p>
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="还款单号 / 还款人" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">状态 (全部)</option>
-                                <option>待入账</option>
-                                <option>已入账</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;">+ 登记还款</button>
-                    </div>
-
-                    <h3>还款单列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>还款单号</th>
-                                <th>还款人</th>
-                                <th>还款金额 (RMB)</th>
-                                <th>关联借款单号</th>
-                                <th>还款方式</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>HK202511005</td>
-                                <td>王五</td>
-                                <td>500.00</td>
-                                <td>JQ202510002</td>
-                                <td>银行转账</td>
-                                <td><span style="color: #f39c12;">待入账</span></td>
-                                <td><a href="#" style="color:#3498db;">确认入账</a></td>
-                            </tr>
-                            <tr>
-                                <td>HK202511006</td>
-                                <td>张三</td>
-                                <td>1,000.00</td>
-                                <td>JQ202510001</td>
-                                <td>现金</td>
-                                <td><span style="color: #27ae60;">已入账</span></td>
-                                <td><a href="#" style="color:#3498db;">查看</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
     // =========================================================================
     // 14. 日常费用报销 (Expense Daily)
     // =========================================================================
@@ -4582,6 +8033,114 @@ function loadContent(moduleCode, element = null) {
                         </tbody>
                     </table>
                 `;
+    }
+
+    // =========================================================================
+    // 报销核销 (ExpenseWriteOff)
+    // =========================================================================
+    else if (moduleCode === "ExpenseWriteOff") {
+        const woList = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
+        const expWoList = woList.filter(w => w.type === 'Expense');
+
+        // Build expense bills from sessionStorage
+        const expenseBills = [];
+        const dailyExp = JSON.parse(sessionStorage.getItem('ExpenseDailyRecords') || '[]');
+        dailyExp.forEach(e => {
+            if (e.status === '已审核' || e.status === '已批准') {
+                expenseBills.push({ id: e.id, type: '日常费用', applicant: e.applicant || e.user || '-', amount: e.amount || e.totalAmount || '0', date: e.date, status: e.status });
+            }
+        });
+        const travelExp = JSON.parse(sessionStorage.getItem('ExpenseTravelRecords') || '[]');
+        travelExp.forEach(e => {
+            if (e.status === '已审核' || e.status === '已批准') {
+                expenseBills.push({ id: e.id, type: '差旅报销', applicant: e.applicant || e.user || '-', amount: e.amount || e.totalAmount || '0', date: e.date, status: e.status });
+            }
+        });
+
+        const _woFmt = (n) => {
+            const v = parseFloat(n);
+            return isNaN(v) ? '0.00' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const pendingRows = expenseBills.length === 0
+            ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">暂无待核销报销单。请先在【日常费用报销】或【差旅报销】中录入并审核报销记录。</td></tr>`
+            : expenseBills.map(r => {
+                const woRecords = expWoList.filter(w => w.billId === r.id);
+                const woAmount = woRecords.reduce((s, w) => s + parseFloat(w.writeOffAmount || 0), 0);
+                const remaining = Math.max(parseFloat(r.amount) - woAmount, 0);
+                const woStatusBadge = remaining <= 0
+                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>`
+                    : woAmount > 0
+                        ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
+                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
+                const canWriteOff = remaining > 0;
+                return `<tr>
+                    <td style="font-family:monospace;color:#2c3e50;">${r.id}</td>
+                    <td>${r.type}</td>
+                    <td>${r.applicant}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(r.amount)}</td>
+                    <td style="text-align:right;color:#e74c3c;">¥${_woFmt(remaining)}</td>
+                    <td>${woStatusBadge}</td>
+                    <td>
+                        ${canWriteOff
+                            ? `<button onclick="window.openWriteOffModal('Expense','${r.id}','${r.applicant}','${remaining.toFixed(2)}')"
+                                style="padding:3px 10px;background:#e67e22;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>`
+                            : `<span style="color:#aaa;font-size:12px;">已完成</span>`}
+                    </td>
+                </tr>`;
+            }).join('');
+
+        const woRows = expWoList.length === 0
+            ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">暂无报销核销记录。</td></tr>`
+            : expWoList.map(w => {
+                const pathBadge = w.invoicePath === 'A'
+                    ? `<span style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先核销后补票</span>`
+                    : `<span style="background:#8e44ad;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先取票后核销</span>`;
+                const invBadge = w.invoiceStatus === '已关联'
+                    ? `<span style="color:#27ae60;">✔ ${w.invoiceNo}</span>`
+                    : `<span style="color:#e67e22;">⏳ 待补票
+                        <button onclick="window.openLinkInvoiceModal('${w.id}','Expense')"
+                            style="padding:1px 6px;background:#e67e22;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-left:4px;">关联</button>
+                    </span>`;
+                return `<tr>
+                    <td style="font-family:monospace;color:#2c3e50;">${w.id}</td>
+                    <td>${w.billId}</td>
+                    <td>${w.counterparty}</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(w.writeOffAmount)}</td>
+                    <td>${w.date}</td>
+                    <td>${pathBadge}</td>
+                    <td>${invBadge}</td>
+                </tr>`;
+            }).join('');
+
+        contentHTML += `
+            <div style="padding:10px 0 18px 0;">
+                <h2 style="margin:0 0 4px 0;color:#2c3e50;">报销核销</h2>
+                <p style="color:#7f8c8d;margin:0;">将已审批的报销单与实际票据进行核销匹配。支持先核销后补票、先取票后核销两种路径。</p>
+            </div>
+
+            <div style="background:#fff8f0;border:1px solid #fde68a;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;gap:30px;">
+                <div><span style="color:#7f8c8d;font-size:12px;">报销单总数</span><br><strong style="font-size:20px;color:#2c3e50;">${expenseBills.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${expWoList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">待补票笔数</span><br><strong style="font-size:20px;color:#e67e22;">${expWoList.filter(w=>w.invoiceStatus==='待补票').length}</strong></div>
+            </div>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #e67e22;padding-bottom:6px;margin-bottom:12px;">待核销报销单</h3>
+            <table class="data-table" style="margin-bottom:24px;">
+                <thead><tr>
+                    <th>报销单号</th><th>报销类型</th><th>申请人</th><th>报销金额</th><th>未核销金额</th><th>核销状态</th><th>操作</th>
+                </tr></thead>
+                <tbody>${pendingRows}</tbody>
+            </table>
+
+            <h3 style="color:#2c3e50;border-bottom:2px solid #e67e22;padding-bottom:6px;margin-bottom:12px;">核销记录</h3>
+            <table class="data-table">
+                <thead><tr>
+                    <th>核销单号</th><th>来源报销单</th><th>申请人</th><th>核销金额</th><th>核销日期</th><th>核销路径</th><th>票据状态</th>
+                </tr></thead>
+                <tbody>${woRows}</tbody>
+            </table>
+        `;
     } // =========================================================================
     // 17. 运单挂账 (Pending Waybill)
     // =========================================================================
@@ -4710,122 +8269,301 @@ function loadContent(moduleCode, element = null) {
     // }
 
     // =========================================================================
-    // 11. 异动管理 (AbnormalManagement) - [业务端：异动登记台]
+    // 11. 异动挂账 (AbnormalManagement) - [统一 wb-* 风格重写]
     // =========================================================================
     else if (moduleCode === "AbnormalManagement") {
+        const _aesc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
-        // 1. 初始化数据 (如果没有数据，给几条示例)
-        let list = JSON.parse(sessionStorage.getItem('AbnormalEvents') || "[]");
-        if (list.length === 0) {
-            list = [
-                {
-                    id: "YC2025120101",
-                    date: "2025-12-01",
-                    waybill: "YD10086",
-                    type: "货物破损",
-                    desc: "外包装破损，客户拒收",
-                    reporter: "客服部-王五",
-                    opsResult: "司机张三全责，赔付500元", // 定责结果
-                    suggestAmount: 500,
-                    status: "待入账"
-                }
-            ];
-            sessionStorage.setItem('AbnormalEvents', JSON.stringify(list));
+        // --- 列定义 ---
+        const abnCols = [
+            { key: "site",                 label: "网点",              w: 110 },
+            { key: "waybillNo",            label: "运单号",            w: 150, batchFilter: "abn_f_waybill" },
+            { key: "goodsNo",              label: "货号",              w: 150, batchFilter: "abn_f_goods"   },
+            { key: "createdAt",            label: "开单时间",          w: 160, dateFilter: true              },
+            { key: "originStation",        label: "发站",              w:  90, textFilter: "abn_f_origin"   },
+            { key: "destinationStation",   label: "到站",              w:  90, textFilter: "abn_f_dest"     },
+            { key: "routeLine",            label: "路由",              w: 130, textFilter: "abn_f_route"    },
+            { key: "shipper",              label: "发货人",            w:  90, textFilter: "abn_f_shipper"  },
+            { key: "consignee",            label: "收货人",            w:  90, textFilter: "abn_f_consignee"},
+            { key: "cashReturnAbn",        label: "现返异动",          w: 100, align: "right"               },
+            { key: "cashReturnAbnStatus",  label: "现返异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_cr"  },
+            { key: "debtReturnAbn",        label: "欠返异动",          w: 100, align: "right"               },
+            { key: "debtReturnAbnStatus",  label: "欠返异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_dr"  },
+            { key: "rebateAbn",            label: "回扣异动",          w: 100, align: "right"               },
+            { key: "rebateAbnStatus",      label: "回扣异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_rb"  },
+            { key: "cashPayAbn",           label: "现付异动",          w: 100, align: "right"               },
+            { key: "cashPayAbnStatus",     label: "现付异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_cp"  },
+            { key: "monthlyPayAbn",        label: "月结异动",          w: 100, align: "right"               },
+            { key: "monthlyPayAbnStatus",  label: "月结异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_mp"  },
+            { key: "debtPayAbn",           label: "欠付异动",          w: 100, align: "right"               },
+            { key: "debtPayAbnStatus",     label: "欠付异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_dp"  },
+            { key: "returnPayAbn",         label: "回付异动",          w: 100, align: "right"               },
+            { key: "returnPayAbnStatus",   label: "回付异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_rp"  },
+            { key: "arrivePayAbn",         label: "到付异动",          w: 100, align: "right"               },
+            { key: "arrivePayAbnStatus",   label: "到付异动挂账状态",  w: 130, align: "center", statusFilter: "abn_f_st_ap"  },
+            { key: "cargoDeductAbn",       label: "货款扣异动",        w: 110, align: "right"               },
+            { key: "cargoDeductAbnStatus", label: "货款扣异动挂账状态",w: 140, align: "center", statusFilter: "abn_f_st_cd"  },
+            { key: "cardAtArrivalAbn",     label: "货到打卡异动",      w: 120, align: "right"               },
+            { key: "cardAtArrivalAbnStatus",label:"货到打卡挂账状态",  w: 140, align: "center", statusFilter: "abn_f_st_ca"  },
+            { key: "codAbn",               label: "代收货款异动",      w: 120, align: "right"               },
+            { key: "codAbnStatus",         label: "代收货款挂账状态",  w: 140, align: "center", statusFilter: "abn_f_st_cod" },
+            { key: "advanceFeeAbn",        label: "垫付费异动",        w: 100, align: "right"               },
+            { key: "advanceFeeAbnStatus",  label: "垫付费挂账状态",    w: 130, align: "center", statusFilter: "abn_f_st_af"  },
+            { key: "codServiceFeeAbn",     label: "货款手续费异动",    w: 120, align: "right"               },
+            { key: "remark",               label: "运单备注",          w: 140                               },
+            { key: "flag",                 label: "运单标识",          w: 120                               },
+        ];
+
+        // --- 初始数据 (2026-01，默认日期范围外，初始呈空态) ---
+        let abnData = JSON.parse(sessionStorage.getItem('AbnormalAccrualRows') || 'null');
+        if (!abnData) {
+            const sites   = ["专线A","专线B","直营C","加盟D","专线E"];
+            const routes  = ["专线A->专线B","上海->杭州","南京->苏州","苏州->上海","杭州->南京"];
+            const statuses = ["已挂账","未挂账","已挂账","未挂账","已挂账","未挂账","已挂账","已挂账"];
+            abnData = [];
+            for (let i = 1; i <= 8; i++) {
+                const day = (i * 3).toString().padStart(2,'0');
+                const makeAmt = (base) => i % 3 === 0 ? "" : (base + i * 20).toFixed(2);
+                const makeSt  = (amt)  => amt ? statuses[i % statuses.length] : "";
+                const cr = makeAmt(100); const dr = makeAmt(80); const rb = makeAmt(50);
+                const cp = makeAmt(200); const mp = makeAmt(300); const dp = makeAmt(120);
+                abnData.push({
+                    id: `ABN26010${i.toString().padStart(2,'0')}`,
+                    site: sites[i % sites.length],
+                    waybillNo: `YD2601${(i*100).toString().padStart(6,'0')}`,
+                    goodsNo:   `GN2601${(i*100).toString().padStart(6,'0')}`,
+                    createdAt: `2026-01-${day} ${(8+i).toString().padStart(2,'0')}:30:00`,
+                    originStation: ["杭州市","上海市","南京市","苏州市"][i%4],
+                    destinationStation: ["上海市","南京市","苏州市","杭州市"][i%4],
+                    routeLine: routes[i % routes.length],
+                    shipper: `发货人${i}`, consignee: `收货人${i}`,
+                    cashReturnAbn: cr,        cashReturnAbnStatus: makeSt(cr),
+                    debtReturnAbn: dr,        debtReturnAbnStatus: makeSt(dr),
+                    rebateAbn: rb,            rebateAbnStatus: makeSt(rb),
+                    cashPayAbn: cp,           cashPayAbnStatus: makeSt(cp),
+                    monthlyPayAbn: mp,        monthlyPayAbnStatus: makeSt(mp),
+                    debtPayAbn: dp,           debtPayAbnStatus: makeSt(dp),
+                    returnPayAbn: "",         returnPayAbnStatus: "",
+                    arrivePayAbn: "",         arrivePayAbnStatus: "",
+                    cargoDeductAbn: "",       cargoDeductAbnStatus: "",
+                    cardAtArrivalAbn: "",     cardAtArrivalAbnStatus: "",
+                    codAbn: "",               codAbnStatus: "",
+                    advanceFeeAbn: "",        advanceFeeAbnStatus: "",
+                    codServiceFeeAbn: "",     remark: i%4===0?"备注示例":"", flag: i%5===0?"加急":"",
+                });
+            }
+            sessionStorage.setItem('AbnormalAccrualRows', JSON.stringify(abnData));
         }
 
-        // 2. 渲染列表
-        const rows = list.map(item => {
-            let statusTag = "";
+        // --- 筛选状态 & 分页 ---
+        const abnF    = window._abnormalFilters   || {};
+        const abnPS   = window._abnormalPageSize  || 10;
+        const abnPage = window._abnormalPage      || 1;
+        const _abnToday = new Date().toISOString().split('T')[0];
+        const _abnStart = new Date(Date.now() - 28*24*60*60*1000).toISOString().split('T')[0];
+        const abnDateStart = abnF.dateStart !== undefined ? abnF.dateStart : _abnStart;
+        const abnDateEnd   = abnF.dateEnd   !== undefined ? abnF.dateEnd   : _abnToday;
 
-            if (item.status === '待入账') {
-                statusTag = `<span style="background:#fff7e6; color:#e67e22; padding:2px 8px; border-radius:4px; border:1px solid #ffe58f;">⏳ 等待财务入账</span>`;
-            } else {
-                statusTag = `<span style="background:#e8f8f5; color:#27ae60; padding:2px 8px; border-radius:4px; border:1px solid #a9dfbf;">✔ 财务已处理</span>`;
+        // --- 过滤 ---
+        let abnFiltered = abnData.filter(row => {
+            if (abnF.waybillNos) {
+                const ns = abnF.waybillNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.waybillNo.includes(n))) return false;
             }
+            if (abnF.goodsNos) {
+                const ns = abnF.goodsNos.split(/[\s,，\n]+/).filter(Boolean);
+                if (ns.length && !ns.some(n => row.goodsNo.includes(n))) return false;
+            }
+            if (abnF.site   && row.site !== abnF.site) return false;
+            if (abnF.route  && !row.routeLine.includes(abnF.route))       return false;
+            if (abnF.origin && !row.originStation.includes(abnF.origin))  return false;
+            if (abnF.dest   && !row.destinationStation.includes(abnF.dest)) return false;
+            if (abnF.shipper   && !row.shipper.includes(abnF.shipper))    return false;
+            if (abnF.consignee && !row.consignee.includes(abnF.consignee)) return false;
+            const rowDate = row.createdAt.split(' ')[0];
+            if (abnDateStart && rowDate < abnDateStart) return false;
+            if (abnDateEnd   && rowDate > abnDateEnd)   return false;
+            return true;
+        });
 
-            return `
-            <tr>
-                <td>${item.id}</td>
-                <td>${item.date}</td>
-                <td><b style="color:#2980b9;">${item.waybill}</b></td>
-                <td>${item.type}</td>
-                <td>${item.opsResult}</td> <td style="font-weight:bold; color:#c0392b;">${item.suggestAmount}</td>
-                <td>${item.reporter}</td>
-                <td>${statusTag}</td>
-            </tr>
-        `;
+        // --- 分页 ---
+        const abnTotal     = abnFiltered.length;
+        const abnTotalPage = Math.max(1, Math.ceil(abnTotal / abnPS));
+        const abnSafePage  = Math.min(abnPage, abnTotalPage);
+        const abnPageRows  = abnFiltered.slice((abnSafePage-1)*abnPS, abnSafePage*abnPS);
+
+        // --- 网点下拉 ---
+        const abnAllSites = [...new Set(abnData.map(r => r.site))];
+        const abnSiteOpts = `<option value="">全部</option>` + abnAllSites.map(s =>
+            `<option value="${_aesc(s)}" ${abnF.site===s?'selected':''}>${_aesc(s)}</option>`).join('');
+
+        // --- 构建行 ---
+        const statusColor = (s) => s === '已挂账' ? '#27ae60' : s === '未挂账' ? '#e67e22' : '';
+        const abnRows = abnPageRows.map((row, idx) => {
+            const rowNo = (abnSafePage-1)*abnPS + idx + 1;
+            return `<tr>
+                <td class="sticky-left-1 wb-rowno">${rowNo}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="abn-check" value="${_aesc(row.id)}" onchange="abnUpdateSel&&abnUpdateSel()"></td>
+                ${abnCols.map(col => {
+                    const st = `${col.align?'text-align:'+col.align+';':''}${col.w?'min-width:'+col.w+'px;':''}`;
+                    const v  = row[col.key] || '';
+                    let cell = col.key === 'waybillNo'
+                        ? `<a class="wb-link" href="javascript:void(0)">${_aesc(v)}</a>`
+                        : col.statusFilter
+                            ? `<span style="color:${statusColor(v)};">${_aesc(v)}</span>`
+                            : _aesc(v);
+                    return `<td style="${st}">${cell}</td>`;
+                }).join('')}
+            </tr>`;
         }).join('');
 
-        contentHTML += `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #eee;">
-            <div>
-                <h2 style="margin:0; color:#2c3e50;">🚨 异动登记台 (Abnormal Registration)</h2>
-                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:13px;">业务部门使用：在此录入异常事件，并判定责任归属。保存后数据将自动推送到财务部。</p>
+        // --- 筛选行构建 ---
+        const abnFilterCell = (col) => {
+            const st = col.w ? `min-width:${col.w}px;` : '';
+            if (col.batchFilter) return `<th class="sticky-filter"><input id="${col.batchFilter}" class="wb-filter-input wb-filter-input--batch" placeholder="支持批量搜索" style="${st}" value="${_aesc(col.batchFilter==='abn_f_waybill'?(abnF.waybillNos||''):(abnF.goodsNos||''))}"></th>`;
+            if (col.dateFilter)  return `<th class="sticky-filter"><div style="display:flex;align-items:center;gap:3px;"><input id="abn_f_date_s" type="date" class="wb-filter-input" style="min-width:110px;" value="${_aesc(abnDateStart)}"><span style="font-size:11px;color:#aaa;">~</span><input id="abn_f_date_e" type="date" class="wb-filter-input" style="min-width:110px;" value="${_aesc(abnDateEnd)}"></div></th>`;
+            if (col.textFilter)  return `<th class="sticky-filter"><input id="${col.textFilter}" class="wb-filter-input" style="${st}" value="${_aesc(abnF[col.textFilter.replace('abn_f_','')] || '')}"></th>`;
+            if (col.statusFilter)return `<th class="sticky-filter"><select id="${col.statusFilter}" class="wb-filter-select" style="${st}"><option value="">--</option><option value="已挂账">已挂账</option><option value="未挂账">未挂账</option></select></th>`;
+            return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled style="${st}"></th>`;
+        };
+
+        // --- 空态 ---
+        const abnEmptyState = `
+        <tr><td colspan="${abnCols.length + 2}" style="padding:80px 0;text-align:center;background:#fff;border:none;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <svg width="84" height="84" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="12" width="66" height="82" rx="6" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <line x1="30" y1="36" x2="72" y2="36" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="50" x2="72" y2="50" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="64" x2="52" y2="64" stroke="#dcdfe6" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="83" cy="83" r="23" fill="#f2f6fc" stroke="#dcdfe6" stroke-width="2"/>
+                    <text x="83" y="91" text-anchor="middle" font-size="24" fill="#c0c4cc" font-family="sans-serif">?</text>
+                    <line x1="98" y1="98" x2="110" y2="110" stroke="#dcdfe6" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+                <div style="font-size:14px;color:#606266;margin-top:4px;">没有对应的数据</div>
+                <div style="font-size:12px;color:#909399;">请检查查询筛选条件后重新进行数据查询</div>
             </div>
-            <div>
-                <button class="btn-primary" style="background:#e74c3c; padding:8px 20px; font-size:14px;" onclick="openRegisterModal()">+ 新增异动登记</button>
+        </td></tr>`;
+
+        // --- 注册函数 ---
+        window.abnApplyFilters = function() {
+            window._abnormalFilters = {
+                waybillNos: document.getElementById('abn_f_waybill')?.value || '',
+                goodsNos:   document.getElementById('abn_f_goods')?.value   || '',
+                site:       document.getElementById('abn_q_site')?.value    || '',
+                dateStart:  document.getElementById('abn_q_date_s')?.value  || '',
+                dateEnd:    document.getElementById('abn_q_date_e')?.value   || '',
+                route:      document.getElementById('abn_q_route')?.value   || '',
+                origin:     document.getElementById('abn_q_origin')?.value  || '',
+                dest:       document.getElementById('abn_q_dest')?.value    || '',
+                shipper:    document.getElementById('abn_f_shipper')?.value  || '',
+                consignee:  document.getElementById('abn_f_consignee')?.value || '',
+            };
+            window._abnormalPage = 1;
+            loadContent('AbnormalManagement');
+        };
+        window.abnSetPage = function(p) { window._abnormalPage = p; loadContent('AbnormalManagement'); };
+        window.abnSetPageSize = function(s) { window._abnormalPageSize = parseInt(s); window._abnormalPage = 1; loadContent('AbnormalManagement'); };
+        window.toggleAll_abn = function(src) { document.querySelectorAll('.abn-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
+        window.abnUpdateSel = function() {};
+        window.abnormalAccrualToolbarSettle = function() {
+            const checked = Array.from(document.querySelectorAll('.abn-check:checked'));
+            if (!checked.length) return alert('请先勾选需要挂账的异动运单。');
+            alert(`已选 ${checked.length} 单，执行挂账。（演示）`);
+        };
+        window.abnormalAccrualToolbarCancel = function() {
+            const checked = Array.from(document.querySelectorAll('.abn-check:checked'));
+            if (!checked.length) return alert('请先勾选需要取消挂账的异动运单。');
+            alert(`已选 ${checked.length} 单，执行取消挂账。（演示）`);
+        };
+
+        // --- 生成 HTML ---
+        contentHTML += `
+        <div class="wb-querybar">
+            <div class="wb-q-item">
+                <div class="wb-q-label">网点</div>
+                <select id="abn_q_site" class="wb-q-control" style="min-width:120px;">${abnSiteOpts}</select>
+            </div>
+            <div class="wb-q-item wb-q-item--date">
+                <div class="wb-q-label">开单时间</div>
+                <div class="wb-q-date">
+                    <input id="abn_q_date_s" class="wb-q-control" type="date" value="${_aesc(abnDateStart)}" style="width:130px;">
+                    <span class="wb-q-date__sep">~</span>
+                    <input id="abn_q_date_e" class="wb-q-control" type="date" value="${_aesc(abnDateEnd)}" style="width:130px;">
+                </div>
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">路由</div>
+                <input id="abn_q_route" class="wb-q-control" type="text" value="${_aesc(abnF.route||'')}" style="width:110px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">发站</div>
+                <input id="abn_q_origin" class="wb-q-control" type="text" value="${_aesc(abnF.origin||'')}" style="width:90px;">
+            </div>
+            <div class="wb-q-item">
+                <div class="wb-q-label">到站</div>
+                <input id="abn_q_dest" class="wb-q-control" type="text" value="${_aesc(abnF.dest||'')}" style="width:90px;">
+            </div>
+            <button class="wb-btn wb-btn--primary" onclick="abnApplyFilters()">&#x1F50D; 查询</button>
+        </div>
+
+        <div class="wb-toolbar">
+            <div class="wb-toolbar__left">
+                <button class="wb-btn" onclick="abnormalAccrualToolbarSettle()">挂账</button>
+                <button class="wb-btn" onclick="abnormalAccrualToolbarCancel()">取消挂账</button>
+            </div>
+            <div class="wb-toolbar__right">
+                <button class="wb-btn" onclick="alert('导出功能开发中')">&#x2193; 导出</button>
+                <button class="wb-btn" onclick="window.print()">&#x1F5A8; 打印</button>
+                <div class="wb-pager">
+                    <button class="wb-pager__btn" onclick="abnSetPage(1)" ${abnSafePage<=1?'disabled':''}>|&lt;</button>
+                    <button class="wb-pager__btn" onclick="abnSetPage(${Math.max(1,abnSafePage-1)})" ${abnSafePage<=1?'disabled':''}>&lt;</button>
+                    <span class="wb-pager__text">第</span>
+                    <span class="wb-pager__page">${abnSafePage}</span>
+                    <span class="wb-pager__text">页/共${abnTotalPage}页</span>
+                    <button class="wb-pager__btn" onclick="abnSetPage(${Math.min(abnTotalPage,abnSafePage+1)})" ${abnSafePage>=abnTotalPage?'disabled':''}>&gt;</button>
+                    <button class="wb-pager__btn" onclick="abnSetPage(${abnTotalPage})" ${abnSafePage>=abnTotalPage?'disabled':''}>&gt;|</button>
+                    <select class="wb-pager__size" onchange="abnSetPageSize(this.value)">
+                        <option value="10" ${abnPS===10?'selected':''}>0-9</option>
+                        <option value="30" ${abnPS===30?'selected':''}>0-29</option>
+                    </select>
+                </div>
+                <span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>
             </div>
         </div>
 
-        <div style="background:white; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); overflow:hidden;">
-            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                <thead style="background:#f8f9fa;">
+        <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+            <table class="data-table" style="white-space:nowrap; min-width:3600px;">
+                <thead>
                     <tr>
-                        <th>登记编号</th><th>登记日期</th><th>关联运单号</th><th>异常类型</th>
-                        <th style="width:25%;">定责结果 (责任方)</th>
-                        <th>涉及金额</th><th>登记人</th><th>状态</th>
+                        <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                        <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="toggleAll_abn(this)"></th>
+                        ${abnCols.map(col => {
+                            const st = `${col.align?'text-align:'+col.align+';':''}${col.w?'min-width:'+col.w+'px;':''}`;
+                            return `<th class="sticky-header" style="${st}">${_aesc(col.label)}</th>`;
+                        }).join('')}
+                    </tr>
+                    <tr>
+                        <th class="sticky-filter sticky-left-1">筛选</th>
+                        <th class="sticky-filter sticky-left-2"></th>
+                        ${abnCols.map(col => abnFilterCell(col)).join('')}
                     </tr>
                 </thead>
-                <tbody>${rows}</tbody>
+                <tbody>${abnRows || abnEmptyState}</tbody>
+                <tfoot>
+                    <tr class="wb-foot wb-foot--sel">
+                        <td class="sticky-left-1 wb-foot__label">选中</td>
+                        <td class="sticky-left-2"></td>
+                        ${abnCols.map((col,i) => i===1 ? `<td><span id="abn_sel_count" class="wb-foot__count">0单</span></td>` : `<td></td>`).join('')}
+                    </tr>
+                    <tr class="wb-foot wb-foot--total">
+                        <td class="sticky-left-1 wb-foot__label">合计</td>
+                        <td class="sticky-left-2"></td>
+                        ${abnCols.map((col,i) => i===1 ? `<td><span class="wb-foot__count">${abnTotal}单</span></td>` : `<td></td>`).join('')}
+                    </tr>
+                </tfoot>
             </table>
-        </div>
-
-        <div id="registerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
-            <div style="position:absolute; top:10%; left:50%; transform:translateX(-50%); width:500px; background:white; border-radius:8px; box-shadow:0 5px 25px rgba(0,0,0,0.2);">
-                
-                <div style="padding:15px 20px; border-bottom:1px solid #eee; background:#f9f9f9; border-radius:8px 8px 0 0;">
-                    <h3 style="margin:0; color:#e74c3c;">📝 录入新异动</h3>
-                </div>
-                
-                <div style="padding:20px;">
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; margin-bottom:5px;">1. 关联运单号：</label>
-                        <input type="text" id="reg_waybill" placeholder="例如：YD10086" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; margin-bottom:5px;">2. 异常类型：</label>
-                        <select id="reg_type" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                            <option value="货物破损">📦 货物破损</option>
-                            <option value="货物丢失">❌ 货物丢失</option>
-                            <option value="时效延误">⏰ 时效延误</option>
-                            <option value="服务投诉">🤬 服务投诉</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; margin-bottom:5px;">3. 责任判定 (谁负责)：</label>
-                        <input type="text" id="reg_liability" placeholder="例如：司机张三全责 / 承运商原因" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; margin-bottom:5px;">4. 处罚/赔偿金额 (¥)：</label>
-                        <input type="number" id="reg_amount" placeholder="0.00" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; font-size:16px; font-weight:bold; color:#c0392b;">
-                    </div>
-
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; margin-bottom:5px;">5. 详细描述/备注：</label>
-                        <textarea id="reg_desc" rows="2" placeholder="填写事故详情..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
-                    </div>
-                </div>
-
-                <div style="padding:15px 20px; border-top:1px solid #eee; text-align:right; background:#f9f9f9; border-radius:0 0 8px 8px;">
-                    <button onclick="document.getElementById('registerModal').style.display='none'" style="padding:8px 15px; margin-right:10px; background:white; border:1px solid #ccc; cursor:pointer; border-radius:4px;">取消</button>
-                    <button class="btn-primary" onclick="saveNewAbnormal()" style="padding:8px 20px; border-radius:4px; background:#e74c3c;">确认录入</button>
-                </div>
-            </div>
-        </div>
-    `;
+        </div>`;
     }
 
     // =========================================================================
@@ -4957,258 +8695,124 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 21. 销项发票台账 (TaxOutputInvoice) - [最终联动版]
+    // 21. 销项发票台账 (TaxOutputInvoice)
     // =========================================================================
     else if (moduleCode === "TaxOutputInvoice") {
         // 1. 读取【待开票队列】(来自运单和对账单的推送)
-        const pendingQueue = JSON.parse(
-            sessionStorage.getItem("PendingInvoiceQueue") || "[]"
-        );
+        const pendingQueue = JSON.parse(sessionStorage.getItem("PendingInvoiceQueue") || "[]");
 
         // 生成待开票行 (黄色背景)
-        const pendingRows = pendingQueue
-            .map(
-                (item, index) => `
-                    <tr style="background-color: #fffbe6; border-left: 3px solid #f1c40f;">
-                        <td style="color:#999;">(自动生成)</td>
-                        <td>${item.client} <span style="font-size:12px;color:#666;">[来源:${item.sourceId}]</span></td>
-                        <td style="font-weight:bold;">${item.amount}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><span style="color: #f39c12; font-weight:bold;">待开票</span></td>
-                        <td>
-                            <button class="btn-primary" style="padding:4px 8px; font-size:12px;" onclick="generateInvoiceFromQueue('${item.sourceId}', '${item.client}', '${item.amount}', ${index})">立即开票</button>
-                        </td>
-                    </tr>
-                `
-            )
-            .join("");
+        const pendingRows = pendingQueue.map((item, index) => `
+            <tr style="background-color:#fffbe6;border-left:3px solid #f1c40f;">
+                <td style="color:#999;font-family:monospace;" id="pending-no-${index}">(待上传)</td>
+                <td>${item.client} <span style="font-size:12px;color:#666;">[${item.sourceId}]</span></td>
+                <td>-</td><td>-</td>
+                <td style="font-weight:bold;">¥${item.amount}</td>
+                <td>-</td>
+                <td><span style="color:#f39c12;font-weight:bold;border:1px solid #f39c12;padding:2px 6px;border-radius:3px;">待开票</span></td>
+                <td>
+                    <label style="padding:3px 8px;font-size:11px;background:#e67e22;color:#fff;border-radius:3px;cursor:pointer;display:inline-block;margin-right:4px;">
+                        上传发票
+                        <input type="file" accept="image/*" style="display:none" onchange="uploadPendingInvoiceImg('${item.sourceId}',${index},this)">
+                    </label>
+                    <button id="pending-invoice-btn-${index}" disabled title="请先上传发票图片"
+                        style="padding:3px 8px;font-size:11px;background:#ccc;color:#aaa;border:none;border-radius:3px;cursor:not-allowed;"
+                        onclick="generateInvoiceFromQueue('${item.sourceId}','${item.client}','${item.amount}',${index})">
+                        通过
+                    </button>
+                </td>
+            </tr>
+        `).join("");
 
-        // 2. 读取【已开票记录】
-        const invoices = JSON.parse(
-            sessionStorage.getItem("OutputInvoices") || "[]"
-        );
-        const invoiceRows = invoices
-            .map(
-                (inv) => `
-                    <tr>
-                        <td>${inv.no}</td>
-                        <td>${inv.client}</td>
-                        <td>${inv.amount}</td>
-                        <td>${inv.tax}</td>
-                        <td>${inv.total}</td>
-                        <td>${inv.date}</td>
-                        <td><span style="color:#27ae60;font-weight:bold;">已开票</span></td>
+        // 2. 读取【已有发票记录】
+        const invoices = JSON.parse(sessionStorage.getItem("OutputInvoices") || "[]");
+        const invoiceRows = invoices.map(inv => {
+            const statusColor = { '已核销':'#27ae60', '已开票':'#2980b9', '待审核':'#e67e22', '已驳回':'#e74c3c', '已作废':'#95a5a6' };
+            const statusHtml = `<span style="color:${statusColor[inv.status]||'#e67e22'};font-weight:bold;border:1px solid ${statusColor[inv.status]||'#e67e22'};padding:2px 6px;border-radius:3px;">${inv.status||'待审核'}</span>`;
 
-                        <td><a href="javascript:void(0)" onclick="viewInvoiceDetail('${inv.no}')" style="color:#3498db;">查看</a></td>
-                    </tr>
-                `
-            )
-            .join("");
+            // 5个按钮始终显示，已作废/已核销时全部变灰不可点击
+            const frozen = inv.status === '已作废' || inv.status === '已核销';
+            const canApprove = !frozen && inv.status === '待审核';
+            const canReject  = !frozen && inv.status === '待审核';
+            const canUpload  = !frozen;
+            const canView    = !!inv.imgBase64;  // 有图才能看，但不受frozen影响（查完再定）
+            const canVoid    = !frozen;
+
+            const grayBtn = (label) => `<button disabled style="padding:3px 8px;font-size:11px;background:#ccc;color:#aaa;border:none;border-radius:3px;cursor:not-allowed;margin-right:3px;">${label}</button>`;
+
+            const actionBtns = [
+                canApprove
+                    ? `<button onclick="approveInvoice('${inv.no}')" style="padding:3px 8px;font-size:11px;background:#27ae60;color:#fff;border:none;border-radius:3px;cursor:pointer;margin-right:3px;">通过</button>`
+                    : grayBtn('通过'),
+                canReject
+                    ? `<button onclick="rejectInvoice('${inv.no}')" style="padding:3px 8px;font-size:11px;background:#e74c3c;color:#fff;border:none;border-radius:3px;cursor:pointer;margin-right:3px;">驳回</button>`
+                    : grayBtn('驳回'),
+                canUpload
+                    ? `<label style="padding:3px 8px;font-size:11px;background:#3498db;color:#fff;border-radius:3px;cursor:pointer;display:inline-block;margin-right:3px;">重新上传<input type="file" accept="image/*" style="display:none" onchange="uploadInvoiceImage('${inv.no}',this)"></label>`
+                    : grayBtn('重新上传'),
+                canView
+                    ? `<button onclick="viewInvoiceImage('${inv.no}')" style="padding:3px 8px;font-size:11px;background:#27ae60;color:#fff;border:none;border-radius:3px;cursor:pointer;margin-right:3px;">查看发票</button>`
+                    : grayBtn('查看发票'),
+                canVoid
+                    ? `<button onclick="voidInvoice('${inv.no}')" style="padding:3px 8px;font-size:11px;background:#95a5a6;color:#fff;border:none;border-radius:3px;cursor:pointer;">作废</button>`
+                    : grayBtn('作废'),
+            ].join('');
+
+            return `
+            <tr>
+                <td class="val-inv-no" style="font-family:monospace;">${inv.no}</td>
+                <td class="val-client">${inv.client}</td>
+                <td class="val-amount">${inv.amount}</td>
+                <td class="val-tax">${inv.tax}</td>
+                <td class="val-total" style="font-weight:bold;">${inv.total}</td>
+                <td class="val-date">${inv.date}</td>
+                <td class="status-cell">${statusHtml}</td>
+                <td>${actionBtns}</td>
+            </tr>`;
+        }).join("");
 
         contentHTML += `
-                    <h2>销项发票台账</h2>
-                    <p style="color:#7f8c8d;">此处集中处理来自各业务模块的开票申请。</p>
-                    
-                    <div class="action-bar" style="margin-bottom:15px;">
-                        <button class="btn-primary" onclick="loadContent('TaxOutputInvoice')">刷新待办任务</button>
-                    </div>
+            <h2>销项发票台账</h2>
+            <p style="color:#7f8c8d;">集中处理来自各业务模块的开票申请，上传发票图片后审核确认。核销请至【应收核销】模块操作。</p>
+            <div class="action-bar" style="margin-bottom:15px;display:flex;gap:10px;align-items:center;">
+                <button class="btn-primary" onclick="loadContent('TaxOutputInvoice')">刷新列表</button>
+                <span style="color:#7f8c8d;font-size:13px;">
+                    待开票队列：${pendingQueue.length} 条 &nbsp;|&nbsp;
+                    待审核：${invoices.filter(i=>i.status==='待审核').length} 条 &nbsp;|&nbsp;
+                    已开票：${invoices.filter(i=>i.status==='已开票').length} 条 &nbsp;|&nbsp;
+                    已核销：${invoices.filter(i=>i.status==='已核销').length} 条
+                </span>
+            </div>
+            <table class="data-table">
+                <thead><tr>
+                    <th>发票号</th><th>客户/对象</th><th>不含税金额</th><th>税额</th><th>价税合计</th>
+                    <th>开票日期</th><th>状态</th><th>操作</th>
+                </tr></thead>
+                <tbody>
+                    ${pendingRows}${invoiceRows}${pendingRows.length === 0 && invoiceRows.length === 0
+                        ? '<tr><td colspan="8" style="text-align:center;color:#ccc;padding:20px;">暂无开票任务，请前往【运单结算】申请开票。</td></tr>'
+                        : ""}
+                </tbody>
+            </table>
 
-                    <table class="data-table">
-                        <thead><tr><th>发票号</th><th>客户/对象</th><th>金额</th><th>税额</th><th>价税合计</th><th>开票日期</th><th>状态</th><th>操作</th></tr></thead>
-                        <tbody>
-                            ${pendingRows} ${invoiceRows} ${pendingRows.length === 0 && invoiceRows.length === 0
-                ? '<tr><td colspan="8" style="text-align:center;color:#ccc;">暂无开票任务，请去结算/对账模块发起。</td></tr>'
-                : ""
-            }
-                        </tbody>
-                    </table>
-                `;
+            <!-- 发票图片预览弹窗 -->
+            <div id="invoice-img-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+                <div style="background:#fff;padding:25px;border-radius:10px;max-width:85%;max-height:90vh;overflow:auto;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+                    <button onclick="document.getElementById('invoice-img-modal').style.display='none'" style="position:absolute;top:12px;right:12px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;line-height:1;">×</button>
+                    <h3 id="invoice-img-modal-title" style="margin-top:0;color:#2c3e50;">发票原图</h3>
+                    <img id="invoice-img-preview" src="" style="max-width:100%;max-height:70vh;display:block;margin:0 auto;border:1px solid #eee;">
+                </div>
+            </div>
+        `;
     }
 
     // =========================================================================
-    // 22. 发票详情页 (InvoiceDetail) - [终极修正版：自动算税 + 完美UI]
-    // =========================================================================
+    // InvoiceDetail 已移除，发票详情通过查看原图实现
     else if (moduleCode === "InvoiceDetail") {
-        // 1. 获取基础数据
-        let inv = window.g_currentInvoice || {
-            no: "253420000002",
-            date: "2025年11月24日",
-            clientName: "演示客户公司",
-            clientTaxId: "9132xxxxxxxx",
-            sellerName: "乐享物流有限公司",
-            sellerTaxId: "9131xxxxxxxx",
-            amount: "1,000.00", // 基础金额
-        };
-
-        // 2. ★★★ 核心修复：强制重新计算税额和总价 ★★★
-        // 去掉逗号转数字
-        const rawAmount = parseFloat(inv.amount.toString().replace(/,/g, "")) || 0;
-        const taxRateVal = 0.09; // 9% 税率
-        const rawTax = rawAmount * taxRateVal;
-        const rawTotal = rawAmount + rawTax;
-
-        // 格式化回字符串 (保留2位小数)
-        inv.amount = rawAmount.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-        inv.taxRate = "9%";
-        inv.tax = rawTax.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-        inv.total = rawTotal.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-
-        // 生成大写金额
-        inv.totalCn =
-            typeof convertCurrency === "function"
-                ? convertCurrency(rawTotal)
-                : "（金额计算中...）";
-
-        // 发票专用色 (深红褐色)
-        const inkColor = "#b15b36";
-        const borderStyle = `1px solid ${inkColor}`;
-
-        contentHTML += `
-                    <div style="margin-bottom:20px; display:flex; justify-content:space-between;">
-                        <button class="btn-primary" style="background-color: #95a5a6;" onclick="loadContent('TaxOutputInvoice')"> < 返回列表</button>
-                        <div>
-                            <button class="btn-primary" style="background-color: #3498db;">🖨 打印发票</button>
-                            <button class="btn-primary" style="background-color: #27ae60;">下载 PDF</button>
-                        </div>
-                    </div>
-
-                    <div style="background: #fff; padding: 30px; border: 1px solid #ccc; width: 950px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-family: 'SimSun', 'Songti SC', serif; color: ${inkColor}; box-sizing: border-box;">
-                        
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 0 10px;">
-                            <div style="width: 20%;">
-                                <div style="width: 80px; height: 80px; border: 1px solid #ddd; padding: 2px; background:#fff; display:flex; align-items:center; justify-content:center; color:#000; font-size:10px;">
-                                    (二维码)
-                                </div>
-                            </div>
-                            <div style="text-align: center; flex: 1; padding-top: 10px;">
-                                <h4 style="font-size: 32px; font-family: 'KaiTi', 'STKaiti', serif; font-weight: bold; margin: 0; letter-spacing: 3px; color: ${inkColor}; border-bottom: 2px double ${inkColor}; display: inline-block; padding-bottom: 5px;">电子发票（增值税专用发票）</h2>
-                            </div>
-                            <div style="width: 25%; text-align: right; line-height: 1.6; font-size: 14px; font-weight: bold; color: ${inkColor};">
-                                <div>发票代码：<span style="color:#000;">031001900111</span></div>
-                                <div>发票号码：<span style="color:#000;">${inv.no}</span></div>
-                                <div>开票日期：<span style="color:#000;">${inv.date}</span></div>
-                                <div>校&nbsp;验&nbsp;码：<span style="color:#000;">1234 5678 9012 3456 7890</span></div>
-                            </div>
-                        </div>
-
-                        <table style="width: 100%; border-collapse: collapse; border: 2px solid ${inkColor}; font-size: 13px;">
-                            
-                            <tr>
-                                <td style="width: 25px; padding: 15px 5px; text-align: center; border-right: ${borderStyle}; border-bottom: ${borderStyle}; line-height: 1.4;">
-                                    购<br>买<br>方
-                                </td>
-                                <td style="width: 55%; padding: 6px 10px; border-right: ${borderStyle}; border-bottom: ${borderStyle}; line-height: 1.8; color: #333;">
-                                    <div><span style="color:${inkColor}">名　　　　称：</span>${inv.clientName}</div>
-                                    <div><span style="color:${inkColor}">纳税人识别号：</span><span style="font-family:Arial;">${inv.clientTaxId}</span></div>
-                                    <div><span style="color:${inkColor}">地 址、电 话：</span>上海市浦东新区... 021-88888888</div>
-                                    <div><span style="color:${inkColor}">开户行及账号：</span>招商银行... 6225xxxxxxxx</div>
-                                </td>
-                                <td style="width: 25px; padding: 15px 5px; text-align: center; border-right: ${borderStyle}; border-bottom: ${borderStyle}; line-height: 1.4;">
-                                    密<br>码<br>区
-                                </td>
-                                <td style="padding: 6px; border-bottom: ${borderStyle}; font-family: 'Courier New', monospace; font-size: 12px; color: #333; word-break: break-all;">
-                                    &lt;01*&gt;56*9&gt;81/02-8&lt;3*&lt;-31&lt;/02&lt;&lt;53+
-                                    <br>*&gt;-6+77/&gt;+&lt;51*&lt;-/5+56*9&gt;81/02-8
-                                    <br>&lt;3*&lt;-31&lt;4&gt;2*9&lt;&lt;01+/8&lt;7+&gt;-2*5&lt;1
-                                </td>
-                            </tr>
-
-                            <tr style="text-align: center; color: ${inkColor}; background-color: transparent;">
-                                <td colspan="4" style="padding: 0; border-bottom: ${borderStyle};">
-                                    <table style="width: 100%; border-collapse: collapse; text-align: center;">
-                                        <tr>
-                                            <td style="width: 30%; padding: 5px; border-right: ${borderStyle};">货物或应税劳务、服务名称</td>
-                                            <td style="width: 10%; padding: 5px; border-right: ${borderStyle};">规格型号</td>
-                                            <td style="width: 5%;  padding: 5px; border-right: ${borderStyle};">单位</td>
-                                            <td style="width: 10%; padding: 5px; border-right: ${borderStyle};">数量</td>
-                                            <td style="width: 15%; padding: 5px; border-right: ${borderStyle};">单价</td>
-                                            <td style="width: 15%; padding: 5px; border-right: ${borderStyle};">金额</td>
-                                            <td style="width: 5%;  padding: 5px; border-right: ${borderStyle};">税率</td>
-                                            <td style="width: 10%; padding: 5px;">税额</td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <tr style="height: 150px; vertical-align: top; color: #000;">
-                                <td colspan="4" style="padding: 0; border-bottom: ${borderStyle};">
-                                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-family: Arial;">
-                                        <tr>
-                                            <td style="width: 30%; padding: 8px; text-align: left; border-right: ${borderStyle};">*物流辅助服务*运输服务费</td>
-                                            <td style="width: 10%; border-right: ${borderStyle};"></td>
-                                            <td style="width: 5%;  border-right: ${borderStyle};">项</td>
-                                            <td style="width: 10%; text-align: right; padding-right: 5px; border-right: ${borderStyle};">1</td>
-                                            <td style="width: 15%; text-align: right; padding-right: 5px; border-right: ${borderStyle};">${inv.amount}</td>
-                                            <td style="width: 15%; text-align: right; padding-right: 5px; border-right: ${borderStyle};">${inv.amount}</td>
-                                            <td style="width: 5%;  text-align: right; padding-right: 5px; border-right: ${borderStyle};">${inv.taxRate}</td>
-                                            <td style="width: 10%; text-align: right; padding-right: 5px;">${inv.tax}</td>
-                                        </tr>
-                                        <tr><td style="border-right: ${borderStyle}; height: 100px;"></td><td style="border-right: ${borderStyle};"></td><td style="border-right: ${borderStyle};"></td><td style="border-right: ${borderStyle};"></td><td style="border-right: ${borderStyle};"></td><td style="border-right: ${borderStyle};"></td><td style="border-right: ${borderStyle};"></td><td></td></tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <tr style="height: 30px; color: ${inkColor}; border-bottom: ${borderStyle};">
-                                <td colspan="4" style="padding: 0;">
-                                    <table style="width: 100%; border-collapse: collapse;">
-                                        <tr>
-                                            <td style="width: 30%; text-align: center; border-right: ${borderStyle}; padding: 5px;">合　　　　计</td>
-                                            <td style="width: 40%; border-right: ${borderStyle};"></td>
-                                            <td style="width: 15%; border-right: ${borderStyle}; text-align: right; padding-right: 5px; color: #000; font-family: Arial;">¥${inv.amount}</td>
-                                            <td style="width: 15%; text-align: right; padding-right: 5px; color: #000; font-family: Arial;">¥${inv.tax}</td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <tr style="height: 35px; border-bottom: ${borderStyle};">
-                                <td colspan="4" style="padding: 0;">
-                                    <div style="display:flex; align-items:center; height: 100%;">
-                                        <div style="width: 23%; text-align: center; border-right: ${borderStyle}; height: 100%; padding-top: 8px; box-sizing:border-box;">价税合计 (大写)</div>
-                                        <div style="flex: 1; padding-left: 15px; display:flex; align-items:center; height: 100%;">
-                                            <span style="border: 1px solid ${inkColor}; border-radius: 50%; padding: 0 3px; font-size: 10px; margin-right: 8px; color:${inkColor};">ⓧ</span>
-                                            <span style="font-family: 'KaiTi'; font-size: 16px; color: #000;">${inv.totalCn}</span>
-                                        </div>
-                                        <div style="width: 30%; text-align: right; padding-right: 10px; color: ${inkColor};">
-                                            (小写) <span style="color: #000; font-family: Arial;">¥${inv.total}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="width: 25px; padding: 15px 5px; text-align: center; border-right: ${borderStyle}; line-height: 1.4;">
-                                    销<br>售<br>方
-                                </td>
-                                <td colspan="3" style="padding: 6px 10px; line-height: 1.8; color: #333;">
-                                    <div><span style="color:${inkColor}">名　　　　称：</span>${inv.sellerName}</div>
-                                    <div><span style="color:${inkColor}">纳税人识别号：</span><span style="font-family:Arial;">${inv.sellerTaxId}</span></div>
-                                    <div><span style="color:${inkColor}">地 址、电 话：</span>滁州市... 0550-8888888</div>
-                                    <div><span style="color:${inkColor}">开户行及账号：</span>工行... 1234567890</div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 14px; padding: 0 10px;">
-                            <div style="width: 25%;">收款人：李财务</div>
-                            <div style="width: 25%;">复核：张主管</div>
-                            <div style="width: 25%;">开票人：管理员</div>
-                            <div style="width: 25%;">销售方：(章)</div>
-                        </div>
-
-                    </div>
-                `;
+        contentHTML += `<div style="padding:30px;text-align:center;color:#7f8c8d;">
+            <p>发票详情页已停用。</p>
+            <p>请在<a href="javascript:loadContent('TaxOutputInvoice')" style="color:#3498db;">销项发票台账</a>点击【查看发票】查看原始发票图片。</p>
+        </div>`;
     }
 
     // =========================================================================
@@ -5877,8 +9481,25 @@ function loadContent(moduleCode, element = null) {
         // 1. 读取存储的科目数据 (如果没有则使用默认的全量数据)
         let storedAccounts = JSON.parse(sessionStorage.getItem("AcctSubjects"));
 
+        // 优先从 localStorage 恢复（跨会话持久化）
         if (!storedAccounts) {
-            // ★★★ 初始化全量科目数据 (基于的 Excel 和标准会计准则) ★★★
+            storedAccounts = JSON.parse(localStorage.getItem("AcctSubjects"));
+            if (storedAccounts) sessionStorage.setItem("AcctSubjects", JSON.stringify(storedAccounts));
+        }
+
+        // 按当前会计准则加载模板
+        if (!storedAccounts) {
+            const _std = localStorage.getItem("AccountingStandard") || "enterprise";
+            const _tpl = ACCOUNTING_STANDARD_TEMPLATES[_std];
+            if (_tpl && _tpl.length > 0) {
+                storedAccounts = _tpl;
+                sessionStorage.setItem("AcctSubjects", JSON.stringify(storedAccounts));
+                localStorage.setItem("AcctSubjects", JSON.stringify(storedAccounts));
+            }
+        }
+
+        if (!storedAccounts) {
+            // ★★★ 初始化全量科目数据 (企业会计准则默认) ★★★
             storedAccounts = [
                 // --- 资产类 (1) ---
                 {
@@ -7066,58 +10687,231 @@ function loadContent(moduleCode, element = null) {
     // 30. 会计账套 (Acct Set)
     // =========================================================================
     else if (moduleCode === "AcctSet") {
-
-        // 动态获取数据
-        let books = window.getAccountBooks ? window.getAccountBooks() : [];
-
-        // 如果没有数据，初始化两条
-        if (books.length === 0) {
-            books = [
-                { id: "1", code: "001", name: "集团总账套", status: "已启用" },
-            ];
-            sessionStorage.setItem('FinanceAccountBooks', JSON.stringify(books));
-        }
-
-        const rows = books.map(b => `
-        <tr>
-            <td>${b.code}</td>
-            <td>${b.name}</td>
-            <td><span style="color:${b.status === '已启用' ? '#27ae60' : '#f39c12'};">${b.status}</span></td>
-            <td>
-                <a href="javascript:void(0)" onclick="loadContent('SettlementEngineConfig', this)">设置</a>  | 
-                <a href="javascript:void(0)" onclick="window.copyAccountBook('${b.id}')">复制</a> | 
-                <a href="javascript:void(0)" onclick="window.deleteAccountBook('${b.id}')" style="color:#e74c3c;">删除</a>
-                <span style="margin-left:12px;">
-                    <label class="acct-switch">
-                        <input type="checkbox" ${b.status === '已启用' ? 'checked' : ''} onchange="window.toggleAccountBookStatus('${b.id}')">
-                        <span class="acct-slider"></span>
-                    </label>
-                </span>
-            </td>
-        </tr>
-    `).join('');
-
         contentHTML += `
-        <h2>会计账套管理</h2>
         <style>
-            .acct-switch { position: relative; display: inline-block; width: 44px; height: 22px; vertical-align: middle; }
-            .acct-switch input { opacity: 0; width: 0; height: 0; }
-            .acct-slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; transition: .2s; border-radius: 999px; }
-            .acct-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; top: 2px; background: #fff; transition: .2s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-            .acct-switch input:checked + .acct-slider { background: #27ae60; }
-            .acct-switch input:checked + .acct-slider:before { transform: translateX(22px); }
+            .acct-tree-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .acct-tree-table th, .acct-tree-table td { padding:10px 12px; text-align:left; border-bottom:1px solid #f0f0f0; }
+            .acct-tree-table thead th { background:#fafafa; font-weight:500; color:#666; border-bottom:1px solid #e0e0e0; }
+            .acct-tree-table tbody tr:hover { background:#fafafa; }
+            .badge-type-merge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#e6f0ff; color:#2563eb; border:1px solid #bfdbfe; }
+            .badge-type-calc { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+            .badge-acct-enabled { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+            .badge-acct-init { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; }
+            .badge-acct-disabled { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+            .acct-action-link { color:#2563eb; text-decoration:none; cursor:pointer; border:none; background:none; font-size:13px; padding:0; margin-right:12px; }
+            .acct-action-link:hover { text-decoration:underline; }
+            .acct-action-link.danger { color:#dc2626; }
+            .acct-toggle-btn { cursor:pointer; user-select:none; margin-right:4px; font-size:11px; }
+            #acctAddModal, #acctDisableModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+            #acctAddModal.show, #acctDisableModal.show { display:flex; }
+            .acct-modal-box { background:#fff; border-radius:4px; width:480px; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+            .acct-modal-hdr { padding:16px 20px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center; }
+            .acct-modal-bdy { padding:20px; }
+            .acct-modal-ftr { padding:12px 20px; border-top:1px solid #e0e0e0; display:flex; justify-content:flex-end; gap:8px; }
+            .acct-fgroup { margin-bottom:16px; }
+            .acct-flabel { display:block; margin-bottom:6px; font-size:13px; color:#666; }
+            .acct-finput, .acct-fselect { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:3px; font-size:13px; }
+            .acct-sbtn { padding:7px 16px; border:1px solid #ddd; background:#fff; border-radius:3px; cursor:pointer; font-size:13px; }
+            .acct-sbtn:hover { background:#f5f5f5; }
+            .acct-sbtn-primary { background:#333; color:#fff; border-color:#333; }
+            .acct-sbtn-primary:hover { background:#555; }
         </style>
-        <div class="action-bar" style="margin-bottom: 15px;">
-            <button class="btn-primary" onclick="window.addAccountBook()">+ 新增账套</button>
-        </div>
-        <table class="data-table">
-            <thead>
-                <tr><th>账套编码</th><th>账套名称</th><th>状态</th><th>操作</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table>
-    `;
 
+        <div style="padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:18px; color:#1a1a1a;">多级会计账套体系</h2>
+                <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctOpenAddModal()">+ 新增账套</button>
+            </div>
+            <div style="background:#fff; border:1px solid #e0e0e0; border-radius:4px; overflow:hidden;">
+                <table class="acct-tree-table">
+                    <thead>
+                        <tr>
+                            <th style="width:220px;">账套名称</th>
+                            <th style="width:120px;">账套编码</th>
+                            <th style="width:100px;">账套类型</th>
+                            <th style="width:130px;">会计准则</th>
+                            <th style="width:120px;">当前状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="acctTreeBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 新增账套弹窗 -->
+        <div id="acctAddModal">
+            <div class="acct-modal-box">
+                <div class="acct-modal-hdr">
+                    <span style="font-size:16px;font-weight:500;">新增账套</span>
+                    <button onclick="window.acctCloseAddModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#999;">×</button>
+                </div>
+                <div class="acct-modal-bdy">
+                    <div class="acct-fgroup">
+                        <label class="acct-flabel">上级账套</label>
+                        <select class="acct-fselect" id="acctFormParent"><option value="">（顶级账套，无上级）</option></select>
+                    </div>
+                    <div class="acct-fgroup">
+                        <label class="acct-flabel">账套名称 <span style="color:#c00;">*</span></label>
+                        <input type="text" class="acct-finput" id="acctFormName" placeholder="请输入账套名称">
+                    </div>
+                    <div class="acct-fgroup">
+                        <label class="acct-flabel">账套编码 <span style="color:#c00;">*</span></label>
+                        <input type="text" class="acct-finput" id="acctFormCode" placeholder="请输入账套编码">
+                    </div>
+                    <div class="acct-fgroup">
+                        <label class="acct-flabel">账套类型 <span style="color:#c00;">*</span></label>
+                        <select class="acct-fselect" id="acctFormType">
+                            <option value="merge">合并账套</option>
+                            <option value="calc" selected>核算账套</option>
+                        </select>
+                    </div>
+                    <div class="acct-fgroup">
+                        <label class="acct-flabel">会计准则</label>
+                        <select class="acct-fselect" id="acctFormPrinciple">
+                            <option value="企业准则">企业会计准则</option>
+                            <option value="小企业准则">小企业会计准则</option>
+                        </select>
+                        <div style="font-size:12px;color:#999;margin-top:4px;">顶级合并账套统一设定，子账套自动继承</div>
+                    </div>
+                </div>
+                <div class="acct-modal-ftr">
+                    <button class="acct-sbtn" onclick="window.acctCloseAddModal()">取消</button>
+                    <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctHandleAddSubmit()">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 停用确认弹窗 -->
+        <div id="acctDisableModal">
+            <div class="acct-modal-box" style="width:380px;">
+                <div class="acct-modal-hdr">
+                    <span style="font-size:16px;font-weight:500;">停用确认</span>
+                    <button onclick="window.acctCloseDisableModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#999;">×</button>
+                </div>
+                <div class="acct-modal-bdy">
+                    <p style="color:#555;line-height:1.6;">确定要停用 <strong id="acctDisableName"></strong> 吗？</p>
+                    <p style="color:#e74c3c;font-size:13px;margin-top:8px;">⚠ 停用后该账套将无法录入新凭证，下级核算账套也将同步停用。</p>
+                </div>
+                <div class="acct-modal-ftr">
+                    <button class="acct-sbtn" onclick="window.acctCloseDisableModal()">取消</button>
+                    <button class="acct-sbtn" style="background:#e74c3c;color:#fff;border-color:#e74c3c;" onclick="window.acctHandleDisableConfirm()">确认停用</button>
+                </div>
+            </div>
+        </div>
+        `;
+
+        setTimeout(() => {
+            let treeData = JSON.parse(sessionStorage.getItem('AcctSetTree') || 'null');
+            if (!treeData) {
+                treeData = [{
+                    id: 1, name: '集团总账套', code: 'ZJKZ', type: 'merge',
+                    principle: '企业准则', status: 'enabled', principleInherited: false, expanded: true,
+                    children: [
+                        {id: 2, name: '分公司-华北', code: 'FJBN', type: 'calc', principle: '企业准则', status: 'enabled', principleInherited: true, expanded: false, children: []},
+                        {id: 3, name: '分公司-华东', code: 'FJBD', type: 'calc', principle: '企业准则', status: 'enabled', principleInherited: true, expanded: true, children: [
+                            {id: 5, name: '子公司-上海', code: 'ZJSH', type: 'calc', principle: '企业准则', status: 'init', principleInherited: true, expanded: false, children: []}
+                        ]},
+                        {id: 4, name: '分公司-华南', code: 'FJHN', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []}
+                    ]
+                }];
+                sessionStorage.setItem('AcctSetTree', JSON.stringify(treeData));
+            }
+            window._acctTreeData = treeData;
+            window._acctDisablingId = null;
+
+            window.acctFindNode = function(nodes, id) {
+                for (const n of nodes) {
+                    if (n.id === id) return n;
+                    if (n.children) { const f = window.acctFindNode(n.children, id); if (f) return f; }
+                }
+                return null;
+            };
+
+            window.acctRenderTree = function() {
+                const tbody = document.getElementById('acctTreeBody');
+                if (!tbody) return;
+                const rows = [];
+                function renderNodes(nodes, level) {
+                    nodes.forEach(node => {
+                        const indent = level * 22;
+                        const hasChildren = node.children && node.children.length > 0;
+                        const typeClass = node.type === 'merge' ? 'badge-type-merge' : 'badge-type-calc';
+                        const typeText = node.type === 'merge' ? '合并账套' : '核算账套';
+                        let statusBadge = '';
+                        if (node.status === 'enabled') statusBadge = '<span class="badge-acct-enabled">已启用</span>';
+                        else if (node.status === 'init') statusBadge = '<span class="badge-acct-init">待初始化</span>';
+                        else statusBadge = '<span class="badge-acct-disabled">已停用封账</span>';
+                        const principleText = node.principleInherited
+                            ? node.principle + ' <span style="color:#999;font-size:12px;">(继承)</span>'
+                            : node.principle;
+                        let actions = '';
+                        if (node.status !== 'disabled') {
+                            actions += `<button class="acct-action-link" onclick="window.acctOpenAddModal(${node.id})">新增子账套</button>`;
+                            if (node.type === 'merge') actions += `<button class="acct-action-link" onclick="loadContent('SettlementEngineConfig')">引擎配置</button>`;
+                            actions += `<button class="acct-action-link danger" onclick="window.acctOpenDisable(${node.id})">停用</button>`;
+                        } else {
+                            actions += `<button class="acct-action-link" onclick="window.acctHandleEnable(${node.id})">启用</button>`;
+                        }
+                        const toggleBtn = hasChildren
+                            ? `<span class="acct-toggle-btn" onclick="window.acctToggleNode(${node.id})">${node.expanded ? '▼' : '▶'}</span>`
+                            : '<span style="display:inline-block;width:18px;"></span>';
+                        rows.push(`<tr><td><span style="padding-left:${indent}px;">${toggleBtn}${node.name}</span></td><td style="color:#666;">${node.code}</td><td><span class="${typeClass}">${typeText}</span></td><td>${principleText}</td><td>${statusBadge}</td><td>${actions}</td></tr>`);
+                        if (hasChildren && node.expanded) renderNodes(node.children, level + 1);
+                    });
+                }
+                renderNodes(window._acctTreeData, 0);
+                tbody.innerHTML = rows.join('');
+                const parentSelect = document.getElementById('acctFormParent');
+                if (parentSelect) {
+                    const opts = ['<option value="">（顶级账套，无上级）</option>'];
+                    function collectOpts(nodes, prefix) { nodes.forEach(n => { opts.push(`<option value="${n.id}">${prefix}${n.name}</option>`); if (n.children && n.children.length) collectOpts(n.children, prefix + '　'); }); }
+                    collectOpts(window._acctTreeData, '');
+                    parentSelect.innerHTML = opts.join('');
+                }
+            };
+
+            window.acctToggleNode = function(id) {
+                const node = window.acctFindNode(window._acctTreeData, id);
+                if (node) { node.expanded = !node.expanded; sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData)); window.acctRenderTree(); }
+            };
+            window.acctOpenAddModal = function(parentId) {
+                document.getElementById('acctFormName').value = '';
+                document.getElementById('acctFormCode').value = '';
+                document.getElementById('acctFormType').value = 'calc';
+                if (parentId) document.getElementById('acctFormParent').value = parentId;
+                document.getElementById('acctAddModal').classList.add('show');
+            };
+            window.acctCloseAddModal = function() { document.getElementById('acctAddModal').classList.remove('show'); };
+            window.acctHandleAddSubmit = function() {
+                const name = document.getElementById('acctFormName').value.trim();
+                const code = document.getElementById('acctFormCode').value.trim();
+                if (!name || !code) { alert('请填写账套名称和编码'); return; }
+                const newNode = { id: Date.now(), name, code, type: document.getElementById('acctFormType').value, principle: document.getElementById('acctFormPrinciple').value, status: 'init', principleInherited: true, expanded: false, children: [] };
+                const parentId = Number(document.getElementById('acctFormParent').value) || null;
+                if (parentId) { const parent = window.acctFindNode(window._acctTreeData, parentId); if (parent) parent.children.push(newNode); } else { window._acctTreeData.push(newNode); }
+                sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
+                window.acctCloseAddModal(); window.acctRenderTree();
+            };
+            window.acctOpenDisable = function(id) {
+                const node = window.acctFindNode(window._acctTreeData, id);
+                if (!node) return;
+                window._acctDisablingId = id;
+                document.getElementById('acctDisableName').textContent = node.name;
+                document.getElementById('acctDisableModal').classList.add('show');
+            };
+            window.acctCloseDisableModal = function() { document.getElementById('acctDisableModal').classList.remove('show'); };
+            window.acctHandleDisableConfirm = function() {
+                const node = window.acctFindNode(window._acctTreeData, window._acctDisablingId);
+                if (node) { function dis(n) { n.status='disabled'; if(n.children) n.children.forEach(dis); } dis(node); sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData)); }
+                window.acctCloseDisableModal(); window.acctRenderTree();
+            };
+            window.acctHandleEnable = function(id) {
+                const node = window.acctFindNode(window._acctTreeData, id);
+                if (node) { node.status='enabled'; sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData)); window.acctRenderTree(); }
+            };
+            window.acctRenderTree();
+        }, 0);
     }
 
     // =========================================================================
@@ -8197,396 +11991,736 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 37. 凭证录入 (VoucherEntryReview) - [智能交互重构版]
+    // 37. 凭证录入 (VoucherEntryReview)
     // =========================================================================
 
     else if (moduleCode === "VoucherEntryReview") {
-        // 1. 读取历史凭证列表
-        const savedVouchers = JSON.parse(
-            sessionStorage.getItem("ManualVouchers") || "[]"
-        );
-        const sessionSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
-        const localSubjects = JSON.parse(localStorage.getItem("AcctSubjects") || "[]");
-        let subjectList = Array.isArray(sessionSubjects) ? sessionSubjects : [];
-        if (subjectList.length < 2 && Array.isArray(localSubjects) && localSubjects.length > 1) {
-            subjectList = localSubjects;
+        var veSessionSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
+        var veLocalSubjects = JSON.parse(localStorage.getItem("AcctSubjects") || "[]");
+        var veSubjectList = (Array.isArray(veSessionSubjects) && veSessionSubjects.length > 1) ? veSessionSubjects
+            : ((Array.isArray(veLocalSubjects) && veLocalSubjects.length > 1) ? veLocalSubjects : []);
+        if (!veSubjectList.length && typeof ACCOUNTING_STANDARD_TEMPLATES !== "undefined") {
+            var standardKey = localStorage.getItem("AccountingStandard") || sessionStorage.getItem("AccountingStandard") || "enterprise";
+            veSubjectList = (ACCOUNTING_STANDARD_TEMPLATES[standardKey] || ACCOUNTING_STANDARD_TEMPLATES.enterprise || []);
         }
-        if (subjectList.length < 2 && typeof ACCOUNTING_STANDARD_TEMPLATES !== "undefined") {
-            const standardKey = localStorage.getItem("AccountingStandard")
-                || sessionStorage.getItem("AccountingStandard")
-                || "enterprise";
-            const standardList = ACCOUNTING_STANDARD_TEMPLATES[standardKey]
-                || ACCOUNTING_STANDARD_TEMPLATES.enterprise
-                || ACCOUNTING_STANDARD_TEMPLATES.small
-                || [];
-            if (standardList.length) {
-                subjectList = standardList;
-            }
-        }
-        if (subjectList.length > 1) {
-            sessionStorage.setItem("AcctSubjects", JSON.stringify(subjectList));
-        }
-        const normalizeSubjectCode = window.normalizeVoucherSubjectCode || ((code) => (code || "").toString().replace(/\D/g, ""));
-        window.normalizeVoucherSubjectCode = normalizeSubjectCode;
-        window._voucherSubjectList = subjectList;
-        const subjectOptions = subjectList.length
-            ? subjectList.map(item => {
-                const normalized = normalizeSubjectCode(item.code);
-                const code = normalized || item.code || "";
-                const name = item.name || "";
-                const displayValue = `${code} ${name}`.trim();
-                return displayValue ? `<option value="${displayValue}"></option>` : "";
-            }).join("")
-            : `<option value="">暂无科目</option>`;
-        window._voucherSubjectOptions = subjectOptions;
-        const subjectMap = {};
-        subjectList.forEach(item => {
-            if (item.code) subjectMap[item.code] = item;
-            const normalized = normalizeSubjectCode(item.code);
-            if (normalized) subjectMap[normalized] = item;
-        });
-        window._voucherSubjectMap = subjectMap;
-        const summaryTemplates = getVoucherSummaryTemplates();
-        const summaryTemplateOptions = summaryTemplates.map(item => `<option value="${item.summary}">${item.summary}</option>`).join("");
-        const summaryTemplateDatalist = summaryTemplates.map(item => `<option value="${item.summary}"></option>`).join("");
+        var veSubjectDatalistHtml = veSubjectList.map(function(item) {
+            var code = ((item.code || '').toString().replace(/\D/g, '')) || item.code || '';
+            var name = item.name || '';
+            return (code && name) ? ('<option value="' + code + ' ' + name + '"></option>') : '';
+        }).join('');
+        var veSummaryTpls = (typeof getVoucherSummaryTemplates === 'function') ? getVoucherSummaryTemplates() : [];
+        var veSummaryDatalistHtml = veSummaryTpls.map(function(item) {
+            return '<option value="' + (item.summary || '') + '"></option>';
+        }).join('');
+        var veTodayDate = new Date().toISOString().split('T')[0];
 
-        // 2. 生成列表行 HTML (★修改了这里：增加了状态判断和操作按钮★)
-        const voucherRows = savedVouchers.map((v) => {
-            let statusBadge = "";
-            let actionBtns = "";
-
-            // 默认状态处理 (防止旧数据没状态)
-            const currentStatus = v.status || "待审核";
-
-            // --- 状态与按钮逻辑 ---
-            if (currentStatus === "待审核") {
-                statusBadge = `<span style="color:#f39c12; background:#fef9e7; padding:2px 6px; border-radius:4px; border:1px solid #f39c12;">⏳ 待审核</span>`;
-                // 待审核 -> 显示【审核】
-                actionBtns = `
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#27ae60;" onclick="auditVoucher('${v.id}')">审核</button>
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#c0392b;" onclick="deleteVoucher('${v.id}')">删除</button>
-                `;
-            } else if (currentStatus === "已审核") {
-                statusBadge = `<span style="color:#3498db; background:#ebf5fb; padding:2px 6px; border-radius:4px; border:1px solid #3498db;">🛡️ 已审核</span>`;
-                // 已审核 -> 显示【过账】
-                actionBtns = `
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#8e44ad;" onclick="postVoucher('${v.id}')">⚡ 过账</button>
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#95a5a6;" onclick="unAuditVoucher('${v.id}')">反审</button>
-                `;
-            } else if (currentStatus === "已记账" || currentStatus === "已过账") {
-                statusBadge = `<span style="color:#27ae60; background:#eafaf1; padding:2px 6px; border-radius:4px; border:1px solid #27ae60;">✔ 已记账</span>`;
-                // 已记账 -> 显示【冲销】
-                actionBtns = `
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#e74c3c;" onclick="reverseVoucher('${v.id}')">⛔ 冲销</button>
-                `;
-            } else if (currentStatus === "已驳回") {
-                statusBadge = `<span style="color:#e74c3c; background:#fef0f0; padding:2px 6px; border-radius:4px; border:1px solid #e74c3c;">⛔ 已驳回</span>`;
-                actionBtns = `
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#2980b9;" onclick="editRejectedVoucher('${v.id}')">修改</button>
-                    <button class="btn-primary" style="padding:2px 8px; font-size:12px; background:#c0392b;" onclick="deleteVoucher('${v.id}')">删除</button>
-                `;
-            } else if (currentStatus === "已冲销") {
-                statusBadge = `<span style="color:#999; text-decoration:line-through;">❌ 已冲销</span>`;
-                actionBtns = `<span style="color:#ccc; font-size:12px;">已作废</span>`;
-            }
-
-            const amountValue =
-                parseFloat((v.amount || "0").toString().replace(/,/g, "")) || 0;
-            const isReverseVoucher =
-                v.isRed ||
-                (typeof v.id === "string" && v.id.includes("-REV")) ||
-                amountValue < 0;
-            const baseId =
-                typeof v.id === "string" ? v.id.replace(/-REV.*$/, "") : "";
-            const originVoucher =
-                baseId && baseId !== v.id
-                    ? savedVouchers.find((item) => item.id === baseId)
-                    : null;
-            const originLine =
-                originVoucher && originVoucher.lines && originVoucher.lines[0];
-            const originSummary =
-                originVoucher &&
-                (originVoucher.summary ||
-                    (originLine && (originLine.summary || originLine.digest)) ||
-                    "");
-            const lineSummary =
-                v.summary ||
-                (v.lines && v.lines[0] && (v.lines[0].summary || v.lines[0].digest)) ||
-                "";
-            const stripReversePrefix = (text) =>
-                (text || "").toString().replace(/^冲销[:：]?\s*/i, "").trim();
-            const baseSummary =
-                stripReversePrefix(lineSummary) ||
-                stripReversePrefix(originSummary) ||
-                "-";
-            let summaryText = baseSummary;
-            if (isReverseVoucher && baseSummary !== "-") {
-                const raw = (lineSummary || v.summary || "").toString().trim();
-                summaryText = raw.startsWith("冲销") ? raw : `冲销：${baseSummary}`;
-            }
-            const reverseTag = isReverseVoucher
-                ? "冲销"
-                : v.status === "已冲销"
-                ? "已冲销"
-                : "-";
-
-            return `<tr>
-                <td><a href="javascript:void(0)" onclick="openVoucherDetail('${v.id}')" style="color:#3498db; font-weight:bold;">${v.id}</a></td>
-                <td>${v.date}</td>
-                <td>${reverseTag}</td>
-                <td>${summaryText}</td>
-                <td style="text-align:right; font-weight:bold;">${parseFloat(v.amount).toLocaleString()}</td>
-                <td>${v.user || 'system'}</td>
-                <td>${statusBadge}</td>
-                <td>${actionBtns}</td>
-            </tr>`;
-        }).join("");
-
-        // 3. 页面 HTML 组装 (保留了你原来的录入表单结构)
         contentHTML += `
-        <div class="voucher-entry-shell">
-            <div class="voucher-entry-toolbar">
-                <button class="btn-primary" onclick="resetSmartForm()">新增</button>
-                <button class="btn-primary" onclick="saveSmartVoucher()">保存</button>
-                <button class="btn-primary" onclick="saveSmartVoucher()">提交</button>
-                <div class="voucher-entry-toolbar-spacer"></div>
-                <button class="btn-primary btn-ghost" onclick="loadContent('Dashboard')">退出</button>
+        <style>
+            .ve-container { background:#fff; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+            .ve-page-header { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #e8e8e8; background:#fafafa; }
+            .ve-page-title { font-size:15px; font-weight:600; color:#1a1a1a; }
+            .ve-header-actions { display:flex; gap:8px; align-items:center; }
+            .ve-btn { padding:6px 14px; border:1px solid #d9d9d9; border-radius:3px; background:#fff; color:#333; font-size:13px; cursor:pointer; transition:border-color 0.2s,background 0.2s; white-space:nowrap; }
+            .ve-btn:hover { border-color:#aaa; }
+            .ve-btn-primary { background:#1890ff; border-color:#1890ff; color:#fff; }
+            .ve-btn-primary:hover { background:#40a9ff; border-color:#40a9ff; }
+            .ve-btn-default { background:#fff; border-color:#d9d9d9; color:#333; }
+            .ve-btn-danger { background:#fff; border-color:#d9d9d9; color:#ff4d4f; }
+            .ve-btn-danger:hover { border-color:#ff4d4f; }
+            .ve-btn:disabled,.ve-btn[disabled] { background:#f5f5f5; border-color:#d9d9d9; color:#bbb; cursor:not-allowed; }
+            .ve-split-btn-group { display:inline-flex; border:1px solid #d9d9d9; border-radius:3px; overflow:visible; position:relative; }
+            .ve-split-btn-main { padding:6px 12px; border:none; background:#fff; color:#333; font-size:13px; cursor:pointer; border-right:1px solid #d9d9d9; }
+            .ve-split-btn-main:hover { background:#f5f5f5; }
+            .ve-split-btn-arrow { padding:6px 8px; border:none; background:#fff; color:#666; font-size:11px; cursor:pointer; }
+            .ve-split-btn-arrow:hover { background:#f5f5f5; }
+            .ve-split-dropdown { display:none; position:absolute; top:calc(100% + 2px); left:0; min-width:140px; background:#fff; border:1px solid #d9d9d9; border-radius:3px; box-shadow:0 4px 12px rgba(0,0,0,0.12); z-index:1000; }
+            .ve-split-dropdown.show { display:block; }
+            .ve-split-dropdown-item { padding:8px 14px; cursor:pointer; font-size:13px; color:#333; display:block; white-space:nowrap; }
+            .ve-split-dropdown-item:hover { background:#f5f5f5; }
+            .ve-split-dropdown-item.ve-active { background:#e6f7ff; color:#1890ff; }
+            .ve-voucher-content { padding:20px; }
+            .ve-voucher-center-title { text-align:center; font-size:16px; font-weight:600; padding:12px 0 16px; border-bottom:1px solid #e8e8e8; margin-bottom:16px; }
+            .ve-header-info { display:flex; flex-wrap:wrap; gap:16px 24px; padding:12px 0 16px; border-bottom:1px solid #e8e8e8; margin-bottom:16px; align-items:flex-start; }
+            .ve-form-field { display:flex; align-items:center; gap:8px; }
+            .ve-form-field label { font-size:13px; color:#666; white-space:nowrap; }
+            .ve-required-star { color:#ff4d4f; margin-right:2px; }
+            .ve-form-field input,.ve-form-field select { padding:5px 10px; border:1px solid #d9d9d9; border-radius:3px; font-size:13px; color:#333; }
+            .ve-form-field input:focus,.ve-form-field select:focus { outline:none; border-color:#40a9ff; }
+            .ve-input-sm { width:140px; }
+            .ve-input-xs { width:80px; }
+            .ve-input-readonly { background:#fafafa; color:#666; cursor:not-allowed; }
+            .ve-detail-header { display:flex; justify-content:space-between; align-items:center; padding:10px 0 8px; margin-bottom:8px; }
+            .ve-detail-title { font-size:14px; font-weight:600; }
+            .ve-detail-actions { display:flex; gap:8px; }
+            .ve-entry-table-wrap { overflow-x:auto; }
+            .ve-entry-table { width:100%; border-collapse:collapse; border:1px solid #e0e0e0; }
+            .ve-entry-table th,.ve-entry-table td { border:1px solid #e0e0e0; padding:7px 10px; text-align:left; font-size:13px; }
+            .ve-entry-table th { background:#fafafa; font-weight:600; color:#555; white-space:nowrap; }
+            .ve-entry-table td { vertical-align:middle; }
+            .ve-col-seq { width:50px; text-align:center; color:#888; }
+            .ve-col-summary { min-width:150px; }
+            .ve-col-subject { min-width:180px; }
+            .ve-col-auxiliary { width:140px; }
+            .ve-col-amount { width:110px; }
+            .ve-col-op { width:50px; text-align:center; }
+            .ve-entry-table tbody tr:hover { background:#fafafa; }
+            .ve-total-row td { background:#fafafa; font-weight:600; }
+            .ve-total-label { text-align:right; color:#555; }
+            .ve-entry-input { width:100%; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; }
+            .ve-entry-input:focus { outline:1px solid #40a9ff; border-radius:2px; }
+            .ve-entry-select { border:none; background:transparent; font-size:13px; color:#333; width:100%; }
+            .ve-entry-select:focus { outline:none; }
+            .ve-amount-input { width:100%; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; text-align:right; }
+            .ve-amount-input:focus { outline:1px solid #40a9ff; border-radius:2px; }
+            .ve-btn-delete-row { display:inline-block; width:20px; height:20px; border:1px solid #d9d9d9; border-radius:50%; text-align:center; line-height:18px; font-size:14px; cursor:pointer; color:#999; }
+            .ve-btn-delete-row:hover { border-color:#ff4d4f; color:#ff4d4f; background:#fff1f0; }
+            .ve-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:900; align-items:center; justify-content:center; }
+            .ve-modal-overlay.show { display:flex; }
+            .ve-modal { background:#fff; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.18); display:flex; flex-direction:column; max-height:80vh; }
+            .ve-modal-header { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #e8e8e8; }
+            .ve-modal-title { font-size:15px; font-weight:600; }
+            .ve-modal-close { width:28px; height:28px; border:none; background:none; font-size:18px; cursor:pointer; color:#999; border-radius:50%; line-height:28px; text-align:center; }
+            .ve-modal-close:hover { background:#f5f5f5; color:#333; }
+            .ve-modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+            .ve-modal-footer { padding:12px 20px; border-top:1px solid #e8e8e8; display:flex; justify-content:flex-end; gap:8px; }
+            .ve-modal-common { width:820px; }
+            .ve-filter-bar { display:flex; gap:8px; align-items:center; padding-bottom:12px; border-bottom:1px solid #f0f0f0; margin-bottom:12px; flex-wrap:wrap; }
+            .ve-filter-bar select,.ve-filter-bar input[type="text"] { padding:5px 10px; border:1px solid #d9d9d9; border-radius:3px; font-size:13px; }
+            .ve-checkbox-label { display:flex; align-items:center; gap:4px; font-size:13px; color:#555; cursor:pointer; }
+            .ve-common-table { width:100%; border-collapse:collapse; }
+            .ve-common-table th,.ve-common-table td { border:1px solid #e0e0e0; padding:7px 10px; font-size:13px; }
+            .ve-common-table th { background:#fafafa; font-weight:600; color:#555; }
+            .ve-common-table tbody tr { cursor:pointer; }
+            .ve-common-table tbody tr:hover { background:#e6f7ff; }
+            .ve-common-table tbody tr.ve-selected { background:#bae7ff; }
+            .ve-modal-bottom-info { padding-top:10px; font-size:12px; color:#888; }
+            .ve-modal-draft { width:720px; }
+            .ve-draft-table { width:100%; border-collapse:collapse; }
+            .ve-draft-table th,.ve-draft-table td { border:1px solid #e0e0e0; padding:7px 10px; font-size:13px; }
+            .ve-draft-table th { background:#fafafa; font-weight:600; color:#555; }
+            .ve-draft-empty { text-align:center; padding:40px; color:#bbb; font-size:13px; }
+            .ve-modal-save-template { width:480px; }
+            .ve-form-row { display:flex; align-items:center; margin-bottom:16px; gap:8px; }
+            .ve-form-row label { width:90px; text-align:right; font-size:13px; color:#555; flex-shrink:0; }
+            .ve-form-row input,.ve-form-row select { flex:1; padding:6px 10px; border:1px solid #d9d9d9; border-radius:3px; font-size:13px; }
+            .ve-form-row input:focus,.ve-form-row select:focus { outline:none; border-color:#40a9ff; }
+            .ve-readonly-field { flex:1; padding:6px 10px; background:#fafafa; color:#888; border:1px solid #e8e8e8; border-radius:3px; font-size:13px; }
+            .ve-modal-confirm { width:360px; }
+            .ve-confirm-content { font-size:14px; color:#333; padding:8px 0; }
+            .ve-toast-container { position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+            .ve-toast { background:#333; color:#fff; padding:10px 20px; border-radius:4px; font-size:13px; box-shadow:0 4px 12px rgba(0,0,0,0.2); animation:veToastIn 0.25s ease; }
+            .ve-toast.success { background:#52c41a; }
+            .ve-toast.error { background:#ff4d4f; }
+            .ve-toast.warning { background:#faad14; }
+            @keyframes veToastIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        </style>
+
+        <div class="ve-container">
+            <div class="ve-page-header">
+                <span class="ve-page-title">&#9679; 新增凭证</span>
+                <div class="ve-header-actions">
+                    <button class="ve-btn ve-btn-default" onclick="veConfirmClear()">清空</button>
+                    <div class="ve-split-btn-group">
+                        <button class="ve-split-btn-main" onclick="veDoNewVoucher()">新增</button>
+                        <button class="ve-split-btn-arrow" onclick="veToggleDropdown('veAddDropdown',event)">&#9662;</button>
+                        <div class="ve-split-dropdown" id="veAddDropdown">
+                            <span class="ve-split-dropdown-item ve-active" onclick="veDoNewVoucher();veCloseDropdown('veAddDropdown')">新增</span>
+                            <span class="ve-split-dropdown-item" onclick="veOpenCommonVoucher();veCloseDropdown('veAddDropdown')">引入常用凭证</span>
+                            <span class="ve-split-dropdown-item" onclick="veOpenDraft();veCloseDropdown('veAddDropdown')">引入草稿凭证</span>
+                        </div>
+                    </div>
+                    <div class="ve-split-btn-group">
+                        <button class="ve-split-btn-main" style="background:#1890ff;color:#fff;border-right:1px solid rgba(255,255,255,0.3);" onclick="veDoSave()">保存</button>
+                        <button class="ve-split-btn-arrow" style="background:#1890ff;color:#fff;" onclick="veToggleDropdown('veSaveDropdown',event)">&#9662;</button>
+                        <div class="ve-split-dropdown" id="veSaveDropdown">
+                            <span class="ve-split-dropdown-item" onclick="veDoSave();veCloseDropdown('veSaveDropdown')">保存</span>
+                            <span class="ve-split-dropdown-item" onclick="veDoSaveNew();veCloseDropdown('veSaveDropdown')">保存新增</span>
+                            <span class="ve-split-dropdown-item" onclick="veDoSaveDraft();veCloseDropdown('veSaveDropdown')">保存为草稿</span>
+                            <span class="ve-split-dropdown-item" onclick="veOpenSaveTemplate();veCloseDropdown('veSaveDropdown')">保存为常用凭证</span>
+                        </div>
+                    </div>
+                    <button class="ve-btn ve-btn-primary" onclick="veDoSubmit()">提交</button>
+                </div>
             </div>
 
-            <div class="voucher-entry-title" id="voucher-entry-title">记账凭证</div>
+            <div class="ve-voucher-content">
+                <div class="ve-voucher-center-title" id="veVoucherTitle">转账凭证</div>
+                <div class="ve-header-info">
+                    <div class="ve-form-field">
+                        <label><span class="ve-required-star">*</span>账簿</label>
+                        <select class="ve-input-sm" id="veBookSelect">
+                            <option>总账账簿</option>
+                            <option>辅助账簿</option>
+                        </select>
+                    </div>
+                    <div class="ve-form-field">
+                        <label><span class="ve-required-star">*</span>日期</label>
+                        <input type="date" class="ve-input-sm" id="veDateInput" value="${veTodayDate}">
+                    </div>
+                    <div class="ve-form-field">
+                        <label><span class="ve-required-star">*</span>凭证字</label>
+                        <select class="ve-input-xs" id="veVoucherWord" onchange="veUpdateVoucherNo()">
+                            <option value="收">收</option>
+                            <option value="付">付</option>
+                            <option value="转" selected>转</option>
+                        </select>
+                    </div>
+                    <div class="ve-form-field">
+                        <label>凭证号</label>
+                        <input type="text" class="ve-input-sm ve-input-readonly" id="veVoucherNo" readonly>
+                    </div>
+                    <div class="ve-form-field">
+                        <label>附件数</label>
+                        <input type="number" class="ve-input-xs" id="veAttachCount" value="0" min="0">
+                    </div>
+                </div>
 
-            <div class="voucher-entry-header">
-                <div class="voucher-field">
-                    <label>账簿</label>
-                    <input type="text" placeholder="账簿">
+                <div>
+                    <div class="ve-detail-header">
+                        <span class="ve-detail-title">分录明细</span>
+                        <div class="ve-detail-actions">
+                            <button class="ve-btn ve-btn-default" onclick="veAddRow()">+ 新增行</button>
+                            <button class="ve-btn ve-btn-default" onclick="veDeleteEmptyRows()">删除空行</button>
+                        </div>
+                    </div>
+                    <div class="ve-entry-table-wrap">
+                        <table class="ve-entry-table">
+                            <thead>
+                                <tr>
+                                    <th class="ve-col-seq">序号</th>
+                                    <th class="ve-col-summary">摘要</th>
+                                    <th class="ve-col-subject">科目名称</th>
+                                    <th class="ve-col-auxiliary">辅助核算项目</th>
+                                    <th class="ve-col-amount">借方金额</th>
+                                    <th class="ve-col-amount">贷方金额</th>
+                                    <th class="ve-col-op">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="veEntryBody"></tbody>
+                            <tfoot>
+                                <tr class="ve-total-row">
+                                    <td colspan="4" class="ve-total-label">合计</td>
+                                    <td class="ve-col-amount" style="text-align:right;" id="veTotalDebit">0.00</td>
+                                    <td class="ve-col-amount" style="text-align:right;" id="veTotalCredit">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
-                <div class="voucher-field">
-                    <label>日期</label>
-                    <input id="voucher-date" type="date" value="${new Date().toISOString().split("T")[0]}">
-                </div>
-                <div class="voucher-field">
-                    <label>凭证字</label>
-                    <select id="voucher-word" onchange="syncVoucherWord()">
-                        <option value="记">记</option>
-                        <option value="收">收</option>
-                        <option value="付">付</option>
-                        <option value="转">转</option>
-                    </select>
-                </div>
-                <div class="voucher-field">
-                    <label>凭证号</label>
-                    <div class="voucher-id" id="current-v-id">记-0001</div>
-                </div>
-                <div class="voucher-field">
-                    <label>附件数</label>
-                    <input type="number" min="0" value="0">
-                </div>
-            </div>
-
-            <div class="voucher-entry-actions">
-                <button class="btn-primary" onclick="addVoucherLineRow()">新增行</button>
-                <button class="btn-primary btn-ghost" onclick="removeLastVoucherLineRow()">删除行</button>
-            </div>
-
-            <div class="voucher-entry-table-wrap">
-                <table class="voucher-entry-table">
-                    <thead>
-                        <tr>
-                            <th style="width:60px;">序号</th>
-                            <th style="width:200px;">摘要</th>
-                            <th style="width:260px;">科目名称</th>
-                            <th style="width:180px;">辅助核算项目</th>
-                            <th style="width:120px;">借方金额</th>
-                            <th style="width:120px;">贷方金额</th>
-                            <th style="width:70px;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="entry-lines-body">
-                        <tr class="entry-line-row">
-                            <td class="entry-index">1</td>
-                            <td><input class="entry-summary" type="text" list="voucher-summary-templates" oninput="updateSmartPreview()" placeholder="摘要" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px;"></td>
-                            <td>
-                                <div class="subject-picker">
-                                    <input class="entry-subject" autocomplete="off" oninput="handleSubjectInputChange(this)" oncompositionend="handleSubjectInputChange(this)" onblur="handleSubjectBlur(this)" placeholder="科目名称/编码" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px;">
-                                    <button type="button" class="subject-toggle" onclick="toggleSubjectDropdown(this)">▾</button>
-                                    <div class="subject-dropdown"></div>
-                                </div>
-                            </td>
-                            <td>
-                                <select class="entry-aux" onchange="updateSmartPreview()" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px;">
-                                    <option value="">无</option>
-                                </select>
-                            </td>
-                            <td><input class="entry-debit" type="number" oninput="updateSmartPreview()" placeholder="0.00" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px;"></td>
-                            <td><input class="entry-credit" type="number" oninput="updateSmartPreview()" placeholder="0.00" style="width:100%; padding:6px 8px; border:1px solid #ccc; border-radius:4px;"></td>
-                            <td style="text-align:center;"><button class="btn-primary" style="background:#e74c3c; padding:2px 6px;" onclick="removeVoucherLineRow(this)">-</button></td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="4" style="text-align:center; font-weight:bold;">合计</td>
-                            <td id="entry-total-debit" style="text-align:right; font-weight:bold;">0.00</td>
-                            <td id="entry-total-credit" style="text-align:right; font-weight:bold;">0.00</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-
             </div>
         </div>
-        <div class="voucher-records-panel">
-            <div class="voucher-records-header">
-                <h3>凭证记录</h3>
-                <div class="voucher-records-meta">
-                    共 <span id="voucher-record-count">0</span> 条
+
+        <!-- 弹窗1：常用凭证参照 -->
+        <div class="ve-modal-overlay" id="veModalCommon">
+            <div class="ve-modal ve-modal-common">
+                <div class="ve-modal-header">
+                    <span class="ve-modal-title">常用凭证参照</span>
+                    <button class="ve-modal-close" onclick="veCloseModal('veModalCommon')">&#215;</button>
+                </div>
+                <div class="ve-modal-body">
+                    <div class="ve-filter-bar">
+                        <select id="veCommonQueryType">
+                            <option>名称编码规格型号</option>
+                            <option>编码</option>
+                            <option>说明</option>
+                        </select>
+                        <input type="text" placeholder="请输入关键字" style="width:180px;" id="veCommonKeyword">
+                        <button class="ve-btn ve-btn-default" style="font-size:13px;padding:5px 12px;" onclick="veFilterCommon()">过滤</button>
+                        <label class="ve-checkbox-label">
+                            <input type="checkbox" id="veChkFilterInResult"> 结果中过滤
+                        </label>
+                        <button class="ve-btn ve-btn-default" style="font-size:13px;padding:5px 12px;" onclick="veShowToast('栏目设置功能待实现')">栏目</button>
+                    </div>
+                    <table class="ve-common-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">序号</th>
+                                <th style="width:80px;">编码</th>
+                                <th>说明</th>
+                                <th style="width:100px;">凭证类别</th>
+                                <th style="width:80px;">附单据数</th>
+                                <th style="width:80px;">所属分类</th>
+                            </tr>
+                        </thead>
+                        <tbody id="veCommonBody"></tbody>
+                    </table>
+                    <div class="ve-modal-bottom-info" id="veCommonInfo">共0条记录</div>
+                </div>
+                <div class="ve-modal-footer">
+                    <button class="ve-btn ve-btn-primary" onclick="veDoImportCommon()">确定</button>
+                    <button class="ve-btn ve-btn-default" onclick="veCloseModal('veModalCommon')">取消</button>
                 </div>
             </div>
-            <div class="voucher-records-table-wrap">
-                <table class="voucher-records-table">
-                    <thead>
-                        <tr>
-                            <th style="width:60px;">序号</th>
-                            <th style="width:140px;">凭证号</th>
-                            <th style="width:120px;">日期</th>
-                            <th style="width:120px;">类型</th>
-                            <th>摘要</th>
-                            <th style="width:120px;">金额</th>
-                            <th style="width:120px;">状态</th>
-                            <th style="width:100px;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="voucher-records-body"></tbody>
-                </table>
-            </div>
-            <div class="voucher-records-pagination" id="voucher-records-pagination"></div>
         </div>
-        <datalist id="voucher-summary-templates">${summaryTemplateDatalist}</datalist>
-    `;
 
-        setTimeout(() => {
-            if (typeof window.updateSubjectCodeInputs === "function") {
-                window.updateSubjectCodeInputs();
-            }
-            if (typeof window.addVoucherLineRow === "function") {
-                const rowCount = document.querySelectorAll(".entry-line-row").length;
-                if (rowCount === 0) window.addVoucherLineRow();
-            }
-            if (typeof window.updateSmartPreview === "function") {
-                window.updateSmartPreview();
-            }
-            if (typeof window.updateEntryRowIndex === "function") {
-                window.updateEntryRowIndex();
-            }
-            document.querySelectorAll(".entry-line-row").forEach(row => {
-                const subjectValue = row.querySelector(".entry-subject")?.value || "";
-                if (typeof window.updateAuxiliaryOptionsForRow === "function") {
-                    window.updateAuxiliaryOptionsForRow(row, subjectValue);
+        <!-- 弹窗2：草稿 -->
+        <div class="ve-modal-overlay" id="veModalDraft">
+            <div class="ve-modal ve-modal-draft">
+                <div class="ve-modal-header">
+                    <span class="ve-modal-title">草稿</span>
+                    <button class="ve-modal-close" onclick="veCloseModal('veModalDraft')">&#215;</button>
+                </div>
+                <div class="ve-modal-body">
+                    <table class="ve-draft-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">序号</th>
+                                <th style="width:40px;"><input type="checkbox" id="veChkDraftAll" onchange="veToggleAllDraft(this)"></th>
+                                <th>单据编号</th>
+                                <th style="width:100px;">凭证类别</th>
+                                <th style="width:110px;">制单日期</th>
+                                <th style="width:80px;">附单据数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="veDraftBody">
+                            <tr><td colspan="6" class="ve-draft-empty">暂无草稿凭证</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ve-modal-footer">
+                    <button class="ve-btn ve-btn-danger" id="veBtnDeleteDraft" disabled onclick="veShowToast('请先选择要删除的草稿','warning')">删除</button>
+                    <button class="ve-btn ve-btn-primary" onclick="veDoImportDraft()">确定</button>
+                    <button class="ve-btn ve-btn-default" onclick="veCloseModal('veModalDraft')">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 弹窗3：保存为常用凭证 -->
+        <div class="ve-modal-overlay" id="veModalSaveTemplate">
+            <div class="ve-modal ve-modal-save-template">
+                <div class="ve-modal-header">
+                    <span class="ve-modal-title">保存为常用凭证</span>
+                    <button class="ve-modal-close" onclick="veCloseModal('veModalSaveTemplate')">&#215;</button>
+                </div>
+                <div class="ve-modal-body">
+                    <div class="ve-form-row">
+                        <label><span style="color:#ff4d4f">*</span> 编码</label>
+                        <input type="text" id="veTmplCode" placeholder="请输入4位数字编码，如 2006" maxlength="10">
+                    </div>
+                    <div class="ve-form-row">
+                        <label><span style="color:#ff4d4f">*</span> 说明</label>
+                        <input type="text" id="veTmplDesc" placeholder="不超过50字符" maxlength="50">
+                    </div>
+                    <div class="ve-form-row">
+                        <label><span style="color:#ff4d4f">*</span> 所属分类</label>
+                        <select id="veTmplCategory">
+                            <option value="">请选择</option>
+                            <option>销售</option>
+                            <option>采购</option>
+                            <option>费用</option>
+                            <option>薪资</option>
+                            <option>其他</option>
+                        </select>
+                    </div>
+                    <div class="ve-form-row">
+                        <label>凭证类别</label>
+                        <div class="ve-readonly-field">转账凭证</div>
+                    </div>
+                </div>
+                <div class="ve-modal-footer">
+                    <button class="ve-btn ve-btn-default" onclick="veCloseModal('veModalSaveTemplate')">取消</button>
+                    <button class="ve-btn ve-btn-primary" onclick="veDoSaveTemplate()">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通用确认弹窗 -->
+        <div class="ve-modal-overlay" id="veModalConfirm">
+            <div class="ve-modal ve-modal-confirm">
+                <div class="ve-modal-header">
+                    <span class="ve-modal-title" id="veConfirmTitle">确认</span>
+                    <button class="ve-modal-close" onclick="veCloseModal('veModalConfirm')">&#215;</button>
+                </div>
+                <div class="ve-modal-body">
+                    <p class="ve-confirm-content" id="veConfirmMsg"></p>
+                </div>
+                <div class="ve-modal-footer">
+                    <button class="ve-btn ve-btn-primary" id="veConfirmOkBtn">确定</button>
+                    <button class="ve-btn ve-btn-default" onclick="veCloseModal('veModalConfirm')">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ve-toast-container" id="veToastContainer"></div>
+        <datalist id="veSubjectDatalist">${veSubjectDatalistHtml}</datalist>
+        <datalist id="veSummaryDatalist">${veSummaryDatalistHtml}</datalist>
+        `;
+
+        setTimeout(function () {
+            // ── 状态变量 ──
+            window.veRows = [
+                { id: 1, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
+                { id: 2, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
+            ];
+            window.veNextId = 3;
+            window.veSelectedCommonIdx = -1;
+            window.veCommonVouchers = [
+                { seq:1,  code:'1001', name:'现金销售',               type:'转账凭证', attach:'-', category:'销售' },
+                { seq:2,  code:'1002', name:'预售商品',               type:'转账凭证', attach:'-', category:'销售' },
+                { seq:3,  code:'1003', name:'销售商品（已预付部分款）', type:'转账凭证', attach:'-', category:'销售' },
+                { seq:4,  code:'1004', name:'赊账销售商品',            type:'转账凭证', attach:'-', category:'销售' },
+                { seq:5,  code:'1005', name:'销售收回货款',            type:'转账凭证', attach:'-', category:'销售' },
+                { seq:6,  code:'1006', name:'现金折扣销售收款',         type:'转账凭证', attach:'-', category:'销售' },
+                { seq:7,  code:'1007', name:'销售商品退回',            type:'转账凭证', attach:'-', category:'销售' },
+                { seq:8,  code:'1008', name:'坏账发生',               type:'转账凭证', attach:'-', category:'销售' },
+                { seq:9,  code:'1009', name:'收回坏账损失',            type:'转账凭证', attach:'-', category:'销售' },
+                { seq:10, code:'2001', name:'现金进货',               type:'转账凭证', attach:'-', category:'采购' },
+                { seq:11, code:'2002', name:'预付货款',               type:'转账凭证', attach:'-', category:'采购' },
+                { seq:12, code:'2003', name:'预付退回',               type:'转账凭证', attach:'-', category:'采购' },
+                { seq:13, code:'2004', name:'用预付款支付货款',         type:'转账凭证', attach:'-', category:'采购' },
+                { seq:14, code:'2005', name:'预付坏账',               type:'转账凭证', attach:'-', category:'采购' }
+            ];
+            window.veFilteredVouchers = window.veCommonVouchers.slice();
+            window.veConfirmCallback = null;
+
+            // ── 渲染分录表格 ──
+            window.veRenderEntryTable = function () {
+                var tbody = document.getElementById('veEntryBody');
+                if (!tbody) return;
+                var html = '';
+                window.veRows.forEach(function (row, idx) {
+                    var auxOptions = ['无','部门','客户','供应商','员工'].map(function(opt) {
+                        return '<option' + (row.auxiliary === opt ? ' selected' : '') + '>' + opt + '</option>';
+                    }).join('');
+                    html += '<tr>' +
+                        '<td class="ve-col-seq">' + (idx + 1) + '</td>' +
+                        '<td class="ve-col-summary"><input class="ve-entry-input" type="text" list="veSummaryDatalist" placeholder="输入摘要" value="' + (row.summary || '').replace(/"/g, '&quot;') + '" oninput="window.veRows[' + idx + '].summary=this.value"></td>' +
+                        '<td class="ve-col-subject"><input class="ve-entry-input" type="text" list="veSubjectDatalist" placeholder="输入科目名称/编码" value="' + (row.subject || '').replace(/"/g, '&quot;') + '" oninput="window.veRows[' + idx + '].subject=this.value"></td>' +
+                        '<td class="ve-col-auxiliary"><select class="ve-entry-select" onchange="window.veRows[' + idx + '].auxiliary=this.value">' + auxOptions + '</select></td>' +
+                        '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.debit || 0) + '" oninput="window.veRows[' + idx + '].debit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
+                        '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.credit || 0) + '" oninput="window.veRows[' + idx + '].credit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
+                        '<td class="ve-col-op"><span class="ve-btn-delete-row" title="删除本行" onclick="veDeleteRow(' + idx + ')">&#8722;</span></td>' +
+                    '</tr>';
+                });
+                tbody.innerHTML = html;
+                veUpdateTotals();
+            };
+
+            window.veUpdateTotals = function () {
+                var debit = 0, credit = 0;
+                window.veRows.forEach(function (r) { debit += r.debit; credit += r.credit; });
+                var td = document.getElementById('veTotalDebit');
+                var tc = document.getElementById('veTotalCredit');
+                if (td) td.textContent = debit.toFixed(2);
+                if (tc) tc.textContent = credit.toFixed(2);
+            };
+
+            window.veAddRow = function () {
+                window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 });
+                veRenderEntryTable();
+            };
+
+            window.veDeleteRow = function (idx) {
+                if (window.veRows.length <= 2) { veShowToast('至少保留2行分录', 'warning'); return; }
+                window.veRows.splice(idx, 1);
+                veRenderEntryTable();
+            };
+
+            window.veDeleteEmptyRows = function () {
+                var before = window.veRows.length;
+                var filtered = window.veRows.filter(function (r) { return r.debit !== 0 || r.credit !== 0; });
+                if (filtered.length >= 2) {
+                    window.veRows = filtered;
+                } else if (filtered.length === 1) {
+                    window.veRows = filtered.concat([{ id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }]);
+                } else {
+                    window.veRows = [
+                        { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
+                        { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
+                    ];
                 }
-                if (typeof window.updateSubjectNameForRow === "function") {
-                    window.updateSubjectNameForRow(row, subjectValue);
+                var deleted = before - window.veRows.length;
+                veRenderEntryTable();
+                veShowToast(deleted > 0 ? ('已删除 ' + deleted + ' 行空白分录') : '没有可删除的空白行', deleted > 0 ? 'success' : 'warning');
+            };
+
+            // ── 凭证号生成 ──
+            window.veGenerateNextId = function (word) {
+                var existing = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+                var prefix = word + '-';
+                var maxNum = 0;
+                existing.forEach(function (v) {
+                    if (v.id && v.id.indexOf(prefix) === 0) {
+                        var num = parseInt(v.id.slice(prefix.length)) || 0;
+                        if (num > maxNum) maxNum = num;
+                    }
+                });
+                var s = String(maxNum + 1);
+                while (s.length < 4) s = '0' + s;
+                return prefix + s;
+            };
+
+            window.veUpdateVoucherNo = function () {
+                var word = (document.getElementById('veVoucherWord') || {}).value || '转';
+                var el = document.getElementById('veVoucherNo');
+                if (el) el.value = veGenerateNextId(word);
+                var titleEl = document.getElementById('veVoucherTitle');
+                if (titleEl) {
+                    var typeMap = { '收': '收款凭证', '付': '付款凭证', '转': '转账凭证' };
+                    titleEl.textContent = typeMap[word] || '转账凭证';
                 }
+            };
+
+            // ── 分裂按钮下拉 ──
+            window.veToggleDropdown = function (id, e) {
+                e.stopPropagation();
+                var el = document.getElementById(id);
+                if (!el) return;
+                var isShow = el.classList.contains('show');
+                document.querySelectorAll('.ve-split-dropdown').forEach(function (d) { d.classList.remove('show'); });
+                if (!isShow) el.classList.add('show');
+            };
+
+            window.veCloseDropdown = function (id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.remove('show');
+            };
+
+            // ── 重置表单 ──
+            window.veResetForm = function () {
+                window.veRows = [
+                    { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
+                    { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
+                ];
+                veRenderEntryTable();
+                veUpdateVoucherNo();
+            };
+
+            // ── 工具栏操作 ──
+            window.veDoNewVoucher = function () {
+                veShowConfirm('新增凭证', '将清空当前表单内容，进入新建凭证状态，是否继续？', function () {
+                    veResetForm();
+                    veShowToast('已新建凭证', 'success');
+                });
+            };
+
+            window.veConfirmClear = function () {
+                veShowConfirm('清空确认', '确定要清空当前凭证内容吗？', function () {
+                    veResetForm();
+                    veShowToast('已清空', 'success');
+                });
+            };
+
+            // 核心保存逻辑（不弹 Toast）
+            window.veSaveVoucher = function () {
+                var word  = (document.getElementById('veVoucherWord')  || {}).value || '转';
+                var date  = (document.getElementById('veDateInput')    || {}).value || new Date().toISOString().split('T')[0];
+                var attach = parseInt((document.getElementById('veAttachCount') || {}).value) || 0;
+                var voucherId = veGenerateNextId(word);
+                var totalDebit = 0;
+                var lines = window.veRows.map(function (r) {
+                    totalDebit += r.debit;
+                    return { summary: r.summary, subject: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
+                });
+                var voucher = {
+                    id: voucherId,
+                    date: date,
+                    summary: (window.veRows[0] && window.veRows[0].summary) || '',
+                    amount: totalDebit.toFixed(2),
+                    user: sessionStorage.getItem('currentUser') || 'system',
+                    status: '待审核',
+                    attachCount: attach,
+                    lines: lines
+                };
+                var existing = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+                existing.push(voucher);
+                sessionStorage.setItem('ManualVouchers', JSON.stringify(existing));
+                var noEl = document.getElementById('veVoucherNo');
+                if (noEl) noEl.value = voucherId;
+                return voucherId;
+            };
+
+            window.veDoSave = function () {
+                var id = veSaveVoucher();
+                veShowToast('凭证 ' + id + ' 已保存，状态：待审核', 'success');
+            };
+
+            window.veDoSaveNew = function () {
+                veSaveVoucher();
+                veShowToast('保存成功，已进入下一张新凭证', 'success');
+                setTimeout(veResetForm, 600);
+            };
+
+            window.veDoSaveDraft = function () {
+                veShowToast('已保存为草稿，可从「引入草稿凭证」找回', 'success');
+            };
+
+            window.veDoSubmit = function () {
+                var debit = 0, credit = 0;
+                window.veRows.forEach(function (r) { debit += r.debit; credit += r.credit; });
+                var validRows = window.veRows.filter(function (r) { return r.subject.trim() !== ''; });
+                if (validRows.length < 2) { veShowToast('至少需要2行有效分录', 'error'); return; }
+                if (Math.abs(debit - credit) > 0.001) { veShowToast('借贷不平衡，请检查分录金额', 'error'); return; }
+                veSaveVoucher();
+                veShowToast('凭证已提交，进入审核流程', 'success');
+            };
+
+            // ── 常用凭证弹窗 ──
+            window.veOpenCommonVoucher = function () {
+                window.veSelectedCommonIdx = -1;
+                window.veFilteredVouchers = window.veCommonVouchers.slice();
+                veRenderCommonTable();
+                veOpenModal('veModalCommon');
+            };
+
+            window.veRenderCommonTable = function () {
+                var tbody = document.getElementById('veCommonBody');
+                var info  = document.getElementById('veCommonInfo');
+                if (!tbody) return;
+                var html = '';
+                window.veFilteredVouchers.forEach(function (v, idx) {
+                    var sel = idx === window.veSelectedCommonIdx ? ' ve-selected' : '';
+                    html += '<tr class="' + sel + '" onclick="window.veSelectedCommonIdx=' + idx + ';veRenderCommonTable()" ondblclick="window.veSelectedCommonIdx=' + idx + ';veDoImportCommon()">' +
+                        '<td style="text-align:center;">' + v.seq + '</td>' +
+                        '<td>' + v.code + '</td>' +
+                        '<td>' + v.name + '</td>' +
+                        '<td>' + v.type + '</td>' +
+                        '<td style="text-align:center;">' + v.attach + '</td>' +
+                        '<td>' + v.category + '</td>' +
+                    '</tr>';
+                });
+                tbody.innerHTML = html;
+                if (info) info.textContent = '共' + window.veFilteredVouchers.length + '条记录';
+            };
+
+            window.veFilterCommon = function () {
+                var kw = ((document.getElementById('veCommonKeyword') || {}).value || '').trim().toLowerCase();
+                if (!kw) {
+                    window.veFilteredVouchers = window.veCommonVouchers.slice();
+                } else {
+                    window.veFilteredVouchers = window.veCommonVouchers.filter(function (v) {
+                        return v.code.toLowerCase().indexOf(kw) >= 0 || v.name.toLowerCase().indexOf(kw) >= 0 || v.category.toLowerCase().indexOf(kw) >= 0;
+                    });
+                }
+                window.veSelectedCommonIdx = -1;
+                veRenderCommonTable();
+            };
+
+            window.veDoImportCommon = function () {
+                if (window.veSelectedCommonIdx < 0) { veShowToast('请先选择一条常用凭证', 'warning'); return; }
+                var selected = window.veFilteredVouchers[window.veSelectedCommonIdx];
+                var hasContent = window.veRows.some(function (r) { return r.subject.trim() !== '' || r.debit !== 0 || r.credit !== 0; });
+                if (hasContent) {
+                    veShowConfirm('引入确认', '引入「' + selected.name + '」将覆盖当前分录内容，是否继续？', function () {
+                        veImportTemplate(selected);
+                    });
+                } else {
+                    veImportTemplate(selected);
+                }
+                veCloseModal('veModalCommon');
+            };
+
+            window.veImportTemplate = function (v) {
+                window.veRows = [
+                    { id: window.veNextId++, summary: v.name, subject: '（请选择科目）', auxiliary: '无', debit: 0, credit: 0 },
+                    { id: window.veNextId++, summary: v.name, subject: '（请选择科目）', auxiliary: '无', debit: 0, credit: 0 }
+                ];
+                veRenderEntryTable();
+                veShowToast('已引入「' + v.name + '」的分录模板，请填写金额', 'success');
+            };
+
+            // ── 草稿弹窗 ──
+            window.veOpenDraft = function () { veOpenModal('veModalDraft'); };
+
+            window.veToggleAllDraft = function (chk) {
+                document.querySelectorAll('#veDraftBody input[type=checkbox]').forEach(function (c) { c.checked = chk.checked; });
+                veUpdateDraftDeleteBtn();
+            };
+
+            window.veUpdateDraftDeleteBtn = function () {
+                var any = document.querySelectorAll('#veDraftBody input[type=checkbox]:checked').length > 0;
+                var btn = document.getElementById('veBtnDeleteDraft');
+                if (btn) btn.disabled = !any;
+            };
+
+            window.veDoImportDraft = function () {
+                veShowToast('草稿列表为空，无可引入内容', 'warning');
+                veCloseModal('veModalDraft');
+            };
+
+            // ── 保存为常用凭证弹窗 ──
+            window.veOpenSaveTemplate = function () {
+                ['veTmplCode', 'veTmplDesc'].forEach(function (id) {
+                    var el = document.getElementById(id); if (el) el.value = '';
+                });
+                var cat = document.getElementById('veTmplCategory'); if (cat) cat.value = '';
+                veOpenModal('veModalSaveTemplate');
+            };
+
+            window.veDoSaveTemplate = function () {
+                var code = ((document.getElementById('veTmplCode') || {}).value || '').trim();
+                var desc = ((document.getElementById('veTmplDesc') || {}).value || '').trim();
+                var cat  = ((document.getElementById('veTmplCategory') || {}).value || '');
+                if (!code) { veShowToast('请填写编码', 'warning'); return; }
+                if (!desc) { veShowToast('请填写说明', 'warning'); return; }
+                if (!cat)  { veShowToast('请选择所属分类', 'warning'); return; }
+                veCloseModal('veModalSaveTemplate');
+                veShowToast('已保存为常用凭证', 'success');
+            };
+
+            // ── 弹窗工具 ──
+            window.veOpenModal = function (id) {
+                var el = document.getElementById(id); if (el) el.classList.add('show');
+            };
+
+            window.veCloseModal = function (id) {
+                var el = document.getElementById(id); if (el) el.classList.remove('show');
+            };
+
+            window.veShowConfirm = function (title, msg, cb) {
+                var tEl = document.getElementById('veConfirmTitle');
+                var mEl = document.getElementById('veConfirmMsg');
+                var ok  = document.getElementById('veConfirmOkBtn');
+                if (tEl) tEl.textContent = title;
+                if (mEl) mEl.textContent = msg;
+                window.veConfirmCallback = cb;
+                if (ok) ok.onclick = function () {
+                    veCloseModal('veModalConfirm');
+                    if (window.veConfirmCallback) window.veConfirmCallback();
+                };
+                veOpenModal('veModalConfirm');
+            };
+
+            // ── Toast ──
+            window.veShowToast = function (msg, type) {
+                type = type || 'default';
+                var container = document.getElementById('veToastContainer');
+                if (!container) return;
+                var toast = document.createElement('div');
+                toast.className = 've-toast' + (type !== 'default' ? ' ' + type : '');
+                toast.textContent = msg;
+                container.appendChild(toast);
+                setTimeout(function () {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s';
+                    setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+                }, 2500);
+            };
+
+            // 遮罩点击关闭弹窗
+            document.querySelectorAll('.ve-modal-overlay').forEach(function (overlay) {
+                overlay.addEventListener('click', function (e) {
+                    if (e.target === overlay) overlay.classList.remove('show');
+                });
             });
-            if (typeof window.syncVoucherWord === "function") {
-                window.syncVoucherWord();
-            }
-            if (typeof window.updateSubjectDatalist === "function") {
-                window.updateSubjectDatalist("");
-            }
-            if (typeof window.renderVoucherRecordPage === "function") {
-                window.renderVoucherRecordPage();
-            }
-        }, 100);
+
+            // 全局点击关闭下拉
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.ve-split-dropdown').forEach(function (d) { d.classList.remove('show'); });
+            });
+
+            // 初始化
+            veUpdateVoucherNo();
+            veRenderEntryTable();
+        }, 0);
     }
+
 
 // =========================================================================
   // ★★★ [修复版] 凭证处理中心 ★★★
   // =========================================================================
   else if (moduleCode === "FinanceVoucherAudit") {
-    const seedRows = Array.isArray(window.__voucherSeedRows) ? window.__voucherSeedRows : [];
-    const normalizeNumber = (value) => {
-        if (value === null || value === undefined) return "";
-        const text = value.toString().trim();
-        if (!text) return "";
-        const num = parseFloat(text.replace(/,/g, ""));
-        return Number.isFinite(num) ? num.toString() : text;
-    };
-    const normalizeDate = (value) => {
-        if (!value) return "";
-        const text = value.toString().trim();
-        if (!text) return "";
-        if (text.includes("-")) return text;
-        const serial = parseFloat(text);
-        if (!Number.isFinite(serial)) return text;
-        const utc = Math.floor(serial - 25569);
-        if (!Number.isFinite(utc)) return text;
-        const date = new Date(utc * 86400 * 1000);
-        if (Number.isNaN(date.getTime())) return text;
-        return date.toISOString().slice(0, 10);
-    };
-    const buildVouchersFromSeed = (rows) => {
-        const map = new Map();
-        rows.forEach(row => {
-            const id = (row.id || "").toString().trim();
-            if (!id) return;
-            const voucher = map.get(id) || {
-                id,
-                date: normalizeDate(row.date),
-                amount: normalizeNumber(row.amount),
-                summary: (row.summary || "").toString().trim(),
-                user: (row.user || "").toString().trim() || "导入",
-                auditUser: (row.auditUser || "").toString().trim(),
-                status: (row.auditUser || "").toString().trim() ? "已审核" : "待审核",
-                lines: []
-            };
-            const accountCode = (row.accountCode || "").toString().trim();
-            const accountName = (row.accountName || "").toString().trim();
-            const account = [accountCode, accountName].filter(Boolean).join(" ").trim();
-            voucher.lines.push({
-                summary: (row.summary || "").toString().trim(),
-                account: account,
-                accountCode: accountCode,
-                accountName: accountName,
-                aux: (row.aux || "").toString().trim(),
-                debit: normalizeNumber(row.debit),
-                credit: normalizeNumber(row.credit)
-            });
-            if (!voucher.summary && row.summary) voucher.summary = row.summary.toString().trim();
-            if (!voucher.amount && row.amount) voucher.amount = normalizeNumber(row.amount);
-            if (!voucher.date && row.date) voucher.date = normalizeDate(row.date);
-            if (!voucher.user && row.user) voucher.user = row.user.toString().trim();
-            if (!voucher.auditUser && row.auditUser) voucher.auditUser = row.auditUser.toString().trim();
-            if (voucher.auditUser) voucher.status = "已审核";
-            map.set(id, voucher);
-        });
-        return Array.from(map.values());
-    };
-
-    window.ensureVoucherSeedData = function(force) {
-        const existing = window.getManualVouchers ? window.getManualVouchers() : [];
-        if (existing.length && !force) {
-            return { loaded: false, count: existing.length, message: `已存在 ${existing.length} 张凭证` };
-        }
-        if (!seedRows.length) {
-            return { loaded: false, count: 0, message: "未检测到可导入的Excel数据" };
-        }
-        const list = buildVouchersFromSeed(seedRows);
-        if (typeof window.saveManualVouchers === "function") {
-            window.saveManualVouchers(list);
-        } else {
-            sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
-        }
-        return { loaded: true, count: list.length, message: `已导入 ${list.length} 张凭证` };
-    };
-
-    window.reloadVoucherSeedData = function() {
-        if (!confirm("确认从Excel重新导入凭证？\n此操作将覆盖当前凭证数据。")) return;
-        const result = window.ensureVoucherSeedData(true);
-        alert(result.message || "已重新导入");
-        loadContent('FinanceVoucherAudit');
-    };
-
-    const seedResult = window.ensureVoucherSeedData(false);
-    const seedNotice = seedResult ? seedResult.message : "";
     const allVouchers = window.getManualVouchers
         ? window.getManualVouchers()
         : JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
@@ -8773,6 +12907,24 @@ function loadContent(moduleCode, element = null) {
         }
 
         sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
+        loadContent('FinanceVoucherAudit');
+    };
+
+    window.deleteSelectedVouchers = function() {
+        const ids = window.getSelectedVoucherIds();
+        if (!ids.length) {
+            alert("请先选择凭证。");
+            return;
+        }
+        if (!confirm(`确认删除选中的 ${ids.length} 张凭证吗？此操作不可恢复。`)) return;
+        const idSet = new Set(ids);
+        const list = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
+        const next = list.filter(item => !idSet.has(item.id));
+        if (next.length === list.length) {
+            alert("未删除任何凭证。");
+            return;
+        }
+        sessionStorage.setItem('ManualVouchers', JSON.stringify(next));
         loadContent('FinanceVoucherAudit');
     };
 
@@ -8989,6 +13141,65 @@ function loadContent(moduleCode, element = null) {
         return null;
     };
 
+    const parseMixedDocItem = (text) => {
+        const raw = (text || "").toString().trim();
+        if (!raw) return null;
+        const match = raw.match(/^(运单号|批次号|报销单号)\s*[:：]\s*(.+)$/);
+        if (!match) return null;
+        const typeMap = { "运单号": "waybill", "批次号": "batch", "报销单号": "reimbursement" };
+        const type = typeMap[match[1]];
+        const id = (match[2] || "").toString().trim();
+        if (!type || !id) return null;
+        return { type, id };
+    };
+
+    const collectVoucherDocIds = (voucher, typeFilter = "") => {
+        const info = resolveRelatedDocs(voucher);
+        if (!info || !Array.isArray(info.ids) || !info.ids.length) return [];
+        const normalizedType = normalizeSourceType(typeFilter);
+        const ids = [];
+        const pushUnique = (value) => {
+            const raw = (value || "").toString().trim();
+            if (!raw) return;
+            if (!ids.includes(raw)) ids.push(raw);
+        };
+        const infoType = normalizeSourceType(info.type || "");
+        if (["waybill", "batch", "reimbursement"].includes(infoType)) {
+            if (normalizedType && normalizedType !== infoType) return [];
+            info.ids.forEach(pushUnique);
+            return ids;
+        }
+        info.ids.forEach((item) => {
+            const mixed = parseMixedDocItem(item);
+            if (!mixed) return;
+            if (normalizedType && mixed.type !== normalizedType) return;
+            pushUnique(mixed.id);
+        });
+        return ids;
+    };
+
+    window.refreshVoucherDocNoOptions = function (keepCurrent = false) {
+        const typeEl = document.getElementById("voucher-doc-type");
+        const noEl = document.getElementById("voucher-doc-no");
+        if (!typeEl || !noEl) return;
+        const type = normalizeSourceType(typeEl.value || "");
+        const placeholderMap = {
+            waybill: "所有运单号（可输入筛选）",
+            batch: "所有批次号（可输入筛选）",
+            reimbursement: "所有报销单号（可输入筛选）"
+        };
+        const nextPlaceholder = placeholderMap[type] || "所有单号（可输入筛选）";
+        const current = (noEl.value || "").trim();
+        if (!keepCurrent || /^所有(运单号|批次号|报销单号|单号)/.test(current)) {
+            noEl.value = "";
+        }
+        noEl.placeholder = nextPlaceholder;
+    };
+
+    window.handleVoucherDocTypeChange = function () {
+        window.refreshVoucherDocNoOptions(false);
+    };
+
     window.openRelatedDocDrawer = function(trigger) {
         if (!trigger) return;
         const typeKey = trigger.dataset.docType || "";
@@ -9106,12 +13317,155 @@ function loadContent(moduleCode, element = null) {
     window._voucherAuditAllRows = rowsData;
     window._voucherAuditRowsData = rowsData;
     window._voucherAuditFilter = { tab: "all" };
-    window._voucherAuditSearch = window._voucherAuditSearch || { docType: "", docNo: "" };
+    window._voucherAuditSearch = window._voucherAuditSearch || {
+        docType: "",
+        docNo: "",
+        voucherType: "",
+        subjectCode: "",
+        summary: "",
+        amountMin: "",
+        amountMax: "",
+        timeMode: "date",
+        dateStart: "",
+        dateEnd: "",
+        periodStart: "",
+        periodEnd: ""
+    };
+
+    const normalizeAmountNumber = (value) => {
+        if (value === null || value === undefined) return null;
+        const text = value.toString().trim();
+        if (!text) return null;
+        const num = parseFloat(text.replace(/,/g, ""));
+        return Number.isFinite(num) ? num : null;
+    };
+
+    const getVoucherTypeLabel = (voucher) => {
+        const explicit = (voucher.type || voucher.voucherType || "").toString().trim();
+        if (explicit) return explicit;
+        const prefix = (voucher.id || "").toString().trim().charAt(0);
+        if (prefix === "收") return "收款凭证";
+        if (prefix === "付") return "付款凭证";
+        if (prefix === "转") return "转账凭证";
+        return "转账凭证";
+    };
+
+    const getVoucherAmountNumber = (voucher) => {
+        const amount = normalizeAmountNumber(voucher.amount);
+        if (amount !== null) return amount;
+        const fallback = normalizeAmountNumber(calcVoucherAmountFromLines(voucher));
+        return fallback === null ? 0 : fallback;
+    };
+
+    const getDateKey = (value) => {
+        const text = (value || "").toString().trim();
+        if (!text) return null;
+        const normalized = text.replace(/\//g, "-");
+        const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (match) {
+            const y = parseInt(match[1], 10);
+            const m = parseInt(match[2], 10);
+            const d = parseInt(match[3], 10);
+            if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                return y * 10000 + m * 100 + d;
+            }
+        }
+        const parsed = new Date(normalized);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return parsed.getFullYear() * 10000 + (parsed.getMonth() + 1) * 100 + parsed.getDate();
+    };
+
+    const getPeriodKey = (value) => {
+        const text = (value || "").toString().trim();
+        if (!text) return null;
+        const match = text.replace("/", ".").match(/^(\d{4})[.\-](\d{1,2})$/);
+        if (!match) return null;
+        const y = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        if (m < 1 || m > 12) return null;
+        return y * 100 + m;
+    };
+
+    const getVoucherPeriodKey = (voucher) => {
+        const explicit = (voucher.period || voucher.acctPeriod || voucher.accountingPeriod || "").toString().trim();
+        if (explicit) {
+            const periodKey = getPeriodKey(explicit);
+            if (periodKey !== null) return periodKey;
+        }
+        const dateText = (voucher.date || "").toString().trim();
+        if (!dateText) return null;
+        const normalized = dateText.replace(/\//g, "-");
+        const match = normalized.match(/^(\d{4})-(\d{1,2})/);
+        if (!match) return null;
+        const y = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        if (m < 1 || m > 12) return null;
+        return y * 100 + m;
+    };
+
+    const matchVoucherTimeRange = (voucher, search) => {
+        const mode = ((search.timeMode || "date").toString().trim() || "date").toLowerCase();
+        if (mode === "period") {
+            const start = getPeriodKey(search.periodStart);
+            const end = getPeriodKey(search.periodEnd);
+            if (start === null && end === null) return true;
+            const voucherPeriod = getVoucherPeriodKey(voucher);
+            if (voucherPeriod === null) return false;
+            if (start !== null && voucherPeriod < start) return false;
+            if (end !== null && voucherPeriod > end) return false;
+            return true;
+        }
+        const start = getDateKey(search.dateStart);
+        const end = getDateKey(search.dateEnd);
+        if (start === null && end === null) return true;
+        const voucherDate = getDateKey(voucher.date);
+        if (voucherDate === null) return false;
+        if (start !== null && voucherDate < start) return false;
+        if (end !== null && voucherDate > end) return false;
+        return true;
+    };
 
     const matchVoucherDocSearch = (voucher) => {
         const search = window._voucherAuditSearch || {};
         const docType = (search.docType || "").toString().trim().toLowerCase();
         const docNo = (search.docNo || "").toString().trim().toLowerCase();
+        const voucherType = (search.voucherType || "").toString().trim().toLowerCase();
+        const subjectCode = (search.subjectCode || "").toString().trim().toLowerCase();
+        const summary = (search.summary || "").toString().trim().toLowerCase();
+        const amountMin = normalizeAmountNumber(search.amountMin);
+        const amountMax = normalizeAmountNumber(search.amountMax);
+
+        if (voucherType) {
+            const typeLabel = getVoucherTypeLabel(voucher).toLowerCase();
+            if (!typeLabel.includes(voucherType)) return false;
+        }
+
+        if (subjectCode) {
+            const lines = Array.isArray(voucher.lines) ? voucher.lines : [];
+            const matched = lines.some((line) => {
+                const parsed = parseAccount(line.account || "");
+                const code = (line.accountCode || parsed.code || "").toString().toLowerCase();
+                return code.includes(subjectCode);
+            });
+            if (!matched) return false;
+        }
+
+        if (summary) {
+            const summaryPool = [
+                voucher.summary || "",
+                ...(Array.isArray(voucher.lines) ? voucher.lines.map(line => line.summary || line.digest || "") : [])
+            ].join(" ").toLowerCase();
+            if (!summaryPool.includes(summary)) return false;
+        }
+
+        if (amountMin !== null || amountMax !== null) {
+            const amount = getVoucherAmountNumber(voucher);
+            if (amountMin !== null && amount < amountMin) return false;
+            if (amountMax !== null && amount > amountMax) return false;
+        }
+
+        if (!matchVoucherTimeRange(voucher, search)) return false;
+
         if (!docType && !docNo) return true;
         const info = resolveRelatedDocs(voucher);
         if (!info || !Array.isArray(info.ids) || info.ids.length === 0) return false;
@@ -9135,6 +13489,9 @@ function loadContent(moduleCode, element = null) {
             if (filter.tab === "cashier") {
                 return (status === "已审核" || status === "已记账" || status === "已过账") && !v.cashierUser;
             }
+            if (filter.tab === "post") {
+                return status === "已审核" && !!v.cashierUser;
+            }
             if (filter.tab === "diff") {
                 return ["已驳回", "已冲销", "已作废"].includes(status);
             }
@@ -9143,12 +13500,50 @@ function loadContent(moduleCode, element = null) {
         window._voucherAuditRowsData = filtered;
     };
 
+    window.vaSmartSearchHint = function(input) {
+        const val = (input.value || "").trim().toUpperCase();
+        const hintEl = document.getElementById("va-smart-type-hint");
+        if (!hintEl) return;
+        if (!val) { hintEl.textContent = ""; return; }
+        if (/^YD/i.test(val))  { hintEl.textContent = "→ 运单"; return; }
+        if (/^BX/i.test(val))  { hintEl.textContent = "→ 报销单"; return; }
+        if (/^(PC|APC|ASH)/i.test(val)) { hintEl.textContent = "→ 批次"; return; }
+        hintEl.textContent = "→ 全类型匹配";
+    };
+
     window.applyVoucherAuditSearch = function() {
-        const typeEl = document.getElementById("voucher-doc-type");
-        const noEl = document.getElementById("voucher-doc-no");
+        const timeModeEl = document.querySelector('input[name="va-time-mode"]:checked');
+        const smartEl = document.getElementById("voucher-smart-search");
+        const voucherTypeEl = document.getElementById("voucher-type-keyword");
+        const subjectCodeEl = document.getElementById("voucher-subject-code");
+        const summaryEl = document.getElementById("voucher-filter-summary");
+        const amountMinEl = document.getElementById("voucher-amount-min");
+        const amountMaxEl = document.getElementById("voucher-amount-max");
+        const dateStartEl = document.getElementById("vaDateStart");
+        const dateEndEl = document.getElementById("vaDateEnd");
+        const periodStartEl = document.getElementById("vaPeriodStart");
+        const periodEndEl = document.getElementById("vaPeriodEnd");
+
+        // Smart-detect doc type from prefix
+        const rawSearch = smartEl ? (smartEl.value || "").trim() : "";
+        let detectedType = "";
+        if (/^YD/i.test(rawSearch))  detectedType = "waybill";
+        else if (/^BX/i.test(rawSearch))  detectedType = "reimbursement";
+        else if (/^(PC|APC|ASH)/i.test(rawSearch)) detectedType = "batch";
+
         window._voucherAuditSearch = {
-            docType: typeEl ? typeEl.value : "",
-            docNo: noEl ? noEl.value : ""
+            docType: detectedType,
+            docNo: rawSearch,
+            voucherType: voucherTypeEl ? voucherTypeEl.value : "",
+            subjectCode: subjectCodeEl ? subjectCodeEl.value : "",
+            summary: summaryEl ? summaryEl.value : "",
+            amountMin: amountMinEl ? amountMinEl.value : "",
+            amountMax: amountMaxEl ? amountMaxEl.value : "",
+            timeMode: timeModeEl ? timeModeEl.value : "date",
+            dateStart: dateStartEl ? dateStartEl.value : "",
+            dateEnd: dateEndEl ? dateEndEl.value : "",
+            periodStart: periodStartEl ? periodStartEl.value : "",
+            periodEnd: periodEndEl ? periodEndEl.value : ""
         };
         window.applyVoucherAuditFilter();
         window.renderVoucherAuditPage(1);
@@ -9203,17 +13598,24 @@ function loadContent(moduleCode, element = null) {
             if (!info || !Array.isArray(info.ids) || info.ids.length === 0) return "";
             const typeKey = info.type || "manual";
             const ids = info.ids;
-            const icon = SOURCE_DOC_ICONS[typeKey] || "📄";
-            return `
-                <button type="button" class="source-badge source-badge--${typeKey}"
+            const allIdsStr = ids.join(",");
+            const vId = voucher.id || "";
+            // 最多展示3个，超出显示 +N
+            const showIds = ids.slice(0, 3);
+            const moreCount = ids.length - showIds.length;
+            const links = showIds.map(id =>
+                `<a href="javascript:void(0)"
+                    class="doc-no-link doc-no-link--${typeKey}"
                     data-doc-type="${typeKey}"
-                    data-doc-ids="${ids.join(",")}"
-                    data-voucher-id="${voucher.id || ""}"
-                    onclick="openRelatedDocDrawer(this)">
-                    <span class="source-badge__icon">${icon}</span>
-                    <span class="source-badge__count">${ids.length}</span>
-                </button>
-            `;
+                    data-doc-ids="${allIdsStr}"
+                    data-voucher-id="${vId}"
+                    onclick="openRelatedDocDrawer(this)"
+                    style="color:#1d4ed8;text-decoration:none;margin-right:4px;font-size:11px;white-space:nowrap;"
+                    title="${typeKey === 'waybill' ? '运单' : typeKey === 'reimbursement' ? '报销单' : '批次'}">${id}</a>`
+            ).join("");
+            const moreHtml = moreCount > 0
+                ? `<span style="color:#94a3b8;font-size:11px;">+${moreCount}</span>` : "";
+            return links + moreHtml;
         };
 
         tbody.innerHTML = slice.map((item, index) => {
@@ -9304,118 +13706,234 @@ function loadContent(moduleCode, element = null) {
     };
 
     contentHTML += `
-            <div class="voucher-center">
-            <div class="voucher-center__toolbar">
-                <div class="voucher-center__actions">
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('audit')" disabled>审核</button>
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('unaudit')" disabled>反审</button>
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="openCashierReviewModal()" disabled>出纳复核</button>
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('reverse')" disabled>冲销</button>
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="applyVoucherAction('void')" disabled>作废</button>
-                    <button class="btn-primary btn-ghost voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
+        <style>
+            .va-toolbar{height:36px;background:#f8f8f8;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 10px;gap:6px;position:relative;}
+            .va-btn{height:26px;padding:0 10px;background:#fff;border:1px solid #a9a9a9;border-radius:2px;cursor:pointer;font-size:12px;color:#333;display:inline-flex;align-items:center;gap:3px;}
+            .va-btn:hover{background:#e8f4fd;border-color:#72a3dd;}
+            .va-btn[disabled]{opacity:.5;cursor:default;pointer-events:none;}
+            .va-dropdown-wrap{position:relative;}
+            .va-dropdown-menu{position:absolute;top:100%;left:0;margin-top:2px;background:#fff;border:1px solid #a9a9a9;border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:130px;display:none;z-index:1000;}
+            .va-dropdown-menu.show{display:block;}
+            .va-dropdown-item{padding:7px 14px;cursor:pointer;font-size:12px;color:#333;border-bottom:1px solid #f0f0f0;}
+            .va-dropdown-item:last-child{border-bottom:none;}
+            .va-dropdown-item:hover{background:#e8f4fd;}
+            .va-dropdown-item.danger{color:#c83c3c;}
+            .va-sep{width:1px;height:20px;background:#ddd;margin:0 2px;}
+            .va-filter-section{padding:6px 12px;background:#fff;border-bottom:1px solid #ddd;overflow-x:auto;}
+            .va-filter-row{display:grid;grid-template-columns:240px 355px 200px 235px auto;column-gap:6px;row-gap:0;margin-bottom:6px;align-items:center;}
+            .va-filter-row:last-child{margin-bottom:0;}
+            .va-fi{display:flex;align-items:center;gap:4px;font-size:12px;min-height:28px;}
+            .va-fi label{white-space:nowrap;color:#333;}
+            .va-fi__label{display:inline-block;width:66px;text-align:right;}
+            .va-fi--field input[type="text"], .va-fi--field select{width:160px;}
+            .va-fi--time input[type="date"], .va-fi--period select{width:auto;}
+            .va-fi--meta input[type="text"]{width:120px;}
+            .va-fi--meta select{width:96px;}
+            .va-fi--doc input[type="text"]{width:150px;}
+            .va-fi--amount input[type="number"]{width:72px;}
+            .va-fi--time input[type="radio"]{margin-right:2px;}
+            .va-fi.is-disabled{opacity:.45;}
+            .va-fi--action{justify-self:start;}
+            .va-fi input[type="date"],.va-fi select{height:24px;border:1px solid #a9a9a9;padding:0 4px;font-size:12px;}
+            .va-fi input[type="text"]{height:24px;width:120px;border:1px solid #a9a9a9;padding:0 6px;font-size:12px;}
+            .va-fi input[type="number"]{height:24px;width:72px;border:1px solid #a9a9a9;padding:0 6px;font-size:12px;}
+            .va-fi select{width:90px;}
+            @media (max-width: 1400px){
+                .va-filter-row{grid-template-columns:240px 355px 200px 235px;}
+                .va-fi--action{grid-column:4;justify-self:end;}
+            }
+            .va-tab-bar{display:flex;gap:2px;padding:8px 15px 0;border-bottom:2px solid #4a90e2;}
+            .va-tab{padding:5px 14px;background:#f0f0f0;border:1px solid #ddd;border-bottom:none;border-radius:4px 4px 0 0;cursor:pointer;color:#666;font-size:12px;}
+            .va-tab.is-active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+            .va-tab:hover:not(.is-active){background:#e8e8e8;}
+            .va-tc{padding:10px 15px;overflow-x:auto;}
+            .va-table{width:100%;border-collapse:collapse;border:1px solid #ddd;background:#fff;font-size:12px;}
+            .va-table th,.va-table td{border:1px solid #ddd;padding:5px 7px;text-align:left;font-size:12px;}
+            .va-table th{background:#f0f0f0;font-weight:normal;color:#333;height:28px;}
+            .va-table td{height:26px;}
+            .va-table tbody tr:hover{background:#f1f6fc;}
+            .va-table tbody tr.selected{background:#fffca8;}
+            .va-footer{padding:8px 15px;background:#f8f8f8;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+            .va-pager{display:flex;gap:4px;align-items:center;}
+            .va-pager button{min-width:26px;height:24px;padding:0 5px;background:#fff;border:1px solid #a9a9a9;border-radius:2px;cursor:pointer;font-size:12px;}
+            .va-pager button:hover{background:#e8f4fd;border-color:#4a90e2;}
+            .va-pager button.is-active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
+            .va-pager button[disabled]{opacity:.4;cursor:default;}
+            /* 栏目设置弹窗 */
+            .va-dlg-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;justify-content:center;align-items:center;}
+            .va-dlg-overlay.show{display:flex;}
+            .va-dlg-box{width:500px;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden;z-index:9999;}
+            .va-dlg-hdr{height:32px;background:#f8f8f8;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;padding:0 10px;user-select:none;}
+            .va-dlg-hdr .va-dlg-title{font-size:14px;font-weight:bold;color:#333;}
+            .va-dlg-hdr .va-dlg-ctrl{display:flex;gap:8px;color:#666;font-size:16px;cursor:pointer;}
+            .va-dlg-hdr .va-dlg-ctrl span:hover{color:#000;}
+            .va-dlg-body{padding:10px 15px;display:flex;flex-direction:column;gap:10px;}
+            .va-dlg-tb{display:flex;gap:5px;align-items:center;}
+            .va-dlg-tb input[type="text"]{width:120px;height:22px;border:1px solid #a9a9a9;padding:0 4px;font-size:12px;}
+            .va-sys-btn{height:22px;padding:0 10px;background:#f0f0f0;border:1px solid #a9a9a9;border-radius:2px;cursor:pointer;font-size:12px;color:#333;}
+            .va-sys-btn:hover{background:#e8e8e8;}
+            .va-grid{display:flex;gap:10px;align-items:flex-start;}
+            .va-col-wrap{width:420px;height:310px;border:1px solid #a9a9a9;overflow-y:auto;}
+            .va-col-tbl{width:100%;border-collapse:collapse;table-layout:fixed;}
+            .va-col-tbl th,.va-col-tbl td{border-right:1px solid #ddd;border-bottom:1px solid #ddd;height:28px;vertical-align:middle;text-align:center;font-size:12px;}
+            .va-col-tbl th{background:#eaeaea;font-weight:normal;position:sticky;top:0;z-index:10;border-bottom:1px solid #a9a9a9;}
+            .va-col-tbl th:last-child,.va-col-tbl td:last-child{border-right:none;}
+            .va-col-tbl td.cname{text-align:left;padding-left:8px;}
+            .va-col-tbl tr.active{background:#fffca8;}
+            .va-col-tbl tr:not(.active):hover{background:#f1f6fc;}
+            .va-icon-btns{display:flex;flex-direction:column;gap:8px;margin-top:50px;}
+            .va-icon-btn{width:24px;height:22px;background:linear-gradient(to bottom,#fff,#d8e5f8);border:1px solid #7a9cd3;border-radius:2px;cursor:pointer;display:flex;justify-content:center;align-items:center;}
+            .va-icon-btn:hover{background:linear-gradient(to bottom,#fff,#c2d5f2);}
+            .va-icon-btn svg{width:12px;height:12px;stroke:#0d3c7a;stroke-width:1.5;fill:none;}
+            .va-bottom-ctrl{display:flex;flex-direction:column;gap:8px;margin-top:5px;}
+            .va-cb-group{display:flex;gap:15px;align-items:center;}
+            .va-cb-group label{display:flex;align-items:center;gap:4px;cursor:pointer;}
+            .va-act-row{display:flex;justify-content:space-between;align-items:center;}
+            .va-note{color:#d32f2f;font-size:11px;}
+            .va-dlg-ftr{border-top:1px solid #ddd;padding:10px 15px;display:flex;justify-content:flex-end;gap:8px;background:#fff;}
+            .va-dlg-ftr .va-sys-btn{width:65px;height:26px;}
+            /* 状态标签 */
+            .voucher-status{border-radius:3px;padding:1px 6px;font-size:11px;}
+            .voucher-status.is-void{background:#fee2e2;color:#dc2626;}
+            .voucher-status.is-posted{background:#dcfce7;color:#16a34a;}
+            .voucher-status.is-audited{background:#dbeafe;color:#2563eb;}
+            .voucher-status.is-pending{background:#fef9c3;color:#a16207;}
+            /* 关联单 */
+            .source-badge{display:inline-flex;align-items:center;gap:2px;padding:0 6px;height:18px;border:1px solid #d1d5db;border-radius:9px;cursor:pointer;font-size:11px;background:#fff;}
+            .source-badge--waybill{border-color:#3b82f6;color:#1d4ed8;}
+            .source-badge--batch{border-color:#f59e0b;color:#d97706;}
+            .source-badge--reimbursement{border-color:#10b981;color:#047857;}
+            .source-badge--mixed,.source-badge--manual{border-color:#6b7280;color:#374151;}
+            .voucher-link{color:#1d4ed8;text-decoration:none;}
+            .voucher-link:hover{text-decoration:underline;}
+            /* 原单抽屉 */
+            .source-doc-drawer{position:fixed;inset:0;z-index:9900;pointer-events:none;}
+            .source-doc-drawer.is-visible{pointer-events:auto;}
+            .source-doc-mask{position:absolute;inset:0;background:rgba(15,23,42,.3);opacity:0;transition:opacity .2s;}
+            .source-doc-drawer.is-visible .source-doc-mask{opacity:1;}
+            .source-doc-panel{position:absolute;right:0;top:0;bottom:0;width:380px;background:#fff;border-left:1px solid #e2e8f0;box-shadow:-4px 0 16px rgba(15,23,42,.12);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;}
+            .source-doc-drawer.is-visible .source-doc-panel{transform:translateX(0);}
+            .source-doc-panel__header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0;}
+            .source-doc-panel__title{font-size:15px;font-weight:600;color:#0f172a;}
+            .source-doc-panel__sub{font-size:12px;color:#64748b;margin-top:3px;}
+            .source-doc-panel__close{padding:4px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#475569;}
+            .source-doc-panel__close:hover{background:#f1f5f9;}
+            .source-doc-panel__body{flex:1;overflow-y:auto;padding:16px 18px;}
+            .source-doc-panel__label{font-size:12px;color:#64748b;margin-bottom:8px;font-weight:600;}
+            .source-doc-table{border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;font-size:12px;}
+            .source-doc-table__head{display:flex;background:#f8fafc;padding:6px 10px;color:#64748b;border-bottom:1px solid #e2e8f0;}
+            .source-doc-table__row{display:flex;padding:7px 10px;border-bottom:1px solid #f1f5f9;}
+            .source-doc-table__row:last-child{border-bottom:none;}
+            .source-doc-table__id{flex:2;}
+            .source-doc-table__amount{flex:1.5;text-align:right;}
+            .source-doc-table__driver{flex:1.5;text-align:right;}
+            .source-doc-table__empty{padding:10px;color:#94a3b8;font-style:italic;text-align:center;}
+            .source-doc-panel__hint{font-size:11px;color:#94a3b8;margin-top:8px;}
+            .empty-row{text-align:center;color:#94a3b8;padding:20px;}
+        </style>
+        <div id="vaWrap" style="background:#fff;border:1px solid #ddd;border-radius:4px;">
+            <!-- 工具栏 -->
+            <div class="va-toolbar">
+                <button class="va-btn voucher-center__action" onclick="applyVoucherAction('unaudit')" disabled>反审核</button>
+                <button class="va-btn voucher-center__action" onclick="applyVoucherAction('audit')" disabled>审核</button>
+                <button class="va-btn voucher-center__action" onclick="openCashierReviewModal()" disabled>出纳复核</button>
+                <button class="va-btn voucher-center__action" onclick="vaCancelCashierReview()" disabled>取消复核</button>
+                <button class="va-btn voucher-center__action" onclick="applyVoucherAction('post')" disabled>记账</button>
+                <button class="va-btn voucher-center__action" onclick="deleteSelectedVouchers()" disabled>删除</button>
+                <div class="va-dropdown-wrap">
+                    <button class="va-btn" id="vaOpBtn" onclick="vaToggleOpMenu(event)">操作 ▼</button>
+                    <div class="va-dropdown-menu" id="vaOpMenu">
+                        <div class="va-dropdown-item danger" onclick="applyVoucherAction('void');document.getElementById('vaOpMenu').classList.remove('show')">作废</div>
+                        <div class="va-dropdown-item" onclick="vaAlert('取消作废')">取消作废</div>
+                        <div class="va-dropdown-item danger" onclick="applyVoucherAction('reverse');document.getElementById('vaOpMenu').classList.remove('show')">冲销</div>
+                        <div class="va-dropdown-item danger" onclick="vaAlert('标错')">标错</div>
+                        <div class="va-dropdown-item" onclick="vaAlert('取消标错')">取消标错</div>
+                    </div>
                 </div>
-                <div class="voucher-center__seed" style="margin-top:8px; color:#475569; font-size:12px;">${seedNotice}</div>
-                <div class="voucher-center__filters">
-                    <div class="voucher-filter">
-                        <label>凭证类别</label>
-                        <select>
-                            <option>全部</option>
-                            <option>记账凭证</option>
-                            <option>收款凭证</option>
-                            <option>付款凭证</option>
-                        </select>
+                <button class="va-btn" onclick="vaOpenColDlg()">栏目</button>
+                <div class="va-sep"></div>
+                <button class="va-btn voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
+                <button class="va-btn" onclick="window.print()" title="打印">🖨</button>
+            </div>
+            <!-- 筛选区 -->
+            <div class="va-filter-section">
+                <div class="va-filter-row">
+                    <div class="va-fi va-fi--field">
+                        <label class="va-fi__label">凭证类别:</label>
+                        <input type="text" id="voucher-type-keyword" placeholder="输入凭证类别">
                     </div>
-                    <div class="voucher-filter">
-                        <label>制单日期</label>
-                        <div class="voucher-filter__range">
-                            <input type="date">
-                            <span>~</span>
-                            <input type="date">
-                        </div>
+                    <div class="va-fi va-fi--time" id="va-date-filter">
+                        <label style="display:flex;align-items:center;gap:3px;cursor:pointer;"><input type="radio" name="va-time-mode" value="date" checked onchange="vaHandleTimeModeChange(this.value)"></label>
+                        <label class="va-fi__label"><span style="color:#d32f2f;">* </span>制单日期:</label>
+                        <input type="date" id="vaDateStart" value="2026-01-01">
+                        <span>-</span>
+                        <input type="date" id="vaDateEnd" value="2026-12-31">
                     </div>
-                    <div class="voucher-filter">
-                        <label>摘要</label>
+                    <div class="va-fi va-fi--meta">
+                        <label class="va-fi__label">摘要:</label>
                         <input type="text" id="voucher-filter-summary" placeholder="输入摘要关键词">
                     </div>
-                    <div class="voucher-filter voucher-filter--composite">
-                        <label>组合查询</label>
-                        <div class="voucher-filter__combo">
-                            <div class="voucher-filter__combo-item">
-                                <span class="voucher-filter__combo-label">来源类型</span>
-                                <select id="voucher-doc-type">
-                                    <option value="">全部</option>
-                                    <option value="waybill">运单</option>
-                                    <option value="batch">批次</option>
-                                    <option value="reimbursement">报销</option>
-                                </select>
-                            </div>
-                            <div class="voucher-filter__combo-item">
-                                <span class="voucher-filter__combo-label">单据号</span>
-                                <input type="text" id="voucher-doc-no" placeholder="例如：YD2601...">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="voucher-filter">
-                        <label>科目编码</label>
-                        <input type="text" placeholder="例如：100201">
-                    </div>
-                    <div class="voucher-filter">
-                        <label>金额</label>
-                        <div class="voucher-filter__range">
-                            <input type="number" placeholder="最小值">
-                            <span>~</span>
-                            <input type="number" placeholder="最大值">
-                        </div>
-                    </div>
-                    <div class="voucher-filter">
-                        <label>会计期间</label>
-                        <div class="voucher-filter__range">
-                            <select>
-                                <option>2025.09</option>
-                                <option>2025.10</option>
-                                <option>2025.11</option>
-                            </select>
-                            <span>~</span>
-                            <select>
-                                <option>2025.10</option>
-                                <option>2025.11</option>
-                                <option>2025.12</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="voucher-filter voucher-filter__query">
-                        <button class="btn-primary" onclick="applyVoucherAuditSearch()">查询</button>
+                    <div class="va-fi va-fi--tail va-fi--amount">
+                        <label class="va-fi__label">金额:</label>
+                        <input type="number" id="voucher-amount-min" placeholder="最小值">
+                        <span>-</span>
+                        <input type="number" id="voucher-amount-max" placeholder="最大值">
                     </div>
                 </div>
-                <div class="voucher-center__tabs">
-                    <button class="voucher-center__tab is-active" data-tab="all" onclick="setVoucherAuditTab('all')">全部凭证</button>
-                    <button class="voucher-center__tab" data-tab="pending" onclick="setVoucherAuditTab('pending')">待审核</button>
-                    <button class="voucher-center__tab" data-tab="cashier" onclick="setVoucherAuditTab('cashier')">待出纳复核</button>
-                    <button class="voucher-center__tab" data-tab="diff" onclick="setVoucherAuditTab('diff')">差异凭证</button>
+                <div class="va-filter-row">
+                    <div class="va-fi va-fi--field">
+                        <label class="va-fi__label">科目编码:</label>
+                        <input type="text" id="voucher-subject-code" placeholder="输入科目编码">
+                    </div>
+                    <div class="va-fi va-fi--time va-fi--period" id="va-period-filter">
+                        <label style="display:flex;align-items:center;gap:3px;cursor:pointer;"><input type="radio" name="va-time-mode" value="period" onchange="vaHandleTimeModeChange(this.value)"></label>
+                        <label class="va-fi__label"><span style="color:#d32f2f;">* </span>会计期间:</label>
+                        <select id="vaPeriodStart"><option>2022.06</option><option>2025.09</option><option selected>2026.01</option></select>
+                        <span>-</span>
+                        <select id="vaPeriodEnd"><option>2026.01</option><option selected>2026.12</option></select>
+                    </div>
+                    <div class="va-fi va-fi--doc" style="grid-column:span 2;">
+                        <label class="va-fi__label">单号:</label>
+                        <input type="text" id="voucher-smart-search"
+                            placeholder="输入单号智能查询：YD运单 / BX报销 / PC批次..."
+                            style="width:260px;"
+                            oninput="vaSmartSearchHint(this)"
+                            onkeydown="if(event.key==='Enter')applyVoucherAuditSearch()">
+                        <span id="va-smart-type-hint" style="font-size:11px;color:#64748b;margin-left:6px;"></span>
+                    </div>
+                    <div class="va-fi va-fi--action">
+                        <button class="va-btn" style="background:#4a90e2;color:#fff;border-color:#4a90e2;" onclick="applyVoucherAuditSearch()">查询</button>
+                    </div>
                 </div>
             </div>
-
-            <div class="voucher-center__table-wrap">
-                <table class="voucher-center__table">
+            <!-- 标签页 -->
+            <div class="va-tab-bar">
+                <div class="va-tab is-active voucher-center__tab" data-tab="all" onclick="setVoucherAuditTab('all')">全部凭证</div>
+                <div class="va-tab voucher-center__tab" data-tab="pending" onclick="setVoucherAuditTab('pending')">待审核</div>
+                <div class="va-tab voucher-center__tab" data-tab="cashier" onclick="setVoucherAuditTab('cashier')">待出纳复核</div>
+                <div class="va-tab voucher-center__tab" data-tab="post" onclick="setVoucherAuditTab('post')">待记账</div>
+                <div class="va-tab voucher-center__tab" data-tab="diff" onclick="setVoucherAuditTab('diff')">差异凭证</div>
+            </div>
+            <!-- 数据表格 -->
+            <div class="va-tc">
+                <table class="va-table">
                     <thead>
                         <tr>
-                            <th style="width:40px; text-align:center;">
-                                <input type="checkbox" onclick="toggleAllVoucherSelection(this.checked)">
-                            </th>
-                            <th style="width:60px;">序号</th>
-                            <th style="width:110px;">制单日期</th>
-                            <th style="width:110px;">凭证字号</th>
-                            <th style="width:120px;">凭证总金额</th>
-                            <th style="width:90px;">审核人</th>
-                            <th style="width:90px;">制单人</th>
+                            <th style="width:36px;text-align:center;"><input type="checkbox" onclick="toggleAllVoucherSelection(this.checked)"></th>
+                            <th style="width:50px;">序号</th>
+                            <th style="width:90px;">制单日期 ▲</th>
+                            <th style="width:80px;">凭证字号 ▲</th>
+                            <th style="width:100px;text-align:right;">凭证总金额</th>
+                            <th style="width:70px;">审核人</th>
+                            <th style="width:70px;">制单人</th>
                             <th>摘要</th>
-                            <th style="width:60px; text-align:center;">关联单</th>
-                            <th style="width:100px;">状态</th>
-                            <th style="width:110px;">科目编码</th>
-                            <th style="width:140px;">科目名称</th>
-                            <th style="width:160px;">辅助项</th>
-                            <th style="width:110px;">借方</th>
-                            <th style="width:110px;">贷方</th>
+                            <th style="width:60px;text-align:center;">业务明细</th>
+                            <th style="width:80px;">状态</th>
+                            <th style="width:80px;">科目编码</th>
+                            <th style="width:170px;">科目名称</th>
+                            <th style="width:120px;">辅助项</th>
+                            <th style="width:90px;text-align:right;">借方</th>
+                            <th style="width:90px;text-align:right;">贷方</th>
                         </tr>
                     </thead>
                     <tbody id="voucher-center-body">
@@ -9423,12 +13941,153 @@ function loadContent(moduleCode, element = null) {
                     </tbody>
                 </table>
             </div>
-            <div class="voucher-center__pagination" id="voucher-center-pagination"></div>
+            <!-- 底部分页 -->
+            <div class="va-footer">
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox"> 未取已签合计</label>
+                <div id="voucher-center-pagination" class="va-pager"></div>
+            </div>
+        </div>
+        <!-- 栏目设置弹窗 -->
+        <div class="va-dlg-overlay" id="vaColDlg">
+            <div class="va-dlg-box">
+                <div class="va-dlg-hdr">
+                    <div class="va-dlg-title">栏目设置</div>
+                    <div class="va-dlg-ctrl">
+                        <span title="帮助">❓</span>
+                        <span title="关闭" onclick="vaCloseColDlg()">✖</span>
+                    </div>
+                </div>
+                <div class="va-dlg-body">
+                    <div class="va-dlg-tb">
+                        <input type="text" placeholder="请输入栏目名称">
+                        <button class="va-sys-btn">定位</button>
+                    </div>
+                    <div class="va-grid">
+                        <div class="va-col-wrap">
+                            <table class="va-col-tbl">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">序号</th>
+                                        <th style="width:50px;">显示<input type="checkbox" style="margin-left:2px;"></th>
+                                        <th style="width:50px;">固定列</th>
+                                        <th style="width:140px;text-align:center;">栏目名称</th>
+                                        <th style="width:50px;">类型</th>
+                                        <th style="width:60px;">排序</th>
+                                        <th style="width:30px;">合计</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>1</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td class="cname">制单日期</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr class="active"><td>2</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td class="cname">凭证字号</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>3</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">附单据数</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>4</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">来源类型</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>5</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">差异凭证</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>6</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">错误</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>7</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">作废</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>8</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">凭证总金额</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>9</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">现金流量分配</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>10</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">记账人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>11</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">审核人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>12</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">出纳</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>13</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">制单人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="va-icon-btns">
+                            <button class="va-icon-btn" title="置顶"><svg viewBox="0 0 10 10"><path d="M 1 1 L 9 1 M 5 9 L 5 3 M 2 6 L 5 3 L 8 6"/></svg></button>
+                            <button class="va-icon-btn" title="上移"><svg viewBox="0 0 10 10"><path d="M 5 9 L 5 1 M 2 4 L 5 1 L 8 4"/></svg></button>
+                            <button class="va-icon-btn" title="下移"><svg viewBox="0 0 10 10"><path d="M 5 1 L 5 9 M 2 6 L 5 9 L 8 6"/></svg></button>
+                            <button class="va-icon-btn" title="置底"><svg viewBox="0 0 10 10"><path d="M 1 9 L 9 9 M 5 1 L 5 7 M 2 4 L 5 7 L 8 4"/></svg></button>
+                        </div>
+                    </div>
+                    <div class="va-bottom-ctrl">
+                        <div class="va-cb-group">
+                            <label><input type="checkbox" checked> 显示明细</label>
+                            <label><input type="checkbox"> 只显示第一行明细</label>
+                        </div>
+                        <div class="va-act-row">
+                            <button class="va-sys-btn">恢复默认</button>
+                            <div style="display:flex;align-items:center;gap:5px;">
+                                <span style="font-size:12px;">移动到</span>
+                                <input type="text" style="width:50px;height:22px;border:1px solid #a9a9a9;text-align:center;">
+                                <button class="va-sys-btn">确定</button>
+                            </div>
+                        </div>
+                        <div class="va-note">注：调整内容只应用于当前用户。</div>
+                    </div>
+                </div>
+                <div class="va-dlg-ftr">
+                    <button class="va-sys-btn" onclick="vaCloseColDlg()">确定</button>
+                    <button class="va-sys-btn" onclick="vaCloseColDlg()">取消</button>
+                </div>
+            </div>
         </div>
     `;
     setTimeout(() => {
+        window.vaToggleOpMenu = function(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('vaOpMenu');
+            if (menu) menu.classList.toggle('show');
+        };
+        document.addEventListener('click', function vaDocClick() {
+            const menu = document.getElementById('vaOpMenu');
+            if (menu) menu.classList.remove('show');
+        });
+        window.vaOpenColDlg = function() {
+            const el = document.getElementById('vaColDlg');
+            if (el) el.classList.add('show');
+        };
+        window.vaCloseColDlg = function() {
+            const el = document.getElementById('vaColDlg');
+            if (el) el.classList.remove('show');
+        };
+        window.vaCancelCashierReview = function() {
+            const ids = window.getSelectedVoucherIds ? window.getSelectedVoucherIds() : [];
+            if (!ids.length) { alert('请先选择凭证'); return; }
+            if (!confirm('确认取消出纳复核？')) return;
+            let list = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+            const idSet = new Set(ids);
+            list.forEach(item => {
+                if (!idSet.has(item.id)) return;
+                delete item.cashierUser;
+                if (item.status === '已记账') item.status = '已审核';
+            });
+            sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
+            loadContent('FinanceVoucherAudit');
+        };
+        window.vaAlert = function(msg) { alert(msg + '：功能待开发'); };
+        window.vaHandleTimeModeChange = function(mode) {
+            const current = mode === "period" ? "period" : "date";
+            const dateIds = ["vaDateStart", "vaDateEnd"];
+            const periodIds = ["vaPeriodStart", "vaPeriodEnd"];
+            const dateWrap = document.getElementById("va-date-filter");
+            const periodWrap = document.getElementById("va-period-filter");
+
+            dateIds.forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = current !== "date";
+            });
+            periodIds.forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = current !== "period";
+            });
+
+            if (dateWrap) dateWrap.classList.toggle("is-disabled", current !== "date");
+            if (periodWrap) periodWrap.classList.toggle("is-disabled", current !== "period");
+
+            document.querySelectorAll('input[name="va-time-mode"]').forEach((radio) => {
+                radio.checked = radio.value === current;
+            });
+        };
         if (typeof window.updateVoucherActionButtons === "function") {
             window.updateVoucherActionButtons();
+        }
+        if (typeof window.refreshVoucherDocNoOptions === "function") {
+            window.refreshVoucherDocNoOptions(true);
+        }
+        const initialTimeMode = (document.querySelector('input[name="va-time-mode"]:checked') || {}).value || "date";
+        if (typeof window.vaHandleTimeModeChange === "function") {
+            window.vaHandleTimeModeChange(initialTimeMode);
         }
         if (typeof window.applyVoucherAuditFilter === "function") {
             window.applyVoucherAuditFilter();
@@ -9438,7 +14097,6 @@ function loadContent(moduleCode, element = null) {
         }
     }, 0);
   }
-
     // =========================================================================
     // 22. 凭证详情页 (VoucherDetail) - [最终修复版：自动计算合计金额]
     // =========================================================================
@@ -9485,11 +14143,11 @@ function loadContent(moduleCode, element = null) {
         // ============================================================
         // ★★★ 核心修复：根据凭证号首字判断大标题 ★★★
         // ============================================================
-        let titleText = "记 账 凭 证"; // 默认兜底
-        let wordText = "记";         // 默认字号
+        let titleText = "转 账 凭 证"; // 默认兜底
+        let wordText = "转";         // 默认字号
 
         // 获取凭证号的第一个字 (例如 "收2025..." -> "收")
-        const firstChar = v.id ? v.id.charAt(0) : "记";
+        const firstChar = v.id ? v.id.charAt(0) : "转";
 
         if (firstChar === '收') {
             titleText = "收 款 凭 证";
@@ -9500,6 +14158,10 @@ function loadContent(moduleCode, element = null) {
         } else if (firstChar === '转') {
             titleText = "转 账 凭 证";
             wordText = "转";
+        } else {
+            // 其他凭证字（记、结等）统一显示为转账凭证，字号保留原始字
+            titleText = "转 账 凭 证";
+            wordText = firstChar;
         }
 
         // 凭证字 (右上角显示用)
@@ -9710,151 +14372,360 @@ function loadContent(moduleCode, element = null) {
     // 57. 权限管理 (Permission) - [RBAC模型 + 数据范围控制]
     // =========================================================================
     else if (moduleCode === "Permission") {
-        // 1. 初始化角色数据 (支持缓存)
-        // 预设了三个经典财务角色：CFO、会计、出纳
-        let roleData = JSON.parse(sessionStorage.getItem('RoleConfig'));
+        // Initialize role data
+        let roleData = JSON.parse(sessionStorage.getItem('RoleConfig') || 'null');
         if (!roleData) {
             roleData = [
-                {
-                    id: 'role_cfo',
-                    name: '财务总监 (CFO)',
-                    desc: '全公司数据可见，拥有一级审批权',
-                    scope: 'all', // all=全公司, dept=本部门, self=仅本人
-                    perms: ['dashboard', 'report', 'audit', 'approval', 'setup']
-                },
-                {
-                    id: 'role_acct',
-                    name: '总账会计',
-                    desc: '负责凭证录入、结账与报表出具',
-                    scope: 'dept',
-                    perms: ['voucher', 'ledger', 'settlement', 'asset', 'invoice']
-                },
-                {
-                    id: 'role_cashier',
-                    name: '出纳专员',
-                    desc: '负责资金收付，严禁接触总账与审核',
-                    scope: 'self',
-                    perms: ['treasury', 'bank', 'expense']
-                }
+                { id: 1, name: '系统管理员', permCount: 15, createTime: '2026-01-15 10:30:00', perms: ['voucher.query','voucher.create','voucher.edit','voucher.delete','voucher.audit','voucher.post','voucher.void','permission.role.query','permission.role.add','permission.role.edit','permission.role.delete','permission.role.assign','permission.user.query','permission.user.add','system.log.query'] },
+                { id: 2, name: '财务主管', permCount: 12, createTime: '2026-01-20 14:20:00', perms: ['voucher.query','voucher.create','voucher.edit','voucher.delete','voucher.audit','voucher.post','voucher.void','voucher.column_setting','voucher.export','voucher.print','permission.role.assign','system.log.query'] },
+                { id: 3, name: '会计', permCount: 8, createTime: '2026-01-22 09:15:00', perms: ['voucher.query','voucher.create','voucher.edit','voucher.submit','voucher.save_draft','voucher.use_template','voucher.export','voucher.print'] },
+                { id: 4, name: '出纳', permCount: 5, createTime: '2026-01-25 11:00:00', perms: ['voucher.query','voucher.cashier_sign','voucher.cashier_unsign','voucher.export','voucher.print'] },
+                { id: 5, name: '审计查看', permCount: 3, createTime: '2026-02-01 16:30:00', perms: ['voucher.query','voucher.export','system.log.query'] }
             ];
             sessionStorage.setItem('RoleConfig', JSON.stringify(roleData));
         }
+        let userData = JSON.parse(sessionStorage.getItem('UserConfig') || 'null');
+        if (!userData) {
+            userData = [
+                { id: 1, account: 'admin', name: '张三', roles: ['系统管理员'], status: 'enabled', createTime: '2026-01-10 09:00:00' },
+                { id: 2, account: 'zhangsan', name: '张三丰', roles: ['财务主管', '会计'], status: 'enabled', createTime: '2026-01-15 10:30:00' },
+                { id: 3, account: 'lisi', name: '李四', roles: ['会计'], status: 'enabled', createTime: '2026-01-20 14:20:00' },
+                { id: 4, account: 'wangwu', name: '王五', roles: ['出纳'], status: 'disabled', createTime: '2026-01-25 16:00:00' },
+                { id: 5, account: 'zhaoliu', name: '赵六', roles: ['审计查看'], status: 'enabled', createTime: '2026-02-01 11:30:00' }
+            ];
+            sessionStorage.setItem('UserConfig', JSON.stringify(userData));
+        }
 
-        // 2. 获取当前选中的角色 (默认第一个)
-        const currentRoleId = window.g_currentRoleSelect || 'role_cfo';
-        const currentRole = roleData.find(r => r.id === currentRoleId) || roleData[0];
+        const roleRows = roleData.map((r, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${r.name}</td>
+                <td>${r.permCount}</td>
+                <td>${r.createTime}</td>
+                <td>
+                    <div style="display:flex;gap:12px;">
+                        <button onclick="window.permOpenPermModal(${r.id})" style="border:none;background:none;color:#0066cc;cursor:pointer;font-size:13px;padding:0;">配置权限</button>
+                        <button onclick="window.permDeleteRole(${r.id})" style="border:none;background:none;color:#cc0000;cursor:pointer;font-size:13px;padding:0;">删除</button>
+                    </div>
+                </td>
+            </tr>`).join('');
 
-        // 3. 生成左侧角色列表 HTML
-        const roleListHtml = roleData.map(r => {
-            const isActive = r.id === currentRoleId ? 'background:#e6f7ff; border-right:3px solid #1890ff;' : '';
-            return `
-            <div onclick="switchRole('${r.id}')" style="padding:15px; cursor:pointer; border-bottom:1px solid #eee; transition:all 0.2s; ${isActive}">
-                <div style="font-weight:bold; color:#333;">${r.name}</div>
-                <div style="font-size:12px; color:#999; margin-top:4px;">${r.desc}</div>
-            </div>
-        `;
-        }).join('');
+        const userRows = userData.map((u, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${u.account}</td>
+                <td>${u.name}</td>
+                <td>${u.roles.join(', ')}</td>
+                <td><span style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:12px;background:${u.status==='enabled'?'#e8f5e9':'#ffebee'};color:${u.status==='enabled'?'#2e7d32':'#c62828'};">${u.status==='enabled'?'启用':'禁用'}</span></td>
+                <td>${u.createTime}</td>
+                <td>
+                    <div style="display:flex;gap:12px;">
+                        <button onclick="window.permOpenAssignRole(${u.id})" style="border:none;background:none;color:#0066cc;cursor:pointer;font-size:13px;padding:0;">分配角色</button>
+                        <button onclick="window.permOpenEditUser(${u.id})" style="border:none;background:none;color:#666;cursor:pointer;font-size:13px;padding:0;">编辑</button>
+                        ${u.status==='enabled'
+                            ? `<button onclick="window.permToggleUser(${u.id},'disabled')" style="border:none;background:none;color:#cc0000;cursor:pointer;font-size:13px;padding:0;">禁用</button>`
+                            : `<button onclick="window.permToggleUser(${u.id},'enabled')" style="border:none;background:none;color:#666;cursor:pointer;font-size:13px;padding:0;">启用</button>`}
+                    </div>
+                </td>
+            </tr>`).join('');
 
-        // 4. 辅助函数：检查权限是否被选中
-        const isChecked = (code) => currentRole.perms.includes(code) ? 'checked' : '';
+        const allPermissions = [
+            { module: '凭证管理', perms: [
+                {code:'voucher.query',label:'凭证查询'},{code:'voucher.create',label:'凭证新增'},{code:'voucher.edit',label:'凭证修改'},
+                {code:'voucher.delete',label:'凭证删除'},{code:'voucher.audit',label:'凭证审核'},{code:'voucher.post',label:'凭证记账'},
+                {code:'voucher.void',label:'凭证作废'},{code:'voucher.unvoid',label:'取消作废'},{code:'voucher.mark_error',label:'凭证标错'},
+                {code:'voucher.unmark_error',label:'取消标错'},{code:'voucher.cashier_sign',label:'出纳签字'},{code:'voucher.cashier_unsign',label:'取消出纳签字'},
+                {code:'voucher.column_setting',label:'栏目设置'},{code:'voucher.export',label:'凭证导出'},{code:'voucher.print',label:'凭证打印'},
+                {code:'voucher.save_draft',label:'保存草稿'},{code:'voucher.submit',label:'提交凭证'},{code:'voucher.use_template',label:'引入常用凭证'}
+            ]},
+            { module: '权限管理', perms: [
+                {code:'permission.role.query',label:'角色查询'},{code:'permission.role.add',label:'角色新增'},{code:'permission.role.edit',label:'角色修改'},
+                {code:'permission.role.delete',label:'角色删除'},{code:'permission.role.assign',label:'配置权限'},{code:'permission.user.query',label:'用户查询'},
+                {code:'permission.user.add',label:'用户新增'},{code:'permission.user.edit',label:'用户修改'},{code:'permission.user.assign_role',label:'分配角色'},
+                {code:'permission.user.toggle_status',label:'启用/禁用用户'}
+            ]},
+            { module: '系统管理', perms: [
+                {code:'system.subject.manage',label:'科目设置'},{code:'system.summary.manage',label:'摘要设置'},
+                {code:'system.voucher_prefix.manage',label:'凭证字设置'},{code:'system.log.query',label:'系统日志查看'}
+            ]}
+        ];
+
+        const permTreeHtml = allPermissions.map(group => `
+            <div style="margin-bottom:12px;">
+                <label style="display:flex;align-items:center;padding:6px 0;cursor:pointer;" onclick="window.permToggleModule(this)">
+                    <input type="checkbox" class="perm-mod-chk" style="margin-right:8px;cursor:pointer;" onchange="window.permToggleModuleCheck(this)">
+                    <span style="font-size:13px;color:#333;font-weight:500;">${group.module}</span>
+                </label>
+                <div style="margin-left:30px;margin-top:4px;">
+                    ${group.perms.map(p => `
+                        <div style="display:flex;align-items:center;padding:3px 0;">
+                            <input type="checkbox" class="perm-child-chk" data-code="${p.code}" style="margin-right:8px;cursor:pointer;">
+                            <span style="font-size:13px;color:#666;">${p.label} (${p.code})</span>
+                        </div>`).join('')}
+                </div>
+            </div>`).join('');
+
+        const roleSelectHtml = roleData.map(r => `<div style="display:flex;align-items:center;padding:10px 15px;border-bottom:1px solid #f0f0f0;"><input type="checkbox" class="perm-assign-role" data-role="${r.name}" style="margin-right:10px;cursor:pointer;"><span style="font-size:13px;color:#333;">${r.name}</span></div>`).join('');
 
         contentHTML += `
-        <h2>角色与权限管理 (RBAC) 🛡️</h2>
-        <p style="color: #7f8c8d;">
-            配置系统角色的功能访问权与数据可见性。系统内置 <b>不相容职责互斥(SoD)</b> 检查。
-        </p>
+        <style>
+            .perm-tabs { display:flex; background:#fff; border-bottom:2px solid #e0e0e0; }
+            .perm-tab { padding:15px 30px; cursor:pointer; border:none; background:none; font-size:14px; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px; }
+            .perm-tab.active { color:#333; border-bottom-color:#333; font-weight:500; }
+            .perm-tab-content { display:none; padding:20px; }
+            .perm-tab-content.active { display:block; }
+            .perm-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .perm-table th { padding:12px; text-align:left; font-weight:500; color:#666; border-bottom:1px solid #e0e0e0; background:#fafafa; }
+            .perm-table td { padding:12px; border-bottom:1px solid #f0f0f0; }
+            .perm-table tbody tr:hover { background:#fafafa; }
+            .perm-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+            .perm-modal.show { display:flex; }
+            .perm-modal-box { background:#fff; border-radius:4px; width:600px; max-width:90%; max-height:90vh; overflow:auto; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+            .perm-modal-box.large { width:800px; }
+            .perm-modal-hdr { padding:20px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center; }
+            .perm-modal-bdy { padding:20px; }
+            .perm-modal-ftr { padding:15px 20px; border-top:1px solid #e0e0e0; display:flex; justify-content:flex-end; gap:10px; }
+            .perm-btn { padding:8px 16px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:13px; border-radius:3px; }
+            .perm-btn:hover { background:#f5f5f5; border-color:#bbb; }
+            .perm-btn-primary { background:#333; color:#fff; border-color:#333; }
+            .perm-btn-primary:hover { background:#555; }
+            .perm-fgroup { margin-bottom:20px; }
+            .perm-flabel { display:block; margin-bottom:8px; font-size:13px; color:#666; }
+            .perm-finput { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:3px; font-size:13px; }
+            .perm-pager { display:flex; justify-content:flex-end; align-items:center; margin-top:20px; padding-top:15px; border-top:1px solid #e0e0e0; font-size:13px; color:#666; gap:5px; }
+            .perm-page-btn { padding:6px 12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:13px; border-radius:3px; }
+            .perm-page-btn.active { background:#333; color:#fff; border-color:#333; }
+        </style>
 
-        <div style="display:flex; height: 650px; border:1px solid #ddd; border-radius:8px; overflow:hidden; background:white;">
-            
-            <div style="width: 280px; background:#f9f9f9; border-right:1px solid #ddd; display:flex; flex-direction:column;">
-                <div style="padding:15px; border-bottom:1px solid #ddd; background:#fff;">
-                    <button class="btn-primary" style="width:100%;" onclick="alert('新增角色功能待开发')">+ 新增角色</button>
+        <div style="background:#fff; border:1px solid #ddd; border-radius:4px; overflow:hidden;">
+            <div style="padding:20px; border-bottom:1px solid #ddd; background:#fafafa;">
+                <h1 style="font-size:20px; font-weight:500; color:#333; margin:0;">权限管理</h1>
+            </div>
+
+            <div class="perm-tabs">
+                <button class="perm-tab active" onclick="window.permSwitchTab('role', this)">角色管理</button>
+                <button class="perm-tab" onclick="window.permSwitchTab('user', this)">用户管理</button>
+            </div>
+
+            <!-- 角色管理 -->
+            <div id="permRoleTab" class="perm-tab-content active">
+                <div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
+                    <button class="perm-btn perm-btn-primary" onclick="window.permOpenNewRole()">新增角色</button>
                 </div>
-                <div style="flex:1; overflow-y:auto;">
-                    ${roleListHtml}
+                <table class="perm-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">序号</th>
+                            <th style="width:150px;">角色名称</th>
+                            <th style="width:120px;">权限点数量</th>
+                            <th style="width:160px;">创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="permRoleBody">${roleRows}</tbody>
+                </table>
+                <div class="perm-pager">
+                    <span>共 ${roleData.length} 条记录</span>
+                    <button class="perm-page-btn" disabled>上一页</button>
+                    <button class="perm-page-btn active">1</button>
+                    <button class="perm-page-btn" disabled>下一页</button>
                 </div>
             </div>
 
-            <div style="flex:1; padding:25px; overflow-y:auto;">
-                
-                <div style="border-bottom:1px solid #eee; padding-bottom:20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; color:#2c3e50;">正在配置：<span style="color:#2980b9;">${currentRole.name}</span></h3>
-                        <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:13px;">角色ID: ${currentRole.id}</p>
-                    </div>
-                    <div>
-                        <button class="btn-primary" style="background:#e74c3c;" onclick="deleteRole()">删除角色</button>
-                    </div>
+            <!-- 用户管理 -->
+            <div id="permUserTab" class="perm-tab-content">
+                <div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #e0e0e0;">
+                    <button class="perm-btn perm-btn-primary" onclick="window.permOpenNewUser()">新增用户</button>
                 </div>
-
-                <div style="background:#fffbe6; border:1px solid #ffe58f; padding:15px; border-radius:6px; margin-bottom:25px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:10px;">👁️ 数据可见范围 (Data Scope)</label>
-                    <select id="scope-select" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        <option value="all" ${currentRole.scope === 'all' ? 'selected' : ''}>🏢 全公司数据 (适合老板/CFO/审计)</option>
-                        <option value="dept" ${currentRole.scope === 'dept' ? 'selected' : ''}>📂 仅本部门数据 (适合部门经理)</option>
-                        <option value="self" ${currentRole.scope === 'self' ? 'selected' : ''}>👤 仅本人数据 (适合普通员工)</option>
-                    </select>
-                    <div style="font-size:12px; color:#d48806; margin-top:5px;">* 修改此选项将影响该角色用户在报表和列表中看到的数据量。</div>
+                <table class="perm-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">序号</th>
+                            <th style="width:120px;">用户账号</th>
+                            <th style="width:120px;">用户姓名</th>
+                            <th>角色</th>
+                            <th style="width:80px;">状态</th>
+                            <th style="width:160px;">创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="permUserBody">${userRows}</tbody>
+                </table>
+                <div class="perm-pager">
+                    <span>共 ${userData.length} 条记录</span>
+                    <button class="perm-page-btn" disabled>上一页</button>
+                    <button class="perm-page-btn active">1</button>
+                    <button class="perm-page-btn" disabled>下一页</button>
                 </div>
-
-                <h4 style="border-left:4px solid #3498db; padding-left:10px; margin-bottom:15px;">功能模块授权</h4>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                    
-                    <div class="perm-card" style="border:1px solid #eee; padding:15px; border-radius:6px;">
-                        <label style="font-weight:bold; display:block; margin-bottom:10px; color:#2c3e50;">
-                            <input type="checkbox" disabled checked> 📖 账务核算
-                        </label>
-                        <div style="margin-left:20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <label><input type="checkbox" class="perm-chk" value="voucher" ${isChecked('voucher')}> 凭证录入</label>
-                            <label><input type="checkbox" class="perm-chk" value="audit" ${isChecked('audit')}> 凭证审核 <span style="color:red;font-size:10px">(互斥)</span></label>
-                            <label><input type="checkbox" class="perm-chk" value="ledger" ${isChecked('ledger')}> 账簿查询</label>
-                            <label><input type="checkbox" class="perm-chk" value="settlement" ${isChecked('settlement')}> 业务结算</label>
-                        </div>
-                    </div>
-
-                    <div class="perm-card" style="border:1px solid #eee; padding:15px; border-radius:6px;">
-                        <label style="font-weight:bold; display:block; margin-bottom:10px; color:#2c3e50;">
-                            <input type="checkbox" disabled checked> 💰 资金与收付
-                        </label>
-                        <div style="margin-left:20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <label><input type="checkbox" class="perm-chk" value="treasury" ${isChecked('treasury')}> 收付款执行</label>
-                            <label><input type="checkbox" class="perm-chk" value="expense" ${isChecked('expense')}> 费用报销</label>
-                            <label><input type="checkbox" class="perm-chk" value="approval" ${isChecked('approval')}> 资金审批</label>
-                        </div>
-                    </div>
-
-                    <div class="perm-card" style="border:1px solid #eee; padding:15px; border-radius:6px;">
-                        <label style="font-weight:bold; display:block; margin-bottom:10px; color:#2c3e50;">
-                            <input type="checkbox" disabled checked> 🧾 税务管理
-                        </label>
-                        <div style="margin-left:20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <label><input type="checkbox" class="perm-chk" value="invoice" ${isChecked('invoice')}> 销项/进项发票</label>
-                            <label><input type="checkbox" class="perm-chk" value="tax" ${isChecked('tax')}> 纳税申报表</label>
-                        </div>
-                    </div>
-
-                    <div class="perm-card" style="border:1px solid #eee; padding:15px; border-radius:6px;">
-                        <label style="font-weight:bold; display:block; margin-bottom:10px; color:#2c3e50;">
-                            <input type="checkbox" disabled checked> 📊 报表与系统
-                        </label>
-                        <div style="margin-left:20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <label><input type="checkbox" class="perm-chk" value="dashboard" ${isChecked('dashboard')}> 经营仪表盘</label>
-                            <label><input type="checkbox" class="perm-chk" value="report" ${isChecked('report')}> 三大财务报表</label>
-                            
-                            <label><input type="checkbox" class="perm-chk" value="log" ${isChecked('log')}> 操作日志</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px; text-align:right;">
-                    <button class="btn-primary" style="background:#95a5a6; margin-right:10px;" onclick="loadContent('Permission')">重置</button>
-                    <button class="btn-primary" style="background:#27ae60; padding:10px 30px;" onclick="saveRoleConfig('${currentRole.id}')">💾 保存配置</button>
-                </div>
-
             </div>
         </div>
-    `;
+
+        <!-- 新增角色 -->
+        <div id="permNewRoleModal" class="perm-modal">
+            <div class="perm-modal-box">
+                <div class="perm-modal-hdr"><h2 style="font-size:16px;font-weight:500;margin:0;">新增角色</h2><button onclick="window.permCloseModal('permNewRoleModal')" style="border:none;background:none;font-size:24px;color:#999;cursor:pointer;">×</button></div>
+                <div class="perm-modal-bdy">
+                    <div class="perm-fgroup"><label class="perm-flabel">角色名称 <span style="color:#cc0000;">*</span></label><input type="text" class="perm-finput" id="newRoleName" placeholder="请输入角色名称"></div>
+                </div>
+                <div class="perm-modal-ftr">
+                    <button class="perm-btn" onclick="window.permCloseModal('permNewRoleModal')">取消</button>
+                    <button class="perm-btn perm-btn-primary" onclick="window.permSubmitNewRole()">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置权限 -->
+        <div id="permPermModal" class="perm-modal">
+            <div class="perm-modal-box large">
+                <div class="perm-modal-hdr"><h2 id="permPermTitle" style="font-size:16px;font-weight:500;margin:0;">配置权限</h2><button onclick="window.permCloseModal('permPermModal')" style="border:none;background:none;font-size:24px;color:#999;cursor:pointer;">×</button></div>
+                <div class="perm-modal-bdy">
+                    <div style="border:1px solid #e0e0e0;border-radius:3px;padding:15px;max-height:400px;overflow-y:auto;" id="permTreeContainer">${permTreeHtml}</div>
+                </div>
+                <div class="perm-modal-ftr">
+                    <button class="perm-btn" onclick="window.permCloseModal('permPermModal')">取消</button>
+                    <button class="perm-btn perm-btn-primary" onclick="window.permSubmitPermission()">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增用户 -->
+        <div id="permNewUserModal" class="perm-modal">
+            <div class="perm-modal-box">
+                <div class="perm-modal-hdr"><h2 style="font-size:16px;font-weight:500;margin:0;">新增用户</h2><button onclick="window.permCloseModal('permNewUserModal')" style="border:none;background:none;font-size:24px;color:#999;cursor:pointer;">×</button></div>
+                <div class="perm-modal-bdy">
+                    <div class="perm-fgroup"><label class="perm-flabel">用户账号 <span style="color:#cc0000;">*</span></label><input type="text" class="perm-finput" id="newUserAccount" placeholder="请输入手机号"></div>
+                    <div class="perm-fgroup"><label class="perm-flabel">用户姓名 <span style="color:#cc0000;">*</span></label><input type="text" class="perm-finput" id="newUserName" placeholder="请输入用户姓名"></div>
+                    <div class="perm-fgroup"><label class="perm-flabel">邮箱</label><input type="email" class="perm-finput" id="newUserEmail" placeholder="请输入邮箱"></div>
+                    <div class="perm-fgroup"><label class="perm-flabel">密码 <span style="color:#cc0000;">*</span></label><input type="password" class="perm-finput" id="newUserPwd" placeholder="请输入密码"></div>
+                </div>
+                <div class="perm-modal-ftr">
+                    <button class="perm-btn" onclick="window.permCloseModal('permNewUserModal')">取消</button>
+                    <button class="perm-btn perm-btn-primary" onclick="window.permSubmitNewUser()">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分配角色 -->
+        <div id="permAssignRoleModal" class="perm-modal">
+            <div class="perm-modal-box">
+                <div class="perm-modal-hdr"><h2 id="permAssignTitle" style="font-size:16px;font-weight:500;margin:0;">分配角色</h2><button onclick="window.permCloseModal('permAssignRoleModal')" style="border:none;background:none;font-size:24px;color:#999;cursor:pointer;">×</button></div>
+                <div class="perm-modal-bdy">
+                    <div style="border:1px solid #e0e0e0;border-radius:3px;max-height:300px;overflow-y:auto;" id="permRoleSelectList">${roleSelectHtml}</div>
+                </div>
+                <div class="perm-modal-ftr">
+                    <button class="perm-btn" onclick="window.permCloseModal('permAssignRoleModal')">取消</button>
+                    <button class="perm-btn perm-btn-primary" onclick="window.permSubmitAssignRole()">保存</button>
+                </div>
+            </div>
+        </div>
+        `;
+
+        setTimeout(() => {
+            window._permEditingRoleId = null;
+            window._permEditingUserId = null;
+
+            window.permSwitchTab = function(tabName, btn) {
+                document.querySelectorAll('.perm-tab').forEach(t => t.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                document.querySelectorAll('.perm-tab-content').forEach(c => c.classList.remove('active'));
+                const target = tabName === 'role' ? 'permRoleTab' : 'permUserTab';
+                const el = document.getElementById(target);
+                if (el) el.classList.add('active');
+            };
+            window.permCloseModal = function(id) {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('show');
+            };
+            window.permOpenNewRole = function() { document.getElementById('newRoleName').value = ''; document.getElementById('permNewRoleModal').classList.add('show'); };
+            window.permSubmitNewRole = function() {
+                const name = document.getElementById('newRoleName').value.trim();
+                if (!name) { alert('请输入角色名称'); return; }
+                let roles = JSON.parse(sessionStorage.getItem('RoleConfig') || '[]');
+                roles.push({ id: Date.now(), name, permCount: 0, createTime: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), perms: [] });
+                sessionStorage.setItem('RoleConfig', JSON.stringify(roles));
+                window.permCloseModal('permNewRoleModal');
+                loadContent('Permission');
+            };
+            window.permOpenPermModal = function(roleId) {
+                const roles = JSON.parse(sessionStorage.getItem('RoleConfig') || '[]');
+                const role = roles.find(r => r.id === roleId);
+                if (!role) return;
+                window._permEditingRoleId = roleId;
+                document.getElementById('permPermTitle').textContent = '配置权限 - ' + role.name;
+                const perms = role.perms || [];
+                document.querySelectorAll('.perm-child-chk').forEach(cb => { cb.checked = perms.includes(cb.dataset.code); });
+                document.querySelectorAll('.perm-mod-chk').forEach(cb => {
+                    const siblings = cb.closest('div').querySelectorAll('.perm-child-chk');
+                    cb.checked = siblings.length > 0 && Array.from(siblings).every(s => s.checked);
+                });
+                document.getElementById('permPermModal').classList.add('show');
+            };
+            window.permToggleModuleCheck = function(cb) {
+                const siblings = cb.closest('div').querySelectorAll('.perm-child-chk');
+                siblings.forEach(s => { s.checked = cb.checked; });
+            };
+            window.permSubmitPermission = function() {
+                const checked = Array.from(document.querySelectorAll('.perm-child-chk:checked')).map(cb => cb.dataset.code);
+                let roles = JSON.parse(sessionStorage.getItem('RoleConfig') || '[]');
+                const role = roles.find(r => r.id === window._permEditingRoleId);
+                if (role) { role.perms = checked; role.permCount = checked.length; sessionStorage.setItem('RoleConfig', JSON.stringify(roles)); }
+                window.permCloseModal('permPermModal');
+                loadContent('Permission');
+            };
+            window.permDeleteRole = function(roleId) {
+                if (!confirm('确定要删除该角色吗？删除后将无法恢复。')) return;
+                let roles = JSON.parse(sessionStorage.getItem('RoleConfig') || '[]');
+                sessionStorage.setItem('RoleConfig', JSON.stringify(roles.filter(r => r.id !== roleId)));
+                loadContent('Permission');
+            };
+            window.permOpenNewUser = function() {
+                ['newUserAccount','newUserName','newUserEmail','newUserPwd'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+                document.getElementById('permNewUserModal').classList.add('show');
+            };
+            window.permSubmitNewUser = function() {
+                const account = document.getElementById('newUserAccount').value.trim();
+                const name = document.getElementById('newUserName').value.trim();
+                if (!account || !name) { alert('请填写必填项'); return; }
+                let users = JSON.parse(sessionStorage.getItem('UserConfig') || '[]');
+                users.push({ id: Date.now(), account, name, roles: [], status: 'enabled', createTime: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-') });
+                sessionStorage.setItem('UserConfig', JSON.stringify(users));
+                window.permCloseModal('permNewUserModal');
+                loadContent('Permission');
+            };
+            window.permOpenEditUser = function(userId) {
+                window._permEditingUserId = userId;
+                const users = JSON.parse(sessionStorage.getItem('UserConfig') || '[]');
+                const user = users.find(u => u.id === userId);
+                if (!user) return;
+                alert('编辑用户: ' + user.name + '\n（功能已集成，实际项目可弹出编辑表单）');
+            };
+            window.permOpenAssignRole = function(userId) {
+                window._permEditingUserId = userId;
+                const users = JSON.parse(sessionStorage.getItem('UserConfig') || '[]');
+                const user = users.find(u => u.id === userId);
+                if (!user) return;
+                document.getElementById('permAssignTitle').textContent = '分配角色 - ' + user.name;
+                const currentRoles = user.roles || [];
+                document.querySelectorAll('.perm-assign-role').forEach(cb => { cb.checked = currentRoles.includes(cb.dataset.role); });
+                document.getElementById('permAssignRoleModal').classList.add('show');
+            };
+            window.permSubmitAssignRole = function() {
+                const selected = Array.from(document.querySelectorAll('.perm-assign-role:checked')).map(cb => cb.dataset.role);
+                let users = JSON.parse(sessionStorage.getItem('UserConfig') || '[]');
+                const user = users.find(u => u.id === window._permEditingUserId);
+                if (user) { user.roles = selected; sessionStorage.setItem('UserConfig', JSON.stringify(users)); }
+                window.permCloseModal('permAssignRoleModal');
+                loadContent('Permission');
+            };
+            window.permToggleUser = function(userId, newStatus) {
+                const msg = newStatus === 'disabled' ? '确定要禁用该用户吗？禁用后用户将无法登录系统。' : '确定要启用该用户吗？';
+                if (!confirm(msg)) return;
+                let users = JSON.parse(sessionStorage.getItem('UserConfig') || '[]');
+                const user = users.find(u => u.id === userId);
+                if (user) { user.status = newStatus; sessionStorage.setItem('UserConfig', JSON.stringify(users)); }
+                loadContent('Permission');
+            };
+        }, 0);
     }
 
     // =========================================================================
@@ -13038,7 +17909,7 @@ function loadContent(moduleCode, element = null) {
                 id: "",
                 type,
                 priority: index + 1,
-                voucherWord: "结",
+                voucherWord: "转",
                 bookId: "",
                 status: "启用"
             };
@@ -13082,7 +17953,7 @@ function loadContent(moduleCode, element = null) {
                     : `结转成本费用 · 模板${index + 1}`;
             const vatCodes = (tpl.vatBaseCodes || []).join(",");
             const sourceCodes = (tpl.sourceCodes || []).join(",");
-            const wordVal = tpl.voucherWord || "结";
+            const wordVal = tpl.voucherWord || "转";
             return `
                 <div class="closing-template-card" data-type="${type}" data-template-id="${tpl.id || ""}">
                     <div class="closing-card-header">
@@ -13140,294 +18011,471 @@ function loadContent(moduleCode, element = null) {
         };
 
         contentHTML += `
-        <div class="acct-standard-panel">
-            <div class="acct-standard-header">
-                <div>
-                    <h2 style="margin:0; color:#2c3e50;">基础设置 · 会计准则</h2>
-                    <p style="margin:6px 0 0 0; color:#7f8c8d; font-size:13px;">
-                        首次启用财务模块需确认会计准则，系统会自动写入一级科目与常用二级科目模板。
-                    </p>
+        <style>
+            .acsm-container{max-width:1200px;background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1);padding:24px;}
+            .acsm-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid #e8e8e8;margin-bottom:24px;}
+            .acsm-title{font-size:20px;font-weight:600;color:#1a1a1a;}
+            .acsm-section{border:1px solid #e8e8e8;border-radius:4px;padding:20px;margin-bottom:20px;background:#fafafa;}
+            .acsm-sec-title{font-size:16px;font-weight:600;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #d9d9d9;color:#1a1a1a;}
+            .acsm-radio-group{display:flex;gap:30px;margin-bottom:16px;}
+            .acsm-radio-item{display:flex;align-items:center;gap:8px;cursor:pointer;}
+            .acsm-radio-item input{width:16px;height:16px;cursor:pointer;}
+            .acsm-radio-item label{font-size:15px;font-weight:500;cursor:pointer;}
+            .acsm-info-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;}
+            .acsm-info-label{font-weight:500;min-width:80px;color:#666;}
+            .acsm-info-value{color:#1a1a1a;flex:1;}
+            .acsm-link-btn{color:#1890ff;text-decoration:none;border:1px solid #1890ff;padding:4px 12px;border-radius:4px;font-size:13px;}
+            .acsm-setting-row{display:flex;align-items:center;gap:15px;margin-bottom:20px;}
+            .acsm-setting-label{font-weight:500;min-width:130px;color:#666;font-size:14px;}
+            .acsm-form-select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;min-width:120px;background:#fff;}
+            .acsm-code-group{display:flex;align-items:center;gap:10px;}
+            .acsm-code-input{width:60px;padding:6px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:14px;}
+            .acsm-code-sep{color:#999;font-weight:bold;}
+            .acsm-level-label{font-size:12px;color:#999;text-align:center;margin-top:4px;}
+            .acsm-warn-box{background:#fff7e6;border:1px solid #ffc53d;border-left:4px solid #fa8c16;padding:14px;border-radius:4px;margin-bottom:20px;display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#d46b08;}
+            .acsm-voucher-list{display:flex;flex-direction:column;gap:10px;}
+            .acsm-voucher-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:#fff;border:1px solid #e8e8e8;border-radius:4px;}
+            .acsm-voucher-name{font-weight:500;color:#1a1a1a;margin-bottom:4px;}
+            .acsm-voucher-rule{font-size:13px;color:#666;margin-top:4px;display:flex;align-items:center;gap:6px;}
+            .acsm-rule-prefix{color:#999;}
+            .acsm-btn{padding:7px 16px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#333;font-size:14px;cursor:pointer;}
+            .acsm-btn:hover{border-color:#1890ff;color:#1890ff;}
+            .acsm-btn:disabled{opacity:.5;cursor:not-allowed;}
+            .acsm-btn-primary{background:#1890ff;border-color:#1890ff;color:#fff;}
+            .acsm-btn-primary:hover{background:#40a9ff;border-color:#40a9ff;color:#fff;}
+            .acsm-form-actions{display:flex;gap:12px;padding-top:24px;border-top:1px solid #e8e8e8;justify-content:flex-end;margin-top:24px;}
+            /* 弹窗 */
+            .acsm-modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+            .acsm-modal-overlay.active{display:flex;}
+            .acsm-modal{background:#fff;border-radius:8px;width:90%;max-width:900px;max-height:80vh;display:flex;flex-direction:column;}
+            .acsm-modal-hdr{padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;}
+            .acsm-modal-title{font-size:18px;font-weight:600;}
+            .acsm-modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#999;}
+            .acsm-modal-close:hover{color:#333;}
+            .acsm-modal-body{padding:24px;flex:1;overflow:hidden;display:flex;flex-direction:column;}
+            .acsm-dual{display:flex;gap:20px;flex:1;min-height:400px;}
+            .acsm-list-panel{flex:1;border:1px solid #d9d9d9;border-radius:4px;display:flex;flex-direction:column;}
+            .acsm-list-hdr{padding:12px;border-bottom:1px solid #e8e8e8;background:#fafafa;font-weight:600;}
+            .acsm-search-box{padding:12px;border-bottom:1px solid #e8e8e8;}
+            .acsm-search-input{width:100%;padding:7px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
+            .acsm-list-content{flex:1;overflow-y:auto;padding:8px;}
+            .acsm-list-item{padding:8px 12px;border:1px solid transparent;border-radius:4px;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+            .acsm-list-item:hover{background:#f0f0f0;}
+            .acsm-list-item.selected{background:#e6f7ff;border-color:#1890ff;}
+            .acsm-list-item.dragging{opacity:.5;}
+            .acsm-arrow-btns{display:flex;flex-direction:column;gap:10px;justify-content:center;}
+            .acsm-arrow-btn{padding:10px 16px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:18px;}
+            .acsm-arrow-btn:hover{border-color:#1890ff;color:#1890ff;}
+            .acsm-modal-tips{padding:12px;margin-top:12px;background:#f0f0f0;border-radius:4px;font-size:13px;color:#666;}
+            .acsm-modal-ftr{padding:16px 24px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:12px;}
+        </style>
+        <div class="acsm-container">
+            <div class="acsm-header">
+                <h1 class="acsm-title">会计设置</h1>
+            </div>
+
+            <!-- 会计准则选择 -->
+            <div class="acsm-section">
+                <div class="acsm-sec-title">会计准则选择</div>
+                <div class="acsm-radio-group">
+                    <div class="acsm-radio-item">
+                        <input type="radio" id="standard-small" name="acct-standard" value="small" ${standard === "small" || !standard ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
+                        <label for="standard-small">小企业会计准则</label>
+                    </div>
+                    <div class="acsm-radio-item">
+                        <input type="radio" id="standard-enterprise" name="acct-standard" value="enterprise" ${standard === "enterprise" ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
+                        <label for="standard-enterprise">企业会计准则</label>
+                    </div>
                 </div>
-                ${lockTag}
-            </div>
-            <div class="acct-standard-status">当前准则：<strong>${standardText}</strong></div>
-
-            <div class="acct-standard-group" style="margin-top:16px;">
-                <input type="radio" id="standard-small" name="acct-standard" value="small" ${standard === "small" ? "checked" : ""} ${locked ? "disabled" : ""}>
-                <label class="acct-standard-card" for="standard-small">
-                    <h4>《小企业会计准则》</h4>
-                    <p>适合大多数中小型物流/货运企业，科目数量精简，上手更快。</p>
-                    <div class="acct-standard-badge">推荐 · 轻量级科目体系</div>
-                </label>
-
-                <input type="radio" id="standard-enterprise" name="acct-standard" value="enterprise" ${standard === "enterprise" ? "checked" : ""} ${locked ? "disabled" : ""}>
-                <label class="acct-standard-card" for="standard-enterprise">
-                    <h4>《企业会计准则》</h4>
-                    <p>适合大型集团，科目体系更全面且严谨，支持复杂核算场景。</p>
-                    <div class="acct-standard-badge">全面 · 扩展性强</div>
-                </label>
-            </div>
-
-            <div style="margin-top:18px; display:flex; align-items:center; gap:12px;">
-                <button class="btn-primary" style="padding:8px 24px;" onclick="applyAccountingStandardSetting()" ${locked ? "disabled" : ""}>保存设置</button>
-                <span style="font-size:12px; color:#95a5a6;">提示：一旦产生凭证数据，将锁定准则，不可更改。</span>
+                <div class="acsm-info-row">
+                    <span class="acsm-info-label">准则版本：</span>
+                    <span class="acsm-info-value" id="acsm-standard-version">${standard === "enterprise" ? "企业会计准则（2006版及后续修订）" : "小企业会计准则（2013版）"}</span>
+                    <a href="javascript:void(0)" class="acsm-link-btn" onclick="window.acsmShowStandardInfo()">查看准则说明</a>
+                </div>
+                <div class="acsm-info-row">
+                    <span class="acsm-info-label">适用范围：</span>
+                    <span class="acsm-info-value" id="acsm-standard-scope">${standard === "enterprise" ? "适用于所有企业，上市公司强制执行" : "适用于符合《中小企业划型标准》规定的小企业"}</span>
+                </div>
+                <div class="acsm-info-row" style="margin-top:6px;">
+                    <span id="acsm-standard-diff" style="font-size:12px;color:#666;line-height:1.7;">
+                        ${standard === "enterprise"
+                            ? '<span style="color:#1890ff;font-weight:500;">企业准则关键特征：</span>所有者权益 <b>4xxx</b>（实收资本4001、资本公积4002）&nbsp;·&nbsp;损益类 <b>6xxx</b>（主营收入6001、成本6401、费用6601~6603）&nbsp;·&nbsp;存货分细科目（1403原材料/1405库存商品等）&nbsp;·&nbsp;科目约90个'
+                            : '<span style="color:#52c41a;font-weight:500;">小企业准则关键特征：</span>所有者权益 <b>3xxx</b>（实收资本3001、资本公积3002）&nbsp;·&nbsp;损益类 <b>5xxx</b>（主营收入5001、成本5401、费用5601~5603）&nbsp;·&nbsp;存货合并为 <b>1401存货</b>&nbsp;·&nbsp;科目约55个，简化核算'
+                        }
+                    </span>
+                </div>
+                ${locked ? '<div style="color:#e67e22;font-size:13px;margin-top:8px;">🔒 已产生凭证数据，准则已锁定不可更改。</div>' : ''}
+                ${!locked ? `<div style="margin-top:16px;display:flex;align-items:center;gap:12px;"><button class="acsm-btn acsm-btn-primary" onclick="applyAccountingStandardSetting()" style="min-width:140px;padding:8px 20px;">确认保存准则</button><span style="color:#888;font-size:12px;">保存后将更新会计科目列表</span></div>` : ''}
             </div>
 
-            <div class="subject-code-setting">
-                <div style="font-weight:bold; color:#2c3e50;">科目编码级次设置</div>
-                <div class="setting-row">
-                    <label>设置科目级次</label>
-                    <select id="subject-level-count" onchange="updateSubjectCodeInputs()">
-                        <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2</option>
-                        <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3</option>
-                        <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4</option>
-                        <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5</option>
+            <!-- 科目设置 -->
+            <div class="acsm-section">
+                <div class="acsm-sec-title">科目设置</div>
+                <div class="acsm-setting-row">
+                    <label class="acsm-setting-label">设置科目级次：</label>
+                    <select id="subject-level-count" class="acsm-form-select" onchange="updateSubjectCodeInputs()">
+                        <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2 级</option>
+                        <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3 级</option>
+                        <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4 级</option>
+                        <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5 级</option>
                     </select>
-                    <label>设置科目编码长度</label>
-                    <input id="subject-length-1" type="number" min="1" value="${subjectSetting.lengths[0] || 4}">
-                    <input id="subject-length-2" type="number" min="1" value="${subjectSetting.lengths[1] || 2}">
-                    <input id="subject-length-3" type="number" min="1" value="${subjectSetting.lengths[2] || 2}">
-                    <input id="subject-length-4" type="number" min="1" value="${subjectSetting.lengths[3] || 2}">
-                    <input id="subject-length-5" type="number" min="1" value="${subjectSetting.lengths[4] || 2}">
-                    <button class="btn-primary" onclick="saveSubjectCodeSetting()">保存设置</button>
                 </div>
-                <div id="subject-code-example" style="margin-top:8px; font-size:12px; color:#95a5a6;">
-                    示例：级次=3，长度=4/2/2，对应 1001 → 100101 → 10010101。
+                <div class="acsm-setting-row">
+                    <label class="acsm-setting-label">设置科目编码长度：</label>
+                    <div class="acsm-code-group">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <input id="subject-length-1" type="number" min="1" value="${subjectSetting.lengths[0] || 4}" class="acsm-code-input">
+                            <span class="acsm-level-label">一级</span>
+                        </div>
+                        <span class="acsm-code-sep">-</span>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <input id="subject-length-2" type="number" min="1" value="${subjectSetting.lengths[1] || 2}" class="acsm-code-input">
+                            <span class="acsm-level-label">二级</span>
+                        </div>
+                        <span class="acsm-code-sep">-</span>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <input id="subject-length-3" type="number" min="1" value="${subjectSetting.lengths[2] || 2}" class="acsm-code-input">
+                            <span class="acsm-level-label">三级</span>
+                        </div>
+                        <span class="acsm-code-sep">-</span>
+                        <div id="acsm-l4-wrap" style="display:flex;flex-direction:column;align-items:center;gap:4px;${subjectSetting.levels < 4 ? 'display:none;' : ''}">
+                            <input id="subject-length-4" type="number" min="1" value="${subjectSetting.lengths[3] || 2}" class="acsm-code-input">
+                            <span class="acsm-level-label">四级</span>
+                        </div>
+                        <input id="subject-length-5" type="number" min="1" value="${subjectSetting.lengths[4] || 2}" style="display:none;">
+                    </div>
+                </div>
+                <div style="margin-top:8px;">
+                    <button class="acsm-btn acsm-btn-primary" onclick="saveSubjectCodeSetting()">保存科目设置</button>
                 </div>
             </div>
 
-            <div class="summary-template-panel">
-                <div class="summary-template-header">
-                    <div>
-                        <div class="summary-template-title">凭证摘要模板设置中心</div>
-                        <div class="summary-template-tip">维护常用摘要，凭证录入时可快速选择。</div>
-                    </div>
-                    <div class="summary-template-actions">
-                        <button class="btn-primary summary-template-action" onclick="addVoucherSummaryTemplateRow()">+ 新增模板</button>
-                        <button class="btn-primary summary-template-action" onclick="resetVoucherSummaryTemplates()">恢复默认</button>
-                        <button class="btn-primary summary-template-action summary-template-save" onclick="saveVoucherSummaryTemplates()">保存设置</button>
-                    </div>
+            <!-- 凭证摘要 -->
+            <div class="acsm-section">
+                <div class="acsm-sec-title">凭证摘要</div>
+                <div class="acsm-warn-box">
+                    <span>⚠</span>
+                    <span>设置不同凭证摘要，结算对应凭证的摘要也会跟随变化。</span>
                 </div>
-                <div class="summary-template-table-wrap">
-                    <table class="data-table summary-template-table">
-                        <thead>
-                            <tr>
-                                <th style="width:90px;">编号</th>
-                                <th>常用摘要</th>
-                                <th style="width:90px;">助记码</th>
-                                <th style="width:90px;">类别</th>
-                                <th style="width:70px;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summary-template-body">${summaryTemplateRows}</tbody>
-                    </table>
-                </div>
-                <div class="summary-template-note">提示：凭证录入的摘要输入框支持下拉提示。</div>
-            </div>
-
-            <div class="report-template-panel closing-template-panel">
-                <div class="report-template-header">
-                    <div>
-                        <div class="report-template-title">期末结转凭证模板设置</div>
-                        <div class="report-template-tip">配置税金、收入、成本费用三类模板，结转时按优先级自动生成凭证。</div>
+                <div class="acsm-voucher-list">
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">员工欠款单凭证摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('员工欠款单凭证摘要')">规则设置</button>
                     </div>
-                    <div class="report-template-actions">
-                        <button class="btn-primary" onclick="resetClosingTemplates()">恢复默认</button>
-                        <button class="btn-primary" onclick="saveClosingTemplates()">保存设置</button>
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">客户对账单凭证摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('客户对账单凭证摘要')">规则设置</button>
                     </div>
-                </div>
-                <div style="margin-top:20px;">
-                    <div class="tax-accrual-panel">
-                        <div class="tax-accrual-header">
-                            <div class="tax-accrual-title">计提税金及附加设置</div>
-                            ${taxLocked ? `<div class="tax-accrual-lock">期间已结账 · 设置只读</div>` : ""}
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">网点对账单凭证摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('网点对账单凭证摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">收款单凭证摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 付款单位 + 收款时间4位年 + 结算时间4位年</span></div>
                         </div>
-                        <div class="tax-accrual-desc">
-                            模块概述：本模块用于预设每月期末处理时“税金及附加”的计算规则。系统将根据此处配置的比例、基数科目，在期末自动计算税额并生成会计凭证。
-                        </div>
-
-                        <div class="tax-info-grid">
-                            <div class="tax-info-item">
-                                <label>账套名称</label>
-                                ${renderBookSelect(closingTaxTemplates[0]?.bookId || "", "tax-book-select", taxLocked)}
-                            </div>
-                            <div class="tax-info-item">
-                                <label>模板名称</label>
-                                <input type="text" value="${closingTaxTemplates[0]?.name || "计提税金及附加-模板1"}" ${taxLocked ? "disabled" : ""} placeholder="模板名称">
-                            </div>
-                            <div class="tax-info-item">
-                                <label>凭证字</label>
-                                <select ${taxLocked ? "disabled" : ""}>
-                                    <option value="记">记</option>
-                                    <option value="结">结</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="tax-rule-card">
-                            <div class="tax-rule-header">
-                                <div style="font-weight:600; color:#374151;">核心规则配置</div>
-                                <div class="tax-rule-actions">
-                                    <label style="font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px;">
-                                        <input type="checkbox" ${taxLocked ? "checked" : ""} onchange="toggleTaxAccrualLock(this)">
-                                        反结转锁定
-                                    </label>
-                                    <button class="btn-primary btn-ghost" onclick="addTaxAccrualRuleRow()" ${taxLocked ? "disabled" : ""}>+ 新增行</button>
-                                    <button class="btn-primary btn-ghost" onclick="validateTaxAccrualRules()">公式验证</button>
-                                </div>
-                            </div>
-                            <table class="tax-rule-table">
-                                <thead>
-                                    <tr>
-                                        <th>税种名称</th>
-                                        <th>计算基数科目</th>
-                                        <th>取数方向</th>
-                                        <th>计提比例(%)</th>
-                                        <th>借方科目</th>
-                                        <th>贷方科目</th>
-                                        <th>辅助核算项</th>
-                                        <th style="width:70px;">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tax-accrual-body">
-                                    ${taxAccrualRowsHtml || ""}
-                                </tbody>
-                            </table>
-                            <div class="tax-rule-footer">
-                                <button class="btn-primary" onclick="saveTaxAccrualRules()" ${taxLocked ? "disabled" : ""}>保存设置</button>
-                            </div>
-                        </div>
-
-                        <div class="tax-preview">
-                            <div class="tax-preview-title">凭证预览</div>
-                            <div class="tax-preview-grid">
-                                <div class="tax-preview-box">
-                                    <div style="font-weight:600; margin-bottom:6px;">借方</div>
-                                    <div id="tax-preview-debit">税金及附加（损益类科目）</div>
-                                </div>
-                                <div class="tax-preview-box">
-                                    <div style="font-weight:600; margin-bottom:6px;">贷方</div>
-                                    <div id="tax-preview-credit">应交税费-各明细税种</div>
-                                </div>
-                            </div>
-                            <div class="tax-preview-note">
-                                计算公式：计提税金 = （基数科目贷方发生额 - 基数科目借方发生额） × 计提比例
-                                <br>取数引擎：系统读取会计期间内指定增值税科目（如 2221）的累计发生额。
-                                <br>凭证分录：借：税金及附加；贷：应交税费-各明细税种。
-                            </div>
-                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('收款单凭证摘要')">规则设置</button>
                     </div>
-                </div>
-                <div class="closing-template-group">
-                    <div class="closing-template-group-header">
-                        <div class="closing-template-group-title">② 结转收入</div>
-                        <button class="btn-primary template-row-btn" onclick="addClosingTemplate('income')">+ 新增模板</button>
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">付款单凭证摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 收款时间4位年 + 结算时间4位年</span></div>
+                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('付款单凭证摘要')">规则设置</button>
                     </div>
-                    <div class="closing-template-grid" id="closing-template-income">
-                        ${closingIncomeTemplates.map((tpl, idx) => buildClosingCard(tpl, "income", idx)).join("")}
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">发车批次挂账摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 车牌号</span></div>
+                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('发车批次挂账摘要')">规则设置</button>
                     </div>
-                </div>
-                <div class="closing-template-group">
-                    <div class="closing-template-group-header">
-                        <div class="closing-template-group-title">③ 结转成本费用</div>
-                        <button class="btn-primary template-row-btn" onclick="addClosingTemplate('cost')">+ 新增模板</button>
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">提货挂次挂账摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('提货挂次挂账摘要')">规则设置</button>
                     </div>
-                    <div class="closing-template-grid" id="closing-template-cost">
-                        ${closingCostTemplates.map((tpl, idx) => buildClosingCard(tpl, "cost", idx)).join("")}
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">短驳挂次挂账摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('短驳挂次挂账摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">送货挂次挂账摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('送货挂次挂账摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">收据凭证摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('收据凭证摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div><div class="acsm-voucher-name">投销单凭证摘要</div></div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('投销单凭证摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">充值凭证摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1 交易流 + 交易流水号 + 固定文字2 充值流 + 充值流水号</span></div>
+                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('充值凭证摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">提现凭证摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1 交易流 + 交易流水号 + 固定文字2 提现流 + 提现流水号</span></div>
+                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('提现凭证摘要')">规则设置</button>
+                    </div>
+                    <div class="acsm-voucher-item">
+                        <div>
+                            <div class="acsm-voucher-name">继货挂账凭证摘要</div>
+                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1【继现】+ 交易流水号 + 固定文字2 提现流 + 提现流水号</span></div>
+                        </div>
+                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('继货挂账凭证摘要')">规则设置</button>
                     </div>
                 </div>
             </div>
 
-            <div class="report-template-panel">
-                <div class="report-template-header">
-                    <div>
-                        <div class="report-template-title">利润表设置</div>
-                        <div class="report-template-tip">配置利润损益表的项目与科目组成，保存后联动报表展示。</div>
-                    </div>
-                    <div class="report-template-actions">
-                        <button class="btn-primary template-row-btn" onclick="addIncomeTemplateRow()">+</button>
-                        <button class="btn-primary" onclick="saveIncomeStatementTemplate()">保存设置</button>
-                    </div>
-                </div>
-                <div class="report-template-table-wrap">
-                    <table class="data-table report-template-table report-template-table--income">
-                        <thead>
-                            <tr>
-                                <th style="width:60px;">序号</th>
-                                <th style="width:60px;">操作</th>
-                                <th style="min-width:180px;">项目名称</th>
-                                <th style="width:200px;">科目组成</th>
-                                <th style="width:90px;">运算符号</th>
-                                <th style="width:90px;">顺序</th>
-                                <th style="width:110px;">单吨平均值</th>
-                                <th style="width:110px;">单方平均值</th>
-                                <th style="width:110px;">单车平均值</th>
-                                <th style="width:110px;">占比基数</th>
-                            </tr>
-                        </thead>
-                        <tbody id="income-template-body">${incomeTemplateRows}</tbody>
-                    </table>
-                </div>
+            <div class="acsm-form-actions">
+                <button class="acsm-btn" onclick="loadContent('AccountingStandardSetting')">取消</button>
+                <button class="acsm-btn acsm-btn-primary" onclick="applyAccountingStandardSetting()" ${locked ? "disabled" : ""}>保存设置</button>
             </div>
+        </div>
 
-            <div class="report-template-panel">
-                <div class="report-template-header">
-                    <div>
-                        <div class="report-template-title">现金流量表设置</div>
-                        <div class="report-template-tip">配置现金流量表项目，保存后联动报表展示。</div>
-                    </div>
-                    <div class="report-template-actions">
-                        <button class="btn-primary template-row-btn" onclick="addCashflowTemplateRow()">+</button>
-                        <button class="btn-primary" onclick="saveCashflowTemplate()">保存设置</button>
-                    </div>
+        <!-- 凭证摘要配置弹窗 -->
+        <div class="acsm-modal-overlay" id="acsmSummaryModal">
+            <div class="acsm-modal">
+                <div class="acsm-modal-hdr">
+                    <div class="acsm-modal-title" id="acsmModalTitle">凭证摘要配置</div>
+                    <button class="acsm-modal-close" onclick="acsmCloseSummaryModal()">&times;</button>
                 </div>
-                <div class="report-template-table-wrap">
-                    <table class="data-table report-template-table">
-                        <thead>
-                            <tr>
-                                <th style="width:60px;">序号</th>
-                                <th style="width:60px;">操作</th>
-                                <th>项目名称</th>
-                                <th style="width:180px;">计算方式</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cashflow-template-body">${cashflowTemplateRows}</tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="report-template-panel">
-                <div class="report-template-header">
-                    <div>
-                        <div class="report-template-title">资产负债表设置</div>
-                        <div class="report-template-tip">配置资产负债表项目及科目组成，保存后联动报表展示。</div>
+                <div class="acsm-modal-body">
+                    <div class="acsm-dual">
+                        <div class="acsm-list-panel">
+                            <div class="acsm-list-hdr">维度列</div>
+                            <div class="acsm-search-box"><input type="text" class="acsm-search-input" placeholder="🔍 搜索" id="acsmLeftSearch" oninput="acsmSearchLeft()"></div>
+                            <div class="acsm-list-content" id="acsmLeftList">
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点名称</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点代码</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点部类</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>经办人</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>经办人部门</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>制单人</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>单据号</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>线路</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>方向</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>付款单位</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>收款时间4位年</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>结算时间4位年</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>车牌号</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>交易流水号</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>充值流水号</span></div>
+                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>提现流水号</span></div>
+                            </div>
+                        </div>
+                        <div class="acsm-arrow-btns">
+                            <button class="acsm-arrow-btn" onclick="acsmMoveToRight()">&#62;</button>
+                            <button class="acsm-arrow-btn" onclick="acsmMoveToLeft()">&#60;</button>
+                        </div>
+                        <div class="acsm-list-panel">
+                            <div class="acsm-list-hdr">显示列（共<span id="acsmRightCount">0</span>项）</div>
+                            <div class="acsm-search-box"><input type="text" class="acsm-search-input" placeholder="🔍 搜索" id="acsmRightSearch" oninput="acsmSearchRight()"></div>
+                            <div class="acsm-list-content" id="acsmRightList"></div>
+                        </div>
                     </div>
-                    <div class="report-template-actions">
-                        <button class="btn-primary template-row-btn" onclick="addBalanceTemplateRow()">+</button>
-                        <button class="btn-primary" onclick="saveBalanceSheetTemplate()">保存设置</button>
-                    </div>
+                    <div class="acsm-modal-tips">双击字段，可快速移至右侧（显示列）。拖拽字段，可上下调整显示顺序。</div>
                 </div>
-                <div class="report-template-table-wrap">
-                    <table class="data-table report-template-table">
-                        <thead>
-                            <tr>
-                                <th style="width:60px;">序号</th>
-                                <th style="width:60px;">操作</th>
-                                <th>项目名称</th>
-                                <th style="width:140px;">类型</th>
-                                <th style="width:160px;">科目组成</th>
-                                <th style="width:90px;">运算符号</th>
-                                <th style="width:160px;">科目组成</th>
-                                <th style="width:90px;">运算符号</th>
-                            </tr>
-                        </thead>
-                        <tbody id="balance-template-body">${balanceTemplateRows}</tbody>
-                    </table>
+                <div class="acsm-modal-ftr">
+                    <button class="acsm-btn" onclick="acsmRestoreDefault()">恢复默认</button>
+                    <button class="acsm-btn acsm-btn-primary" onclick="acsmConfirmModal()">确定</button>
+                    <button class="acsm-btn" onclick="acsmCloseSummaryModal()">取消</button>
                 </div>
             </div>
         </div>
+
         `;
         setTimeout(() => {
+            window.acsmOnStandardChange = function(radio) {
+                if (!radio) return;
+                const isEnterprise = radio.value === 'enterprise';
+                const versionEl = document.getElementById('acsm-standard-version');
+                const scopeEl = document.getElementById('acsm-standard-scope');
+                const diffEl = document.getElementById('acsm-standard-diff');
+                if (versionEl) versionEl.textContent = isEnterprise ? '企业会计准则（2006版及后续修订）' : '小企业会计准则（2013版）';
+                if (scopeEl) scopeEl.textContent = isEnterprise ? '适用于所有企业，上市公司强制执行' : '适用于符合《中小企业划型标准》规定的小企业';
+                if (diffEl) {
+                    if (isEnterprise) {
+                        diffEl.innerHTML = '<span style="color:#1890ff;font-weight:500;">企业准则关键特征：</span>所有者权益 <b>4xxx</b>（实收资本4001、资本公积4002）&nbsp;·&nbsp;损益类 <b>6xxx</b>（主营收入6001、成本6401、费用6601~6603）&nbsp;·&nbsp;存货分细科目（1403原材料/1405库存商品等）&nbsp;·&nbsp;科目约90个';
+                    } else {
+                        diffEl.innerHTML = '<span style="color:#52c41a;font-weight:500;">小企业准则关键特征：</span>所有者权益 <b>3xxx</b>（实收资本3001、资本公积3002）&nbsp;·&nbsp;损益类 <b>5xxx</b>（主营收入5001、成本5401、费用5601~5603）&nbsp;·&nbsp;存货合并为 <b>1401存货</b>&nbsp;·&nbsp;科目约55个，简化核算';
+                    }
+                }
+            };
+            window.acsmShowStandardInfo = function() {
+                const sel = document.querySelector('input[name="acct-standard"]:checked');
+                const isEnterprise = sel && sel.value === 'enterprise';
+                const html = `
+                <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;" id="acsmInfoModal">
+                <div style="background:#fff;border-radius:8px;width:860px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.2);">
+                    <div style="padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:16px;font-weight:600;">会计准则对比说明</span>
+                        <button onclick="document.getElementById('acsmInfoModal').remove()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#666;">×</button>
+                    </div>
+                    <div style="padding:24px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#fafafa;">
+                                    <th style="padding:10px 12px;border:1px solid #e8e8e8;text-align:left;width:22%;">对比维度</th>
+                                    <th style="padding:10px 12px;border:1px solid #e8e8e8;text-align:left;background:#f6ffed;color:#389e0d;">小企业会计准则（2013）</th>
+                                    <th style="padding:10px 12px;border:1px solid #e8e8e8;text-align:left;background:#e6f7ff;color:#096dd9;">企业会计准则（2006+）</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">适用对象</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">符合《中小企业划型标准》的小型企业</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">所有企业；上市公司、国有大型企业强制执行</td>
+                                </tr>
+                                <tr style="background:#fafafa;">
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">科目数量</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">约55个一级科目，简化核算</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">约90个一级科目，覆盖复杂业务</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;color:#e67e22;">⭐ 所有者权益编码</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b style="color:#389e0d;">3xxx</b>（3001实收资本、3002资本公积、3101盈余公积、3103本年利润）</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b style="color:#096dd9;">4xxx</b>（4001实收资本、4002资本公积、4101盈余公积、4103本年利润）</td>
+                                </tr>
+                                <tr style="background:#fafafa;">
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;color:#e67e22;">⭐ 损益类编码</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b style="color:#389e0d;">5xxx</b>（5001主营业务收入、5401主营业务成本、5602管理费用、5603财务费用）</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b style="color:#096dd9;">6xxx</b>（6001主营业务收入、6401主营业务成本、6602管理费用、6603财务费用）</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">成本类编码</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b>4xxx</b>（4001生产成本、4101制造费用）</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b>5xxx</b>（5001生产成本、5101制造费用、5201劳务成本、5301研发支出）</td>
+                                </tr>
+                                <tr style="background:#fafafa;">
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">存货核算</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;"><b>1401存货</b>（合并核算，不分原材料/商品等）</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">1401材料采购 / 1403原材料 / 1405库存商品 / 1406发出商品 等分细核算</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">收入科目</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">5001主营业务收入 + 5051其他业务收入（合并简化）</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">6001主营业务收入 + 6051其他业务收入（分开核算）</td>
+                                </tr>
+                                <tr style="background:#fafafa;">
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">金融工具</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">无交易性金融资产（1101）等复杂金融科目</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">有1101交易性金融资产、1511可供出售金融资产、2002交易性金融负债等</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">所得税</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">5901所得税费用；无递延所得税资产/负债</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">6801所得税费用；有1811递延所得税资产、2701递延所得税负债</td>
+                                </tr>
+                                <tr style="background:#fafafa;">
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;font-weight:500;">报表要求</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">资产负债表 + 利润表（简化版），无现金流量表要求</td>
+                                    <td style="padding:10px 12px;border:1px solid #e8e8e8;">资产负债表 + 利润表 + 现金流量表 + 所有者权益变动表（完整版）</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top:16px;padding:12px 16px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:13px;color:#614700;">
+                            <b>切换注意事项：</b>两套准则的所有者权益和损益科目编码<b>完全不同</b>，切换准则后系统将载入对应的标准科目表。如已有凭证数据，准则将被锁定，不允许再切换。
+                        </div>
+                    </div>
+                </div>
+                </div>`;
+                document.body.insertAdjacentHTML('beforeend', html);
+            };
+            window.acsmOpenSummaryModal = function(title) {
+                const titleEl = document.getElementById('acsmModalTitle');
+                const el = document.getElementById('acsmSummaryModal');
+                if (titleEl) titleEl.textContent = title;
+                if (el) el.classList.add('active');
+            };
+            window.acsmCloseSummaryModal = function() {
+                const el = document.getElementById('acsmSummaryModal');
+                if (el) el.classList.remove('active');
+            };
+            window.acsmToggleSelect = function(item) {
+                if (!item) return;
+                item.classList.toggle('selected');
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = !cb.checked;
+            };
+            function acsmUpdateRightCount() {
+                const rl = document.getElementById('acsmRightList');
+                const el = document.getElementById('acsmRightCount');
+                if (el && rl) el.textContent = rl.querySelectorAll('.acsm-list-item').length;
+            }
+            window.acsmMoveToRight = function() {
+                const ll = document.getElementById('acsmLeftList');
+                const rl = document.getElementById('acsmRightList');
+                if (!ll || !rl) return;
+                ll.querySelectorAll('.acsm-list-item.selected').forEach(item => {
+                    const clone = item.cloneNode(true);
+                    clone.classList.remove('selected');
+                    clone.querySelector('input').checked = false;
+                    clone.setAttribute('draggable', 'true');
+                    clone.onclick = function() { window.acsmToggleSelect(this); };
+                    rl.appendChild(clone);
+                    item.remove();
+                });
+                acsmUpdateRightCount();
+            };
+            window.acsmMoveToLeft = function() {
+                const ll = document.getElementById('acsmLeftList');
+                const rl = document.getElementById('acsmRightList');
+                if (!ll || !rl) return;
+                rl.querySelectorAll('.acsm-list-item.selected').forEach(item => {
+                    const clone = item.cloneNode(true);
+                    clone.classList.remove('selected');
+                    clone.querySelector('input').checked = false;
+                    clone.removeAttribute('draggable');
+                    clone.onclick = function() { window.acsmToggleSelect(this); };
+                    ll.appendChild(clone);
+                    item.remove();
+                });
+                acsmUpdateRightCount();
+            };
+            window.acsmSearchLeft = function() {
+                const kw = (document.getElementById('acsmLeftSearch')?.value || '').toLowerCase();
+                document.getElementById('acsmLeftList')?.querySelectorAll('.acsm-list-item').forEach(item => {
+                    item.style.display = item.textContent.toLowerCase().includes(kw) ? 'flex' : 'none';
+                });
+            };
+            window.acsmSearchRight = function() {
+                const kw = (document.getElementById('acsmRightSearch')?.value || '').toLowerCase();
+                document.getElementById('acsmRightList')?.querySelectorAll('.acsm-list-item').forEach(item => {
+                    item.style.display = item.textContent.toLowerCase().includes(kw) ? 'flex' : 'none';
+                });
+            };
+            window.acsmRestoreDefault = function() {
+                if (!confirm('确定要恢复默认设置吗？')) return;
+                const rl = document.getElementById('acsmRightList');
+                if (rl) rl.innerHTML = '';
+                acsmUpdateRightCount();
+                alert('已恢复默认设置');
+            };
+            window.acsmConfirmModal = function() {
+                const rl = document.getElementById('acsmRightList');
+                const items = rl ? rl.querySelectorAll('.acsm-list-item') : [];
+                const fields = Array.from(items).map(i => i.textContent.trim());
+                alert(fields.length ? '摘要规则已保存：\n' + fields.join(' + ') : '提示：未配置摘要规则，将使用系统默认摘要');
+                window.acsmCloseSummaryModal();
+            };
+            const acsmLeftList = document.getElementById('acsmLeftList');
+            if (acsmLeftList) {
+                acsmLeftList.addEventListener('dblclick', function(e) {
+                    const item = e.target.closest('.acsm-list-item');
+                    if (item) { item.classList.add('selected'); const cb = item.querySelector('input'); if(cb) cb.checked=true; window.acsmMoveToRight(); }
+                });
+            }
+            const acsmModal = document.getElementById('acsmSummaryModal');
+            if (acsmModal) { acsmModal.addEventListener('click', function(e) { if (e.target === this) window.acsmCloseSummaryModal(); }); }
             if (typeof window.updateSubjectCodeInputs === "function") {
                 window.updateSubjectCodeInputs(subjectSetting.levels, subjectSetting.lengths);
             }
@@ -13443,105 +18491,351 @@ function loadContent(moduleCode, element = null) {
         let list = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || "[]");
         if (list.length === 0) {
             list = [
-                { id: "PM001", name: "银行转账", type: "银行账户", status: "启用" },
-                { id: "PM002", name: "微信支付", type: "第三方平台", status: "启用" },
-                { id: "PM003", name: "支付宝", type: "第三方平台", status: "启用" },
-                { id: "PM004", name: "现金/支票", type: "线下", status: "停用" }
+                { id: 1, org: '贵州云链', useOrg: '本级及下级', method: '油卡开油', bankName: '', bankAccount: '', accountHolder: '', alipay: '', wechat: '', accountCode: '122104', accountName: '其他应收款_油卡', remark: '', creator: '专线A', createTime: '2023-02-17 00:00:00', updater: '', updateTime: '', status: '已启用' },
+                { id: 2, org: '专线A', useOrg: '本级及下级', method: '微信', bankName: '', bankAccount: '', accountHolder: '', alipay: '', wechat: '', accountCode: '1012', accountName: '其他货币资金', remark: '微信/支付宝支付', creator: '专线A', createTime: '2025-10-13 14:07:24', updater: '专线A', updateTime: '2025-10-13 14:07:24', status: '已启用' },
+                { id: 3, org: '贵州云链', useOrg: '本级及下级', method: '现金', bankName: '', bankAccount: '', accountHolder: '', alipay: '', wechat: '', accountCode: '100209', accountName: '银行存款_银行开户1', remark: '', creator: '张三', createTime: '2019-07-01 00:00:00', updater: '', updateTime: '', status: '已启用' },
+                { id: 4, org: '贵州云链', useOrg: '本级及下级', method: '平台账户', bankName: '', bankAccount: '', accountHolder: '', alipay: '', wechat: '', accountCode: '', accountName: '', remark: '', creator: '', createTime: '2019-07-02 00:00:00', updater: '', updateTime: '', status: '已启用' }
             ];
             sessionStorage.setItem('ConfigPaymentMethods', JSON.stringify(list));
         }
 
         // 2. 渲染表格行
         const subjects = JSON.parse(sessionStorage.getItem('AcctSubjects') || "[]");
-        const subjectOptions = subjects.length
-            ? subjects.filter(s => s.status !== "停用").map(s => `<option value="${s.code}|||${s.name}">${s.code} ${s.name}</option>`).join("")
-            : `<option value="">暂无科目，请先维护会计科目</option>`;
-
-        const rows = list.map(item => {
-            let statusTag = item.status === '启用'
-                ? `<span style="color:#27ae60; background:#eafaf1; padding:2px 6px; border-radius:4px;">✔ 启用</span>`
-                : `<span style="color:#999; background:#eee; padding:2px 6px; border-radius:4px;">⛔ 停用</span>`;
-
-            let actionBtn = item.status === '启用'
-                ? `<button class="btn-primary" style="background:#e74c3c; padding:2px 8px; font-size:12px;" onclick="toggleMethodStatus('${item.id}')">停用</button>`
-                : `<button class="btn-primary" style="background:#27ae60; padding:2px 8px; font-size:12px;" onclick="toggleMethodStatus('${item.id}')">启用</button>`;
-
-            const subjectText = item.subjectCode && item.subjectName
-                ? `${item.subjectCode} ${item.subjectName}`
-                : "-";
-
-            return `
-            <tr>
-                <td>${item.id}</td>
-                <td><b>${item.name}</b></td>
-                <td>${item.type}</td>
-                <td>${subjectText}</td>
-                <td>${statusTag}</td>
-                <td>
-                    <button class="btn-primary" style="background:#3498db; padding:2px 8px; font-size:12px;" onclick="editPaymentMethod('${item.id}')">编辑</button>
-                    ${actionBtn}
-                    <button class="btn-primary" style="background:#c0392b; padding:2px 8px; font-size:12px; margin-left:5px;" onclick="deleteMethod('${item.id}')">删除</button>
-                </td>
-            </tr>
-        `;
-        }).join('');
+        // 只显示货币资金相关科目：库存现金(1001)、银行存款(1002)、其他货币资金(1012) 及其所有子科目
+        const CASH_BANK_PREFIXES = ["1001", "1002", "1012"];
+        const filteredSubjects = subjects.filter(s =>
+            s.status !== "停用" &&
+            CASH_BANK_PREFIXES.some(prefix => (s.code || "").toString().startsWith(prefix))
+        );
+        const subjectOptions = filteredSubjects.length
+            ? filteredSubjects.map(s => `<option value="${s.code}|${s.name}">${s.code} ${s.name}</option>`).join("")
+            : subjects.length
+                ? `<option value="">暂无货币资金类科目（请在会计科目中维护1001/1002/1012）</option>`
+                : `<option value="">暂无科目，请先维护会计科目</option>`;
 
         // 3. 拼接页面 HTML
         contentHTML += `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #eee;">
-            <div>
-                <h2 style="margin:0; color:#2c3e50;">💳 收支方式配置 (Payment Methods)</h2>
-                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:13px;">定义系统支持的付款和收款渠道，如银行卡、支付宝等。</p>
+        <style>
+            .pm-filter { background:#fafafa; padding:16px 20px; margin-bottom:16px; border-radius:6px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+            .pm-filter label { font-size:14px; color:#666; white-space:nowrap; }
+            .pm-filter input, .pm-filter select { padding:6px 12px; border:1px solid #d9d9d9; border-radius:4px; font-size:14px; min-width:160px; }
+            .pm-action-bar { display:flex; justify-content:space-between; margin-bottom:12px; }
+            .pm-action-left, .pm-action-right { display:flex; gap:8px; }
+            .pm-btn { padding:6px 16px; border:1px solid #d9d9d9; border-radius:4px; background:#fff; color:#333; font-size:14px; cursor:pointer; }
+            .pm-btn:hover { color:#1890ff; border-color:#1890ff; }
+            .pm-btn-primary { background:#1890ff; border-color:#1890ff; color:#fff; }
+            .pm-btn-primary:hover { background:#40a9ff; border-color:#40a9ff; color:#fff; }
+            .pm-btn:disabled { opacity:.5; cursor:not-allowed; }
+            .pm-table { width:100%; border-collapse:collapse; font-size:14px; }
+            .pm-table th, .pm-table td { padding:12px 8px; text-align:left; border-bottom:1px solid #e8e8e8; }
+            .pm-table thead { background:#fafafa; }
+            .pm-table th { font-weight:500; color:#666; }
+            .pm-table tbody tr:hover { background:#f5f5f5; }
+            .pm-table tbody tr.pm-selected { background:#e6f7ff; }
+            .pm-status-enabled { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+            .pm-status-disabled { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; }
+            .pm-code-badge { background:#e6f7ff; color:#1890ff; padding:2px 8px; border-radius:3px; font-family:monospace; font-size:12px; }
+            .pm-pager { display:flex; justify-content:space-between; align-items:center; padding:16px 0; font-size:14px; color:#666; }
+            .pm-pager-controls { display:flex; gap:8px; align-items:center; }
+            .pm-pager-btn { min-width:32px; height:32px; padding:0 8px; border:1px solid #d9d9d9; border-radius:4px; background:#fff; cursor:pointer; font-size:14px; }
+            .pm-pager-btn.active { background:#1890ff; color:#fff; border-color:#1890ff; }
+            .pm-modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.45); z-index:1000; align-items:center; justify-content:center; }
+            .pm-modal-overlay.active { display:flex; }
+            .pm-modal { background:#fff; border-radius:8px; width:90%; max-width:860px; max-height:90vh; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,.15); }
+            .pm-modal-hdr { padding:16px 24px; border-bottom:1px solid #e8e8e8; display:flex; justify-content:space-between; align-items:center; }
+            .pm-modal-bdy { padding:24px; }
+            .pm-modal-ftr { padding:16px 24px; border-top:1px solid #e8e8e8; display:flex; justify-content:flex-end; gap:12px; }
+            .pm-section { margin-bottom:20px; border:1px solid #e8e8e8; border-radius:6px; padding:20px; }
+            .pm-section-title { font-size:16px; font-weight:500; margin-bottom:14px; color:#333; position:relative; padding-left:12px; }
+            .pm-section-title::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:4px; height:16px; background:#1890ff; border-radius:2px; }
+            .pm-section-title.critical::before { background:#ff4d4f; }
+            .pm-form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+            .pm-form-row.single { grid-template-columns:1fr; }
+            .pm-fgroup { display:flex; flex-direction:column; gap:6px; }
+            .pm-fgroup label { font-size:14px; color:#666; }
+            .pm-fgroup label .req { color:#ff4d4f; margin-left:4px; }
+            .pm-fgroup input, .pm-fgroup select, .pm-fgroup textarea { padding:8px 12px; border:1px solid #d9d9d9; border-radius:4px; font-size:14px; font-family:inherit; }
+            .pm-fgroup input:read-only { background:#f5f5f5; cursor:not-allowed; }
+            .pm-fgroup textarea { min-height:80px; resize:vertical; }
+            .pm-hint { font-size:12px; color:#999; }
+            .pm-chk-group { display:flex; align-items:center; gap:8px; }
+        </style>
+
+        <div style="background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.1);">
+            <div style="padding:20px 24px; border-bottom:1px solid #e8e8e8;">
+                <h1 style="font-size:20px; font-weight:500; color:#333; margin:0;">收支方式管理</h1>
             </div>
-            <div>
-                <button class="btn-primary" onclick="openPaymentMethodModal()">+ 新增方式</button>
+            <div style="padding:20px 24px;">
+                <!-- 筛选 -->
+                <div class="pm-filter">
+                    <label>所属组织:</label>
+                    <select id="pmFilterOrg"><option value="">全部</option><option>贵州云链</option><option>专线A</option></select>
+                    <label>收支方式:</label>
+                    <input type="text" id="pmFilterMethod" placeholder="请输入收支方式">
+                    <label>状态:</label>
+                    <select id="pmFilterStatus"><option value="已启用">已启用</option><option value="已停用">已停用</option><option value="">全部</option></select>
+                    <button class="pm-btn pm-btn-primary" onclick="window.pmSearch()">查询</button>
+                </div>
+
+                <!-- 操作栏 -->
+                <div class="pm-action-bar">
+                    <div class="pm-action-left">
+                        <button class="pm-btn pm-btn-primary" onclick="window.pmOpenNew()">新增</button>
+                        <button class="pm-btn" id="pmBtnEdit" onclick="window.pmOpenEdit()" disabled>修改</button>
+                        <button class="pm-btn" id="pmBtnDisable" onclick="window.pmHandleDisable()" disabled>停用</button>
+                    </div>
+                    <div class="pm-action-right">
+                        <button class="pm-btn" onclick="alert('导出功能：正在导出收支方式数据...')">导出</button>
+                        <button class="pm-btn" onclick="window.print()">打印</button>
+                    </div>
+                </div>
+
+                <!-- 表格 -->
+                <div style="overflow-x:auto; margin-bottom:12px;">
+                    <table class="pm-table" id="pmTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="pmCheckAll" onchange="window.pmHandleCheckAll()"></th>
+                                <th style="width:50px;">序号</th>
+                                <th>所属组织</th><th>使用组织</th><th>收支方式</th>
+                                <th>银行名称</th><th>银行卡号</th><th>开户人</th>
+                                <th>科目代码</th><th>科目名称</th>
+                                <th>备注</th><th>创建人</th><th>创建时间</th>
+                                <th>更新人</th><th>更新时间</th><th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pmTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pm-pager">
+                    <div id="pmPagerInfo">共 0 条</div>
+                    <div class="pm-pager-controls">
+                        <button class="pm-pager-btn active">1</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div style="background:white; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); padding:15px;">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>编号</th><th>方式名称</th><th>类型</th><th>科目类别</th><th>状态</th><th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-
-        <div id="pmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
-            <div style="position:absolute; top:20%; left:50%; transform:translateX(-50%); width:400px; background:white; border-radius:8px; box-shadow:0 5px 25px rgba(0,0,0,0.2); padding:20px;">
-                <h3 style="margin-top:0; color:#2980b9;">新增收支方式</h3>
-                
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">方式名称：</label>
-                    <input type="text" id="pm_name" placeholder="例如：招商银行9527" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+        <!-- 新增/编辑弹窗 -->
+        <div class="pm-modal-overlay" id="pmModalOverlay">
+            <div class="pm-modal">
+                <div class="pm-modal-hdr">
+                    <div id="pmModalTitle" style="font-size:18px;font-weight:500;">收支方式 - 新增</div>
+                    <button onclick="window.pmCloseModal()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">×</button>
                 </div>
-
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">渠道类型：</label>
-                    <select id="pm_type" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                        <option value="银行账户">🏦 银行账户</option>
-                        <option value="第三方平台">📱 第三方平台 (微信/支付宝)</option>
-                        <option value="线下">💵 线下 (现金/支票)</option>
-                    </select>
+                <div class="pm-modal-bdy">
+                    <!-- 基础信息 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title">基础信息</div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup"><label>所属组织 <span class="req">*</span></label><select id="pmFormOrg"><option value="">请选择</option><option>贵州云链</option><option>专线A</option></select></div>
+                            <div class="pm-fgroup"><label>使用组织 <span class="req">*</span></label><select id="pmFormUseOrg"><option>本级及下级</option><option>仅本级</option></select></div>
+                        </div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup"><label>收支方式 <span class="req">*</span></label><input type="text" id="pmFormMethod" placeholder="请输入收支方式名称"></div>
+                            <div class="pm-fgroup"><label>状态 <span class="req">*</span></label><select id="pmFormStatus"><option>已启用</option><option>已停用</option></select></div>
+                        </div>
+                    </div>
+                    <!-- 银行信息 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title">银行信息</div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup"><label>银行名称</label><input type="text" id="pmFormBankName" placeholder="请输入银行名称"></div>
+                            <div class="pm-fgroup"><label>银行卡号</label><input type="text" id="pmFormBankAccount" placeholder="请输入银行卡号"></div>
+                        </div>
+                        <div class="pm-form-row single">
+                            <div class="pm-fgroup"><label>开户人</label><input type="text" id="pmFormHolder" placeholder="请输入开户人姓名"></div>
+                        </div>
+                    </div>
+                    <!-- 支付信息 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title">支付信息</div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup"><label>支付宝号</label><input type="text" id="pmFormAlipay" placeholder="请输入支付宝账号"></div>
+                            <div class="pm-fgroup"><label>微信号</label><input type="text" id="pmFormWechat" placeholder="请输入微信账号"></div>
+                        </div>
+                    </div>
+                    <!-- 科目配置 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title critical">科目配置（关键！）</div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup">
+                                <label>科目代码 <span class="req">*</span></label>
+                                <select id="pmFormAccountCode" onchange="window.pmOnAccountSelect()">
+                                    <option value="">请选择科目代码</option>
+                                    ${subjectOptions}
+                                </select>
+                                <span class="pm-hint">仅显示库存现金(1001)、银行存款(1002)、其他货币资金(1012)及其子科目；新增子科目后自动同步</span>
+                            </div>
+                            <div class="pm-fgroup">
+                                <label>科目名称 <span class="req">*</span></label>
+                                <input type="text" id="pmFormAccountName" placeholder="选择科目代码后自动回填" readonly>
+                                <span class="pm-hint">选择科目代码后自动显示</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 油卡管理 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title">油卡管理（可选）</div>
+                        <div class="pm-form-row">
+                            <div class="pm-fgroup">
+                                <div class="pm-chk-group"><input type="checkbox" id="pmFormLinkOilCard" onchange="window.pmToggleOilCard()"><label for="pmFormLinkOilCard">关联油卡管理</label></div>
+                            </div>
+                            <div class="pm-fgroup"><label>默认油卡</label><input type="text" id="pmFormOilCard" placeholder="请输入默认油卡编号" disabled><span class="pm-hint">仅当关联油卡管理时启用</span></div>
+                        </div>
+                    </div>
+                    <!-- 备注 -->
+                    <div class="pm-section">
+                        <div class="pm-section-title">备注信息</div>
+                        <div class="pm-form-row single">
+                            <div class="pm-fgroup"><label>备注</label><textarea id="pmFormRemark" placeholder="请输入备注信息（最多500字）" maxlength="500"></textarea></div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">科目类别：</label>
-                    <select id="pm_subject" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                        <option value="">请选择科目</option>
-                        ${subjectOptions}
-                    </select>
-                </div>
-
-                <div style="text-align:right; margin-top:20px;">
-                    <button onclick="document.getElementById('pmModal').style.display='none'" style="padding:8px 15px; margin-right:10px; background:white; border:1px solid #ccc; border-radius:4px; cursor:pointer;">取消</button>
-                    <button class="btn-primary" onclick="savePaymentMethod()">确认保存</button>
+                <div class="pm-modal-ftr">
+                    <button class="pm-btn" onclick="window.pmCloseModal()">取消</button>
+                    <button class="pm-btn pm-btn-primary" onclick="window.pmHandleSubmit()">确定</button>
                 </div>
             </div>
         </div>
-    `;
+        `;
+
+        setTimeout(() => {
+            let pmData = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+            let pmSelected = new Set();
+            let pmMode = 'new';
+            let pmEditingId = null;
+
+            window.pmRenderTable = function() {
+                pmData = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+                const tbody = document.getElementById('pmTableBody');
+                if (!tbody) return;
+                if (!pmData.length) { tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:40px;color:#999;">暂无数据</td></tr>'; return; }
+                tbody.innerHTML = pmData.map((row, i) => `
+                    <tr class="${pmSelected.has(row.id) ? 'pm-selected' : ''}" onclick="window.pmRowClick(event, ${row.id})">
+                        <td><input type="checkbox" ${pmSelected.has(row.id)?'checked':''} onchange="window.pmCheckRow(${row.id})"></td>
+                        <td>${i+1}</td>
+                        <td>${row.org||''}</td><td>${row.useOrg||''}</td><td>${row.method||''}</td>
+                        <td>${row.bankName||''}</td><td>${row.bankAccount||''}</td><td>${row.accountHolder||''}</td>
+                        <td>${row.accountCode?`<span class="pm-code-badge">${row.accountCode}</span>`:''}</td><td>${row.accountName||''}</td>
+                        <td>${row.remark||''}</td><td>${row.creator||''}</td><td>${row.createTime||''}</td>
+                        <td>${row.updater||''}</td><td>${row.updateTime||''}</td>
+                        <td><span class="${row.status==='已启用'?'pm-status-enabled':'pm-status-disabled'}">${row.status||''}</span></td>
+                    </tr>`).join('');
+                const pagerInfo = document.getElementById('pmPagerInfo');
+                if (pagerInfo) pagerInfo.textContent = `共 ${pmData.length} 条`;
+                window.pmUpdateActionBtns();
+            };
+            window.pmUpdateActionBtns = function() {
+                const editBtn = document.getElementById('pmBtnEdit');
+                const disBtn = document.getElementById('pmBtnDisable');
+                if (editBtn) editBtn.disabled = pmSelected.size !== 1;
+                if (disBtn) disBtn.disabled = pmSelected.size === 0;
+            };
+            window.pmRowClick = function(e, id) { if (e.target.type === 'checkbox') return; window.pmCheckRow(id); };
+            window.pmCheckRow = function(id) { if (pmSelected.has(id)) pmSelected.delete(id); else pmSelected.add(id); window.pmRenderTable(); };
+            window.pmHandleCheckAll = function() {
+                const cb = document.getElementById('pmCheckAll');
+                pmData.forEach(r => { if (cb.checked) pmSelected.add(r.id); else pmSelected.delete(r.id); });
+                window.pmRenderTable();
+            };
+            window.pmSearch = function() {
+                const org = document.getElementById('pmFilterOrg').value;
+                const method = document.getElementById('pmFilterMethod').value.toLowerCase();
+                const status = document.getElementById('pmFilterStatus').value;
+                const all = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+                pmData = all.filter(r => (!org || r.org === org) && (!method || (r.method||'').toLowerCase().includes(method)) && (!status || r.status === status));
+                pmSelected.clear();
+                window.pmRenderTable();
+            };
+            window.pmOnAccountSelect = function() {
+                const sel = document.getElementById('pmFormAccountCode');
+                const parts = (sel.value || '').split('|');
+                document.getElementById('pmFormAccountName').value = parts[1] || '';
+            };
+            window.pmToggleOilCard = function() {
+                const cb = document.getElementById('pmFormLinkOilCard');
+                const inp = document.getElementById('pmFormOilCard');
+                if (inp) { inp.disabled = !cb.checked; if (!cb.checked) inp.value = ''; }
+            };
+            window.pmCloseModal = function() {
+                const overlay = document.getElementById('pmModalOverlay');
+                if (overlay) overlay.classList.remove('active');
+            };
+            window.pmOpenNew = function() {
+                pmMode = 'new'; pmEditingId = null;
+                document.getElementById('pmModalTitle').textContent = '收支方式 - 新增';
+                ['pmFormOrg','pmFormMethod','pmFormBankName','pmFormBankAccount','pmFormHolder','pmFormAlipay','pmFormWechat','pmFormRemark'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                document.getElementById('pmFormUseOrg').value = '本级及下级';
+                document.getElementById('pmFormStatus').value = '已启用';
+                document.getElementById('pmFormAccountCode').value = '';
+                document.getElementById('pmFormAccountName').value = '';
+                document.getElementById('pmFormLinkOilCard').checked = false;
+                document.getElementById('pmFormOilCard').disabled = true;
+                document.getElementById('pmModalOverlay').classList.add('active');
+            };
+            window.pmOpenEdit = function() {
+                if (pmSelected.size !== 1) return;
+                pmMode = 'edit'; pmEditingId = Array.from(pmSelected)[0];
+                const row = pmData.find(r => r.id === pmEditingId);
+                if (!row) return;
+                document.getElementById('pmModalTitle').textContent = '收支方式 - 编辑';
+                document.getElementById('pmFormOrg').value = row.org || '';
+                document.getElementById('pmFormUseOrg').value = row.useOrg || '本级及下级';
+                document.getElementById('pmFormMethod').value = row.method || '';
+                document.getElementById('pmFormStatus').value = row.status || '已启用';
+                document.getElementById('pmFormBankName').value = row.bankName || '';
+                document.getElementById('pmFormBankAccount').value = row.bankAccount || '';
+                document.getElementById('pmFormHolder').value = row.accountHolder || '';
+                document.getElementById('pmFormAlipay').value = row.alipay || '';
+                document.getElementById('pmFormWechat').value = row.wechat || '';
+                document.getElementById('pmFormAccountCode').value = row.accountCode ? `${row.accountCode}|${row.accountName}` : '';
+                document.getElementById('pmFormAccountName').value = row.accountName || '';
+                document.getElementById('pmFormRemark').value = row.remark || '';
+                document.getElementById('pmModalOverlay').classList.add('active');
+            };
+            window.pmHandleDisable = function() {
+                if (!pmSelected.size) return;
+                if (!confirm(`确定要停用选中的 ${pmSelected.size} 个收支方式吗？`)) return;
+                let all = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+                all.forEach(r => { if (pmSelected.has(r.id)) r.status = '已停用'; });
+                sessionStorage.setItem('ConfigPaymentMethods', JSON.stringify(all));
+                pmSelected.clear();
+                window.pmRenderTable();
+            };
+            window.pmHandleSubmit = function() {
+                const org = document.getElementById('pmFormOrg').value;
+                const method = document.getElementById('pmFormMethod').value.trim();
+                const accountCode = document.getElementById('pmFormAccountCode').value.split('|')[0];
+                if (!org || !method) { alert('请填写所有必填项'); return; }
+                if (!accountCode) { alert('请选择科目代码'); return; }
+                const formData = {
+                    org, useOrg: document.getElementById('pmFormUseOrg').value,
+                    method, status: document.getElementById('pmFormStatus').value,
+                    bankName: document.getElementById('pmFormBankName').value,
+                    bankAccount: document.getElementById('pmFormBankAccount').value,
+                    accountHolder: document.getElementById('pmFormHolder').value,
+                    alipay: document.getElementById('pmFormAlipay').value,
+                    wechat: document.getElementById('pmFormWechat').value,
+                    accountCode: accountCode,
+                    accountName: document.getElementById('pmFormAccountName').value,
+                    remark: document.getElementById('pmFormRemark').value
+                };
+                let all = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+                if (pmMode === 'new') {
+                    all.push({ id: Date.now(), ...formData, creator: '当前用户', createTime: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), updater: '', updateTime: '' });
+                } else {
+                    const idx = all.findIndex(r => r.id === pmEditingId);
+                    if (idx >= 0) Object.assign(all[idx], formData, { updater: '当前用户', updateTime: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-') });
+                }
+                sessionStorage.setItem('ConfigPaymentMethods', JSON.stringify(all));
+                window.pmCloseModal();
+                window.pmRenderTable();
+            };
+            window.pmRenderTable();
+        }, 0);
     }
 
     // =========================================================================
@@ -13914,91 +19208,587 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
     // [2.0 版本] 会计引擎配置 - 树形导航 + 搜索
     // =========================================================================
-    // ★★★ 请将以下代码块插入到 view_manager.js 中 ★★★
     else if (moduleCode === 'SettlementEngineConfig') {
-        /** 渲染会计引擎账套管理界面 */
-        window.renderSettlementEngineConfig = function () {
-            let books = window.getAccountBooks();
-            let html = `
-        <div style="padding:15px; background:#fff; border-radius:4px;">
-            <div style="margin-bottom:15px; display:flex; justify-content:space-between;">
-                <h3 style="margin:0;">会计引擎账套管理</h3>
-                <button onclick="window.addAccountBook()" style="padding:6px 12px; background:#1890ff; color:#fff; border:none; border-radius:4px; cursor:pointer;">+ 新增账套</button>
-            </div>
-            <table class="grid-table" style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#fafafa; text-align:left;">
-                        <th style="padding:12px; border-bottom:1px solid #eee;">账套编码</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">账套名称</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">状态</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${books.map(b => `
-                        <tr style="border-bottom:1px solid #f0f0f0;">
-                            <td style="padding:12px;">${b.code}</td>
-                            <td style="padding:12px;">${b.name}</td>
-                            <td style="padding:12px;"><span style="color:${b.status === '已审核' ? 'green' : 'orange'}">${b.status}</span></td>
-                            <td style="padding:12px;">
-                                <a href="javascript:;" onclick="window.editAccountBook('${b.id}')">编辑</a> | 
-                                <a href="javascript:;" onclick="window.copyAccountBook('${b.id}')">复制</a> | 
-                                <a href="javascript:;" onclick="window.deleteAccountBook('${b.id}')" style="color:red;">删除</a>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-            document.getElementById('main_content').innerHTML = html;
-        };
-        // 1. 检查 engine_config.js 是否已加载
-        if (typeof renderEngineTree === 'undefined') {
-            contentHTML += `
-            <div style="padding: 20px; color: red;">
-                错误：engine_config.js 未加载或 renderEngineTree 函数未定义。<br>
-                请检查 index.html 底部是否引入了 <script src="js/core/modules/finance/engine_config.js"></script>
-            </div>`;
-        }
-        else {
-            // 2. 渲染左右分栏布局
-            contentHTML += `
-            <style>
-                .engine-container { display: flex; height: calc(100vh - 140px); border: 1px solid #ddd; background: #fff; }
-                .engine-sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #ddd; overflow-y: auto; padding: 10px; }
-                .engine-content { flex: 1; padding: 20px; overflow-y: auto; }
-                .tree-node { cursor: pointer; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: #333; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-                .tree-node:hover { background-color: #e9ecef; }
-                .tree-node.active { background-color: #007bff; color: #fff; }
-                .level-1 { font-weight: bold; margin-top: 10px; font-size: 14px; }
-                .level-2 { margin-left: 15px; font-weight: bold; color: #555; margin-top: 5px; }
-                .level-3 { margin-left: 30px; font-weight: normal; border-left: 1px solid #eee; justify-content: flex-start; gap: 6px; }
-                .engine-category { margin-left: 4px; }
-                .engine-subcategory { margin-left: 4px; }
-                .engine-toggle-icon { margin-left: auto; color: #7f8c8d; font-size: 12px; }
-                .config-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                .config-table th, .config-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-                .config-table th { background-color: #f1f1f1; font-weight: bold; }
-                .badge-debit { color: green; font-weight: bold; }
-                .badge-credit { color: red; font-weight: bold; }
-            </style>
+        contentHTML += `
+        <style>
+            .sec-container { display: flex; height: calc(100vh - 140px); background: #fff; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+            .sec-sidebar { width: 280px; min-width: 280px; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 12px 0; }
+            .sec-tree-node { padding: 8px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+            .sec-tree-node:hover { background: #f5f5f5; }
+            .sec-tree-node.active { background: #e6f0ff; color: #1a1a1a; font-weight: 500; }
+            .sec-level-1 { font-weight: 600; font-size: 15px; padding: 10px 16px; }
+            .sec-level-2 { padding-left: 28px; font-size: 14px; color: #555; }
+            .sec-level-3 { padding-left: 44px; font-size: 13px; color: #666; }
+            .sec-stub { cursor: default !important; opacity: 0.5; }
+            .sec-stub:hover { background: transparent !important; }
+            .sec-stub-tag { font-size: 10px; color: #999; background: #f0f0f0; padding: 1px 6px; border-radius: 8px; margin-left: 6px; }
+            .sec-toggle-icon { font-size: 12px; color: #999; }
+            .sec-cat-children, .sec-sub-items { display: none; }
+            .sec-main-panel { flex: 1; padding: 24px; overflow-y: auto; }
+            .sec-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #999; }
+            .sec-empty-icon { font-size: 36px; margin-bottom: 12px; color: #ccc; }
+            .sec-empty-text { font-size: 15px; }
+            .sec-empty-sub { font-size: 13px; margin-top: 6px; color: #bbb; }
+            .sec-config-panel { display: none; }
+            .sec-config-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+            .sec-config-title { font-size: 20px; font-weight: 600; }
+            .sec-config-path { font-size: 12px; color: #999; margin-top: 4px; }
+            .sec-config-badge { font-size: 12px; color: #999; }
+            .sec-config-tip { font-size: 12px; line-height: 1.6; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; }
+            .sec-tip-normal { background: #f0f4f8; color: #2c3e50; }
+            .sec-tip-settlement { background: #fef0f0; color: #c0392b; }
+            .sec-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+            .sec-form-group label { display: block; font-size: 12px; color: #999; margin-bottom: 4px; }
+            .sec-form-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+            .sec-form-input:focus { outline: none; border-color: #999; }
+            .sec-entry-section { margin-top: 20px; }
+            .sec-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+            .sec-entry-title { font-size: 16px; font-weight: 600; }
+            .sec-btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+            .sec-btn:hover { border-color: #999; }
+            .sec-btn-add { border-color: #3498db; color: #3498db; }
+            .sec-btn-add:hover { background: #ecf5ff; }
+            .sec-btn-save { background: #333; color: #fff; border-color: #333; }
+            .sec-btn-save:hover { background: #555; }
+            .sec-btn-remove { color: #cf1322; border-color: #cf1322; padding: 4px 10px; font-size: 12px; }
+            .sec-btn-remove:hover { background: #fff1f0; }
+            .sec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            .sec-table th { padding: 8px; text-align: left; background: #fafafa; border-bottom: 1px solid #e8e8e8; color: #666; font-weight: 600; }
+            .sec-table td { padding: 8px; border-bottom: 1px solid #e8e8e8; }
+            .sec-table td select, .sec-table td input[type="text"] { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
+            .sec-action-bar { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+            .sec-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+            .sec-modal-overlay.active { display: flex; }
+            .sec-modal { background: #fff; border-radius: 4px; padding: 24px; min-width: 360px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; }
+            .sec-modal-icon { font-size: 36px; margin-bottom: 12px; }
+            .sec-modal-msg { font-size: 15px; margin-bottom: 20px; color: #333; }
+        </style>
 
-            <div class="engine-container">
-                <div class="engine-sidebar">
-                    ${renderEngineTree()} 
+        <div class="sec-container">
+            <!-- 左侧树形菜单 -->
+            <div class="sec-sidebar">
+                <!-- 挂帐 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(0)">
+                    <span>挂帐</span><span class="sec-toggle-icon" id="sec-icon-cat-0">▸</span>
                 </div>
-                
-                <div class="engine-content" id="engine-content-area">
-                    <div style="text-align:center; margin-top: 100px; color:#999;">
-                        <p>⬅️ 请在左侧选择具体的费用类型</p>
-                        <p>以配置其会计分录生成规则</p>
+                <div class="sec-cat-children" id="sec-cat-0">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(0,0)">
+                        <span>运单</span><span class="sec-toggle-icon" id="sec-icon-sub-0-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-0-0">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付挂帐','挂帐','运单')">现付挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现返挂帐','挂帐','运单')">现返挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'欠付挂帐','挂帐','运单')">欠付挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'月结挂帐','挂帐','运单')">月结挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付挂帐','挂帐','运单')">回付挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'代收货款挂帐','挂帐','运单')">总部代收货款挂帐</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(0,1)">
+                        <span>异动</span><span class="sec-toggle-icon" id="sec-icon-sub-0-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-0-1">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现返异动增款挂帐','挂帐','异动')">现返异动增款挂帐</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'欠返异动增款挂帐','挂帐','异动')">欠返异动增款挂帐</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>干线</span><span class="sec-stub-tag">暂未开放</span></div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>送货</span><span class="sec-stub-tag">暂未开放</span></div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>短驳</span><span class="sec-stub-tag">暂未开放</span></div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>应收挂帐</span><span class="sec-stub-tag">暂未开放</span></div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>应付挂帐</span><span class="sec-stub-tag">暂未开放</span></div>
+                    <div class="sec-tree-node sec-level-2 sec-stub"><span>提货</span><span class="sec-stub-tag">暂未开放</span></div>
+                </div>
+
+                <!-- 结算 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(1)">
+                    <span>结算</span><span class="sec-toggle-icon" id="sec-icon-cat-1">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-1">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,0)">
+                        <span>运单</span><span class="sec-toggle-icon" id="sec-icon-sub-1-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-1-0">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付结算','结算','运单')">现付结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付结算','结算','运单')">到付结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'月结结算','结算','运单')">月结结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付结算','结算','运单')">回付结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货到打卡结算','结算','运单')">货到打卡结算</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,1)">
+                        <span>干线</span><span class="sec-toggle-icon" id="sec-icon-sub-1-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-1-1">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付运输费结算','结算','干线')">现付运输费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付运输费结算','结算','干线')">到付运输费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付运输费结算','结算','干线')">回付运输费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'整车保险费结算','结算','干线')">整车保险费结算</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,2)">
+                        <span>送货</span><span class="sec-toggle-icon" id="sec-icon-sub-1-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-1-2">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费结算','结算','送货')">送货费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费异动增款结算','结算','送货')">送货费异动增款结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费异动减款结算','结算','送货')">送货费异动减款结算</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,3)">
+                        <span>短驳</span><span class="sec-toggle-icon" id="sec-icon-sub-1-3">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-1-3">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'短驳费结算','结算','短驳')">短驳费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'网点对账结算','结算','短驳')">网点对账结算</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,4)">
+                        <span>提货</span><span class="sec-toggle-icon" id="sec-icon-sub-1-4">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-1-4">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费结算','结算','提货')">提货费结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费异动增款结算','结算','提货')">提货费异动增款结算</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费异动减款结算','结算','提货')">提货费异动减款结算</div>
+                    </div>
+                </div>
+
+                <!-- 账户结算 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(2)">
+                    <span>账户结算</span><span class="sec-toggle-icon" id="sec-icon-cat-2">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-2">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,0)">
+                        <span>账户收款（网点间交易）</span><span class="sec-toggle-icon" id="sec-icon-sub-2-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-2-0">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付出发网点收款','账户结算','账户收款（网点间交易）')">到付出发网点收款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款出发网点收款','账户结算','账户收款（网点间交易）')">货款出发网点收款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款总部收款','账户结算','账户收款（网点间交易）')">货款总部收款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'成本中转费收款','账户结算','账户收款（网点间交易）')">成本中转费收款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'单票送货费收款','账户结算','账户收款（网点间交易）')">单票送货费收款</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,1)">
+                        <span>账户扣款（网点间交易）</span><span class="sec-toggle-icon" id="sec-icon-sub-2-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-2-1">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付目的网点付款','账户结算','账户扣款（网点间交易）')">到付目的网点付款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款目的网点付款','账户结算','账户扣款（网点间交易）')">货款目的网点付款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款总部付款','账户结算','账户扣款（网点间交易）')">货款总部付款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'成本中转费付款','账户结算','账户扣款（网点间交易）')">成本中转费付款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'单票送货费付款','账户结算','账户扣款（网点间交易）')">单票送货费付款</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,2)">
+                        <span>利息账户</span><span class="sec-toggle-icon" id="sec-icon-sub-2-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-2-2">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'利息收入','账户结算','利息账户')">利息收入</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'利息支出','账户结算','利息账户')">利息支出</div>
+                    </div>
+                </div>
+
+                <!-- 账户管理 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(3)">
+                    <span>账户管理</span><span class="sec-toggle-icon" id="sec-icon-cat-3">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-3">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,0)">
+                        <span>充值管理</span><span class="sec-toggle-icon" id="sec-icon-sub-3-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-3-0">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户充值','账户管理','充值管理')">账户充值</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'充值入金手续费','账户管理','充值管理')">充值入金手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,1)">
+                        <span>提现管理</span><span class="sec-toggle-icon" id="sec-icon-sub-3-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-3-1">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户提现','账户管理','提现管理')">账户提现</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提现手续费','账户管理','提现管理')">提现手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,2)">
+                        <span>扫码收款</span><span class="sec-toggle-icon" id="sec-icon-sub-3-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-3-2">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付入金手续费','账户管理','扫码收款')">现付入金手续费</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付入金手续费','账户管理','扫码收款')">到付入金手续费</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款入金手续费','账户管理','扫码收款')">货款入金手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,3)">
+                        <span>在线打款</span><span class="sec-toggle-icon" id="sec-icon-sub-3-3">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-3-3">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款','账户管理','在线打款')">在线打款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款手续费','账户管理','在线打款')">在线打款手续费</div>
+                    </div>
+                </div>
+
+                <!-- 在线账户管理 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(4)">
+                    <span>在线账户管理</span><span class="sec-toggle-icon" id="sec-icon-cat-4">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-4">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,0)">
+                        <span>充值管理</span><span class="sec-toggle-icon" id="sec-icon-sub-4-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-4-0">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户充值','在线账户管理','充值管理')">账户充值</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'后台充值','在线账户管理','充值管理')">后台充值</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'充值入金手续费','在线账户管理','充值管理')">充值入金手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,1)">
+                        <span>提现管理</span><span class="sec-toggle-icon" id="sec-icon-sub-4-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-4-1">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户提现','在线账户管理','提现管理')">账户提现</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'后台提现','在线账户管理','提现管理')">后台提现</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提现手续费','在线账户管理','提现管理')">提现手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,2)">
+                        <span>扫码收款</span><span class="sec-toggle-icon" id="sec-icon-sub-4-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-4-2">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付入金手续费','在线账户管理','扫码收款')">现付入金手续费</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付入金手续费','在线账户管理','扫码收款')">到付入金手续费</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款入金手续费','在线账户管理','扫码收款')">货款入金手续费</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,3)">
+                        <span>收支方式</span><span class="sec-toggle-icon" id="sec-icon-sub-4-3">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-4-3">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付','在线账户管理','收支方式')">现付</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付','在线账户管理','收支方式')">到付</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'代收货款','在线账户管理','收支方式')">代收货款</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,4)">
+                        <span>在线打款</span><span class="sec-toggle-icon" id="sec-icon-sub-4-4">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-4-4">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款','在线账户管理','在线打款')">在线打款</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款手续费','在线账户管理','在线打款')">在线打款手续费</div>
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款运输费','在线账户管理','在线打款')">在线打款运输费</div>
+                    </div>
+                </div>
+
+                <!-- 收付款单 -->
+                <div class="sec-tree-node sec-level-1" style="border-top:2px solid #e8f4fd;margin-top:8px;" onclick="secToggleCategory(5)">
+                    <span>收付款单</span><span class="sec-toggle-icon" id="sec-icon-cat-5">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-5">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(5,0)">
+                        <span>收款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-0">▾</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-5-0" style="display:block;">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'收款单','收付款单','收款单')">收款单</div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(5,1)">
+                        <span>付款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-1">▾</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-5-1" style="display:block;">
+                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'付款单','收付款单','付款单')">付款单</div>
                     </div>
                 </div>
             </div>
+
+            <!-- 右侧面板 -->
+            <div class="sec-main-panel">
+                <div class="sec-empty-state" id="secEmptyState">
+                    <div class="sec-empty-icon">&#x2295;</div>
+                    <div class="sec-empty-text">请在左侧选择具体的费用类型</div>
+                    <div class="sec-empty-sub">以配置其会计分录生成规则</div>
+                </div>
+
+                <div class="sec-config-panel" id="secConfigPanel">
+                    <div class="sec-config-header">
+                        <div>
+                            <div class="sec-config-title" id="secCfgTitle">-</div>
+                            <div class="sec-config-path" id="secCfgPath">分类：-</div>
+                        </div>
+                        <div class="sec-config-badge">模板配置</div>
+                    </div>
+
+                    <div class="sec-config-tip" id="secCfgTip"></div>
+
+                    <div class="sec-form-row">
+                        <div class="sec-form-group">
+                            <label>凭证字</label>
+                            <select class="sec-form-input" id="secCfgVoucherWord">
+                                <option value="转">转</option>
+                                <option value="收">收</option>
+                                <option value="付">付</option>
+                            </select>
+                        </div>
+                        <div class="sec-form-group">
+                            <label>摘要模板</label>
+                            <input class="sec-form-input" id="secCfgSummary" type="text" placeholder="例如：收运单{waybillNo}运费">
+                        </div>
+                    </div>
+                    <div class="sec-form-group">
+                        <label>备注</label>
+                        <input class="sec-form-input" id="secCfgRemark" type="text" placeholder="规则备注">
+                    </div>
+
+                    <div class="sec-entry-section">
+                        <div class="sec-entry-header">
+                            <div class="sec-entry-title">分录配置</div>
+                            <button class="sec-btn sec-btn-add" onclick="secAddEntry()">+ 添加分录</button>
+                        </div>
+                        <table class="sec-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px">方向</th>
+                                    <th>会计科目</th>
+                                    <th style="width:180px">摘要</th>
+                                    <th style="width:80px;display:none" id="secThPm">收支方式</th>
+                                    <th style="width:60px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="secEntryBody">
+                                <tr>
+                                    <td><select class="sec-form-input"><option>借</option><option>贷</option></select></td>
+                                    <td><select class="sec-form-input"><option value="">请选择科目</option><option>1001 库存现金</option><option>1002.01 银行存款-基本户</option><option>1012.01 其他货币资金-微信</option><option>1122 应收账款</option><option>2202 应付账款</option></select></td>
+                                    <td><input type="text" class="sec-form-input" placeholder="摘要模板"></td>
+                                    <td style="text-align:center;display:none" class="sec-td-pm"><input type="checkbox"></td>
+                                    <td style="text-align:center"><button class="sec-btn sec-btn-remove" onclick="secRemoveEntry(this)">删除</button></td>
+                                </tr>
+                                <tr>
+                                    <td><select class="sec-form-input"><option>借</option><option value="贷" selected>贷</option></select></td>
+                                    <td><select class="sec-form-input"><option value="">请选择科目</option><option>1001 库存现金</option><option>1002.01 银行存款-基本户</option><option>1012.01 其他货币资金-微信</option><option>1122 应收账款</option><option>2202 应付账款</option></select></td>
+                                    <td><input type="text" class="sec-form-input" placeholder="摘要模板"></td>
+                                    <td style="text-align:center;display:none" class="sec-td-pm"><input type="checkbox"></td>
+                                    <td style="text-align:center"><button class="sec-btn sec-btn-remove" onclick="secRemoveEntry(this)">删除</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="sec-action-bar">
+                        <button class="sec-btn" onclick="secClearEntries()">清空科目</button>
+                        <button class="sec-btn sec-btn-save" onclick="secSaveTemplate()">保存模板</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提示弹窗 -->
+        <div class="sec-modal-overlay" id="secToastModal">
+            <div class="sec-modal">
+                <div class="sec-modal-icon">&#10003;</div>
+                <div class="sec-modal-msg" id="secToastMsg">操作成功</div>
+                <button class="sec-btn sec-btn-save" onclick="secCloseToast()">确定</button>
+            </div>
+        </div>
         `;
-        }
+
+        setTimeout(function () {
+            var secCurrentIsSettlement = false;
+
+            window.secToggleCategory = function (index) {
+                var el = document.getElementById('sec-cat-' + index);
+                var icon = document.getElementById('sec-icon-cat-' + index);
+                if (!el) return;
+                var hidden = el.style.display === 'none' || el.style.display === '';
+                el.style.display = hidden ? 'block' : 'none';
+                if (icon) icon.textContent = hidden ? '▾' : '▸';
+            };
+
+            window.secToggleSub = function (catIndex, subIndex) {
+                var el = document.getElementById('sec-sub-' + catIndex + '-' + subIndex);
+                var icon = document.getElementById('sec-icon-sub-' + catIndex + '-' + subIndex);
+                if (!el) return;
+                var hidden = el.style.display === 'none' || el.style.display === '';
+                el.style.display = hidden ? 'block' : 'none';
+                if (icon) icon.textContent = hidden ? '▾' : '▸';
+            };
+
+            // 获取科目下拉选项 HTML（从已维护科目+准则模板合并）
+            function secGetSubjectOptionsHtml(selectedCode) {
+                var subjects = [];
+                try {
+                    var stored = JSON.parse(sessionStorage.getItem('AcctSubjects') || 'null');
+                    if (!stored) stored = JSON.parse(localStorage.getItem('AcctSubjects') || 'null');
+                    var std = localStorage.getItem('AccountingStandard') || 'enterprise';
+                    var tplList = (window.ACCOUNTING_STANDARD_TEMPLATES && window.ACCOUNTING_STANDARD_TEMPLATES[std]) || [];
+                    var map = new Map();
+                    tplList.forEach(function(s) { map.set(String(s.code), s); });
+                    (stored || []).forEach(function(s) { map.set(String(s.code), s); });
+                    subjects = Array.from(map.values()).filter(function(s) { return s.status !== '停用'; });
+                    subjects.sort(function(a, b) { return String(a.code).localeCompare(String(b.code)); });
+                } catch(e) {}
+                var html = '<option value="">请选择科目</option>';
+                subjects.forEach(function(s) {
+                    var val = s.code + '|||' + s.name;
+                    var sel = (s.code === selectedCode) ? ' selected' : '';
+                    html += '<option value="' + val + '"' + sel + '>' + s.code + ' ' + s.name + '</option>';
+                });
+                return html;
+            }
+
+            // 从 EngineVoucherTemplates 加载已保存的模板
+            function secLoadStoredTemplate(name) {
+                try {
+                    var store = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+                    return store[name] || null;
+                } catch(e) { return null; }
+            }
+
+            // 渲染分录行
+            function secRenderEntryRow(tbody, entry) {
+                var pmDisplay = secCurrentIsSettlement ? 'table-cell' : 'none';
+                var pmChecked = (entry && entry.usePaymentMethod) ? ' checked' : '';
+                var subjectCode = (entry && entry.subjectCode) || '';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td><select class="sec-form-input sec-entry-dir">' +
+                        '<option value="借"' + ((!entry || entry.dir === '借') ? ' selected' : '') + '>借</option>' +
+                        '<option value="贷"' + ((entry && entry.dir === '贷') ? ' selected' : '') + '>贷</option>' +
+                    '</select></td>' +
+                    '<td><select class="sec-form-input sec-entry-subject">' + secGetSubjectOptionsHtml(subjectCode) + '</select></td>' +
+                    '<td><input type="text" class="sec-form-input sec-entry-summary" placeholder="摘要模板（可含{客户}等占位符）" value="' + ((entry && entry.summary) || '') + '"></td>' +
+                    '<td style="text-align:center;display:' + pmDisplay + '" class="sec-td-pm"><input type="checkbox" class="sec-entry-pm"' + pmChecked + '></td>' +
+                    '<td style="text-align:center"><button class="sec-btn sec-btn-remove" onclick="secRemoveEntry(this)">删除</button></td>';
+                tbody.appendChild(tr);
+            }
+
+            window.secLoadConfig = function (el, name, category, group) {
+                document.querySelectorAll('.sec-tree-node').forEach(function (n) { n.classList.remove('active'); });
+                el.classList.add('active');
+                secCurrentIsSettlement = (category === '结算');
+                document.getElementById('secEmptyState').style.display = 'none';
+                document.getElementById('secConfigPanel').style.display = 'block';
+                document.getElementById('secCfgTitle').textContent = name;
+                document.getElementById('secCfgPath').textContent = '分类：' + category + ' / ' + group;
+                var tip = document.getElementById('secCfgTip');
+                if (secCurrentIsSettlement) {
+                    tip.className = 'sec-config-tip sec-tip-settlement';
+                    tip.textContent = '* 结算类凭证可选择从收支方式读取科目，挂帐类不允许。';
+                } else {
+                    tip.className = 'sec-config-tip sec-tip-normal';
+                    tip.textContent = '* 请手动配置分录科目，系统将按模板生成凭证。';
+                }
+                var thPm = document.getElementById('secThPm');
+                var tdPms = document.querySelectorAll('.sec-td-pm');
+                thPm.style.display = secCurrentIsSettlement ? 'table-cell' : 'none';
+                tdPms.forEach(function (td) { td.style.display = secCurrentIsSettlement ? 'table-cell' : 'none'; });
+
+                // ★ 加载已保存模板数据
+                var stored = secLoadStoredTemplate(name);
+                if (stored) {
+                    document.getElementById('secCfgVoucherWord').value = stored.voucherWord || '转';
+                    document.getElementById('secCfgSummary').value = stored.summaryTemplate || stored.summary || '';
+                    document.getElementById('secCfgRemark').value = stored.remark || '';
+                    var tbody = document.getElementById('secEntryBody');
+                    tbody.innerHTML = '';
+                    (stored.entries || []).forEach(function(entry) { secRenderEntryRow(tbody, entry); });
+                } else {
+                    // 收款单/付款单给默认分录引导
+                    if (name === '收款单') {
+                        document.getElementById('secCfgVoucherWord').value = '收';
+                        document.getElementById('secCfgSummary').value = '收款-{clientName}-{id}';
+                        document.getElementById('secEntryBody').innerHTML = '';
+                    } else if (name === '付款单') {
+                        document.getElementById('secCfgVoucherWord').value = '付';
+                        document.getElementById('secCfgSummary').value = '付款-{clientName}-{id}';
+                        document.getElementById('secEntryBody').innerHTML = '';
+                    } else {
+                        document.getElementById('secCfgVoucherWord').value = '转';
+                        document.getElementById('secCfgSummary').value = '';
+                        document.getElementById('secEntryBody').innerHTML = '';
+                    }
+                }
+            };
+
+            window.secAddEntry = function () {
+                var tbody = document.getElementById('secEntryBody');
+                secRenderEntryRow(tbody, null);
+            };
+
+            window.secRemoveEntry = function (btn) {
+                var tr = btn.closest('tr');
+                if (tr) tr.remove();
+            };
+
+            window.secClearEntries = function () {
+                document.getElementById('secEntryBody').innerHTML = '';
+                secShowToast('科目已清空');
+            };
+
+            window.secSaveTemplate = function () {
+                var name = document.getElementById('secCfgTitle').textContent;
+                var pathText = document.getElementById('secCfgPath').textContent; // 格式: "分类：收付款单 / 收款单"
+                var parts = pathText.replace('分类：', '').split(' / ');
+                var category = (parts[0] || '').trim();
+                var group = (parts[1] || '').trim();
+
+                var voucherWord = document.getElementById('secCfgVoucherWord').value;
+                var summaryTemplate = document.getElementById('secCfgSummary').value.trim();
+                var remark = document.getElementById('secCfgRemark').value.trim();
+
+                var rows = document.querySelectorAll('#secEntryBody tr');
+                if (rows.length === 0) {
+                    alert('请至少添加一条分录');
+                    return;
+                }
+
+                var entries = [];
+                var hasError = false;
+                rows.forEach(function(tr) {
+                    var dirEl = tr.querySelector('.sec-entry-dir');
+                    var subjEl = tr.querySelector('.sec-entry-subject');
+                    var summEl = tr.querySelector('.sec-entry-summary');
+                    var pmEl = tr.querySelector('.sec-entry-pm');
+                    var usePaymentMethod = pmEl ? pmEl.checked : false;
+                    var subjectValue = subjEl ? subjEl.value : '';
+                    var subjParts = subjectValue.split('|||');
+                    var subjectCode = (subjParts[0] || '').trim();
+                    var subjectName = (subjParts[1] || '').trim();
+                    if (!usePaymentMethod && !subjectCode) {
+                        hasError = true;
+                    }
+                    entries.push({
+                        dir: dirEl ? dirEl.value : '借',
+                        subjectCode: subjectCode,
+                        subjectName: subjectName,
+                        summary: summEl ? summEl.value.trim() : '',
+                        usePaymentMethod: usePaymentMethod
+                    });
+                });
+
+                if (hasError) {
+                    alert('有分录未选择科目，请检查');
+                    return;
+                }
+
+                // ★ 保存到 EngineVoucherTemplates（generateVoucherFromEngineTemplate 会读取此处）
+                var template = {
+                    name: name,
+                    category: category,
+                    group: group,
+                    voucherWord: voucherWord,
+                    summaryTemplate: summaryTemplate,
+                    remark: remark,
+                    entries: entries
+                };
+                try {
+                    var store = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+                    store[name] = template;
+                    sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(store));
+                } catch(e) {}
+                // 同时保存一份到 localStorage 保持持久化
+                try {
+                    var lsStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
+                    lsStore[name] = template;
+                    localStorage.setItem('EngineVoucherTemplates', JSON.stringify(lsStore));
+                } catch(e) {}
+
+                secShowToast('✅ 模板已保存并生效');
+            };
+
+            window.secShowToast = function (msg) {
+                document.getElementById('secToastMsg').textContent = msg;
+                document.getElementById('secToastModal').classList.add('active');
+            };
+
+            window.secCloseToast = function () {
+                document.getElementById('secToastModal').classList.remove('active');
+            };
+        }, 0);
     }
+
 
     // =========================================================================
     // 核心页面逻辑结束

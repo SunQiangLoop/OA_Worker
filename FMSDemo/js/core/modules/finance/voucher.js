@@ -80,7 +80,7 @@
             addEntryRow();
 
             const wordEl = document.getElementById('voucher-word');
-            const word = wordEl ? wordEl.value : "记";
+            const word = wordEl ? wordEl.value : "转";
             const nextSeq = window.getNextVoucherSeq ? window.getNextVoucherSeq(word) : 1;
             const newId = window.formatVoucherId ? window.formatVoucherId(word, nextSeq) : `${word}-${String(nextSeq).padStart(4, "0")}`;
             document.getElementById('current-v-id').innerText = newId;
@@ -306,8 +306,8 @@ window.updateSmartPreview = function() {
     const totalC = document.getElementById('preview-total-credit');
     const entryTotalD = document.getElementById('entry-total-debit');
     const entryTotalC = document.getElementById('entry-total-credit');
-    const voucherWord = document.getElementById("voucher-word")?.value || "记";
-    const voucherType = window.getVoucherTypeByWord ? window.getVoucherTypeByWord(voucherWord) : "记账凭证";
+    const voucherWord = document.getElementById("voucher-word")?.value || "转";
+    const voucherType = window.getVoucherTypeByWord ? window.getVoucherTypeByWord(voucherWord) : "转账凭证";
 
     const lines = window.collectVoucherLines ? window.collectVoucherLines() : [];
     if (!lines.length) {
@@ -809,7 +809,7 @@ window.getVoucherTypeByWord = function(word) {
         case "转":
             return "转账凭证";
         default:
-            return "记账凭证";
+            return "转账凭证";
     }
 };
 
@@ -823,7 +823,7 @@ window.parseVoucherSeq = function(id) {
 
 window.getNextVoucherSeq = function(word) {
     const list = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-    const prefix = (word || "记").toString();
+    const prefix = (word || "转").toString();
     let maxSeq = 0;
     list.forEach(v => {
         const id = (v.id || "").toString().trim();
@@ -835,7 +835,7 @@ window.getNextVoucherSeq = function(word) {
 };
 
 window.formatVoucherId = function(word, seq) {
-    const prefix = (word || "记").toString();
+    const prefix = (word || "转").toString();
     const num = Number.isFinite(seq) ? seq : 1;
     return `${prefix}-${String(num).padStart(4, "0")}`;
 };
@@ -843,8 +843,8 @@ window.formatVoucherId = function(word, seq) {
 window.syncVoucherWord = function() {
     const wordEl = document.getElementById("voucher-word");
     const idEl = document.getElementById("current-v-id");
-    const word = wordEl ? wordEl.value : "记";
-    const type = window.getVoucherTypeByWord ? window.getVoucherTypeByWord(word) : "记账凭证";
+    const word = wordEl ? wordEl.value : "转";
+    const type = window.getVoucherTypeByWord ? window.getVoucherTypeByWord(word) : "转账凭证";
     if (idEl) {
         if (window._editingVoucherId) {
             // 编辑模式不改凭证号
@@ -869,7 +869,7 @@ window.getVoucherWordFromType = function(type) {
         case "转账凭证":
             return "转";
         default:
-            return "记";
+            return "转";
     }
 };
 
@@ -1195,7 +1195,7 @@ window.renderVoucherRecordPage = function(page = 1) {
                 <td>${start + idx + 1}</td>
                 <td><a href="javascript:void(0)" onclick="openVoucherDetail('${v.id}')" class="voucher-link">${v.id || "-"}</a></td>
                 <td>${v.date || "-"}</td>
-                <td>${v.type || "记账凭证"}</td>
+                <td>${v.type || "转账凭证"}</td>
                 <td class="summary-cell">${summary}</td>
                 <td class="amount-cell">${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td><span class="voucher-record-status ${statusClass}">${status}</span></td>

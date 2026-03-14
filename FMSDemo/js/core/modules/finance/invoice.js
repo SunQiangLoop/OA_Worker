@@ -1,53 +1,62 @@
-        /** [修复版] 队列开票 (改为含税价逻辑：总额不变，倒算税额) */
+        /** 队列开票：已上传图片后确认开票，直接生成已开票发票记录 */
         window.generateInvoiceFromQueue = function (sourceId, client, amountStr, index) {
-            if (!confirm(`确认对源单据【${sourceId}】开票吗？`)) return;
+            // 必须先上传图片才能开票
+            const imgBase64 = sessionStorage.getItem('_PendingImg_' + sourceId);
+            if (!imgBase64) return alert('请先上传发票图片后再开票。');
 
-            // 1. 移除待办 (保持不变)
+            if (!confirm(`确认对来源单据【${sourceId}】完成开票？\n客户：${client}\n价税合计：¥${amountStr}`)) return;
+
+            // 1. 取出待办队列项（在 splice 前先取，保留 waybillIds）
             let queue = JSON.parse(sessionStorage.getItem('PendingInvoiceQueue') || "[]");
+            const queueItem = queue[index] || {};
+            const linkedIds = Array.isArray(queueItem.waybillIds) ? queueItem.waybillIds : [];
             queue.splice(index, 1);
             sessionStorage.setItem('PendingInvoiceQueue', JSON.stringify(queue));
+            // 清理临时图片缓存
+            sessionStorage.removeItem('_PendingImg_' + sourceId);
 
-            let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || "[]");
-
-            // ============================================================
-            // ★★★ 核心修改区：含税倒算逻辑 ★★★
-            // ============================================================
-            // 1. 获取总金额 (这就是对账单金额 2300)
+            // 2. 含税倒算
             const totalNum = parseFloat(amountStr.replace(/,/g, ''));
-
-            // 2. 倒算不含税金额 (总额 / 1.09)
             const amountNum = totalNum / 1.09;
-
-            // 3. 计算税额 (总额 - 不含税)
             const taxNum = totalNum - amountNum;
-
-            // 4. 格式化字符串
             const totalStr = totalNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const amountFinalStr = amountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const taxStr = taxNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            // ============================================================
+            const today = new Date().toISOString().slice(0, 10);
 
+            // 3. 生成发票记录（发票号取上传时存储的 FP+时间戳，状态设为待审核）
+            const fpNo = sessionStorage.getItem('_PendingFP_' + sourceId) || ('FP' + Date.now());
+            sessionStorage.removeItem('_PendingFP_' + sourceId);
             const newInvoice = {
-                no: "13000" + Math.floor(Math.random() * 90000),
+                no: fpNo,
                 client: client,
-                amount: amountFinalStr, // 显示不含税金额 (约 2110.09)
-                tax: taxStr,           // 显示税额 (约 189.91)
-                total: totalStr,       // 显示总额 (2300.00) -> 保持和对账一致！
-                date: new Date().toISOString().slice(0, 10),
-                status: "正常",
-                remark: sourceId
+                amount: amountFinalStr,
+                tax: taxStr,
+                total: totalStr,
+                date: today,
+                status: "待审核",
+                remark: sourceId,
+                waybillIds: linkedIds,
+                imgBase64: imgBase64,
+                uploadTime: new Date().toISOString()
             };
-
-            // ... (后续保存、生成凭证代码保持不变) ...
+            let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || "[]");
             invoices.unshift(newInvoice);
             sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
 
-            // 生成凭证时，记得也要传 totalNum
-            if (typeof runAccountingEngine === 'function') {
-                runAccountingEngine('发票开具', { client: client, amount: totalStr });
-            }
+            // 4. 回写关联运单开票状态
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || "[]");
+            let wbUpdated = 0;
+            waybills.forEach(w => {
+                if (linkedIds.includes(w.id) || w.reconId === sourceId) {
+                    w.invoiceStatus = '已开票';
+                    w.invoiceNo = newInvoice.no;
+                    wbUpdated++;
+                }
+            });
+            if (wbUpdated > 0) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
 
-            // ... (后续状态回写保持不变) ...
+            // 5. 回写对账单状态
             let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || "[]");
             let reconItem = recons.find(r => r.id === sourceId);
             if (reconItem) {
@@ -55,14 +64,7 @@
                 sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
             }
 
-            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || "[]");
-            let wbUpdated = false;
-            waybills.forEach(w => {
-                if (w.reconId === sourceId) { w.status = '已开票'; wbUpdated = true; }
-            });
-            if (wbUpdated) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
-
-            alert(`🎉 开票成功！\n\n发票总额：${totalStr} (与对账一致)\n其中税额：${taxStr}`);
+            alert(`✅ 开票申请已提交！\n发票号：${newInvoice.no}\n客户：${client}\n价税合计：¥${totalStr}\n\n请在【销项发票台账】点击【通过】审核后，再前往【应收核销】操作。`);
             loadContent('TaxOutputInvoice');
         }
 

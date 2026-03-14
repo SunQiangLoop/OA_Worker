@@ -1,5 +1,28 @@
 // js/modules/finance/settlement.js
 
+/**
+ * 生成凭证字号：收/付/转 + YYYYMM + 四位顺序号
+ * 例：收202601 0001、转202601 0002
+ * @param {string} voucherType  '收款凭证' | '付款凭证' | '转账凭证'
+ */
+window.generateVoucherId = function (voucherType) {
+    const prefix = voucherType === '收款凭证' ? '收'
+                 : voucherType === '付款凭证' ? '付'
+                 : '转';
+    // 扫描已有凭证找最大序号，保证不断号
+    const vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+    const re = new RegExp(`^${prefix}-(\\d+)$`);
+    let maxSeq = 0;
+    vouchers.forEach(v => {
+        const m = (v.id || '').match(re);
+        if (m) {
+            const n = parseInt(m[1], 10);
+            if (n > maxSeq) maxSeq = n;
+        }
+    });
+    return `${prefix}-${String(maxSeq + 1).padStart(4, '0')}`;
+};
+
 // 全选/反选
 window.toggleAll = function (source) {
     document.querySelectorAll('.wb-check').forEach(cb => {
@@ -70,67 +93,63 @@ const generateSettlementVoucher = (templateName, doc, pmId) => {
 window.settleWaybill = function (id) {
     let list = JSON.parse(sessionStorage.getItem('BizWaybills'));
     let item = list.find(i => i.id === id);
-    if (item) {
-        item.status = '已挂帐';
-        // ★★★ 修复 1：读取 totalAmount，如果没有则默认 1000 ★★★
-        let currentVal = item.totalAmount || item.amount || "1000";
-        item.totalAmount = parseFloat(currentVal.toString().replace(/,/g, '')).toFixed(2);
-        
-        sessionStorage.setItem('BizWaybills', JSON.stringify(list));
-        // 生成对应应收账款 (一单一应收)
-        let arList = JSON.parse(sessionStorage.getItem('ARStatements') || "[]");
-        if (!arList.some(ar => ar.id === item.id)) {
-            arList.unshift({
-                id: item.id,
-                client: item.client,
-                period: item.bizDate ? item.bizDate.slice(0, 7) : new Date().toISOString().slice(0, 7),
-                amount: item.totalAmount,
-                verified: '0.00',
-                unverified: item.totalAmount,
-                status: '未核销'
-            });
-            sessionStorage.setItem('ARStatements', JSON.stringify(arList));
-        }
+    if (!item) return;
 
-        const shouldGenerateVoucher = confirm("✅ 挂帐完成！\n状态已更新为【已挂帐】。\n已生成应收。\n\n是否立即生成凭证？\n点击【取消】将在对账时统一生成一张凭证。");
-        let vId = '';
-        let engineTip = '';
+    item.status = '已挂帐';
+    let currentVal = item.totalAmount || item.freightAmount || item.amount || "1000";
+    const totalAmt = parseFloat(currentVal.toString().replace(/,/g, ''));
+    item.totalAmount = totalAmt.toFixed(2);
 
-        if (shouldGenerateVoucher) {
-            // 生成凭证 (每单一张，使用会计引擎配置模板)
-            const doc = {
-                type: '运单',
-                waybillNo: item.id,
-                bill_no: item.id,
-                paymentType: item.paymentType || '现付',
-                status: '已挂帐',
-                clientName: item.client,
-                orgName: item.orgName || '上海分公司',
-                amount: item.totalAmount
-            };
-            const pmId = resolvePaymentMethodId(item.paymentMethod || 'pm_cash');
-            const templateName = resolveAccrualTemplateName(item.paymentType || '现付');
-            const result = generateSettlementVoucher(templateName, doc, pmId);
-            if (result.success) {
-                vId = result.voucherId;
-            } else {
-                engineTip = result.error || '模板未生成凭证';
-            }
-        } else {
-            engineTip = '已选择对账后生成';
-        }
+    sessionStorage.setItem('BizWaybills', JSON.stringify(list));
 
-        item.voucherPending = !vId;
-        if (vId) {
-            item.voucherId = vId;
-        }
-
-        sessionStorage.setItem('BizWaybills', JSON.stringify(list));
-
-        const voucherTip = vId ? `\n已生成凭证：${vId}` : `\n未生成凭证：${engineTip}`;
-        alert(`✅ 挂帐完成！状态已更新为【已挂帐】。\n已生成应收。${voucherTip}`);
-        loadContent('SettlementWaybill');
+    // 生成应收记录
+    let arList = JSON.parse(sessionStorage.getItem('ARStatements') || "[]");
+    if (!arList.some(ar => ar.id === item.id)) {
+        arList.unshift({
+            id: item.id,
+            client: item.client,
+            period: item.bizDate ? item.bizDate.slice(0, 7) : new Date().toISOString().slice(0, 7),
+            amount: item.totalAmount,
+            verified: '0.00',
+            unverified: item.totalAmount,
+            status: '未核销'
+        });
+        sessionStorage.setItem('ARStatements', JSON.stringify(arList));
     }
+
+    // 生成转账凭证：确认应收账款
+    // 借：应收账款，贷：主营业务收入 + 应交税费-应交增值税(销项税额)
+    const today = new Date().toISOString().slice(0, 10);
+    const taxRate = parseFloat((item.taxRate || '9%').toString().replace('%', '')) / 100 || 0.09;
+    const taxAmt = (totalAmt * taxRate / (1 + taxRate)).toFixed(2);
+    const revenueAmt = (totalAmt - parseFloat(taxAmt)).toFixed(2);
+
+    const voucherId = window.generateVoucherId('转账凭证');
+    const voucher = {
+        id: voucherId,
+        type: '转账凭证',
+        date: today,
+        summary: `运单挂账 ${item.id}`,
+        entries: [
+            { subjectCode: '1122', subjectName: '应收账款', auxiliary: item.client || '', debit: totalAmt.toFixed(2), credit: '' },
+            { subjectCode: '6001', subjectName: '主营业务收入', debit: '', credit: revenueAmt },
+            { subjectCode: '2221.01', subjectName: '应交税费-应交增值税(销项税额)', debit: '', credit: taxAmt },
+        ],
+        relatedDocs: [{ type: 'waybill', id: item.id }],
+        sourceId: item.id,
+        status: '待审核',
+        createdAt: today
+    };
+    let vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+    vouchers.unshift(voucher);
+    sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));
+
+    item.voucherId = voucherId;
+    item.voucherPending = false;
+    sessionStorage.setItem('BizWaybills', JSON.stringify(list));
+
+    alert(`✅ 挂账完成！\n运单：${item.id}\n含税总额：¥${totalAmt.toFixed(2)}（税率${Math.round(taxRate * 100)}%）\n\n已生成转账凭证：${voucherId}\n  借：应收账款 ¥${totalAmt.toFixed(2)}\n  贷：主营业务收入 ¥${revenueAmt}\n      应交税费-销项税 ¥${taxAmt}`);
+    loadContent('SettlementWaybill');
 }
 
 // 取消挂帐
@@ -1068,6 +1087,136 @@ window.toggleMethodStatus = function(id) {
     }
 }
 
+// ============================================
+// 提货批次挂账 (PickupBatchAccrual) 业务逻辑
+// ============================================
+
+// ============================================
+// 短驳批次挂账 (ShuttleBatchAccrual) 业务逻辑
+// ============================================
+
+window.shuttleBatchToolbarSettle = function() {
+    const checked = Array.from(document.querySelectorAll('.shuttle-check:checked'));
+    if (!checked.length) return alert('请先勾选需要挂账的短驳批次。');
+    const ids = checked.map(cb => cb.value);
+
+    let list = JSON.parse(sessionStorage.getItem('ShuttleBatches') || '[]');
+    const unSettled = ids.filter(id => {
+        const item = list.find(i => i.id === id);
+        return item && item.feeAccrualStatus !== '已挂账';
+    });
+    if (!unSettled.length) return alert('所选批次均已挂账，无需重复操作。');
+
+    if (!confirm(`确认对以下 ${unSettled.length} 条短驳批次发起挂账？\n\n${unSettled.join('\n')}`)) return;
+
+    let apList = JSON.parse(sessionStorage.getItem('APApplications') || '[]');
+    unSettled.forEach(id => {
+        const item = list.find(i => i.id === id);
+        if (!item) return;
+        item.feeAccrualStatus = '已挂账';
+        apList.unshift({
+            apId: 'AP' + new Date().getTime().toString().slice(-6) + Math.floor(Math.random()*100),
+            sourceId: item.id,
+            payee: item.driver + ' (短驳)',
+            amount: parseFloat(item.fee),
+            applyDate: new Date().toISOString().split('T')[0],
+            status: '待付款'
+        });
+    });
+    sessionStorage.setItem('ShuttleBatches', JSON.stringify(list));
+    sessionStorage.setItem('APApplications', JSON.stringify(apList));
+
+    alert(`✅ 挂账成功！\n共 ${unSettled.length} 条短驳批次已挂账，已生成付款申请。`);
+    loadContent('ShuttleBatchAccrual');
+};
+
+window.shuttleBatchToolbarCancel = function() {
+    const checked = Array.from(document.querySelectorAll('.shuttle-check:checked'));
+    if (!checked.length) return alert('请先勾选需要取消挂账的短驳批次。');
+    const ids = checked.map(cb => cb.value);
+
+    let list = JSON.parse(sessionStorage.getItem('ShuttleBatches') || '[]');
+    const settled = ids.filter(id => {
+        const item = list.find(i => i.id === id);
+        return item && item.feeAccrualStatus === '已挂账';
+    });
+    if (!settled.length) return alert('所选批次均未挂账，无需取消。');
+
+    if (!confirm(`确认取消以下 ${settled.length} 条短驳批次的挂账？\n\n${settled.join('\n')}`)) return;
+
+    settled.forEach(id => {
+        const item = list.find(i => i.id === id);
+        if (item) item.feeAccrualStatus = '未挂账';
+    });
+    sessionStorage.setItem('ShuttleBatches', JSON.stringify(list));
+
+    alert(`✅ 已取消挂账！\n共 ${settled.length} 条短驳批次状态已回滚为【未挂账】。`);
+    loadContent('ShuttleBatchAccrual');
+};
+
+// ============================================
+// 提货批次挂账 (PickupBatchAccrual) 业务逻辑
+// ============================================
+
+window.pickupBatchToolbarSettle = function() {
+    const checked = Array.from(document.querySelectorAll('.pickup-check:checked'));
+    if (!checked.length) return alert('请先勾选需要挂账的提货批次。');
+    const ids = checked.map(cb => cb.value);
+
+    let list = JSON.parse(sessionStorage.getItem('PickupBatches') || '[]');
+    const unSettled = ids.filter(id => {
+        const item = list.find(i => i.id === id);
+        return item && item.feeAccrualStatus !== '已挂账';
+    });
+    if (!unSettled.length) return alert('所选批次均已挂账，无需重复操作。');
+
+    if (!confirm(`确认对以下 ${unSettled.length} 条提货批次发起挂账？\n\n${unSettled.join('\n')}`)) return;
+
+    let apList = JSON.parse(sessionStorage.getItem('APApplications') || '[]');
+    unSettled.forEach(id => {
+        const item = list.find(i => i.id === id);
+        if (!item) return;
+        item.feeAccrualStatus = '已挂账';
+        apList.unshift({
+            apId: 'AP' + new Date().getTime().toString().slice(-6) + Math.floor(Math.random()*100),
+            sourceId: item.id,
+            payee: item.driver + ' (提货)',
+            amount: parseFloat(item.fee),
+            applyDate: new Date().toISOString().split('T')[0],
+            status: '待付款'
+        });
+    });
+    sessionStorage.setItem('PickupBatches', JSON.stringify(list));
+    sessionStorage.setItem('APApplications', JSON.stringify(apList));
+
+    alert(`✅ 挂账成功！\n共 ${unSettled.length} 条提货批次已挂账，已生成付款申请。`);
+    loadContent('PickupBatchAccrual');
+};
+
+window.pickupBatchToolbarCancel = function() {
+    const checked = Array.from(document.querySelectorAll('.pickup-check:checked'));
+    if (!checked.length) return alert('请先勾选需要取消挂账的提货批次。');
+    const ids = checked.map(cb => cb.value);
+
+    let list = JSON.parse(sessionStorage.getItem('PickupBatches') || '[]');
+    const settled = ids.filter(id => {
+        const item = list.find(i => i.id === id);
+        return item && item.feeAccrualStatus === '已挂账';
+    });
+    if (!settled.length) return alert('所选批次均未挂账，无需取消。');
+
+    if (!confirm(`确认取消以下 ${settled.length} 条提货批次的挂账？\n\n${settled.join('\n')}`)) return;
+
+    settled.forEach(id => {
+        const item = list.find(i => i.id === id);
+        if (item) item.feeAccrualStatus = '未挂账';
+    });
+    sessionStorage.setItem('PickupBatches', JSON.stringify(list));
+
+    alert(`✅ 已取消挂账！\n共 ${settled.length} 条提货批次状态已回滚为【未挂账】。`);
+    loadContent('PickupBatchAccrual');
+};
+
 // 4. 删除方式
 window.deleteMethod = function(id) {
     if(!confirm("确定要删除该收支方式吗？删除后可能影响历史数据的显示。")) return;
@@ -1386,4 +1535,287 @@ window.toggleAccountBookStatus = function(id) {
     item.status = item.status === '已启用' ? '停用' : '已启用';
     sessionStorage.setItem('FinanceAccountBooks', JSON.stringify(list));
     loadContent('AcctSet');
+};
+
+// ============================================================
+// 运单结算 - 转账凭证（确认结算应收）
+// ============================================================
+
+/** 运单结算：生成转账凭证（借：应收账款-已结算，贷：应收账款） */
+window.arSettleWaybillsBatch = function () {
+    const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
+    if (!checked.length) return alert('请先勾选需要结算的运单。');
+    const ids = checked.map(cb => cb.value).filter(Boolean);
+
+    const list = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+    const toSettle = list.filter(w => ids.includes(w.id) && w.settlementStatus !== '已结算');
+    if (!toSettle.length) return alert('所选运单均已结算，无需重复操作。');
+
+    const toNumber = (v) => {
+        const n = Number((v ?? '').toString().replace(/,/g, '').trim());
+        return Number.isFinite(n) ? n : 0;
+    };
+    const total = toSettle.reduce((s, w) => s + toNumber(w.totalAmount || w.freightAmount || w.amount || 0), 0);
+    const totalStr = total.toFixed(2);
+
+    if (!confirm(`确认结算 ${toSettle.length} 票运单？\n合计金额：¥${totalStr}\n\n将生成转账凭证，确认应收账款。`)) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    // 更新运单状态
+    list.forEach(w => {
+        if (!ids.includes(w.id) || w.settlementStatus === '已结算') return;
+        w.settlementStatus = '已结算';
+        w.settledAt = today;
+        if (!w.invoiceStatus) w.invoiceStatus = '';
+    });
+    sessionStorage.setItem('BizWaybills', JSON.stringify(list));
+
+    // 生成转账凭证：确认结算应收
+    // 借：应收账款-已结算，贷：应收账款（将挂账应收转入已结算应收）
+    const voucherId = window.generateVoucherId('转账凭证');
+    const voucher = {
+        id: voucherId,
+        type: '转账凭证',
+        date: today,
+        summary: `运单结算确认 ${toSettle.length}票`,
+        entries: [
+            { subjectCode: '1122.01', subjectName: '应收账款-已结算', debit: totalStr, credit: '' },
+            { subjectCode: '1122',    subjectName: '应收账款',        debit: '',       credit: totalStr }
+        ],
+        relatedDocs: ids.map(id => ({ type: 'waybill', id })),
+        sourceIds: ids,
+        amount: totalStr,
+        status: '待审核',
+        createdAt: today
+    };
+    let vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+    vouchers.unshift(voucher);
+    sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));
+
+    alert(`✅ 结算完成！\n已结算 ${toSettle.length} 票运单，合计：¥${totalStr}\n\n已生成转账凭证：${voucherId}\n  借：应收账款-已结算 ¥${totalStr}\n  贷：应收账款      ¥${totalStr}\n\n请勾选已结算运单，点【申请开票】推送至发票台账。`);
+    loadContent('ARCollectionVerify');
+};
+
+/** 申请开票：将已结算运单推送到发票台账待办队列 */
+window.arRequestInvoiceBatch = function () {
+    const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
+    if (!checked.length) return alert('请先勾选需要申请开票的运单。');
+    const ids = checked.map(cb => cb.value).filter(Boolean);
+
+    const list = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+    const eligible = list.filter(w => ids.includes(w.id) && w.settlementStatus === '已结算' && w.invoiceStatus !== '已开票' && w.invoiceStatus !== '申请中');
+    if (!eligible.length) return alert('请先对运单进行结算，且未重复申请开票。');
+
+    const toNumber = (v) => {
+        const n = Number((v ?? '').toString().replace(/,/g, '').trim());
+        return Number.isFinite(n) ? n : 0;
+    };
+    const total = eligible.reduce((s, w) => s + toNumber(w.totalAmount || w.freightAmount || w.amount || 0), 0);
+    const client = eligible[0].client || '';
+
+    const sourceId = 'JH' + new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+    let queue = JSON.parse(sessionStorage.getItem('PendingInvoiceQueue') || '[]');
+    queue.unshift({ sourceId, client, amount: total.toFixed(2), waybillIds: ids, requestAt: new Date().toISOString().slice(0, 10) });
+    sessionStorage.setItem('PendingInvoiceQueue', JSON.stringify(queue));
+
+    list.forEach(w => { if (ids.includes(w.id)) w.invoiceStatus = '申请中'; });
+    sessionStorage.setItem('BizWaybills', JSON.stringify(list));
+
+    alert(`✅ 申请开票成功！\n来源单号：${sourceId}\n客户：${client}\n合计：¥${total.toFixed(2)}\n\n请前往【销项发票台账】完成开票操作。`);
+    loadContent('ARCollectionVerify');
+};
+
+/** 待开票队列：上传票图并激活确认开票按钮，同时生成 FP+时间戳 发票号 */
+window.uploadPendingInvoiceImg = function (sourceId, index, input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) return alert('图片不能超过5MB');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const ts = Date.now();
+        const fpNo = 'FP' + ts;
+        sessionStorage.setItem('_PendingImg_' + sourceId, e.target.result);
+        sessionStorage.setItem('_PendingFP_' + sourceId, fpNo);
+        // 激活通过按钮
+        const btn = document.getElementById('pending-invoice-btn-' + index);
+        if (btn) {
+            btn.disabled = false;
+            btn.style.background = '#27ae60';
+            btn.style.color = '#fff';
+            btn.style.cursor = 'pointer';
+            btn.removeAttribute('title');
+        }
+        // 显示生成的发票号
+        const noCell = document.getElementById('pending-no-' + index);
+        if (noCell) noCell.textContent = fpNo;
+    };
+    reader.readAsDataURL(file);
+};
+
+/** 上传/重新上传发票图片，上传后状态自动变为"待审核" */
+window.uploadInvoiceImage = function (invNo, input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) return alert('图片不能超过5MB');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+        const inv = invoices.find(i => i.no === invNo);
+        if (!inv) return alert('未找到发票记录');
+        inv.imgBase64 = e.target.result;
+        inv.imgName = file.name;
+        inv.uploadTime = new Date().toISOString();
+        if (inv.status !== '已核销') inv.status = '待审核';
+        sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+        loadContent('TaxOutputInvoice');
+    };
+    reader.readAsDataURL(file);
+};
+
+/** 通过发票审核 */
+window.approveInvoice = function (invNo) {
+    if (!confirm('确认通过发票【' + invNo + '】的审核？')) return;
+    let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv) return alert('未找到发票记录');
+    inv.status = '已开票';
+    sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+    loadContent('TaxOutputInvoice');
+};
+
+/** 驳回发票 */
+window.rejectInvoice = function (invNo) {
+    const reason = prompt('请输入驳回原因：');
+    if (reason === null) return;
+    let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv) return alert('未找到发票记录');
+    inv.status = '已驳回';
+    inv.rejectReason = reason;
+    sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+    alert('发票已驳回，请重新上传正确的发票图片。');
+    loadContent('TaxOutputInvoice');
+};
+
+/** 作废发票 */
+window.voidInvoice = function (invNo) {
+    if (!confirm('确认作废发票【' + invNo + '】？此操作不可撤销。')) return;
+    let invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv) return alert('未找到发票记录');
+    inv.status = '已作废';
+    sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+    loadContent('TaxOutputInvoice');
+};
+
+/** 查看发票图片 */
+window.viewInvoiceImage = function (invNo) {
+    const invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv || !inv.imgBase64) return alert('暂无图片');
+    const modal = document.getElementById('invoice-img-modal');
+    const img = document.getElementById('invoice-img-preview');
+    const title = document.getElementById('invoice-img-modal-title');
+    if (!modal || !img) return;
+    img.src = inv.imgBase64;
+    if (title) title.textContent = `发票图片 - ${invNo}`;
+    modal.style.display = 'flex';
+};
+
+/** 确认开票：上传图片后点击，将发票状态变为已开票，回写运单 */
+window.confirmInvoice = function (invNo) {
+    const invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv) return alert('未找到发票数据');
+    if (!inv.imgBase64) return alert('请先上传发票图片后再确认开票。');
+    if (inv.status === '已开票' || inv.status === '已核销') return alert('该发票已开票，无需重复操作。');
+
+    if (!confirm(`确认开票？\n发票号：${invNo}\n客户：${inv.client}\n价税合计：¥${inv.total}`)) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    inv.status = '已开票';
+    inv.date = inv.date || today;
+    sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+
+    // 回写关联运单开票状态
+    const waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+    let wbUpdated = 0;
+    const linkedIds = Array.isArray(inv.waybillIds) ? inv.waybillIds : [];
+    waybills.forEach(w => {
+        if (w.invoiceNo === invNo || w.reconId === inv.remark || linkedIds.includes(w.id)) {
+            w.invoiceStatus = '已开票';
+            w.invoiceNo = invNo;
+            wbUpdated++;
+        }
+    });
+    if (wbUpdated > 0) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+    alert(`✅ 开票确认成功！\n发票【${invNo}】已标记为已开票。`);
+    loadContent('TaxOutputInvoice');
+};
+
+/** 核销发票：生成收款凭证，标记已核销，回写运单状态 */
+window.verifyInvoice = function (invNo) {
+    const invoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
+    const inv = invoices.find(i => i.no === invNo);
+    if (!inv) return alert('未找到发票数据');
+    if (inv.status === '已核销') return alert('该发票已核销，无需重复操作。');
+    if (inv.status !== '已开票') return alert('请先确认开票后再核销。');
+
+    if (!confirm(`确认核销发票【${invNo}】？\n客户：${inv.client}\n价税合计：¥${inv.total}\n\n核销将自动生成收款凭证。`)) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    inv.status = '已核销';
+    inv.verifiedAt = today;
+    sessionStorage.setItem('OutputInvoices', JSON.stringify(invoices));
+
+    // 生成收款凭证：借 银行存款-基本户 / 贷 应收账款-已结算
+    const voucherId = window.generateVoucherId('收款凭证');
+    const linkedIds = Array.isArray(inv.waybillIds) ? inv.waybillIds : [];
+    const voucher = {
+        id: voucherId,
+        type: '收款凭证',
+        date: today,
+        summary: `收到货款 发票${invNo} ${inv.client}`,
+        entries: [
+            { subjectCode: '1002.01', subjectName: '银行存款-基本户', debit: inv.total, credit: '' },
+            { subjectCode: '1122.01', subjectName: '应收账款-已结算', debit: '', credit: inv.total }
+        ],
+        relatedDocs: linkedIds.length > 0
+            ? linkedIds.map(id => ({ type: 'waybill', id }))
+            : [{ type: 'reimbursement', id: inv.remark }],
+        sourceId: inv.remark,
+        invoiceNo: invNo,
+        status: '待审核',
+        createdAt: today
+    };
+    let manualVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+    manualVouchers.unshift(voucher);
+    sessionStorage.setItem('ManualVouchers', JSON.stringify(manualVouchers));
+
+    // 回写关联运单状态
+    const waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+    let updated = 0;
+    waybills.forEach(w => {
+        if (w.invoiceNo === invNo || linkedIds.includes(w.id)) {
+            w.invoiceStatus = '已核销';
+            updated++;
+        }
+    });
+    if (updated > 0) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+    // 更新ARStatements
+    let arList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+    arList.forEach(ar => {
+        if (ar.client === inv.client && ar.status !== '已核销') {
+            ar.status = '已核销';
+            ar.verified = ar.amount;
+            ar.unverified = '0.00';
+        }
+    });
+    sessionStorage.setItem('ARStatements', JSON.stringify(arList));
+
+    alert(`✅ 核销完成！\n发票【${invNo}】已核销。\n已生成收款凭证：${voucherId}\n  借：银行存款-基本户 ¥${inv.total}\n  贷：应收账款-已结算 ¥${inv.total}${updated > 0 ? `\n已更新 ${updated} 条运单状态。` : ''}`);
+    loadContent('TaxOutputInvoice');
 };
