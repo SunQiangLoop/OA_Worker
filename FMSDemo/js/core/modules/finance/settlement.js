@@ -148,6 +148,7 @@ window.settleWaybill = function (id) {
     item.voucherPending = false;
     sessionStorage.setItem('BizWaybills', JSON.stringify(list));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '运单挂账，单号：' + item.id + '，含税金额：¥' + totalAmt.toFixed(2) + '，凭证：' + voucherId });
     alert(`✅ 挂账完成！\n运单：${item.id}\n含税总额：¥${totalAmt.toFixed(2)}（税率${Math.round(taxRate * 100)}%）\n\n已生成转账凭证：${voucherId}\n  借：应收账款 ¥${totalAmt.toFixed(2)}\n  贷：主营业务收入 ¥${revenueAmt}\n      应交税费-销项税 ¥${taxAmt}`);
     loadContent('SettlementWaybill');
 }
@@ -171,6 +172,7 @@ window.cancelWaybill = function (id) {
     arList = arList.filter(ar => ar.id !== id);
     sessionStorage.setItem('ARStatements', JSON.stringify(arList));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消运单挂账，单号：' + id + '，状态回滚为【未挂帐】' });
     alert("✅ 已取消挂帐，状态已回滚为【未挂帐】。");
     loadContent('SettlementWaybill');
 }
@@ -541,6 +543,7 @@ window.settleShortHaul = function(id) {
     });
     sessionStorage.setItem('APApplications', JSON.stringify(apList));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '短途批次挂账，批次：' + id + '，金额：¥' + item.totalAmount });
     alert("✅ 短途费用挂帐成功！已生成付款申请。");
     
     // 刷新页面 (如果在详情页则刷新详情页，在列表页则刷新列表页)
@@ -1126,6 +1129,7 @@ window.shuttleBatchToolbarSettle = function() {
     sessionStorage.setItem('ShuttleBatches', JSON.stringify(list));
     sessionStorage.setItem('APApplications', JSON.stringify(apList));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '短驳批次挂账，共 ' + unSettled.length + ' 条，批次：' + unSettled.join('、') });
     alert(`✅ 挂账成功！\n共 ${unSettled.length} 条短驳批次已挂账，已生成付款申请。`);
     loadContent('ShuttleBatchAccrual');
 };
@@ -1150,6 +1154,7 @@ window.shuttleBatchToolbarCancel = function() {
     });
     sessionStorage.setItem('ShuttleBatches', JSON.stringify(list));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消短驳批次挂账，共 ' + settled.length + ' 条，批次：' + settled.join('、') });
     alert(`✅ 已取消挂账！\n共 ${settled.length} 条短驳批次状态已回滚为【未挂账】。`);
     loadContent('ShuttleBatchAccrual');
 };
@@ -1189,6 +1194,7 @@ window.pickupBatchToolbarSettle = function() {
     sessionStorage.setItem('PickupBatches', JSON.stringify(list));
     sessionStorage.setItem('APApplications', JSON.stringify(apList));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '提货批次挂账，共 ' + unSettled.length + ' 条，批次：' + unSettled.join('、') });
     alert(`✅ 挂账成功！\n共 ${unSettled.length} 条提货批次已挂账，已生成付款申请。`);
     loadContent('PickupBatchAccrual');
 };
@@ -1213,6 +1219,7 @@ window.pickupBatchToolbarCancel = function() {
     });
     sessionStorage.setItem('PickupBatches', JSON.stringify(list));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消提货批次挂账，共 ' + settled.length + ' 条，批次：' + settled.join('、') });
     alert(`✅ 已取消挂账！\n共 ${settled.length} 条提货批次状态已回滚为【未挂账】。`);
     loadContent('PickupBatchAccrual');
 };
@@ -1593,6 +1600,7 @@ window.arSettleWaybillsBatch = function () {
     vouchers.unshift(voucher);
     sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应收管理', action: '结算', detail: '运单结算，共 ' + toSettle.length + ' 票，合计：¥' + totalStr + '，凭证：' + voucherId });
     alert(`✅ 结算完成！\n已结算 ${toSettle.length} 票运单，合计：¥${totalStr}\n\n已生成转账凭证：${voucherId}\n  借：应收账款-已结算 ¥${totalStr}\n  贷：应收账款      ¥${totalStr}\n\n请勾选已结算运单，点【申请开票】推送至发票台账。`);
     loadContent('ARCollectionVerify');
 };
@@ -1622,6 +1630,7 @@ window.arRequestInvoiceBatch = function () {
     list.forEach(w => { if (ids.includes(w.id)) w.invoiceStatus = '申请中'; });
     sessionStorage.setItem('BizWaybills', JSON.stringify(list));
 
+    if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应收管理', action: '申请开票', detail: '申请开票，来源单：' + sourceId + '，客户：' + client + '，合计：¥' + total.toFixed(2) });
     alert(`✅ 申请开票成功！\n来源单号：${sourceId}\n客户：${client}\n合计：¥${total.toFixed(2)}\n\n请前往【销项发票台账】完成开票操作。`);
     loadContent('ARCollectionVerify');
 };

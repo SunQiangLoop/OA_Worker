@@ -31,8 +31,7 @@ function getModuleName(code) {
         BudgetPlanning: "预算编制",
         BudgetExecutionAnalysis: "预算执行分析",
         BudgetPerformance: "绩效考核",
-        RiskSensitiveLog: "敏感操作日志",
-        RiskDataChange: "数据变更明细",
+        OperationLogCenter: "操作日志中心",
         AcctSubject: "会计科目",
         AcctSet: "会计账套",
         AcctPeriod: "会计期间",
@@ -522,7 +521,9 @@ function loadContent(moduleCode, element = null) {
         if (defaultItem) defaultItem.classList.add("active");
     }
 
-    let contentHTML = `<h2>${getModuleName(moduleCode)}</h2>`;
+    // 部分模块自带标题，不需要自动插入 h2
+    const modulesWithOwnTitle = ["AccountingStandardSetting", "FinanceOpeningBalance"];
+    let contentHTML = modulesWithOwnTitle.includes(moduleCode) ? `` : `<h2>${getModuleName(moduleCode)}</h2>`;
 
     // =========================================================================
     // 核心页面逻辑开始
@@ -903,8 +904,8 @@ function loadContent(moduleCode, element = null) {
                                 <div class="ws-link" onclick="loadContent('Permission')">
                                     权限管理 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
                                 </div>
-                                <div class="ws-link" onclick="loadContent('RiskSensitiveLog')">
-                                    操作日志 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
+                                <div class="ws-link" onclick="loadContent('OperationLogCenter')">
+                                    操作日志中心 <div class="ws-link__right"><span class="ws-link__arrow">›</span></div>
                                 </div>
                             </div>
                         </div>
@@ -3228,24 +3229,28 @@ function loadContent(moduleCode, element = null) {
         window.arBatchToolbarSettle = function() {
             const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
             if (!checked.length) return alert('请先勾选需要挂账的到车批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('ArrivalBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item) { item.arrFreightAccrual = '已挂账'; item.arrStationFeeAccrual = item.arrStationFee ? '已挂账' : ''; item.unloadFeeAccrual = item.unloadFee ? '已挂账' : ''; }
             });
             sessionStorage.setItem('ArrivalBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '到车批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 挂账成功！共 ${checked.length} 条到车批次已挂账。`);
             loadContent('ArrivalBatchAccrual');
         };
         window.arBatchToolbarCancel = function() {
             const checked = Array.from(document.querySelectorAll('.ar-check:checked'));
             if (!checked.length) return alert('请先勾选需要取消挂账的到车批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('ArrivalBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item) { item.arrFreightAccrual = '未挂账'; item.arrStationFeeAccrual = item.arrStationFee ? '未挂账' : ''; item.unloadFeeAccrual = item.unloadFee ? '未挂账' : ''; }
             });
             sessionStorage.setItem('ArrivalBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消到车批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 已取消挂账！共 ${checked.length} 条到车批次状态回滚。`);
             loadContent('ArrivalBatchAccrual');
         };
@@ -3595,24 +3600,28 @@ function loadContent(moduleCode, element = null) {
         window.dlBatchToolbarSettle = function() {
             const checked = Array.from(document.querySelectorAll('.dl-check:checked'));
             if (!checked.length) return alert('请先勾选需要挂账的送货批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('DeliveryBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item && item.deliveryFee > 0) { item.deliveryFeeAccrual = '已挂账'; item.deliveryFeeConfirm = item.deliveryFeeConfirm || '已确认'; }
             });
             sessionStorage.setItem('DeliveryBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '送货批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 挂账成功！共 ${checked.length} 条送货批次已挂账。`);
             loadContent('DeliveryBatchAccrual');
         };
         window.dlBatchToolbarCancel = function() {
             const checked = Array.from(document.querySelectorAll('.dl-check:checked'));
             if (!checked.length) return alert('请先勾选需要取消挂账的送货批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('DeliveryBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item) { item.deliveryFeeAccrual = '未挂账'; }
             });
             sessionStorage.setItem('DeliveryBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消送货批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 已取消挂账！共 ${checked.length} 条送货批次状态回滚。`);
             loadContent('DeliveryBatchAccrual');
         };
@@ -3904,6 +3913,7 @@ function loadContent(moduleCode, element = null) {
                 if (item) { item.cashFreightAccrual = '已挂账'; item.cashOilFeeAccrual = '已挂账'; }
             });
             sessionStorage.setItem('DepartureBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '发车批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 挂账成功！共 ${ids.length} 条发车批次已挂账。`);
             loadContent('DepartureBatchAccrual');
         };
@@ -3917,6 +3927,7 @@ function loadContent(moduleCode, element = null) {
                 if (item) { item.cashFreightAccrual = '未挂账'; item.cashOilFeeAccrual = '未挂账'; }
             });
             sessionStorage.setItem('DepartureBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消发车批次挂账，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 已取消挂账！共 ${ids.length} 条发车批次状态回滚。`);
             loadContent('DepartureBatchAccrual');
         };
@@ -5483,8 +5494,9 @@ function loadContent(moduleCode, element = null) {
         window.apBatchSettle = function() {
             const checked = Array.from(document.querySelectorAll('.ap-check:checked'));
             if (!checked.length) return alert('请先勾选需要结算的批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('APTrunkBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item) {
                     item.cashFreightUnpaid = 0; item.cashFuelCardUnpaid = 0;
@@ -5496,6 +5508,7 @@ function loadContent(moduleCode, element = null) {
                 }
             });
             sessionStorage.setItem('APTrunkBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应付管理', action: '结算', detail: '干线批次结算，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
             loadContent('APTrunkBatchSettlement');
         };
@@ -5808,8 +5821,9 @@ function loadContent(moduleCode, element = null) {
         window.sbBatchSettle = function() {
             const checked = Array.from(document.querySelectorAll('.sb-check:checked'));
             if (!checked.length) return alert('请先勾选需要结算的批次。');
+            const ids = checked.map(cb => cb.value);
             let list = JSON.parse(sessionStorage.getItem('APShortBatches') || '[]');
-            checked.map(cb => cb.value).forEach(id => {
+            ids.forEach(id => {
                 const item = list.find(i => i.id === id);
                 if (item) {
                     item.settledFee   = item.deliveryFee;
@@ -5818,6 +5832,7 @@ function loadContent(moduleCode, element = null) {
                 }
             });
             sessionStorage.setItem('APShortBatches', JSON.stringify(list));
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应付管理', action: '结算', detail: '短驳批次结算，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
             alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
             loadContent('APShortBatchSettlement');
         };
@@ -8469,12 +8484,16 @@ function loadContent(moduleCode, element = null) {
         window.abnormalAccrualToolbarSettle = function() {
             const checked = Array.from(document.querySelectorAll('.abn-check:checked'));
             if (!checked.length) return alert('请先勾选需要挂账的异动运单。');
-            alert(`已选 ${checked.length} 单，执行挂账。（演示）`);
+            const ids = checked.map(cb => cb.value);
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '挂账', detail: '异动运单挂账，共 ' + ids.length + ' 单，单号：' + ids.join('、') });
+            alert(`✅ 挂账成功！已选 ${checked.length} 单完成挂账。`);
         };
         window.abnormalAccrualToolbarCancel = function() {
             const checked = Array.from(document.querySelectorAll('.abn-check:checked'));
             if (!checked.length) return alert('请先勾选需要取消挂账的异动运单。');
-            alert(`已选 ${checked.length} 单，执行取消挂账。（演示）`);
+            const ids = checked.map(cb => cb.value);
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '挂帐管理', action: '取消挂账', detail: '取消异动运单挂账，共 ' + ids.length + ' 单，单号：' + ids.join('、') });
+            alert(`✅ 已取消挂账！已选 ${checked.length} 单状态回滚。`);
         };
 
         // --- 生成 HTML ---
@@ -9283,195 +9302,336 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 26. 敏感操作日志 (RiskSensitiveLog) - [最终版：支持多条记录共存]
+    // 26 & 28 (合并). 操作日志中心 (OperationLogCenter)
+    // 读取 GlobalAuditLogs + GlobalDataChangeLogs，统一展示，支持多选导出与完善分页
     // =========================================================================
-    else if (moduleCode === "RiskSensitiveLog") {
-        // 1. 读取所有动态日志 (数组)
-        const logsStr = sessionStorage.getItem("GlobalAuditLogs");
-        let dynamicRowsHTML = "";
+    else if (moduleCode === "OperationLogCenter") {
 
-        if (logsStr) {
-            const logs = JSON.parse(logsStr);
-            // 2. 循环生成每一行 HTML
-            dynamicRowsHTML = logs
-                .map((log) => {
-                    // 根据风险等级决定颜色
-                    const badgeColor =
-                        log.level === "高危"
-                            ? "#e74c3c"
-                            : log.level === "中风险"
-                                ? "#f39c12"
-                                : "#3498db";
-                    const actionColor = log.level === "高危" ? "#c0392b" : "#333";
+        // ── 1. 读取两个日志源并统一格式 ──
+        var _auditRaw  = JSON.parse(sessionStorage.getItem('GlobalAuditLogs')      || '[]');
+        var _changeRaw = JSON.parse(sessionStorage.getItem('GlobalDataChangeLogs') || '[]');
 
-                    return `
-                            <tr style="background-color: #fff0f0; animation: highlight 2s;">
-                                <td><span style="background:${badgeColor}; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">● ${log.level
-                        }</span></td>
-                                <td>${log.time}</td>
-                                <td><strong>${log.user}</strong></td>
-                                <td>${log.ip}</td>
-                                <td>${log.module}</td>
-                                <td style="color: ${actionColor}; font-weight:bold;">${log.action
-                        }</td>
-                                <td>${log.detail}</td>
-                                <td>
-                                    <a href="javascript:void(0)" onclick="alert('【系统快照】\\n----------------\\n数据指纹：Hash-${Math.floor(
-                            Math.random() * 10000000
-                        )}')" style="color:#3498db;">查看快照</a>
-                                </td>
-                            </tr>
-                        `;
+        var _dynamic = [].concat(
+            _auditRaw.map(function(log) {
+                return {
+                    time:       log.time       || '',
+                    user:       log.user       || '',
+                    company:    log.company    || '',
+                    ip:         log.ip         || '',
+                    ipLocation: log.ipLocation || '',
+                    module:     log.module     || '',
+                    actionType: log.action     || '',
+                    summary:    log.detail     || '',
+                    result:     '成功'
+                };
+            }),
+            _changeRaw.map(function(log) {
+                return {
+                    time:       log.time       || '',
+                    user:       log.user       || '',
+                    company:    log.company    || '',
+                    ip:         log.ip         || '',
+                    ipLocation: log.ipLocation || '',
+                    module:     log.object     || '',
+                    actionType: '数据变更',
+                    summary:    '[' + (log.objId||'') + '] ' + (log.field||'') + '：' + (log.oldVal||'') + ' → ' + (log.newVal||''),
+                    result:     '成功'
+                };
+            })
+        ).sort(function(a, b) { return new Date(b.time) - new Date(a.time); });
+
+        // 合并，统一编号（仅使用实时操作日志，无静态演示数据）
+        var _merged = _dynamic.slice().map(function(log, i) {
+            return Object.assign({}, log, { _id: 'LOG-' + String(88291 - i).padStart(5,'0') });
+        });
+
+        // ── 3. 定义全局交互函数 ──
+        window._opLogs        = _merged;
+        window._opLogPage     = 1;
+        window._opLogPageSize = 20;
+        window._opLogFilter   = { module:'', actionType:'', user:'', result:'' };
+
+        window._opFiltered = function() {
+            var f = window._opLogFilter;
+            return window._opLogs.filter(function(log) {
+                if (f.module     && log.module     !== f.module)       return false;
+                if (f.actionType && log.actionType !== f.actionType)   return false;
+                if (f.user       && log.user.indexOf(f.user) === -1)   return false;
+                if (f.result     && log.result     !== f.result)       return false;
+                return true;
+            });
+        };
+
+        window._opActionBadge = function(type) {
+            var colorMap = { '核销':'#e74c3c','冲销':'#c0392b','反结账':'#c0392b','数据变更':'#2980b9','修改':'#e67e22','新增':'#27ae60','删除':'#e74c3c','自动凭证':'#8e44ad' };
+            var color = colorMap[type] || '#7f8c8d';
+            return '<span style="color:' + color + ';font-weight:600;">' + type + '</span>';
+        };
+
+        window._opResultBadge = function(result) {
+            if (result === '成功') return '<span style="color:#27ae60;display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:#27ae60;display:inline-block;flex-shrink:0;"></span>成功</span>';
+            return '<span style="color:#e74c3c;display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:#e74c3c;display:inline-block;flex-shrink:0;"></span>失败</span>';
+        };
+
+        window._opBuildRows = function(pageData) {
+            if (!pageData || pageData.length === 0)
+                return '<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">暂无操作日志</td></tr>';
+            return pageData.map(function(log) {
+                return '<tr data-id="' + log._id + '" style="transition:background 0.15s;">'
+                    + '<td style="text-align:center;"><input type="checkbox" class="oplog-row-check" onchange="window._opUpdateSel()" style="cursor:pointer;"></td>'
+                    + '<td style="font-family:monospace;color:#7f8c8d;font-size:12px;">' + log._id + '</td>'
+                    + '<td style="white-space:nowrap;">' + log.time + '</td>'
+                    + '<td>' + log.user + '</td>'
+                    + '<td style="color:#555;font-size:12px;">' + (log.company || '-') + '</td>'
+                    + '<td style="font-size:12px;"><div style="white-space:nowrap;">' + (log.ip || '-') + '</div><div style="color:#999;font-size:11px;">' + (log.ipLocation || '') + '</div></td>'
+                    + '<td>' + log.module + '</td>'
+                    + '<td>' + window._opActionBadge(log.actionType) + '</td>'
+                    + '<td style="color:#555;">' + log.summary + '</td>'
+                    + '<td>' + window._opResultBadge(log.result) + '</td>'
+                    + '</tr>';
+            }).join('');
+        };
+
+        window._opBuildPager = function(current, total) {
+            var nums = [];
+            if (total <= 7) {
+                for (var i = 1; i <= total; i++) nums.push(i);
+            } else if (current <= 4) {
+                nums = [1,2,3,4,5,'…',total];
+            } else if (current >= total - 3) {
+                nums = [1,'…',total-4,total-3,total-2,total-1,total];
+            } else {
+                nums = [1,'…',current-1,current,current+1,'…',total];
+            }
+            return nums.map(function(n) {
+                if (n === '…') return '<span style="padding:0 4px;color:#bbb;line-height:30px;">···</span>';
+                var active = n === current;
+                return '<button onclick="window._opGoToPage(' + n + ')" style="min-width:30px;height:30px;border-radius:4px;border:1px solid '
+                    + (active ? '#3498db' : '#ddd') + ';background:' + (active ? '#3498db' : '#fff')
+                    + ';color:' + (active ? '#fff' : '#333') + ';cursor:pointer;font-size:13px;">' + n + '</button>';
+            }).join('');
+        };
+
+        window._opRefresh = function() {
+            var filtered = window._opFiltered();
+            var total    = filtered.length;
+            var ps       = window._opLogPageSize;
+            var totalPg  = Math.max(1, Math.ceil(total / ps));
+            if (window._opLogPage > totalPg) window._opLogPage = totalPg;
+            var pageData = filtered.slice((window._opLogPage - 1) * ps, window._opLogPage * ps);
+
+            var tbody = document.getElementById('oplog-tbody');
+            if (tbody) tbody.innerHTML = window._opBuildRows(pageData);
+            var pager = document.getElementById('oplog-pager');
+            if (pager) pager.innerHTML = window._opBuildPager(window._opLogPage, totalPg);
+            var countEl = document.getElementById('oplog-total');
+            if (countEl) countEl.textContent = total;
+
+            var allBox = document.getElementById('oplog-checkall');
+            if (allBox) { allBox.checked = false; allBox.indeterminate = false; }
+            window._opUpdateSel();
+        };
+
+        window._opGoToPage = function(p) {
+            var totalPg = Math.max(1, Math.ceil(window._opFiltered().length / window._opLogPageSize));
+            if (p < 1 || p > totalPg) return;
+            window._opLogPage = p;
+            window._opRefresh();
+        };
+
+        window._opChangePageSize = function(size) {
+            window._opLogPageSize = parseInt(size);
+            window._opLogPage = 1;
+            window._opRefresh();
+        };
+
+        window._opJumpPage = function() {
+            var input = document.getElementById('oplog-jump');
+            if (!input) return;
+            var p = parseInt(input.value);
+            var totalPg = Math.max(1, Math.ceil(window._opFiltered().length / window._opLogPageSize));
+            if (!isNaN(p) && p >= 1 && p <= totalPg) window._opGoToPage(p);
+            input.value = '';
+        };
+
+        window._opUpdateSel = function() {
+            var checks  = document.querySelectorAll('.oplog-row-check');
+            var checked = [].filter.call(checks, function(c) { return c.checked; });
+            var allBox  = document.getElementById('oplog-checkall');
+            if (allBox) {
+                allBox.checked      = checked.length === checks.length && checks.length > 0;
+                allBox.indeterminate = checked.length > 0 && checked.length < checks.length;
+            }
+            var bar    = document.getElementById('oplog-selbar');
+            var selcnt = document.getElementById('oplog-selcount');
+            var expBtn = document.getElementById('oplog-expbtn');
+            if (bar)    bar.style.display = checked.length > 0 ? 'flex' : 'none';
+            if (selcnt) selcnt.textContent = checked.length;
+            if (expBtn) expBtn.textContent  = checked.length > 0 ? '导出选中 (' + checked.length + ')' : '导出日志';
+            [].forEach.call(checks, function(cb) {
+                cb.closest('tr').style.backgroundColor = cb.checked ? '#eff6ff' : '';
+            });
+        };
+
+        window._opToggleAll = function(cb) {
+            [].forEach.call(document.querySelectorAll('.oplog-row-check'), function(c) {
+                c.checked = cb.checked;
+                c.closest('tr').style.backgroundColor = cb.checked ? '#eff6ff' : '';
+            });
+            window._opUpdateSel();
+        };
+
+        window._opSelAll = function(checked) {
+            [].forEach.call(document.querySelectorAll('.oplog-row-check'), function(c) {
+                c.checked = checked;
+                c.closest('tr').style.backgroundColor = checked ? '#eff6ff' : '';
+            });
+            var allBox = document.getElementById('oplog-checkall');
+            if (allBox) { allBox.checked = checked; allBox.indeterminate = false; }
+            window._opUpdateSel();
+        };
+
+        window._opExport = function() {
+            var checked = [].filter.call(document.querySelectorAll('.oplog-row-check'), function(c) { return c.checked; });
+            if (checked.length === 0) { alert('请先勾选需要导出的日志条目'); return; }
+            var ids = checked.map(function(c) { return c.closest('tr').dataset.id; }).join('、');
+            alert('即将导出 ' + checked.length + ' 条日志：\n' + ids + '\n\n（实际项目中此处调用导出接口）');
+        };
+
+        window._opSearch = function() {
+            // 每次查询都重新从 sessionStorage 读取最新日志，确保实时性
+            var _freshAudit  = JSON.parse(sessionStorage.getItem('GlobalAuditLogs')      || '[]');
+            var _freshChange = JSON.parse(sessionStorage.getItem('GlobalDataChangeLogs') || '[]');
+            var _freshAll = [].concat(
+                _freshAudit.map(function(log) {
+                    return { time: log.time||'', user: log.user||'', company: log.company||'', ip: log.ip||'', ipLocation: log.ipLocation||'', module: log.module||'', actionType: log.action||'', summary: log.detail||'', result: '成功' };
+                }),
+                _freshChange.map(function(log) {
+                    return { time: log.time||'', user: log.user||'', company: log.company||'', ip: log.ip||'', ipLocation: log.ipLocation||'', module: log.object||'', actionType: '数据变更', summary: '[' + (log.objId||'') + '] ' + (log.field||'') + '：' + (log.oldVal||'') + ' → ' + (log.newVal||''), result: '成功' };
                 })
-                .join(""); // 将数组拼接成字符串
-        }
+            ).sort(function(a, b) { return new Date(b.time) - new Date(a.time); });
+            window._opLogs = _freshAll.map(function(log, i) {
+                return Object.assign({}, log, { _id: 'LOG-' + String(88291 - i).padStart(5,'0') });
+            });
+            window._opLogFilter = {
+                module:     (document.getElementById('oplog-f-module')  || {}).value || '',
+                actionType: (document.getElementById('oplog-f-type')    || {}).value || '',
+                user:       (document.getElementById('oplog-f-user')    || {}).value || '',
+                result:     (document.getElementById('oplog-f-result')  || {}).value || '',
+            };
+            window._opLogPage = 1;
+            window._opRefresh();
+        };
+
+        window._opReset = function() {
+            ['oplog-f-module','oplog-f-type','oplog-f-user','oplog-f-result'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            window._opLogFilter = { module:'', actionType:'', user:'', result:'' };
+            window._opLogPage   = 1;
+            window._opRefresh();
+        };
+
+        // ── 4. 计算初始页（直接写入 HTML，避免空白闪烁） ──
+        var _initFiltered = _merged;
+        var _initTotal    = _initFiltered.length;
+        var _initPages    = Math.max(1, Math.ceil(_initTotal / window._opLogPageSize));
+        var _initPageData = _initFiltered.slice(0, window._opLogPageSize);
+        var _initTbody    = window._opBuildRows(_initPageData);
+        var _initPager    = window._opBuildPager(1, _initPages);
 
         contentHTML += `
-                    <h2>敏感操作日志 🛡️</h2>
-                    <p style="color: #7f8c8d;">系统的“黑匣子”，记录所有涉及资金安全、内控合规的高风险操作行为。审计数据不可删除。</p>
-                    
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items:center;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">风险等级 (全部)</option>
-                                <option value="high">🔴 高危</option>
-                                <option value="medium">🟠 中风险</option>
-                            </select>
-                            <input type="text" placeholder="操作人 / 关键词" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <button class="btn-primary">🔍 审计查询</button>
-                            <button class="btn-primary" style="background-color: #34495e;">导出审计报告</button>
-                        </div>
+            <h2>操作日志中心 📋</h2>
+            <p style="color:#7f8c8d;margin-bottom:16px;">记录系统所有操作行为，数据不可删除，支持多条件筛选与审计导出。</p>
+
+            <div class="filter-area" style="background:#fff;padding:16px;border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,0.05);margin-bottom:14px;">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                    <div>
+                        <label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">业务模块</label>
+                        <select id="oplog-f-module" style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                            <option value="">全部模块</option>
+                            <option>收款管理</option><option>结算管理</option><option>应收管理</option>
+                            <option>应付管理</option><option>月末结账</option><option>基础配置</option>
+                            <option>会计引擎</option><option>数据变更</option>
+                        </select>
                     </div>
-                    
-                    <h3>敏感操作记录 (实时更新)</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>风险等级</th>
-                                <th>操作时间</th>
-                                <th>操作人 (账号)</th>
-                                <th>IP 地址</th>
-                                <th>操作模块</th>
-                                <th>操作行为</th>
-                                <th>关键参数 / 详情</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            ${dynamicRowsHTML}
-
-                            <tr>
-                                <td><span style="background:#e74c3c; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">● 高危</span></td>
-                                <td>2025-11-22 14:30:05</td>
-                                <td><strong>管理员 (admin)</strong></td>
-                                <td>192.168.1.88</td>
-                                <td>月末结账</td>
-                                <td style="color: #c0392b; font-weight:bold;">执行反结账</td>
-                                <td>目标期间：2025年11期</td>
-                                <td><a href="javascript:void(0)" onclick="alert('快照数据已归档')" style="color:#3498db;">查看快照</a></td>
-                            </tr>
-                             <tr>
-                                <td><span style="background:#f39c12; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">● 中风险</span></td>
-                                <td>2025-11-21 16:40:00</td>
-                                <td>系统管理员</td>
-                                <td>10.0.0.5</td>
-                                <td>计费规则配置</td>
-                                <td>修改规则费率</td>
-                                <td>干线运费：2.5 -> 2.8</td>
-                                <td><a href="javascript:void(0)" onclick="alert('变更前：2.5\\n变更后：2.8')" style="color:#3498db;">对比变更</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 28. 数据变更明细 (RiskDataChange) - [修复读取逻辑]
-    // =========================================================================
-    else if (moduleCode === "RiskDataChange") {
-        // 1. 从 SessionStorage 读取动态日志
-        const logsStr = sessionStorage.getItem("GlobalDataChangeLogs");
-        let dynamicRowsHTML = "";
-
-        if (logsStr) {
-            const logs = JSON.parse(logsStr);
-            // 遍历生成 HTML
-            dynamicRowsHTML = logs
-                .map(
-                    (log) => `
-                        <tr style="background-color: #fff0f0; animation: highlight 2s;">
-                            <td>${log.time}</td>
-                            <td><strong>${log.user}</strong></td>
-                            <td>${log.object}</td>
-                            <td>${log.objId}</td>
-                            <td style="color: #2980b9; font-weight:bold;">${log.field}</td>
-                            <td style="color: #999; text-decoration: line-through;">${log.oldVal}</td>
-                            <td style="color: #e74c3c; font-weight:bold;">${log.newVal}</td>
-                            <td><a href="javascript:void(0)" onclick="viewDataChangeDetail(this)" style="color:#3498db;">查看详情</a></td>
-                        </tr>
-                    `
-                )
-                .join("");
-        }
-
-        contentHTML += `
-                    <h2>数据变更明细 📝</h2>
-                    <p style="color: #7f8c8d;">详细记录核心基础数据（如客户资料、科目余额、资产卡片）的每一次修改，包括修改前后的值。</p>
-                    
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="变更人 / 记录ID" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">变更对象 (全部)</option>
-                                <option>客户档案</option>
-                                <option>供应商档案</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                        </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">操作类型</label>
+                        <select id="oplog-f-type" style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                            <option value="">全部类型</option>
+                            <option>核销</option><option>冲销</option><option>反结账</option>
+                            <option>修改</option><option>新增</option><option>数据变更</option><option>自动凭证</option>
+                        </select>
                     </div>
-                    
-                    <h3>数据变更记录列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 160px;">变更时间</th>
-                                <th style="width: 100px;">变更人</th>
-                                <th style="width: 120px;">变更对象</th>
-                                <th style="width: 120px;">对象 ID</th>
-                                <th style="width: 150px;">字段名称</th>
-                                <th>原值 (Old)</th>
-                                <th>新值 (New)</th>
-                                <th style="width: 80px;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            ${dynamicRowsHTML}
+                    <div>
+                        <label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">操作人</label>
+                        <input id="oplog-f-user" type="text" placeholder="姓名 / 账号" style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:140px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:12px;color:#555;margin-bottom:4px;">操作结果</label>
+                        <select id="oplog-f-result" style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                            <option value="">全部结果</option><option>成功</option><option>失败</option>
+                        </select>
+                    </div>
+                    <button onclick="window._opSearch()" class="btn-primary" style="height:34px;padding:0 18px;">🔍 查询</button>
+                    <button onclick="window._opReset()" style="padding:0 14px;height:34px;border:1px solid #ccc;border-radius:4px;font-size:13px;background:#f5f5f5;cursor:pointer;">重置</button>
+                    <button id="oplog-expbtn" onclick="window._opExport()" style="padding:0 16px;height:34px;border-radius:4px;font-size:13px;background:#27ae60;color:#fff;border:none;cursor:pointer;margin-left:auto;">导出日志</button>
+                </div>
+            </div>
 
-                            <tr>
-                                <td>2025-11-21 16:30:00</td>
-                                <td>李出纳</td>
-                                <td>供应商档案</td>
-                                <td>SUP-0088</td>
-                                <td style="color: #c0392b; font-weight:bold;">银行账号</td>
-                                <td style="color: #999; text-decoration: line-through;">6222...8888</td>
-                                <td style="color: #c0392b; font-weight:bold;">6222...9999</td>
-                                <td><a href="javascript:void(0)" onclick="viewDataChangeDetail(this)" style="color:#3498db;">查看详情</a></td>
-                            </tr>
-                            <tr>
-                                <td>2025-11-21 14:15:22</td>
-                                <td>张销售</td>
-                                <td>客户档案</td>
-                                <td>CUST-1024</td>
-                                <td style="color: #2980b9; font-weight:bold;">信用额度</td>
-                                <td style="color: #999;">50,000.00</td>
-                                <td style="color: #27ae60; font-weight:bold;">100,000.00</td>
-                                <td><a href="javascript:void(0)" onclick="viewDataChangeDetail(this)" style="color:#3498db;">查看详情</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
+            <div id="oplog-selbar" style="display:none;align-items:center;gap:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 14px;margin-bottom:10px;">
+                <span style="color:#1d4ed8;font-size:13px;font-weight:500;">已选中 <strong id="oplog-selcount">0</strong> 条</span>
+                <span style="color:#cbd5e1;">|</span>
+                <button onclick="window._opSelAll(true)"  style="color:#2563eb;background:none;border:none;cursor:pointer;font-size:13px;">全选本页</button>
+                <button onclick="window._opSelAll(false)" style="color:#64748b;background:none;border:none;cursor:pointer;font-size:13px;">取消全选</button>
+                <span style="color:#cbd5e1;">|</span>
+                <button onclick="window._opExport()" style="background:#27ae60;color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;">导出选中</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;text-align:center;"><input type="checkbox" id="oplog-checkall" onchange="window._opToggleAll(this)" style="cursor:pointer;"></th>
+                        <th style="width:108px;">日志编号</th>
+                        <th style="width:150px;">操作时间</th>
+                        <th style="width:120px;">操作人 (账号)</th>
+                        <th style="width:130px;">所属公司</th>
+                        <th style="width:150px;">IP / 归属地</th>
+                        <th style="width:110px;">业务模块</th>
+                        <th style="width:80px;">操作类型</th>
+                        <th>操作内容摘要</th>
+                        <th style="width:70px;">结果</th>
+                    </tr>
+                </thead>
+                <tbody id="oplog-tbody">
+                    ${_initTbody}
+                </tbody>
+            </table>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#555;">
+                    <span>共 <strong style="color:#3498db;" id="oplog-total">${_initTotal}</strong> 条记录</span>
+                    <span style="color:#ddd;">|</span>
+                    <span>每页</span>
+                    <select onchange="window._opChangePageSize(this.value)" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
+                        <option value="20" selected>20 条</option>
+                        <option value="50">50 条</option>
+                        <option value="100">100 条</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;">
+                    <button onclick="window._opGoToPage(1)" title="首页" style="min-width:30px;height:30px;border-radius:4px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;">«</button>
+                    <button onclick="window._opGoToPage(window._opLogPage-1)" title="上一页" style="min-width:30px;height:30px;border-radius:4px;border:1px solid #ddd;background:#fff;cursor:pointer;">◀</button>
+                    <div id="oplog-pager" style="display:flex;align-items:center;gap:4px;">${_initPager}</div>
+                    <button onclick="window._opGoToPage(window._opLogPage+1)" title="下一页" style="min-width:30px;height:30px;border-radius:4px;border:1px solid #ddd;background:#fff;cursor:pointer;">▶</button>
+                    <button onclick="window._opGoToPage(Math.ceil(window._opFiltered().length/window._opLogPageSize))" title="末页" style="min-width:30px;height:30px;border-radius:4px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;">»</button>
+                    <span style="font-size:13px;color:#555;margin-left:6px;">跳至</span>
+                    <input id="oplog-jump" type="number" min="1" placeholder="页" onkeydown="if(event.key==='Enter')window._opJumpPage()" style="width:48px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:13px;text-align:center;">
+                    <button onclick="window._opJumpPage()" style="padding:4px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;background:#f5f5f5;cursor:pointer;">确定</button>
+                </div>
+            </div>
+        `;
     }
 
     // =========================================================================
@@ -11052,7 +11212,7 @@ function loadContent(moduleCode, element = null) {
                     "6601 销售费用（销售部的支出）",
                     "5001 运输成本（车队/调度部的支出）"
                 ],
-                remark: "用于费用归集与绩效考核。将费用科目开启“部门”核算后，可统计各部门每月的经费支出（如办公费、差旅费），支持部门预算管理。"
+                remark: "用于费用归集与绩效考核。将费用科目开启\"部门\"核算后，可统计各部门每月的经费支出（如办公费、差旅费），支持部门预算管理。"
             },
             customer: {
                 title: "客户 (Customer)",
@@ -11061,7 +11221,7 @@ function loadContent(moduleCode, element = null) {
                     "2203 预收账款（或合同负债）",
                     "6001 主营业务收入"
                 ],
-                remark: "用于往来对账与收入分析。挂载在应收账款时，可按客户查看“谁欠我多少运费”及账龄分析；挂载在收入科目时，可统计各客户的业绩贡献。"
+                remark: "用于往来对账与收入分析。挂载在应收账款时，可按客户查看\"谁欠我多少运费\"及账龄分析；挂载在收入科目时，可统计各客户的业绩贡献。"
             },
             vendor: {
                 title: "供应商 (Supplier)",
@@ -11086,7 +11246,7 @@ function loadContent(moduleCode, element = null) {
                     "5001 / 6401 运输成本",
                     "6001 主营业务收入"
                 ],
-                remark: "用于独立盈亏核算。在物流行业，项目通常对应“运输线路”（如：上海-北京专线）或“大型合同项目”。开启后可生成该项目的独立利润表，分析该项目赚不赚钱。"
+                remark: "用于独立盈亏核算。在物流行业，项目通常对应\"运输线路\"（如：上海-北京专线）或\"大型合同项目\"。开启后可生成该项目的独立利润表，分析该项目赚不赚钱。"
             },
             inventory: {
                 title: "存货 (Inventory)",
@@ -14866,7 +15026,7 @@ function loadContent(moduleCode, element = null) {
                         <table class="data-table">
                             <thead><tr><th>检查项</th><th>状态</th><th>提示信息</th><th>操作</th></tr></thead>
                             <tbody id="checkListBody">
-                                <tr><td colspan="4" style="text-align:center; color:#999;">请点击“刷新检查状态”开始自检...</td></tr>
+                                <tr><td colspan="4" style="text-align:center; color:#999;">请点击"刷新检查状态"开始自检...</td></tr>
                             </tbody>
                         </table>
                     `;
@@ -14951,7 +15111,7 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
     else if (moduleCode === "ReportBalanceSheet") {
         // 1. 获取本年利润 (这是让报表平衡的关键！)
-        // 利润表算出的“净利润”，最终会变成资产负债表里的“权益”
+        // 利润表算出的"净利润"，最终会变成资产负债表里的"权益"
         const profitResult =
             typeof calculateRealProfit === "function"
                 ? calculateRealProfit()
@@ -15403,17 +15563,17 @@ function loadContent(moduleCode, element = null) {
             { name: "财务费用", codes: "6603", op: "-" },
             { name: "资产减值损失", codes: "6701", op: "-" },
             { name: "加：其他收益", codes: "", op: "+" },
-            { name: "加：公允价值变动收益（损失以“-”号填列）", codes: "6101", op: "+" },
-            { name: "投资收益（损失以“-”号填列）", codes: "6111", op: "+" },
+            { name: "加：公允价值变动收益（损失以"-"号填列）", codes: "6101", op: "+" },
+            { name: "投资收益（损失以"-"号填列）", codes: "6111", op: "+" },
             { name: "其中：对联营企业和合营企业的投资收益", codes: "", op: "+" },
-            { name: "汇兑收益（损失以“-”号填列）", codes: "", op: "+" },
-            { name: "二、营业利润（亏损以“-”号填列）", codes: "", op: "+" },
+            { name: "汇兑收益（损失以"-"号填列）", codes: "", op: "+" },
+            { name: "二、营业利润（亏损以"-"号填列）", codes: "", op: "+" },
             { name: "加：营业外收入", codes: "6301", op: "+" },
             { name: "减：营业外支出", codes: "6711", op: "-" },
             { name: "其中：非流动资产处置损失", codes: "", op: "-" },
-            { name: "三、利润总额（亏损总额以“-”号填列）", codes: "", op: "+" },
+            { name: "三、利润总额（亏损总额以"-"号填列）", codes: "", op: "+" },
             { name: "减：所得税费用", codes: "6801", op: "-" },
-            { name: "四、净利润（净亏损以“-”号填列）", codes: "", op: "+" },
+            { name: "四、净利润（净亏损以"-"号填列）", codes: "", op: "+" },
             { name: "归属于公司所有者的净利润", codes: "", op: "+" },
             { name: "少数股东损益", codes: "", op: "+" },
             { name: "五、每股收益：", codes: "", op: "+" },
@@ -16465,7 +16625,7 @@ function loadContent(moduleCode, element = null) {
             sessionStorage.getItem("ManualVouchers") || "[]"
         );
 
-        // 1. ★★★ 核心修复：定义科目的“默认方向” ★★★
+        // 1. ★★★ 核心修复：定义科目的"默认方向" ★★★
         // 资产/成本/费用类 (1xxx, 5xxx, 6xxx) -> 默认 "借"
         // 负债/权益/收入类 (2xxx, 3xxx, 4xxx) -> 默认 "贷"
         const firstDigit = targetCode.charAt(0);
@@ -16479,8 +16639,8 @@ function loadContent(moduleCode, element = null) {
         // 假设：银行存款有期初，应付账款期初为0
         let currentBalance = targetCode === "1002" ? 800000 : 0;
 
-        // 3. 生成“期初余额”行
-        // 如果余额为0，方向显示“平”，否则显示默认方向
+        // 3. 生成"期初余额"行
+        // 如果余额为0，方向显示"平"，否则显示默认方向
         const startDirText = currentBalance === 0 ? "平" : defaultDir;
 
         let tableHTML = `
@@ -16729,7 +16889,7 @@ function loadContent(moduleCode, element = null) {
 
         contentHTML += `
                     <h2>薪酬核算与发放</h2>
-                    <p style="color: #7f8c8d;">每月核算各部门工资。点击“执行发薪”将自动调用资金模块进行打款，并生成财务凭证。</p>
+                    <p style="color: #7f8c8d;">每月核算各部门工资。点击"执行发薪"将自动调用资金模块进行打款，并生成财务凭证。</p>
                     
                     <div class="action-bar" style="margin-bottom: 15px;">
                         <button class="btn-primary" style="background-color: #27ae60;" onclick="createMonthlyPayroll()">+ 核算本月工资</button>
@@ -17145,7 +17305,7 @@ function loadContent(moduleCode, element = null) {
 
         contentHTML += `
                     <h2>绩效考核 📊</h2>
-                    <p style="color: #7f8c8d;">录入员工月度考核分数。该分数将直接决定工资中的“绩效工资”实发金额。</p>
+                    <p style="color: #7f8c8d;">录入员工月度考核分数。该分数将直接决定工资中的"绩效工资"实发金额。</p>
 
                     <div class="filter-area" style="background:white; padding:15px; margin-bottom:20px; border-radius:6px;">
                         <div style="display:flex; align-items:center; gap:15px;">
@@ -17257,17 +17417,17 @@ function loadContent(moduleCode, element = null) {
             { name: "财务费用", codes: "6603", op: "-" },
             { name: "资产减值损失", codes: "6701", op: "-" },
             { name: "加：其他收益", codes: "", op: "+" },
-            { name: "加：公允价值变动收益（损失以“-”号填列）", codes: "6101", op: "+" },
-            { name: "投资收益（损失以“-”号填列）", codes: "6111", op: "+" },
+            { name: "加：公允价值变动收益（损失以"-"号填列）", codes: "6101", op: "+" },
+            { name: "投资收益（损失以"-"号填列）", codes: "6111", op: "+" },
             { name: "其中：对联营企业和合营企业的投资收益", codes: "", op: "+" },
-            { name: "汇兑收益（损失以“-”号填列）", codes: "", op: "+" },
-            { name: "二、营业利润（亏损以“-”号填列）", codes: "", op: "+" },
+            { name: "汇兑收益（损失以"-"号填列）", codes: "", op: "+" },
+            { name: "二、营业利润（亏损以"-"号填列）", codes: "", op: "+" },
             { name: "加：营业外收入", codes: "6301", op: "+" },
             { name: "减：营业外支出", codes: "6711", op: "-" },
             { name: "其中：非流动资产处置损失", codes: "", op: "-" },
-            { name: "三、利润总额（亏损总额以“-”号填列）", codes: "", op: "+" },
+            { name: "三、利润总额（亏损总额以"-"号填列）", codes: "", op: "+" },
             { name: "减：所得税费用", codes: "6801", op: "-" },
-            { name: "四、净利润（净亏损以“-”号填列）", codes: "", op: "+" },
+            { name: "四、净利润（净亏损以"-"号填列）", codes: "", op: "+" },
             { name: "归属于公司所有者的净利润", codes: "", op: "+" },
             { name: "少数股东损益", codes: "", op: "+" },
             { name: "五、每股收益：", codes: "", op: "+" },
@@ -17991,12 +18151,33 @@ function loadContent(moduleCode, element = null) {
             `;
         };
 
+        // 结转收入/成本：横向表格行
+        const buildClosingRow = (tpl, type, index) => {
+            const sourceCodes = (tpl.sourceCodes || []).join(",");
+            const wordVal = tpl.voucherWord || "转";
+            const sourceLabel = type === "income" ? "收入科目范围" : "成本费用科目范围";
+            return `
+                <tr class="closing-template-card" data-type="${type}" data-template-id="${tpl.id || ""}">
+                    <td style="text-align:center; color:#999; font-size:12px; width:40px;">${index + 1}</td>
+                    <td style="width:130px;">${renderBookSelect(tpl.bookId || "", "closing-book-select")}</td>
+                    <td><input type="text" class="closing-source-input" value="${sourceCodes}" placeholder="${sourceLabel}，多个用逗号分隔"></td>
+                    <td style="width:150px;">${renderSubjectSelect(tpl.targetCode || "4103", "closing-target-select")}</td>
+                    <td style="width:70px;"><input type="text" class="closing-word-input" value="${wordVal}" placeholder="转"></td>
+                    <td style="text-align:center; width:60px;"><button class="btn-primary btn-ghost closing-template-remove" style="padding:3px 8px; font-size:12px;" onclick="removeClosingTemplate(this)">删除</button></td>
+                </tr>`;
+        };
+
         window.addClosingTemplate = function(type) {
             const container = document.getElementById(`closing-template-${type}`);
             if (!container) return;
             const count = container.querySelectorAll(".closing-template-card").length;
             const tpl = createClosingTemplate(type, count);
-            container.insertAdjacentHTML("beforeend", buildClosingCard(tpl, type, count));
+            // income/cost 用表格行，tax 用卡片
+            if (type === "income" || type === "cost") {
+                container.insertAdjacentHTML("beforeend", buildClosingRow(tpl, type, count));
+            } else {
+                container.insertAdjacentHTML("beforeend", buildClosingCard(tpl, type, count));
+            }
         };
 
         window.removeClosingTemplate = function(btn) {
@@ -18012,286 +18193,441 @@ function loadContent(moduleCode, element = null) {
 
         contentHTML += `
         <style>
-            .acsm-container{max-width:1200px;background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1);padding:24px;}
-            .acsm-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid #e8e8e8;margin-bottom:24px;}
-            .acsm-title{font-size:20px;font-weight:600;color:#1a1a1a;}
-            .acsm-section{border:1px solid #e8e8e8;border-radius:4px;padding:20px;margin-bottom:20px;background:#fafafa;}
-            .acsm-sec-title{font-size:16px;font-weight:600;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #d9d9d9;color:#1a1a1a;}
-            .acsm-radio-group{display:flex;gap:30px;margin-bottom:16px;}
-            .acsm-radio-item{display:flex;align-items:center;gap:8px;cursor:pointer;}
-            .acsm-radio-item input{width:16px;height:16px;cursor:pointer;}
-            .acsm-radio-item label{font-size:15px;font-weight:500;cursor:pointer;}
-            .acsm-info-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;}
-            .acsm-info-label{font-weight:500;min-width:80px;color:#666;}
-            .acsm-info-value{color:#1a1a1a;flex:1;}
-            .acsm-link-btn{color:#1890ff;text-decoration:none;border:1px solid #1890ff;padding:4px 12px;border-radius:4px;font-size:13px;}
-            .acsm-setting-row{display:flex;align-items:center;gap:15px;margin-bottom:20px;}
-            .acsm-setting-label{font-weight:500;min-width:130px;color:#666;font-size:14px;}
-            .acsm-form-select{padding:6px 10px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;min-width:120px;background:#fff;}
-            .acsm-code-group{display:flex;align-items:center;gap:10px;}
-            .acsm-code-input{width:60px;padding:6px;border:1px solid #d9d9d9;border-radius:4px;text-align:center;font-size:14px;}
-            .acsm-code-sep{color:#999;font-weight:bold;}
-            .acsm-level-label{font-size:12px;color:#999;text-align:center;margin-top:4px;}
-            .acsm-warn-box{background:#fff7e6;border:1px solid #ffc53d;border-left:4px solid #fa8c16;padding:14px;border-radius:4px;margin-bottom:20px;display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#d46b08;}
-            .acsm-voucher-list{display:flex;flex-direction:column;gap:10px;}
-            .acsm-voucher-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:#fff;border:1px solid #e8e8e8;border-radius:4px;}
-            .acsm-voucher-name{font-weight:500;color:#1a1a1a;margin-bottom:4px;}
-            .acsm-voucher-rule{font-size:13px;color:#666;margin-top:4px;display:flex;align-items:center;gap:6px;}
-            .acsm-rule-prefix{color:#999;}
-            .acsm-btn{padding:7px 16px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#333;font-size:14px;cursor:pointer;}
-            .acsm-btn:hover{border-color:#1890ff;color:#1890ff;}
-            .acsm-btn:disabled{opacity:.5;cursor:not-allowed;}
-            .acsm-btn-primary{background:#1890ff;border-color:#1890ff;color:#fff;}
-            .acsm-btn-primary:hover{background:#40a9ff;border-color:#40a9ff;color:#fff;}
-            .acsm-form-actions{display:flex;gap:12px;padding-top:24px;border-top:1px solid #e8e8e8;justify-content:flex-end;margin-top:24px;}
-            /* 弹窗 */
-            .acsm-modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
-            .acsm-modal-overlay.active{display:flex;}
-            .acsm-modal{background:#fff;border-radius:8px;width:90%;max-width:900px;max-height:80vh;display:flex;flex-direction:column;}
-            .acsm-modal-hdr{padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;}
-            .acsm-modal-title{font-size:18px;font-weight:600;}
-            .acsm-modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#999;}
-            .acsm-modal-close:hover{color:#333;}
-            .acsm-modal-body{padding:24px;flex:1;overflow:hidden;display:flex;flex-direction:column;}
-            .acsm-dual{display:flex;gap:20px;flex:1;min-height:400px;}
-            .acsm-list-panel{flex:1;border:1px solid #d9d9d9;border-radius:4px;display:flex;flex-direction:column;}
-            .acsm-list-hdr{padding:12px;border-bottom:1px solid #e8e8e8;background:#fafafa;font-weight:600;}
-            .acsm-search-box{padding:12px;border-bottom:1px solid #e8e8e8;}
-            .acsm-search-input{width:100%;padding:7px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
-            .acsm-list-content{flex:1;overflow-y:auto;padding:8px;}
-            .acsm-list-item{padding:8px 12px;border:1px solid transparent;border-radius:4px;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
-            .acsm-list-item:hover{background:#f0f0f0;}
-            .acsm-list-item.selected{background:#e6f7ff;border-color:#1890ff;}
-            .acsm-list-item.dragging{opacity:.5;}
-            .acsm-arrow-btns{display:flex;flex-direction:column;gap:10px;justify-content:center;}
-            .acsm-arrow-btn{padding:10px 16px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:18px;}
-            .acsm-arrow-btn:hover{border-color:#1890ff;color:#1890ff;}
-            .acsm-modal-tips{padding:12px;margin-top:12px;background:#f0f0f0;border-radius:4px;font-size:13px;color:#666;}
-            .acsm-modal-ftr{padding:16px 24px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:12px;}
+            /* ===== 基础设置页面样式 ===== */
+            .proto-content { padding: 20px; width: 100%; box-sizing: border-box; }
+            .page-title-bar { font-size: 20px; font-weight: bold; color: #2c3e50; padding: 0 0 10px 0; }
+            /* 按钮覆盖 */
+            .proto-content .btn-primary { background-color: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background-color 0.2s; }
+            .proto-content .btn-primary:hover { background-color: #2980b9; }
+            .proto-content .btn-primary:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+            .proto-content .btn-ghost { background: #f6f8fa; color: #2c3e50; border: 1px solid #d7dde3; box-shadow: none; padding: 6px 12px; font-size: 12px; }
+            .proto-content .btn-ghost:hover { background: #edf1f5; }
+            /* 表格 */
+            .proto-content .data-table { width: 100%; border-collapse: collapse; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+            .proto-content .data-table th, .proto-content .data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ecf0f1; }
+            .proto-content .data-table th { background-color: #f7f9fa; font-weight: bold; color: #555; }
+            .proto-content .data-table tbody tr:last-child td { border-bottom: none; }
+            /* 会计准则面板 */
+            .acct-standard-panel { background: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 0; }
+            .acct-standard-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+            .acct-standard-status { font-size: 13px; color: #637382; }
+            .acct-standard-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #f0f4f8; color: #5d6e7e; border: 1px solid #d7dde3; white-space: nowrap; }
+            .acct-standard-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
+            .acct-standard-group input[type="radio"] { display: none; }
+            .acct-standard-card { border: 1px solid #e1e5ea; border-radius: 14px; padding: 18px 20px; cursor: pointer; display: block; transition: all 0.2s; background: #fff; }
+            .acct-standard-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
+            .acct-standard-group input[type="radio"]:checked + .acct-standard-card { border-color: #2c3e50; box-shadow: 0 10px 24px rgba(44,62,80,0.15); background: #f0f7ff; }
+            .acct-standard-card h4 { margin: 0 0 8px 0; font-size: 16px; color: #2c3e50; }
+            .acct-standard-card p { margin: 0; font-size: 13px; color: #7f8c8d; line-height: 1.5; }
+            .acct-standard-card .acct-standard-badge { display: inline-flex; align-items: center; margin-top: 10px; padding: 3px 10px; border-radius: 999px; font-size: 12px; background: #e6f9f0; color: #1a7a4a; border: 1px solid #b2dfce; }
+            /* 科目编码级次设置 */
+            .subject-code-setting { margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e6eaf0; }
+            .subject-code-setting .setting-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+            .subject-code-setting label { font-size: 13px; color: #4a5a6a; }
+            .subject-code-setting select { padding: 6px 10px; border: 1px solid #cfd6dd; border-radius: 5px; font-size: 13px; width: 80px; }
+            .subject-code-setting input[type="number"] { padding: 6px 10px; border: 1px solid #cfd6dd; border-radius: 5px; font-size: 13px; width: 70px; }
+            /* 凭证摘要模板面板 */
+            .summary-template-panel { margin-top: 16px; padding: 14px; background: #fff; border-radius: 8px; border: 1px solid #e6eaf0; }
+            .summary-template-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+            .summary-template-title { font-weight: 700; color: #2c3e50; }
+            .summary-template-tip { margin-top: 4px; font-size: 12px; color: #95a5a6; }
+            .summary-template-actions { display: flex; gap: 8px; flex-shrink: 0; }
+            .summary-template-actions .btn-primary { padding: 4px 10px; font-size: 12px; }
+            .summary-template-table-wrap { margin-top: 10px; border: 1px solid #eef2f6; border-radius: 6px; overflow: hidden; }
+            .summary-template-table { margin: 0; font-size: 12px; }
+            .summary-template-table th, .summary-template-table td { padding: 6px 8px; }
+            .summary-template-table th { background: #f7f9fb; }
+            .summary-template-table input { width: 100%; padding: 4px 6px; border: 1px solid #dce3ea; border-radius: 4px; font-size: 12px; }
+            .summary-template-table .summary-template-action { padding: 2px 8px; font-size: 11px; }
+            .summary-template-note { margin-top: 8px; font-size: 12px; color: #95a5a6; }
+            /* 报表模板面板 */
+            .report-template-panel { margin-top: 18px; background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e6eaf0; }
+            .report-template-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+            .report-template-title { font-size: 15px; font-weight: 600; color: #2c3e50; }
+            .report-template-tip { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+            .report-template-actions { display: flex; gap: 8px; }
+            .template-row-btn { padding: 2px 8px; min-width: 30px; }
+            .report-template-table-wrap { overflow: auto; max-height: 420px; border: 1px solid #eef2f6; border-radius: 6px; }
+            .report-template-table input, .report-template-table select { width: 80%; padding: 4px 6px; border: 1px solid #dce3ea; border-radius: 4px; font-size: 12px; }
+            .report-template-table td { padding: 6px; }
+            .report-template-table thead th { position: sticky; top: 0; background: #f7f9fa; z-index: 1; }
+            .report-template-table { border-collapse: separate; position: relative; }
+            .report-template-table--income th, .report-template-table--income td { white-space: nowrap; }
+            .report-template-table--income { min-width: 980px; }
+            .template-checkbox { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+            .template-checkbox input { margin: 0; }
+            /* 期末结转模板 */
+            .closing-template-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+            .closing-template-group { margin-top: 16px; }
+            .closing-template-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+            .closing-template-group-title { font-size: 14px; font-weight: 600; color: #2c3e50; }
+            .closing-template-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; background: #fafbfc; }
+            .closing-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+            .closing-card-header h4 { margin: 0; font-size: 14px; color: #2c3e50; }
+            .closing-template-remove { padding: 2px 6px; font-size: 12px; }
+            .closing-field { margin-bottom: 10px; }
+            .closing-field label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+            .closing-template-card input, .closing-template-card select { box-sizing: border-box; max-width: 100%; width: 100%; padding: 6px 8px; border: 1px solid #dce3ea; border-radius: 4px; font-size: 13px; }
+            /* 计提税金附加面板 */
+            .tax-accrual-panel { background: #fff; border: 1px solid #e6e8ec; border-radius: 12px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
+            .tax-accrual-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+            .tax-accrual-title { font-size: 18px; font-weight: 600; color: #1f2937; }
+            .tax-accrual-lock { font-size: 12px; color: #f59e0b; background: #fffbeb; padding: 3px 10px; border-radius: 999px; }
+            .tax-accrual-desc { margin-top: 6px; font-size: 13px; color: #6b7280; line-height: 1.6; }
+            .tax-info-grid { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+            .tax-info-item label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+            .tax-info-item select, .tax-info-item input { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; }
+            .tax-rule-card { margin-top: 18px; border: 1px solid #edf0f4; border-radius: 10px; padding: 14px; background: #f9fafb; }
+            .tax-rule-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+            .tax-rule-actions { display: flex; gap: 8px; align-items: center; }
+            .tax-rule-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
+            .tax-rule-table th, .tax-rule-table td { border-bottom: 1px solid #edf0f4; padding: 10px; text-align: left; }
+            .tax-rule-table th { background: #f3f4f6; color: #4b5563; font-weight: 600; }
+            .tax-rule-table input[type="text"], .tax-rule-table input[type="number"], .tax-rule-table select { width: 100%; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; }
+            .tax-direction-group { display: flex; flex-direction: column; gap: 4px; }
+            .tax-preview { margin-top: 18px; border: 1px dashed #d1d5db; border-radius: 10px; padding: 14px; background: #fff; }
+            .tax-preview-title { font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+            .tax-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+            .tax-preview-box { background: #f9fafb; border-radius: 10px; padding: 12px; color: #374151; }
+            .tax-preview-note { margin-top: 10px; font-size: 12px; color: #6b7280; }
+            .tax-rule-footer { margin-top: 12px; display: flex; justify-content: flex-end; }
+            hr.section-divider { border: none; border-top: 1px solid #eef2f6; margin: 0; }
+            /* 科目多选控件 */
+            .subject-multi-select { position: relative; display: inline-block; width: 100%; }
+            .subject-multi-input { width: 100%; padding: 4px 24px 4px 6px; border: 1px solid #dce3ea; border-radius: 4px; font-size: 12px; cursor: pointer; box-sizing: border-box; }
+            .subject-multi-arrow { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #888; font-size: 12px; }
+            .subject-multi-panel { display: none; position: fixed; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 3000; min-width: 280px; max-height: 320px; flex-direction: column; }
+            .subject-multi-panel.is-open { display: flex; }
+            .subject-multi-header { display: flex; padding: 6px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: #555; }
+            .subject-multi-header .col-check { width: 24px; }
+            .subject-multi-header .col-code { width: 80px; }
+            .subject-multi-header .col-name { flex: 1; }
+            .subject-multi-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+            .subject-option { display: flex; align-items: center; padding: 5px 8px; cursor: pointer; font-size: 12px; gap: 6px; }
+            .subject-option:hover { background: #f5f5f5; }
+            .subject-option input[type="checkbox"] { width: 14px; height: 14px; margin: 0; flex-shrink: 0; }
+            .subject-option .code { width: 80px; color: #555; }
+            .subject-option .name { flex: 1; color: #333; }
+            .subject-multi-empty { padding: 12px 8px; font-size: 12px; color: #999; text-align: center; }
+            .subject-multi-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 6px 8px; border-top: 1px solid #f0f0f0; }
+            /* 结转收入/成本 横向表格布局 */
+            .closing-tbl-section { margin-top: 16px; }
+            .closing-tbl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+            .closing-tbl-title { font-size: 14px; font-weight: 600; color: #2c3e50; }
+            .closing-tbl-wrap { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+            .closing-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            .closing-tbl thead tr { background: #f7f9fa; }
+            .closing-tbl th { padding: 9px 10px; font-size: 12px; font-weight: 600; color: #555; border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
+            .closing-tbl tbody { display: block; max-height: 180px; overflow-y: auto; }
+            .closing-tbl thead, .closing-tbl tbody tr { display: table; width: 100%; table-layout: fixed; }
+            .closing-tbl td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+            .closing-tbl tbody tr:last-child td { border-bottom: none; }
+            .closing-tbl tbody tr:hover { background: #fafbff; }
+            .closing-tbl td input, .closing-tbl td select { width: 100%; box-sizing: border-box; padding: 5px 7px; border: 1px solid #dce3ea; border-radius: 4px; font-size: 12px; }
+            .closing-tbl td input:focus, .closing-tbl td select:focus { outline: none; border-color: #3498db; }
         </style>
-        <div class="acsm-container">
-            <div class="acsm-header">
-                <h1 class="acsm-title">会计设置</h1>
-            </div>
 
-            <!-- 会计准则选择 -->
-            <div class="acsm-section">
-                <div class="acsm-sec-title">会计准则选择</div>
-                <div class="acsm-radio-group">
-                    <div class="acsm-radio-item">
-                        <input type="radio" id="standard-small" name="acct-standard" value="small" ${standard === "small" || !standard ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
-                        <label for="standard-small">小企业会计准则</label>
-                    </div>
-                    <div class="acsm-radio-item">
-                        <input type="radio" id="standard-enterprise" name="acct-standard" value="enterprise" ${standard === "enterprise" ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
-                        <label for="standard-enterprise">企业会计准则</label>
-                    </div>
-                </div>
-                <div class="acsm-info-row">
-                    <span class="acsm-info-label">准则版本：</span>
-                    <span class="acsm-info-value" id="acsm-standard-version">${standard === "enterprise" ? "企业会计准则（2006版及后续修订）" : "小企业会计准则（2013版）"}</span>
-                    <a href="javascript:void(0)" class="acsm-link-btn" onclick="window.acsmShowStandardInfo()">查看准则说明</a>
-                </div>
-                <div class="acsm-info-row">
-                    <span class="acsm-info-label">适用范围：</span>
-                    <span class="acsm-info-value" id="acsm-standard-scope">${standard === "enterprise" ? "适用于所有企业，上市公司强制执行" : "适用于符合《中小企业划型标准》规定的小企业"}</span>
-                </div>
-                <div class="acsm-info-row" style="margin-top:6px;">
-                    <span id="acsm-standard-diff" style="font-size:12px;color:#666;line-height:1.7;">
-                        ${standard === "enterprise"
-                            ? '<span style="color:#1890ff;font-weight:500;">企业准则关键特征：</span>所有者权益 <b>4xxx</b>（实收资本4001、资本公积4002）&nbsp;·&nbsp;损益类 <b>6xxx</b>（主营收入6001、成本6401、费用6601~6603）&nbsp;·&nbsp;存货分细科目（1403原材料/1405库存商品等）&nbsp;·&nbsp;科目约90个'
-                            : '<span style="color:#52c41a;font-weight:500;">小企业准则关键特征：</span>所有者权益 <b>3xxx</b>（实收资本3001、资本公积3002）&nbsp;·&nbsp;损益类 <b>5xxx</b>（主营收入5001、成本5401、费用5601~5603）&nbsp;·&nbsp;存货合并为 <b>1401存货</b>&nbsp;·&nbsp;科目约55个，简化核算'
-                        }
-                    </span>
-                </div>
-                ${locked ? '<div style="color:#e67e22;font-size:13px;margin-top:8px;">🔒 已产生凭证数据，准则已锁定不可更改。</div>' : ''}
-                ${!locked ? `<div style="margin-top:16px;display:flex;align-items:center;gap:12px;"><button class="acsm-btn acsm-btn-primary" onclick="applyAccountingStandardSetting()" style="min-width:140px;padding:8px 20px;">确认保存准则</button><span style="color:#888;font-size:12px;">保存后将更新会计科目列表</span></div>` : ''}
-            </div>
+        <div class="proto-content">
 
-            <!-- 科目设置 -->
-            <div class="acsm-section">
-                <div class="acsm-sec-title">科目设置</div>
-                <div class="acsm-setting-row">
-                    <label class="acsm-setting-label">设置科目级次：</label>
-                    <select id="subject-level-count" class="acsm-form-select" onchange="updateSubjectCodeInputs()">
-                        <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2 级</option>
-                        <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3 级</option>
-                        <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4 级</option>
-                        <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5 级</option>
-                    </select>
-                </div>
-                <div class="acsm-setting-row">
-                    <label class="acsm-setting-label">设置科目编码长度：</label>
-                    <div class="acsm-code-group">
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                            <input id="subject-length-1" type="number" min="1" value="${subjectSetting.lengths[0] || 4}" class="acsm-code-input">
-                            <span class="acsm-level-label">一级</span>
-                        </div>
-                        <span class="acsm-code-sep">-</span>
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                            <input id="subject-length-2" type="number" min="1" value="${subjectSetting.lengths[1] || 2}" class="acsm-code-input">
-                            <span class="acsm-level-label">二级</span>
-                        </div>
-                        <span class="acsm-code-sep">-</span>
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                            <input id="subject-length-3" type="number" min="1" value="${subjectSetting.lengths[2] || 2}" class="acsm-code-input">
-                            <span class="acsm-level-label">三级</span>
-                        </div>
-                        <span class="acsm-code-sep">-</span>
-                        <div id="acsm-l4-wrap" style="display:flex;flex-direction:column;align-items:center;gap:4px;${subjectSetting.levels < 4 ? 'display:none;' : ''}">
-                            <input id="subject-length-4" type="number" min="1" value="${subjectSetting.lengths[3] || 2}" class="acsm-code-input">
-                            <span class="acsm-level-label">四级</span>
-                        </div>
-                        <input id="subject-length-5" type="number" min="1" value="${subjectSetting.lengths[4] || 2}" style="display:none;">
+            <!-- ============ 1. 会计准则 + 科目编码 + 凭证摘要 + 期末结转 ============ -->
+            <div class="acct-standard-panel">
+                <div class="acct-standard-header">
+                    <div>
+                        <h2 style="margin:0; color:#2c3e50;">基础设置 · 会计准则</h2>
+                        <p style="margin:6px 0 0 0; color:#7f8c8d; font-size:13px;">
+                            首次启用财务模块需确认会计准则，系统会自动写入一级科目与常用二级科目模板。
+                        </p>
                     </div>
+                    ${lockTag}
                 </div>
-                <div style="margin-top:8px;">
-                    <button class="acsm-btn acsm-btn-primary" onclick="saveSubjectCodeSetting()">保存科目设置</button>
-                </div>
-            </div>
+                <div class="acct-standard-status">当前准则：<strong>${standardText}</strong></div>
 
-            <!-- 凭证摘要 -->
-            <div class="acsm-section">
-                <div class="acsm-sec-title">凭证摘要</div>
-                <div class="acsm-warn-box">
-                    <span>⚠</span>
-                    <span>设置不同凭证摘要，结算对应凭证的摘要也会跟随变化。</span>
-                </div>
-                <div class="acsm-voucher-list">
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">员工欠款单凭证摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('员工欠款单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">客户对账单凭证摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('客户对账单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">网点对账单凭证摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('网点对账单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">收款单凭证摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 付款单位 + 收款时间4位年 + 结算时间4位年</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('收款单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">付款单凭证摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 收款时间4位年 + 结算时间4位年</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('付款单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">发车批次挂账摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>商点名称 + 车牌号</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('发车批次挂账摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">提货挂次挂账摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('提货挂次挂账摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">短驳挂次挂账摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('短驳挂次挂账摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">送货挂次挂账摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('送货挂次挂账摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">收据凭证摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('收据凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div><div class="acsm-voucher-name">投销单凭证摘要</div></div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('投销单凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">充值凭证摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1 交易流 + 交易流水号 + 固定文字2 充值流 + 充值流水号</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('充值凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">提现凭证摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1 交易流 + 交易流水号 + 固定文字2 提现流 + 提现流水号</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('提现凭证摘要')">规则设置</button>
-                    </div>
-                    <div class="acsm-voucher-item">
-                        <div>
-                            <div class="acsm-voucher-name">继货挂账凭证摘要</div>
-                            <div class="acsm-voucher-rule"><span class="acsm-rule-prefix">└─</span><span>固定文字1【继现】+ 交易流水号 + 固定文字2 提现流 + 提现流水号</span></div>
-                        </div>
-                        <button class="acsm-btn" onclick="acsmOpenSummaryModal('继货挂账凭证摘要')">规则设置</button>
-                    </div>
-                </div>
-            </div>
+                <div class="acct-standard-group">
+                    <input type="radio" id="standard-small" name="acct-standard" value="small" ${standard === "small" || !standard ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
+                    <label class="acct-standard-card" for="standard-small">
+                        <h4>《小企业会计准则》</h4>
+                        <p>适合大多数中小型物流/货运企业，科目数量精简，上手更快。</p>
+                        <div class="acct-standard-badge">推荐 · 轻量级科目体系</div>
+                    </label>
 
-            <div class="acsm-form-actions">
-                <button class="acsm-btn" onclick="loadContent('AccountingStandardSetting')">取消</button>
-                <button class="acsm-btn acsm-btn-primary" onclick="applyAccountingStandardSetting()" ${locked ? "disabled" : ""}>保存设置</button>
-            </div>
-        </div>
-
-        <!-- 凭证摘要配置弹窗 -->
-        <div class="acsm-modal-overlay" id="acsmSummaryModal">
-            <div class="acsm-modal">
-                <div class="acsm-modal-hdr">
-                    <div class="acsm-modal-title" id="acsmModalTitle">凭证摘要配置</div>
-                    <button class="acsm-modal-close" onclick="acsmCloseSummaryModal()">&times;</button>
+                    <input type="radio" id="standard-enterprise" name="acct-standard" value="enterprise" ${standard === "enterprise" ? "checked" : ""} ${locked ? "disabled" : ""} onchange="acsmOnStandardChange(this)">
+                    <label class="acct-standard-card" for="standard-enterprise">
+                        <h4>《企业会计准则》</h4>
+                        <p>适合大型集团，科目体系更全面且严谨，支持复杂核算场景。</p>
+                        <div class="acct-standard-badge">全面 · 扩展性强</div>
+                    </label>
                 </div>
-                <div class="acsm-modal-body">
-                    <div class="acsm-dual">
-                        <div class="acsm-list-panel">
-                            <div class="acsm-list-hdr">维度列</div>
-                            <div class="acsm-search-box"><input type="text" class="acsm-search-input" placeholder="🔍 搜索" id="acsmLeftSearch" oninput="acsmSearchLeft()"></div>
-                            <div class="acsm-list-content" id="acsmLeftList">
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点名称</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点代码</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>商点部类</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>经办人</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>经办人部门</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>制单人</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>单据号</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>线路</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>方向</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>付款单位</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>收款时间4位年</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>结算时间4位年</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>车牌号</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>交易流水号</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>充值流水号</span></div>
-                                <div class="acsm-list-item" onclick="acsmToggleSelect(this)"><input type="checkbox"><span>提现流水号</span></div>
+
+                <div style="margin-top:18px; display:flex; align-items:center; gap:12px;">
+                    <button class="btn-primary" style="padding:8px 24px;" onclick="applyAccountingStandardSetting()" ${locked ? "disabled" : ""}>保存设置</button>
+                    <span style="font-size:12px; color:#95a5a6;">提示：一旦产生凭证数据，将锁定准则，不可更改。</span>
+                </div>
+
+                <!-- ============ 2. 科目编码级次设置 ============ -->
+                <div class="subject-code-setting">
+                    <div style="font-weight:bold; color:#2c3e50;">科目编码级次设置</div>
+                    <div class="setting-row">
+                        <label>设置科目级次</label>
+                        <select id="subject-level-count" onchange="updateSubjectCodeInputs()">
+                            <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2</option>
+                            <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3</option>
+                            <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4</option>
+                            <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5</option>
+                        </select>
+                        <label>设置科目编码长度</label>
+                        <input type="number" id="subject-length-1" value="${subjectSetting.lengths[0] || 4}" min="1">
+                        <input type="number" id="subject-length-2" value="${subjectSetting.lengths[1] || 2}" min="1">
+                        <input type="number" id="subject-length-3" value="${subjectSetting.lengths[2] || 2}" min="1" style="${subjectSetting.levels < 3 ? "display:none;" : ""}">
+                        <input type="number" id="subject-length-4" value="${subjectSetting.lengths[3] || 2}" min="1" style="${subjectSetting.levels < 4 ? "display:none;" : ""}">
+                        <input type="number" id="subject-length-5" value="${subjectSetting.lengths[4] || 2}" min="1" style="${subjectSetting.levels < 5 ? "display:none;" : ""}">
+                        <button class="btn-primary" onclick="saveSubjectCodeSetting()">保存设置</button>
+                    </div>
+                    <div id="subject-code-example" style="margin-top:8px; font-size:12px; color:#95a5a6;">
+                        示例：级次=3，长度=4/2/2，对应 1000 → 100001 → 10000101。
+                    </div>
+                </div>
+
+                <!-- ============ 3. 凭证摘要模板设置中心 ============ -->
+                <div class="summary-template-panel">
+                    <div class="summary-template-header">
+                        <div>
+                            <div class="summary-template-title">凭证摘要模板设置中心</div>
+                            <div class="summary-template-tip">维护常用摘要，凭证录入时可快速选择。</div>
+                        </div>
+                        <div class="summary-template-actions">
+                            <button class="btn-primary summary-template-action" onclick="addVoucherSummaryTemplateRow()">+ 新增模板</button>
+                            <button class="btn-primary summary-template-action btn-ghost" onclick="resetVoucherSummaryTemplates()">恢复默认</button>
+                            <button class="btn-primary summary-template-action" onclick="saveVoucherSummaryTemplates()">保存设置</button>
+                        </div>
+                    </div>
+                    <div class="summary-template-table-wrap">
+                        <table class="data-table summary-template-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:90px;">编号</th>
+                                    <th>常用摘要</th>
+                                    <th style="width:90px;">助记码</th>
+                                    <th style="width:90px;">类别</th>
+                                    <th style="width:70px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-template-body">
+                                ${summaryTemplateRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="summary-template-note">提示：凭证录入的摘要输入框支持下拉提示。</div>
+                </div>
+
+                <!-- ============ 4. 期末结转凭证模板设置 ============ -->
+                <div class="report-template-panel closing-template-panel">
+                    <div class="report-template-header">
+                        <div>
+                            <div class="report-template-title">期末结转凭证模板设置</div>
+                            <div class="report-template-tip">配置税金、收入、成本费用三类模板，结转时按优先级自动生成凭证。</div>
+                        </div>
+                        <div class="report-template-actions">
+                            <button class="btn-primary btn-ghost" onclick="loadContent('AccountingStandardSetting')">恢复默认</button>
+                            <button class="btn-primary" onclick="saveClosingTemplateSettings()">保存设置</button>
+                        </div>
+                    </div>
+
+                    <!-- ① 计提税金及附加 -->
+                    <div style="margin-top:20px;">
+                        <div class="tax-accrual-panel">
+                            <div class="tax-accrual-header">
+                                <div class="tax-accrual-title">计提税金及附加设置</div>
+                                ${taxLocked ? '<span class="tax-accrual-lock">🔒 已锁定</span>' : ''}
+                            </div>
+                            <div class="tax-accrual-desc">
+                                模块概述：本模块用于预设每月期末处理时"税金及附加"的计算规则。系统将根据此处配置的比例、基数科目，在期末自动计算税额并生成会计凭证。
+                            </div>
+                            <div class="tax-rule-card">
+                                <div class="tax-rule-header">
+                                    <div style="font-weight:600; color:#374151;">核心规则配置</div>
+                                    <div class="tax-rule-actions">
+                                        <label style="font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px;">
+                                            <input type="checkbox" ${taxLocked ? "checked" : ""} onchange="toggleTaxAccrualLock(this)"> 反结转锁定
+                                        </label>
+                                        <button class="btn-primary btn-ghost" onclick="addTaxAccrualRuleRow()" ${taxLocked ? "disabled" : ""}>+ 新增行</button>
+                                        <button class="btn-primary btn-ghost" onclick="validateTaxAccrualRules()">公式验证</button>
+                                    </div>
+                                </div>
+                                <table class="tax-rule-table">
+                                    <thead>
+                                        <tr>
+                                            <th>税种名称</th>
+                                            <th>计算基数科目</th>
+                                            <th>取数方向</th>
+                                            <th>计提比例(%)</th>
+                                            <th>借方科目</th>
+                                            <th>贷方科目</th>
+                                            <th>辅助核算项</th>
+                                            <th style="width:70px;">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tax-accrual-body">
+                                        ${taxAccrualRowsHtml}
+                                    </tbody>
+                                </table>
+                                <div class="tax-rule-footer">
+                                    <button class="btn-primary" onclick="saveTaxAccrualRules()">保存设置</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="acsm-arrow-btns">
-                            <button class="acsm-arrow-btn" onclick="acsmMoveToRight()">&#62;</button>
-                            <button class="acsm-arrow-btn" onclick="acsmMoveToLeft()">&#60;</button>
+                    </div>
+
+                    <!-- ② 结转收入（表格形式） -->
+                    <div class="closing-tbl-section">
+                        <div class="closing-tbl-header">
+                            <span class="closing-tbl-title">② 结转收入</span>
+                            <button class="btn-primary template-row-btn" onclick="addClosingTemplate('income')">+ 新增</button>
                         </div>
-                        <div class="acsm-list-panel">
-                            <div class="acsm-list-hdr">显示列（共<span id="acsmRightCount">0</span>项）</div>
-                            <div class="acsm-search-box"><input type="text" class="acsm-search-input" placeholder="🔍 搜索" id="acsmRightSearch" oninput="acsmSearchRight()"></div>
-                            <div class="acsm-list-content" id="acsmRightList"></div>
+                        <div class="closing-tbl-wrap">
+                            <table class="closing-tbl">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">序号</th>
+                                        <th style="width:130px;">账套</th>
+                                        <th>收入科目范围</th>
+                                        <th style="width:150px;">转入科目</th>
+                                        <th style="width:70px;">凭证字</th>
+                                        <th style="width:60px;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="closing-template-income">
+                                    ${closingIncomeTemplates.map((t, i) => buildClosingRow(t, "income", i)).join("")}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="acsm-modal-tips">双击字段，可快速移至右侧（显示列）。拖拽字段，可上下调整显示顺序。</div>
+
+                    <!-- ③ 结转成本费用（表格形式） -->
+                    <div class="closing-tbl-section">
+                        <div class="closing-tbl-header">
+                            <span class="closing-tbl-title">③ 结转成本费用</span>
+                            <button class="btn-primary template-row-btn" onclick="addClosingTemplate('cost')">+ 新增</button>
+                        </div>
+                        <div class="closing-tbl-wrap">
+                            <table class="closing-tbl">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">序号</th>
+                                        <th style="width:130px;">账套</th>
+                                        <th>成本费用科目范围</th>
+                                        <th style="width:150px;">转入科目</th>
+                                        <th style="width:70px;">凭证字</th>
+                                        <th style="width:60px;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="closing-template-cost">
+                                    ${closingCostTemplates.map((t, i) => buildClosingRow(t, "cost", i)).join("")}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- end closing-template-panel -->
+
+            </div><!-- end acct-standard-panel -->
+
+            <!-- ============ 5. 利润表设置 ============ -->
+            <div class="report-template-panel">
+                <div class="report-template-header">
+                    <div>
+                        <div class="report-template-title">利润表设置</div>
+                        <div class="report-template-tip">配置利润损益表的项目与科目组成，保存后联动报表展示。</div>
+                    </div>
+                    <div class="report-template-actions">
+                        <button class="btn-primary template-row-btn" onclick="addIncomeTemplateRow()">+</button>
+                        <button class="btn-primary" onclick="saveIncomeStatementTemplate()">保存设置</button>
+                    </div>
                 </div>
-                <div class="acsm-modal-ftr">
-                    <button class="acsm-btn" onclick="acsmRestoreDefault()">恢复默认</button>
-                    <button class="acsm-btn acsm-btn-primary" onclick="acsmConfirmModal()">确定</button>
-                    <button class="acsm-btn" onclick="acsmCloseSummaryModal()">取消</button>
+                <div class="report-template-table-wrap">
+                    <table class="data-table report-template-table report-template-table--income">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">序号</th>
+                                <th style="width:60px;">操作</th>
+                                <th style="min-width:180px;">项目名称</th>
+                                <th style="width:200px;">科目组成</th>
+                                <th style="width:90px;">运算符号</th>
+                                <th style="width:90px;">顺序</th>
+                                <th style="width:110px;">单吨平均值</th>
+                                <th style="width:110px;">单方平均值</th>
+                                <th style="width:110px;">单车平均值</th>
+                                <th style="width:110px;">占比基数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="income-template-body">
+                            ${incomeTemplateRows}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
+            <!-- ============ 6. 现金流量表设置 ============ -->
+            <div class="report-template-panel">
+                <div class="report-template-header">
+                    <div>
+                        <div class="report-template-title">现金流量表设置</div>
+                        <div class="report-template-tip">配置现金流量表项目，保存后联动报表展示。</div>
+                    </div>
+                    <div class="report-template-actions">
+                        <button class="btn-primary template-row-btn" onclick="addCashflowTemplateRow()">+</button>
+                        <button class="btn-primary" onclick="saveCashflowTemplate()">保存设置</button>
+                    </div>
+                </div>
+                <div class="report-template-table-wrap">
+                    <table class="data-table report-template-table">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">序号</th>
+                                <th style="width:60px;">操作</th>
+                                <th>项目名称</th>
+                                <th style="width:180px;">计算方式</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashflow-template-body">
+                            ${cashflowTemplateRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ 7. 资产负债表设置 ============ -->
+            <div class="report-template-panel">
+                <div class="report-template-header">
+                    <div>
+                        <div class="report-template-title">资产负债表设置</div>
+                        <div class="report-template-tip">配置资产负债表项目及科目组成，保存后联动报表展示。</div>
+                    </div>
+                    <div class="report-template-actions">
+                        <button class="btn-primary template-row-btn" onclick="addBalanceTemplateRow()">+</button>
+                        <button class="btn-primary" onclick="saveBalanceSheetTemplate()">保存设置</button>
+                    </div>
+                </div>
+                <div class="report-template-table-wrap">
+                    <table class="data-table report-template-table" style="min-width:900px;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">序号</th>
+                                <th style="width:50px;">操作</th>
+                                <th>项目名称</th>
+                                <th style="width:130px;">类型</th>
+                                <th style="width:160px;">期末科目组成</th>
+                                <th style="width:80px;">运算符</th>
+                                <th style="width:160px;">期初科目组成</th>
+                                <th style="width:80px;">运算符</th>
+                            </tr>
+                        </thead>
+                        <tbody id="balance-template-body">
+                            ${balanceTemplateRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- end proto-content -->
         `;
         setTimeout(() => {
             window.acsmOnStandardChange = function(radio) {
@@ -18476,6 +18812,9 @@ function loadContent(moduleCode, element = null) {
             }
             const acsmModal = document.getElementById('acsmSummaryModal');
             if (acsmModal) { acsmModal.addEventListener('click', function(e) { if (e.target === this) window.acsmCloseSummaryModal(); }); }
+            window.saveClosingTemplateSettings = function() {
+                alert("✅ 期末结转凭证模板设置已保存。");
+            };
             if (typeof window.updateSubjectCodeInputs === "function") {
                 window.updateSubjectCodeInputs(subjectSetting.levels, subjectSetting.lengths);
             }
@@ -18963,13 +19302,27 @@ function loadContent(moduleCode, element = null) {
         // 1. 初始化页面结构
         // 使用 Flex 布局：顶部操作栏 + 中间滚动表格 + 底部固定试算平衡条
         contentHTML = `
+            <style>
+                .ob-btn { background: #fff; border: 1px solid #d9d9d9; color: #333; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: background 0.15s, border-color 0.15s; }
+                .ob-btn:hover { background: #f5f5f5; border-color: #aaa; }
+                .ob-level-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+                .ob-level-1 { background: #e6f0ff; color: #2c5fad; }
+                .ob-level-2 { background: #e6fff0; color: #1a7a4a; }
+                .ob-level-3 { background: #fff7e6; color: #a05a00; }
+                .ob-level-parent { background: #fafafa; }
+                .ob-level-parent td { color: #888; }
+                .ob-parent-tip { font-size: 11px; color: #bbb; display: block; margin-top: 2px; }
+            </style>
             <div style="display: flex; flex-direction: column; height: 100%; background-color: #f0f2f5;">
                 <div style="padding: 16px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center;">
                     <div style="font-size: 16px; font-weight: bold; color: #333;">期初余额录入</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-secondary" id="btn-import">📥 Excel导入</button>
-                        <button class="btn-primary" id="btn-save">💾 保存数据</button>
-                        <button class="btn-danger" id="btn-enable" disabled>🚀 启用账套</button> </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="ob-btn" id="btn-import">导入</button>
+                        <button class="ob-btn" id="btn-export">导出</button>
+                        <button class="ob-btn" id="btn-save">保存</button>
+                        <button class="ob-btn" id="btn-clear">清零</button>
+                        <button class="ob-btn" id="btn-trial">试算平衡</button>
+                    </div>
                 </div>
 
                 <div style="flex: 1; overflow: auto; padding: 16px;">
@@ -18977,15 +19330,16 @@ function loadContent(moduleCode, element = null) {
                         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                             <thead style="background: #fafafa; position: sticky; top: 0; z-index: 10;">
                                 <tr style="height: 40px; border-bottom: 1px solid #e8e8e8;">
-                                    <th style="text-align: left; padding-left: 16px; width: 150px;">科目编码</th>
+                                    <th style="text-align: left; padding-left: 16px; width: 130px;">科目编码</th>
+                                    <th style="text-align: center; width: 70px;">科目级别</th>
                                     <th style="text-align: left; padding-left: 16px;">科目名称</th>
                                     <th style="text-align: center; width: 80px;">方向</th>
-                                    <th style="text-align: center; width: 60px;">辅助</th> <th style="text-align: right; padding-right: 16px; width: 150px;">期初余额</th>
-                                    <th style="text-align: right; padding-right: 16px; width: 150px;">年初余额</th> <th style="text-align: center; width: 100px;">操作</th>
+                                    <th style="text-align: right; padding-right: 16px; width: 160px;">期初余额</th>
+                                    <th style="text-align: right; padding-right: 16px; width: 120px;">年初余额</th>
                                 </tr>
                             </thead>
                             <tbody id="opening-balance-tbody">
-                                <tr><td colspan="7" style="text-align:center; padding: 20px;">正在加载科目表...</td></tr>
+                                <tr><td colspan="6" style="text-align:center; padding: 20px;">正在加载科目表...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -19059,47 +19413,83 @@ function loadContent(moduleCode, element = null) {
         const totalCreditEl = document.getElementById("total-credit");
         const diffAmountEl = document.getElementById("diff-amount");
         const statusBox = document.getElementById("balance-status");
-        const btnEnable = document.getElementById("btn-enable");
+
+        // 获取科目级次配置
+        function getSubjectLevel(code) {
+            try {
+                const s = JSON.parse(localStorage.getItem("SubjectCodeSetting") || sessionStorage.getItem("SubjectCodeSetting") || "{}");
+                const lengths = (s && Array.isArray(s.lengths) && s.lengths.length) ? s.lengths : [4, 2, 2];
+                let cumLen = 0;
+                for (let i = 0; i < lengths.length; i++) {
+                    cumLen += lengths[i];
+                    if (code.length <= cumLen) return i + 1;
+                }
+                return lengths.length;
+            } catch (e) {
+                return code.length <= 4 ? 1 : code.length <= 6 ? 2 : 3;
+            }
+        }
+
+        const levelNames = ['一级', '二级', '三级', '四级', '五级'];
+        const levelClasses = ['ob-level-1', 'ob-level-2', 'ob-level-3', 'ob-level-3', 'ob-level-3'];
 
         // 3. 渲染表格函数
         function renderTable() {
             let html = "";
             mockSubjects.forEach((sub, index) => {
-                const isEditable = sub.isLeaf && !sub.hasAux; // 只有末级且无辅助核算才可以直接输
-                const inputStyle = isEditable 
-                    ? "border: 1px solid #d9d9d9; border-radius: 3px; padding: 4px 8px; width: 100%; text-align: right;" 
-                    : "border: 1px solid #f0f0f0; background: #f5f5f5; color: #999; padding: 4px 8px; width: 100%; text-align: right; cursor: not-allowed;";
-                
-                // 辅助核算按钮逻辑
-                let actionBtn = "";
-                if (sub.hasAux) {
-                    actionBtn = `<a href="javascript:void(0)" class="btn-aux-edit" data-index="${index}" style="color: #1890ff; text-decoration: none;">📋 录入明细</a>`;
+                const level = getSubjectLevel(sub.code);
+                // 一级科目且有子科目 → 不可录入，余额由子科目汇总
+                // 一级科目无子科目 → 可直接录入
+                const hasChildren = mockSubjects.some(c => c.code !== sub.code && c.code.startsWith(sub.code));
+                const isParent = (level === 1) && hasChildren;
+                const isEditable = !isParent;
+                const levelLabel = levelNames[level - 1] || `${level}级`;
+                const levelClass = levelClasses[level - 1] || 'ob-level-3';
+
+                const editableStyle = "border: 1px solid #d9d9d9; border-radius: 3px; padding: 4px 8px; width: 100%; text-align: right; box-sizing: border-box;";
+                const disabledStyle = "border: 1px solid #e8e8e8; background: #f5f5f5; color: #bbb; padding: 4px 8px; width: 100%; text-align: right; cursor: not-allowed; border-radius: 3px; box-sizing: border-box;";
+
+                const rowStyle = isParent
+                    ? "border-bottom: 1px solid #f0f0f0; height: 45px; background: #fafafa;"
+                    : "border-bottom: 1px solid #f0f0f0; height: 45px;";
+
+                // 名称缩进（子科目缩进显示）
+                const nameIndent = level > 1 ? `padding-left: ${(level - 1) * 20 + 16}px;` : "padding-left: 16px;";
+
+                // 期初余额单元格
+                let balanceCell = "";
+                if (isParent) {
+                    balanceCell = `
+                        <input type="number" readonly disabled
+                            value="${parseFloat(sub.balance || 0).toFixed(2)}"
+                            title="父科目余额由子科目汇总，不可直接修改"
+                            style="${disabledStyle}">
+                        <span class="ob-parent-tip">汇总自子科目</span>`;
+                } else {
+                    balanceCell = `
+                        <input type="number" class="balance-input" data-index="${index}" data-dir="${sub.direction}"
+                            value="${sub.balance || ''}" placeholder="0.00"
+                            style="${editableStyle}">`;
                 }
 
                 html += `
-                    <tr style="border-bottom: 1px solid #f0f0f0; height: 45px;">
-                        <td style="padding-left: 16px;">${sub.code}</td>
-                        <td style="padding-left: 16px;">${sub.name}</td>
+                    <tr style="${rowStyle}">
+                        <td style="padding-left: 16px; font-family: monospace;">${sub.code}</td>
+                        <td style="text-align: center;">
+                            <span class="ob-level-badge ${levelClass}">${levelLabel}</span>
+                        </td>
+                        <td style="${nameIndent}">
+                            ${isParent ? `<strong>${sub.name}</strong>` : sub.name}
+                        </td>
                         <td style="text-align: center;">
                             <span style="padding: 2px 6px; border-radius: 2px; font-size: 12px; background: ${sub.direction==='借'?'#e6f7ff':'#fff1f0'}; color: ${sub.direction==='借'?'#1890ff':'#f5222d'};">
                                 ${sub.direction}
                             </span>
                         </td>
-                        <td style="text-align: center;">${sub.hasAux ? '✅' : '-'}</td>
-                        
                         <td style="padding-right: 16px;">
-                            <input type="number" class="balance-input" data-index="${index}" data-dir="${sub.direction}" 
-                                value="${sub.balance || ''}" placeholder="0.00" 
-                                ${isEditable ? '' : 'readonly'} style="${inputStyle}">
+                            ${balanceCell}
                         </td>
-                        
-                        <td style="padding-right: 16px;">
-                            <input type="number" readonly style="border: none; background: transparent; width: 100%; text-align: right; color: #bbb;" value="0.00">
-                        </td>
-                        
-                        <td style="text-align: center;">
-                            ${actionBtn}
-                        </td>
+                        <td style="padding-right: 16px; text-align: right; color: #bbb; font-size: 13px;">0.00</td>
                     </tr>
                 `;
             });
@@ -19107,7 +19497,7 @@ function loadContent(moduleCode, element = null) {
 
             // 重新绑定事件
             bindEvents();
-            calculateTrialBalance(); // 初始计算一次
+            calculateTrialBalance();
         }
 
         // 4. 核心逻辑：试算平衡计算器
@@ -19116,9 +19506,10 @@ function loadContent(moduleCode, element = null) {
             let creditTotal = 0;
 
             mockSubjects.forEach(sub => {
+                // 有子科目的父科目不参与统计，只统计叶子科目（可直接录入的科目）
+                const hasChildren = mockSubjects.some(c => c.code !== sub.code && c.code.startsWith(sub.code));
+                if (hasChildren) return;
                 const val = parseFloat(sub.balance) || 0;
-                // 这里简单处理：实际逻辑应该根据科目属性累加
-                // 注意：非末级科目金额应该由下级汇总，这里假设数据源已经是平铺且包含金额
                 if (sub.direction === "借") {
                     debitTotal += val;
                 } else {
@@ -19134,24 +19525,14 @@ function loadContent(moduleCode, element = null) {
             diffAmountEl.innerText = Math.abs(diff).toLocaleString('zh-CN', {minimumFractionDigits: 2});
 
             // 状态判断
-            if (Math.abs(diff) < 0.01 && (debitTotal > 0 || creditTotal > 0)) {
-                // 平衡
+            if (Math.abs(diff) < 0.01) {
                 statusBox.style.background = "#f6ffed";
                 statusBox.style.color = "#52c41a";
-                statusBox.innerHTML = `✅ 试算平衡 | 可以启用`;
-                btnEnable.disabled = false;
-                btnEnable.className = "btn-success"; // 假设你有这个样式类
-                btnEnable.style.background = "#52c41a";
-                btnEnable.style.color = "#fff";
-                btnEnable.style.cursor = "pointer";
+                statusBox.innerHTML = `✅ 试算平衡`;
             } else {
-                // 不平衡
                 statusBox.style.background = "#ffebee";
                 statusBox.style.color = "#d32f2f";
-                statusBox.innerHTML = `⚠️ 试算不平衡 | 差额: ${diff.toFixed(2)}`;
-                btnEnable.disabled = true;
-                btnEnable.style.background = "#ccc";
-                btnEnable.style.cursor = "not-allowed";
+                statusBox.innerHTML = `⚠️ 试算不平衡 | 差额: ${Math.abs(diff).toFixed(2)}`;
             }
         }
 
@@ -19161,9 +19542,11 @@ function loadContent(moduleCode, element = null) {
             document.querySelectorAll('.balance-input').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const idx = e.target.dataset.index;
-                    mockSubjects[idx].balance = e.target.value; // 更新数据模型
+                    mockSubjects[idx].balance = e.target.value;
+                    // 同步更新父科目汇总
+                    syncParentBalances();
                     persistOpeningBalances();
-                    calculateTrialBalance(); // 触发重算
+                    calculateTrialBalance();
                 });
             });
 
@@ -19172,31 +19555,67 @@ function loadContent(moduleCode, element = null) {
                 btn.addEventListener('click', (e) => {
                     const idx = e.target.dataset.index;
                     const sub = mockSubjects[idx];
-                    // 这里应该弹出一个 Modal，为了演示简单，用 prompt 代替
-                    const amount = prompt(`【模拟弹窗】\n请输入 ${sub.name} 的明细总额：\n(真实开发请替换为明细录入表格)`, sub.balance || 0);
+                    const amount = prompt(`【${sub.name}】\n请输入辅助核算明细总额：`, sub.balance || 0);
                     if (amount !== null) {
-                        mockSubjects[idx].balance = parseFloat(amount);
+                        mockSubjects[idx].balance = parseFloat(amount) || 0;
+                        syncParentBalances();
                         persistOpeningBalances();
-                        // 刷新表格显示新金额
                         renderTable();
                     }
                 });
             });
 
-            // 启用按钮
-            btnEnable.onclick = () => {
-                if(!btnEnable.disabled) {
-                    alert("🎉 账套启用成功！\n系统现在将锁定期初余额，并开启凭证录入权限。");
-                    // 这里调用后端 API: POST /api/finance/enable
-                }
+            // 导入按钮
+            const btnImport = document.getElementById('btn-import');
+            if (btnImport) btnImport.onclick = () => {
+                alert('导入功能：请选择 Excel 文件导入期初余额数据。');
             };
-            
+
+            // 导出按钮
+            const btnExport = document.getElementById('btn-export');
+            if (btnExport) btnExport.onclick = () => {
+                const rows = mockSubjects.map(s => `${s.code}\t${s.name}\t${s.direction}\t${parseFloat(s.balance||0).toFixed(2)}`).join('\n');
+                const header = '科目编码\t科目名称\t方向\t期初余额\n';
+                const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/tab-separated-values;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = '期初余额.tsv'; a.click();
+                URL.revokeObjectURL(url);
+            };
+
             // 保存按钮
-            document.getElementById('btn-save').onclick = () => {
+            const btnSave = document.getElementById('btn-save');
+            if (btnSave) btnSave.onclick = () => {
                 persistOpeningBalances();
-                alert("数据已暂存");
-                // 这里调用后端 API: POST /api/finance/opening-balance/save
+                alert('期初余额已保存。');
             };
+
+            // 清零按钮
+            const btnClear = document.getElementById('btn-clear');
+            if (btnClear) btnClear.onclick = () => {
+                if (!confirm('确认将所有科目期初余额清零？')) return;
+                mockSubjects.forEach(s => { s.balance = 0; });
+                persistOpeningBalances();
+                renderTable();
+            };
+
+            // 试算平衡按钮
+            const btnTrial = document.getElementById('btn-trial');
+            if (btnTrial) btnTrial.onclick = () => {
+                calculateTrialBalance();
+                document.getElementById('balance-status')?.scrollIntoView({ behavior: 'smooth' });
+            };
+        }
+
+        // 子科目变动后自动汇总父科目余额
+        function syncParentBalances() {
+            mockSubjects.forEach(parent => {
+                if (parent.isLeaf) return;
+                const children = mockSubjects.filter(c => c.code !== parent.code && c.code.startsWith(parent.code));
+                if (children.length) {
+                    parent.balance = children.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
+                }
+            });
         }
 
         // 初始化运行
@@ -19820,7 +20239,7 @@ function loadContent(moduleCode, element = null) {
 
 
     // ============================================================
-    //  以下是新增的“全流程联动控制台”逻辑
+    //  以下是新增的"全流程联动控制台"逻辑
     // ============================================================
 
     /**

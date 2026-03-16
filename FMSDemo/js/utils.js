@@ -52,16 +52,34 @@ function generateSequentialVoucherId(word) {
 window.getNextVoucherSeqStrict = getNextVoucherSeqStrict;
 window.generateSequentialVoucherId = generateSequentialVoucherId;
 
+/**
+ * 当前登录会话信息（可由登录模块覆写）
+ * ip 与 ipLocation 在真实系统中应由服务端下发；此处为演示用模拟值。
+ */
+window.CURRENT_SESSION = window.CURRENT_SESSION || {
+    company:    '广州顺达物流科技有限公司',
+    ip:         '112.96.18.47',
+    ipLocation: '广东省·广州市·天河区'
+};
+
 /** 核心辅助：追加【数据变更】日志 */
 function addDataChangeLog(changeLog) {
     let logs = JSON.parse(sessionStorage.getItem('GlobalDataChangeLogs') || "[]");
+    // 自动补充公司和IP信息
+    if (!changeLog.company)    changeLog.company    = (window.CURRENT_SESSION || {}).company    || '';
+    if (!changeLog.ip)         changeLog.ip         = (window.CURRENT_SESSION || {}).ip         || '';
+    if (!changeLog.ipLocation) changeLog.ipLocation = (window.CURRENT_SESSION || {}).ipLocation || '';
     logs.unshift(changeLog);
     sessionStorage.setItem('GlobalDataChangeLogs', JSON.stringify(logs));
 }
 
-/** 核心辅助：追加审计日志 */
+/** 核心辅助：追加审计日志（自动注入所属公司、IP 及归属地） */
 function addAuditLog(newLog) {
     let logs = JSON.parse(sessionStorage.getItem('GlobalAuditLogs') || "[]");
+    // 自动补充公司和IP信息（调用方也可显式传入以覆盖）
+    if (!newLog.company)    newLog.company    = (window.CURRENT_SESSION || {}).company    || '';
+    if (!newLog.ip)         newLog.ip         = (window.CURRENT_SESSION || {}).ip         || '';
+    if (!newLog.ipLocation) newLog.ipLocation = (window.CURRENT_SESSION || {}).ipLocation || '';
     logs.unshift(newLog);
     sessionStorage.setItem('GlobalAuditLogs', JSON.stringify(logs));
 }
