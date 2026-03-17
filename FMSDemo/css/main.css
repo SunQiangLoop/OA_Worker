@@ -41,6 +41,35 @@
             flex-shrink: 0;
         }
 
+        /* 短驳批次挂帐 - 页面内子标签页 */
+        .sh-inner-tab-bar {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e4ea;
+            margin-bottom: 16px;
+        }
+        .sh-inner-tab {
+            padding: 9px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -2px;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .sh-inner-tab:hover { color: #2c3e50; background: #f5f7fa; }
+        .sh-inner-tab.active {
+            color: #e74c3c;
+            font-weight: 600;
+            border-color: #e0e4ea;
+            border-bottom-color: #fff;
+            background: #fff;
+            border-top: 2px solid #e74c3c;
+        }
+
         /* 内容包装器：tab-bar + content-area 垂直排列 */
         .content-wrapper {
             flex-grow: 1;

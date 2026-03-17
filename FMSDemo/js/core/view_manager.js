@@ -5,6 +5,8 @@ function getModuleName(code) {
     const names = {
         Dashboard: "首页",
         SettlementWaybill: "运单挂帐",
+        TrunkBatchAccrual: "干线批次挂帐",
+        ShortHaulBatchAccrual: "短驳批次挂帐",
         SettlementShortHaul: "短途批次挂帐",
         PriceManagement: "价格管理",
         ReconSite: "网点对账",
@@ -2262,7 +2264,7 @@ function loadContent(moduleCode, element = null) {
 	            const text = (raw || "").toString().trim();
 	            if (!text) return [];
 	            return text
-	                .split(/[\n,，;；\\s]+/)
+	                .split(/[\n,，;；\s]+/)
 	                .map((t) => t.trim())
 	                .filter(Boolean);
 	        };
@@ -2543,7 +2545,6 @@ function loadContent(moduleCode, element = null) {
 		        };
 
 		        contentHTML += `
-		                    <h2>运单挂账</h2>
 
 	                    <div class="wb-querybar">
 	                        <div class="wb-q-item">
@@ -2645,6 +2646,952 @@ function loadContent(moduleCode, element = null) {
 		                    </div>
 		                `;
 		    }
+
+    // =========================================================================
+    // 干线批次挂帐 (TrunkBatchAccrual)
+    // =========================================================================
+    else if (moduleCode === "TrunkBatchAccrual") {
+
+        // ── 1. 默认数据 ──
+        const tbDefaultBatches = [
+            { id:"APC260302001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-02 13:25:12", planDepartAt:"2026-03-02 13:24:51", actualDepartAt:"2026-03-02 13:25:33", arriveAt:"2026-03-02 15:42:18", plate:"皖CF8473", trailerPlate:"皖CF8473挂", driver:"张强",   phone:"15898705567", pieces:52,  weight:1280.5, volume:42.8, remark:"",         loadSite:"专线A", loadOperator:"强",   departSite:"专线A", departOperator:"强",   arriveSite:"专线B", arriveOperator:"强"  },
+            { id:"APC260302002", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线B->专线A", loadAt:"2026-03-02 09:10:05", planDepartAt:"2026-03-02 09:00:00", actualDepartAt:"2026-03-02 09:12:33", arriveAt:"2026-03-02 11:35:14", plate:"苏E66782", trailerPlate:"",         driver:"李明",   phone:"13812345678", pieces:38,  weight:960.0,  volume:32.0, remark:"",         loadSite:"专线B", loadOperator:"王华", departSite:"专线B", departOperator:"王华", arriveSite:"专线A", arriveOperator:"赵磊"},
+            { id:"APC260302003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-02 14:30:00", planDepartAt:"2026-03-02 15:00:00", actualDepartAt:"2026-03-02 15:08:22", arriveAt:"2026-03-02 18:55:40", plate:"皖M45678", trailerPlate:"",         driver:"王辉",   phone:"18912345670", pieces:70,  weight:2100.0, volume:68.5, remark:"含易碎品", loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线C", arriveOperator:"陈磊"},
+            { id:"APC260302004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-02 16:00:00", planDepartAt:"2026-03-02 16:30:00", actualDepartAt:"2026-03-02 16:35:10", arriveAt:"",                   plate:"浙A78901", trailerPlate:"浙A78901挂", driver:"陈波",   phone:"15612345671", pieces:45,  weight:1350.0, volume:45.0, remark:"",         loadSite:"专线C", loadOperator:"李华", departSite:"专线C", departOperator:"李华", arriveSite:"",    arriveOperator:""    },
+            { id:"APC260302005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线B", loadAt:"2026-03-02 08:15:30", planDepartAt:"2026-03-02 08:30:00", actualDepartAt:"2026-03-02 08:32:45", arriveAt:"2026-03-02 10:18:22", plate:"皖CF1234", trailerPlate:"",         driver:"刘刚",   phone:"13712345672", pieces:88,  weight:3200.0, volume:95.0, remark:"加急件",   loadSite:"专线A", loadOperator:"张亮", departSite:"专线A", departOperator:"张亮", arriveSite:"专线B", arriveOperator:"李勇"},
+            { id:"APC260303001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-03 07:50:00", planDepartAt:"2026-03-03 08:00:00", actualDepartAt:"2026-03-03 08:05:33", arriveAt:"2026-03-03 10:22:45", plate:"苏K98765", trailerPlate:"",         driver:"赵明",   phone:"18512345673", pieces:62,  weight:1850.0, volume:56.5, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"刘磊"},
+            { id:"APC260303002", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线C", loadAt:"2026-03-03 10:30:00", planDepartAt:"2026-03-03 11:00:00", actualDepartAt:"2026-03-03 11:02:18", arriveAt:"2026-03-03 14:35:00", plate:"皖A23456", trailerPlate:"皖A23456挂", driver:"孙强",   phone:"15712345674", pieces:95,  weight:2850.0, volume:88.0, remark:"",         loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"李磊"},
+            { id:"APC260303003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-03 13:00:00", planDepartAt:"2026-03-03 14:00:00", actualDepartAt:"2026-03-03 14:10:05", arriveAt:"2026-03-03 17:45:22", plate:"浙B34567", trailerPlate:"",         driver:"周杰",   phone:"13912345675", pieces:33,  weight:890.0,  volume:28.5, remark:"含冷链",   loadSite:"专线C", loadOperator:"陈磊", departSite:"专线C", departOperator:"陈磊", arriveSite:"专线A", arriveOperator:""    },
+            { id:"APC260303004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-03 15:20:00", planDepartAt:"2026-03-03 16:00:00", actualDepartAt:"2026-03-03 16:05:48", arriveAt:"",                   plate:"皖B45678", trailerPlate:"皖B45678挂", driver:"吴磊",   phone:"18112345676", pieces:120, weight:3600.0, volume:110.0,remark:"",         loadSite:"专线A", loadOperator:"王磊", departSite:"专线A", departOperator:"王磊", arriveSite:"",    arriveOperator:""    },
+            { id:"APC260303005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线B->专线A", loadAt:"2026-03-03 09:00:00", planDepartAt:"2026-03-03 09:30:00", actualDepartAt:"2026-03-03 09:28:15", arriveAt:"2026-03-03 11:55:30", plate:"苏D56789", trailerPlate:"",         driver:"郑伟",   phone:"15212345677", pieces:41,  weight:1150.0, volume:38.5, remark:"",         loadSite:"专线B", loadOperator:"强",   departSite:"专线B", departOperator:"强",   arriveSite:"专线A", arriveOperator:"强"  },
+            { id:"APC260304001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-04 08:00:00", planDepartAt:"2026-03-04 08:30:00", actualDepartAt:"2026-03-04 08:33:22", arriveAt:"2026-03-04 10:45:18", plate:"皖C67890", trailerPlate:"",         driver:"何军",   phone:"13612345678", pieces:78,  weight:2340.0, volume:72.5, remark:"",         loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线B", arriveOperator:"张磊"},
+            { id:"APC260304002", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-04 11:15:00", planDepartAt:"2026-03-04 12:00:00", actualDepartAt:"2026-03-04 11:58:40", arriveAt:"2026-03-04 14:22:10", plate:"苏F78901", trailerPlate:"苏F78901挂", driver:"林勇",   phone:"18612345679", pieces:55,  weight:1650.0, volume:52.0, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"李磊"},
+            { id:"APC260304003", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-04 13:30:00", planDepartAt:"2026-03-04 14:00:00", actualDepartAt:"2026-03-04 14:02:55", arriveAt:"2026-03-04 17:38:22", plate:"皖D89012", trailerPlate:"",         driver:"罗凤",   phone:"15912345680", pieces:66,  weight:1980.0, volume:62.0, remark:"指定时效", loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"陈磊"},
+            { id:"APC260304004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-04 15:00:00", planDepartAt:"2026-03-04 16:00:00", actualDepartAt:"2026-03-04 16:08:30", arriveAt:"",                   plate:"浙C90123", trailerPlate:"浙C90123挂", driver:"韩涛",   phone:"13712345681", pieces:48,  weight:1440.0, volume:48.0, remark:"",         loadSite:"专线C", loadOperator:"李磊", departSite:"专线C", departOperator:"李磊", arriveSite:"",    arriveOperator:""    },
+            { id:"APC260304005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线B", loadAt:"2026-03-04 07:30:00", planDepartAt:"2026-03-04 08:00:00", actualDepartAt:"2026-03-04 07:58:12", arriveAt:"2026-03-04 10:15:45", plate:"皖E01234", trailerPlate:"",         driver:"冯磊",   phone:"18812345682", pieces:102, weight:3060.0, volume:92.0, remark:"",         loadSite:"专线A", loadOperator:"王强", departSite:"专线A", departOperator:"王强", arriveSite:"专线B", arriveOperator:"刘磊"},
+        ];
+
+        let tbBatches = JSON.parse(sessionStorage.getItem("BizTrunkBatches"));
+        if (!tbBatches || !tbBatches.length) {
+            tbBatches = tbDefaultBatches;
+            sessionStorage.setItem("BizTrunkBatches", JSON.stringify(tbBatches));
+        }
+
+        // ── 2. 表头字段 ──
+        const tbColumns = [
+            { key: "id",             label: "发车批次",      filter: { id: "tb_f_batch_no", placeholder: "支持批量搜索" } },
+            { key: "batchStatus",    label: "批次状态",      align: "center", filter: { id: "tb_f_batch_status", type: "select", options: ["", "已装车", "已发车", "已到达", "已卸车"] } },
+            { key: "accrualStatus",  label: "挂帐状态",      align: "center", filter: { id: "tb_f_accrual_status", type: "select", options: ["", "未挂帐", "已挂帐"] } },
+            { key: "route",          label: "车辆线路" },
+            { key: "loadAt",         label: "装车时间" },
+            { key: "planDepartAt",   label: "预计发车时间" },
+            { key: "actualDepartAt", label: "实际发车时间" },
+            { key: "arriveAt",       label: "到达时间" },
+            { key: "plate",          label: "车牌号" },
+            { key: "trailerPlate",   label: "挂车牌号" },
+            { key: "driver",         label: "司机" },
+            { key: "phone",          label: "手机号" },
+            { key: "pieces",         label: "件数",          align: "right" },
+            { key: "weight",         label: "重量(KG)",      align: "right" },
+            { key: "volume",         label: "体积(m³)",      align: "right" },
+            { key: "loadSite",       label: "装车操作网点" },
+            { key: "loadOperator",   label: "装车操作人" },
+            { key: "departSite",     label: "发车操作网点" },
+            { key: "departOperator", label: "发车操作人" },
+            { key: "arriveSite",     label: "到达操作网点" },
+            { key: "arriveOperator", label: "到达操作人" },
+            { key: "remark",         label: "备注" },
+        ];
+
+        const tbNumKeys = ["pieces", "weight", "volume"];
+
+        // ── 3. 工具函数 ──
+        const tbEsc = (val) => (val ?? "").toString()
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+        const tbParseDateOnly = (raw) => {
+            const s = (raw || "").toString().trim();
+            if (!s) return null;
+            const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (!m) return null;
+            const d = new Date(`${m[1]}T00:00:00`);
+            return Number.isNaN(d.getTime()) ? null : d;
+        };
+
+        const tbFmtNum = (n) => {
+            const v = parseFloat(n || 0);
+            return v ? v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : "";
+        };
+
+        // ── 4. 状态管理函数 ──
+        if (!window.trunkBatchSetPage) {
+            window.trunkBatchSetPage = function (page) {
+                window._trunkBatchPage = page;
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchSetPageSize) {
+            window.trunkBatchSetPageSize = function (size) {
+                window._trunkBatchPageSize = Number(size) || 10;
+                window._trunkBatchPage = 1;
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchApplyFilters) {
+            window.trunkBatchApplyFilters = function () {
+                const g = (id) => { const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; };
+                window._trunkBatchFilters = {
+                    batchNo:      g("tb_f_batch_no"),
+                    batchStatus:  g("tb_f_batch_status"),
+                    accrualStatus:g("tb_f_accrual_status"),
+                    route:        g("tb_q_route"),
+                    dateStart:    g("tb_q_date_start"),
+                    dateEnd:      g("tb_q_date_end"),
+                };
+                window._trunkBatchPage = 1;
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchResetFilters) {
+            window.trunkBatchResetFilters = function () {
+                window._trunkBatchFilters = {};
+                window._trunkBatchPage = 1;
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchExport) {
+            window.trunkBatchExport = function () {
+                const data = window._trunkBatchExportData || [];
+                if (!data.length) return alert("没有可导出的数据。");
+                const cols = window._trunkBatchExportCols || [];
+                const e = (v) => { const s = (v ?? "").toString(); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+                const lines = [cols.map(c => e(c.label)).join(",")];
+                data.forEach(row => lines.push(cols.map(c => e(row[c.key] ?? "")).join(",")));
+                const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `干线批次挂帐_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(a); a.click(); a.remove();
+            };
+        }
+        if (!window.trunkBatchSettle) {
+            window.trunkBatchSettle = function () {
+                const checked = Array.from(document.querySelectorAll(".tb-check:checked"));
+                if (!checked.length) return alert("请先勾选需要挂帐的批次。");
+                const ids = new Set(checked.map(cb => cb.value));
+                let list = JSON.parse(sessionStorage.getItem("BizTrunkBatches") || "[]");
+                let count = 0;
+                list.forEach(item => {
+                    if (ids.has(item.id) && item.accrualStatus !== "已挂帐") {
+                        item.accrualStatus = "已挂帐";
+                        count++;
+                    }
+                });
+                if (!count) return alert("所选批次均已挂帐，无需重复操作。");
+                sessionStorage.setItem("BizTrunkBatches", JSON.stringify(list));
+                if (typeof addAuditLog === "function") addAuditLog({ time: new Date().toLocaleString("zh-CN", {hour12:false}).replace(/\//g,"-"), user: "管理员", module: "挂帐管理", action: "批次挂帐", detail: `批量挂帐 ${count} 个干线批次` });
+                alert(`✅ 挂帐完成！共挂帐 ${count} 个批次。`);
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchCancelSettle) {
+            window.trunkBatchCancelSettle = function () {
+                const checked = Array.from(document.querySelectorAll(".tb-check:checked"));
+                if (!checked.length) return alert("请先勾选需要取消挂帐的批次。");
+                if (!confirm(`确认取消挂帐 ${checked.length} 个批次吗？`)) return;
+                const ids = new Set(checked.map(cb => cb.value));
+                let list = JSON.parse(sessionStorage.getItem("BizTrunkBatches") || "[]");
+                let count = 0;
+                list.forEach(item => {
+                    if (ids.has(item.id) && item.accrualStatus === "已挂帐") {
+                        item.accrualStatus = "未挂帐";
+                        count++;
+                    }
+                });
+                sessionStorage.setItem("BizTrunkBatches", JSON.stringify(list));
+                alert(`✅ 已取消 ${count} 个批次挂帐，状态已回滚为【未挂帐】。`);
+                loadContent("TrunkBatchAccrual");
+            };
+        }
+        if (!window.trunkBatchToggleAll) {
+            window.trunkBatchToggleAll = function (source) {
+                document.querySelectorAll(".tb-check").forEach(cb => { cb.checked = source.checked; });
+                if (typeof window.trunkBatchUpdateSelection === "function") window.trunkBatchUpdateSelection();
+            };
+        }
+        if (!window.trunkBatchUpdateSelection) {
+            window.trunkBatchUpdateSelection = function () {
+                const ids = Array.from(document.querySelectorAll(".tb-check:checked")).map(cb => cb.value);
+                const rowMap = window._trunkBatchRowMap || {};
+                const sums = { pieces: 0, weight: 0, volume: 0 };
+                ids.forEach(id => {
+                    const r = rowMap[id];
+                    if (!r) return;
+                    ["pieces", "weight", "volume"].forEach(k => { sums[k] += parseFloat(r[k] || 0); });
+                });
+                const countEl = document.getElementById("tb_sel_count");
+                if (countEl) countEl.textContent = `${ids.length}单`;
+                ["pieces", "weight", "volume"].forEach(k => {
+                    const el = document.getElementById(`tb_sel_sum_${k}`);
+                    if (el) el.textContent = sums[k] ? sums[k].toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2}) : "";
+                });
+            };
+        }
+
+        // ── 5. 筛选 ──
+        const tbFilters = window._trunkBatchFilters || {};
+        const tbDateStart = tbParseDateOnly(tbFilters.dateStart);
+        const tbDateEnd   = tbParseDateOnly(tbFilters.dateEnd);
+
+        const tbParseTokens = (raw) => (raw || "").toString().trim().split(/[\n,，;；\s]+/).map(t => t.trim()).filter(Boolean);
+        const tbBatchNosFilter = tbParseTokens(tbFilters.batchNo);
+
+        const tbFiltered = (Array.isArray(tbBatches) ? tbBatches : []).filter(item => {
+            if (tbFilters.batchStatus  && item.batchStatus  !== tbFilters.batchStatus)  return false;
+            if (tbFilters.accrualStatus && item.accrualStatus !== tbFilters.accrualStatus) return false;
+            if (tbFilters.route && !(item.route || "").includes(tbFilters.route)) return false;
+            if (tbBatchNosFilter.length) {
+                const id = (item.id || "").toString();
+                if (tbBatchNosFilter.length === 1) { if (!id.includes(tbBatchNosFilter[0])) return false; }
+                else { if (!new Set(tbBatchNosFilter).has(id)) return false; }
+            }
+            if (tbDateStart || tbDateEnd) {
+                const d = tbParseDateOnly(item.loadAt);
+                if (!d) return false;
+                if (tbDateStart && d < tbDateStart) return false;
+                if (tbDateEnd   && d > tbDateEnd)   return false;
+            }
+            return true;
+        });
+
+        // ── 6. 分页 ──
+        const tbPageSize  = window._trunkBatchPageSize || 10;
+        const tbTotalPages = Math.max(1, Math.ceil(tbFiltered.length / tbPageSize));
+        let   tbCurPage   = window._trunkBatchPage || 1;
+        if (tbCurPage > tbTotalPages) tbCurPage = tbTotalPages;
+        const tbPageStart = (tbCurPage - 1) * tbPageSize;
+        const tbPaged     = tbFiltered.slice(tbPageStart, tbPageStart + tbPageSize);
+
+        // ── 7. 合计 ──
+        const tbTotalSums = { pieces: 0, weight: 0, volume: 0 };
+        tbFiltered.forEach(r => { tbNumKeys.forEach(k => { tbTotalSums[k] += parseFloat(r[k] || 0); }); });
+
+        window._trunkBatchRowMap     = Object.fromEntries(tbPaged.map(r => [r.id, r]));
+        window._trunkBatchExportData = tbFiltered;
+        window._trunkBatchExportCols = tbColumns;
+
+        // ── 8. 渲染单元格 ──
+        const tbRenderCell = (row, col) => {
+            const val = row[col.key];
+            if (col.key === "id") {
+                return `<a class="wb-link" href="javascript:void(0)">${tbEsc(val || "")}</a>`;
+            }
+            if (col.key === "batchStatus") {
+                const colorMap = { "已卸车": "#27ae60", "已到达": "#2980b9", "已发车": "#e67e22", "已装车": "#8e44ad" };
+                const c = colorMap[val] || "#999";
+                return `<span style="color:${c};font-weight:bold;">${tbEsc(val || "-")}</span>`;
+            }
+            if (col.key === "accrualStatus") {
+                const c = val === "已挂帐" ? "#27ae60" : "#e67e22";
+                return `<span style="color:${c};font-weight:bold;">${tbEsc(val || "未挂帐")}</span>`;
+            }
+            if (col.align === "right") {
+                return `<span class="wb-money">${tbFmtNum(val)}</span>`;
+            }
+            return tbEsc(val || "");
+        };
+
+        // ── 9. 表格行 ──
+        const tbFillerCnt = Math.max(0, tbPageSize - tbPaged.length);
+        const tbDataRows = tbPaged.map((row, idx) => `<tr>
+            <td class="sticky-left-1 wb-rowno">${tbPageStart + idx + 1}</td>
+            <td class="sticky-left-2"><input type="checkbox" class="tb-check" value="${tbEsc(row.id)}" onchange="trunkBatchUpdateSelection()"></td>
+            ${tbColumns.map(col => `<td${col.align ? ` style="text-align:${col.align};"` : ""}>${tbRenderCell(row, col)}</td>`).join("")}
+        </tr>`).join("");
+
+        const tbFillerRows = tbFillerCnt ? Array.from({ length: tbFillerCnt }).map(() => `<tr class="wb-empty-row">
+            <td class="sticky-left-1 wb-rowno">&nbsp;</td>
+            <td class="sticky-left-2">&nbsp;</td>
+            ${tbColumns.map(col => `<td${col.align ? ` style="text-align:${col.align};"` : ""}>&nbsp;</td>`).join("")}
+        </tr>`).join("") : "";
+
+        // ── 10. 筛选行 ──
+        const tbBuildFilterCell = (col) => {
+            if (!col.filter) return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`;
+            const f = col.filter;
+            if (f.type === "select") {
+                const opts = (f.options || []).map(opt => {
+                    const cur = (tbFilters[col.key === "batchStatus" ? "batchStatus" : "accrualStatus"] || "");
+                    const sel = opt ? (cur === opt ? "selected" : "") : (!cur ? "selected" : "");
+                    return `<option value="${tbEsc(opt)}" ${sel}>${opt || "全部"}</option>`;
+                }).join("");
+                return `<th class="sticky-filter"><select id="${tbEsc(f.id)}" class="wb-filter-select">${opts}</select></th>`;
+            }
+            const val = col.key === "id" ? (tbFilters.batchNo || "") : "";
+            return `<th class="sticky-filter"><input id="${tbEsc(f.id)}" class="wb-filter-input${(f.placeholder||"").includes("批量") ? " wb-filter-input--batch" : ""}" placeholder="${tbEsc(f.placeholder||"")}" value="${tbEsc(val)}"></th>`;
+        };
+
+        // ── 11. 汇总行 ──
+        const tbBuildFooter = (mode) => {
+            const isSel = mode === "sel";
+            return tbColumns.map(col => {
+                const alignStyle = col.align ? ` style="text-align:${col.align};"` : "";
+                if (col.key === "id") {
+                    const id  = isSel ? "tb_sel_count" : "tb_total_count";
+                    const txt = isSel ? "0单" : `${tbFiltered.length}单`;
+                    return `<td${alignStyle}><span id="${id}" class="wb-foot__count">${txt}</span></td>`;
+                }
+                if (tbNumKeys.includes(col.key)) {
+                    const id  = isSel ? `tb_sel_sum_${col.key}` : `tb_total_sum_${col.key}`;
+                    const val = isSel ? "" : tbFmtNum(tbTotalSums[col.key]);
+                    return `<td${alignStyle}><span id="${id}" class="wb-foot__amt">${tbEsc(val)}</span></td>`;
+                }
+                return `<td${alignStyle}>&nbsp;</td>`;
+            }).join("");
+        };
+
+        // ── 12. 分页按钮 ──
+        const tbPagerBtns = (() => {
+            const btns = []; const delta = 2;
+            for (let p = 1; p <= tbTotalPages; p++) {
+                if (p === 1 || p === tbTotalPages || (p >= tbCurPage - delta && p <= tbCurPage + delta)) {
+                    btns.push(`<button class="wb-pager__btn wb-pager__btn--num${p === tbCurPage ? " wb-pager__btn--active" : ""}" onclick="trunkBatchSetPage(${p})">${p}</button>`);
+                } else if (btns[btns.length - 1] !== "…") {
+                    btns.push("…");
+                }
+            }
+            return btns.map(b => b === "…" ? `<span class="wb-pager__ellipsis">…</span>` : b).join("");
+        })();
+
+        // ── 13. 输出 HTML ──
+        contentHTML += `
+
+            <div class="wb-querybar">
+                <div class="wb-q-item">
+                    <div class="wb-q-label">车辆线路</div>
+                    <input id="tb_q_route" class="wb-q-control" type="text" placeholder="搜索线路" value="${tbEsc(tbFilters.route || "")}">
+                </div>
+                <div class="wb-q-item wb-q-item--date">
+                    <div class="wb-q-label">装车时间</div>
+                    <div class="wb-q-date">
+                        <input id="tb_q_date_start" class="wb-q-control" type="date" value="${tbEsc(tbFilters.dateStart || "")}">
+                        <span class="wb-q-date__sep">~</span>
+                        <input id="tb_q_date_end" class="wb-q-control" type="date" value="${tbEsc(tbFilters.dateEnd || "")}">
+                    </div>
+                </div>
+                <button class="wb-btn wb-btn--primary" onclick="trunkBatchApplyFilters()">查询</button>
+                <button class="wb-btn" onclick="trunkBatchResetFilters()">重置</button>
+            </div>
+
+            <div class="wb-toolbar">
+                <div class="wb-toolbar__left">
+                    <button class="wb-btn" onclick="trunkBatchSettle()">挂账</button>
+                    <button class="wb-btn" onclick="trunkBatchCancelSettle()">取消挂账</button>
+                </div>
+                <div class="wb-toolbar__right">
+                    <button class="wb-btn" onclick="trunkBatchExport()">导出</button>
+                    <button class="wb-btn" onclick="window.print()">打印</button>
+                    <div class="wb-pager">
+                        <span class="wb-pager__total">共 <strong>${tbFiltered.length}</strong> 条</span>
+                        <button class="wb-pager__btn" onclick="trunkBatchSetPage(1)" ${tbCurPage <= 1 ? "disabled" : ""} title="首页">|◀</button>
+                        <button class="wb-pager__btn" onclick="trunkBatchSetPage(${Math.max(1, tbCurPage - 1)})" ${tbCurPage <= 1 ? "disabled" : ""} title="上一页">◀</button>
+                        ${tbPagerBtns}
+                        <button class="wb-pager__btn" onclick="trunkBatchSetPage(${Math.min(tbTotalPages, tbCurPage + 1)})" ${tbCurPage >= tbTotalPages ? "disabled" : ""} title="下一页">▶</button>
+                        <button class="wb-pager__btn" onclick="trunkBatchSetPage(${tbTotalPages})" ${tbCurPage >= tbTotalPages ? "disabled" : ""} title="末页">▶|</button>
+                        <span class="wb-pager__jump">跳至 <input type="number" min="1" max="${tbTotalPages}" class="wb-pager__jump-input" onkeydown="if(event.key==='Enter'){const v=parseInt(this.value);if(v>=1&&v<=${tbTotalPages})trunkBatchSetPage(v);}" placeholder="${tbCurPage}"> 页</span>
+                        <select class="wb-pager__size" onchange="trunkBatchSetPageSize(this.value)">
+                            <option value="10"  ${tbPageSize === 10  ? "selected" : ""}>10 条/页</option>
+                            <option value="20"  ${tbPageSize === 20  ? "selected" : ""}>20 条/页</option>
+                            <option value="50"  ${tbPageSize === 50  ? "selected" : ""}>50 条/页</option>
+                            <option value="100" ${tbPageSize === 100 ? "selected" : ""}>100 条/页</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px; --sticky-left-2:46px;">
+                <table class="data-table" style="white-space:nowrap;">
+                    <thead>
+                        <tr>
+                            <th class="sticky-header sticky-left-1"><span class="wb-funnel" title="筛选"></span></th>
+                            <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="trunkBatchToggleAll(this)"></th>
+                            ${tbColumns.map(col => `<th class="sticky-header"${col.align ? ` style="text-align:${col.align};"` : ""}>${tbEsc(col.label)}</th>`).join("")}
+                        </tr>
+                        <tr>
+                            <th class="sticky-filter sticky-left-1">筛选</th>
+                            <th class="sticky-filter sticky-left-2"></th>
+                            ${tbColumns.map(col => tbBuildFilterCell(col)).join("")}
+                        </tr>
+                    </thead>
+                    <tbody>${tbDataRows + tbFillerRows || `<tr><td colspan="${tbColumns.length + 2}" style="text-align:center;color:#999;padding:18px;">暂无数据</td></tr>`}</tbody>
+                    <tfoot>
+                        <tr class="wb-foot wb-foot--sel">
+                            <td class="sticky-left-1 wb-foot__label">选中</td>
+                            <td class="sticky-left-2"></td>
+                            ${tbBuildFooter("sel")}
+                        </tr>
+                        <tr class="wb-foot wb-foot--total">
+                            <td class="sticky-left-1 wb-foot__label">合计</td>
+                            <td class="sticky-left-2"></td>
+                            ${tbBuildFooter("total")}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+    }
+
+    // =========================================================================
+    // 短驳批次挂帐 (ShortHaulBatchAccrual) — 送货 / 提货 双标签
+    // =========================================================================
+    else if (moduleCode === "ShortHaulBatchAccrual") {
+        const shTab = window._shortHaulTab || "delivery";
+
+        if (!window.switchShortHaulTab) {
+            window.switchShortHaulTab = function (tab) {
+                window._shortHaulTab = tab;
+                loadContent("ShortHaulBatchAccrual");
+            };
+        }
+
+        // ── 公共工具 ──
+        const shEsc = (val) => (val ?? "").toString()
+            .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+            .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+        const shFmtNum = (n) => { const v = parseFloat(n || 0); return v ? v.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}) : ""; };
+        const shParseDateOnly = (raw) => { const s=(raw||"").toString().trim(); if(!s) return null; const m=s.match(/^(\d{4}-\d{2}-\d{2})/); if(!m) return null; const d=new Date(`${m[1]}T00:00:00`); return Number.isNaN(d.getTime())?null:d; };
+        const shParseTokens  = (raw) => (raw||"").toString().trim().split(/[\n,，;；\s]+/).map(t=>t.trim()).filter(Boolean);
+
+        contentHTML += `
+            <div class="sh-inner-tab-bar">
+                <div class="sh-inner-tab ${shTab==="delivery"?"active":""}" onclick="switchShortHaulTab('delivery')">送货挂账</div>
+                <div class="sh-inner-tab ${shTab==="pickup"?"active":""}" onclick="switchShortHaulTab('pickup')">提货挂账</div>
+                <div class="sh-inner-tab ${shTab==="internal"?"active":""}" onclick="switchShortHaulTab('internal')">内部短驳挂账 <span style="font-size:11px;color:#e67e22;font-weight:400;margin-left:4px;">待开发</span></div>
+            </div>
+        `;
+
+        // =====================================================================
+        // 送货挂账
+        // =====================================================================
+        if (shTab === "delivery") {
+            const shdDef = [
+                {id:"SH260302001",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"南京联畅物流有限公司",  deliveryAt:"2026-03-02 09:00:00",finishAt:"2026-03-02 11:30:00",deliveryMethod:"自驾送货",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:18, weight:450.0, volume:15.0,deliveryFee:120.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"专线B",finishOperator:"王华", remark:""},
+                {id:"SH260302002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"合肥诚才物流有限公司",  deliveryAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:00:00",deliveryMethod:"外包配送",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:25, weight:680.5, volume:22.0,deliveryFee:180.00,unitDeliveryFee:7.20, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"专线A",finishOperator:"刘强",remark:""},
+                {id:"SH260302003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"镇江天地沃华物流",      deliveryAt:"2026-03-02 14:00:00",finishAt:"2026-03-02 16:30:00",deliveryMethod:"上门派送",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:12, weight:320.0, volume:10.5,deliveryFee:85.00, unitDeliveryFee:7.08, deliverySite:"专线B",deliveryOperator:"陈磊",finishSite:"专线B",finishOperator:"赵华", remark:"需冷链"},
+                {id:"SH260302004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"南京浦鹏物流有限公司",  deliveryAt:"2026-03-02 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:30, weight:900.0, volume:30.0,deliveryFee:200.00,unitDeliveryFee:6.67, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"SH260302005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"天长市乐运物流",        deliveryAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 11:00:00",deliveryMethod:"外包配送",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:42, weight:1200.5,volume:40.0,deliveryFee:280.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"王强",finishSite:"专线B",finishOperator:"刘磊",remark:""},
+                {id:"SH260303001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 11:00:00",deliveryMethod:"自驾送货",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:8,  weight:220.0, volume:7.5, deliveryFee:60.00, unitDeliveryFee:7.50, deliverySite:"专线A",deliveryOperator:"李华",finishSite:"专线A",finishOperator:"张磊",remark:""},
+                {id:"SH260303002",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"怀化飞鸿物流",          deliveryAt:"2026-03-03 10:00:00",finishAt:"2026-03-03 13:30:00",deliveryMethod:"上门派送",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:55, weight:1500.0,volume:52.0,deliveryFee:350.00,unitDeliveryFee:6.36, deliverySite:"专线B",deliveryOperator:"陈强",finishSite:"专线B",finishOperator:"王磊",remark:""},
+                {id:"SH260303003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"昆山江南达物流",        deliveryAt:"2026-03-03 13:00:00",finishAt:"2026-03-03 15:20:00",deliveryMethod:"外包配送",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:20, weight:580.0, volume:18.0,deliveryFee:140.00,unitDeliveryFee:7.00, deliverySite:"专线A",deliveryOperator:"刘磊",finishSite:"专线A",finishOperator:"赵强",remark:""},
+                {id:"SH260303004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"江西连淳物流",          deliveryAt:"2026-03-03 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"赣C45678",driver:"吴磊", phone:"18112345676",pieces:15, weight:420.0, volume:14.0,deliveryFee:100.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"SH260303005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:30:00",deliveryMethod:"外包配送",plate:"皖F56789",driver:"郑伟", phone:"15212345677",pieces:38, weight:1050.0,volume:35.5,deliveryFee:240.00,unitDeliveryFee:6.32, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"专线A",finishOperator:"王磊",remark:""},
+                {id:"SH260304001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"广东东安物流",          deliveryAt:"2026-03-04 09:30:00",finishAt:"2026-03-04 12:00:00",deliveryMethod:"上门派送",plate:"粤G67890",driver:"何军", phone:"13612345678",pieces:22, weight:620.0, volume:20.5,deliveryFee:150.00,unitDeliveryFee:6.82, deliverySite:"专线B",deliveryOperator:"刘强",finishSite:"专线B",finishOperator:"李华", remark:""},
+                {id:"SH260304002",accrualStatus:"未挂帐",deliveryStatus:"待送货", customerName:"浙江圆通供应链",        deliveryAt:"2026-03-04 14:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"浙H78901",driver:"林勇", phone:"18612345679",pieces:35, weight:980.0, volume:32.0,deliveryFee:210.00,unitDeliveryFee:6.00, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"",    finishOperator:"",    remark:"加急"},
+            ];
+            let shdData = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery"));
+            if (!shdData || !shdData.length) { shdData = shdDef; sessionStorage.setItem("BizShortHaulDelivery", JSON.stringify(shdData)); }
+
+            const shdCols = [
+                {key:"id",              label:"送货批次",     filter:{id:"shd_f_no",  placeholder:"支持批量搜索"}},
+                {key:"accrualStatus",   label:"挂帐状态",     align:"center", filter:{id:"shd_f_accrual",type:"select",options:["","未挂帐","已挂帐"]}},
+                {key:"deliveryStatus",  label:"送货状态",     align:"center", filter:{id:"shd_f_status", type:"select",options:["","待送货","送货中","已送货","已签收"]}},
+                {key:"customerName",    label:"客户名称"},
+                {key:"deliveryAt",      label:"送货时间"},
+                {key:"finishAt",        label:"完成时间"},
+                {key:"deliveryMethod",  label:"送货方式"},
+                {key:"plate",           label:"送货车牌号"},
+                {key:"driver",          label:"送货司机"},
+                {key:"phone",           label:"送货手机号"},
+                {key:"pieces",          label:"送货件数",     align:"right"},
+                {key:"weight",          label:"送货重量(KG)", align:"right"},
+                {key:"volume",          label:"送货体积(m³)", align:"right"},
+                {key:"deliveryFee",     label:"送货费",       align:"right"},
+                {key:"unitDeliveryFee", label:"单票送货费",   align:"right"},
+                {key:"deliverySite",    label:"送货网点"},
+                {key:"deliveryOperator",label:"送货操作人"},
+                {key:"finishSite",      label:"完成网点"},
+                {key:"finishOperator",  label:"完成操作人"},
+                {key:"remark",          label:"送货备注"},
+            ];
+            const shdNumKeys = ["pieces","weight","volume","deliveryFee","unitDeliveryFee"];
+
+            if (!window.shdSetPage)      window.shdSetPage      = (p) => { window._shdPage=p; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shdSetPageSize)  window.shdSetPageSize  = (s) => { window._shdPageSize=Number(s)||10; window._shdPage=1; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shdApplyFilters) window.shdApplyFilters = () => {
+                const g=(id)=>{const el=document.getElementById(id);return el?(el.value||"").trim():"";};
+                window._shdFilters={batchNo:g("shd_f_no"),accrualStatus:g("shd_f_accrual"),deliveryStatus:g("shd_f_status"),customerName:g("shd_q_customer"),dateStart:g("shd_q_ds"),dateEnd:g("shd_q_de")};
+                window._shdPage=1; loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shdResetFilters) window.shdResetFilters = () => { window._shdFilters={}; window._shdPage=1; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shdExport)       window.shdExport       = () => {
+                const data=window._shdExportData||[]; if(!data.length) return alert("没有可导出的数据。");
+                const cols=window._shdExportCols||[];
+                const e=(v)=>{const s=(v??"").toString(); return /[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;};
+                const lines=[cols.map(c=>e(c.label)).join(",")]; data.forEach(row=>lines.push(cols.map(c=>e(row[c.key]??"")).join(","))); const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`送货批次挂帐_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove();
+                // ^ export fn
+            };
+            if (!window.shdSettle)      window.shdSettle      = () => {
+                const checked=Array.from(document.querySelectorAll(".shd-check:checked")); if(!checked.length) return alert("请先勾选需要挂帐的送货批次。");
+                const ids=new Set(checked.map(cb=>cb.value)); let list=JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]"); let count=0;
+                list.forEach(item=>{if(ids.has(item.id)&&item.accrualStatus!=="已挂帐"){item.accrualStatus="已挂帐";count++;}}); if(!count) return alert("所选批次均已挂帐。");
+                sessionStorage.setItem("BizShortHaulDelivery",JSON.stringify(list)); if(typeof addAuditLog==="function") addAuditLog({time:new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-"),user:"管理员",module:"挂帐管理",action:"送货批次挂帐",detail:`挂帐 ${count} 个送货批次`});
+                alert(`✅ 挂帐完成！共挂帐 ${count} 个送货批次。`); loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shdCancelSettle) window.shdCancelSettle = () => {
+                const checked=Array.from(document.querySelectorAll(".shd-check:checked")); if(!checked.length) return alert("请先勾选需要取消挂帐的批次。");
+                if(!confirm(`确认取消挂帐 ${checked.length} 个送货批次吗？`)) return;
+                const ids=new Set(checked.map(cb=>cb.value)); let list=JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]"); let count=0;
+                list.forEach(item=>{if(ids.has(item.id)&&item.accrualStatus==="已挂帐"){item.accrualStatus="未挂帐";count++;}}); sessionStorage.setItem("BizShortHaulDelivery",JSON.stringify(list));
+                alert(`✅ 已取消 ${count} 个送货批次挂帐。`); loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shdToggleAll)    window.shdToggleAll    = (src) => { document.querySelectorAll(".shd-check").forEach(cb=>cb.checked=src.checked); if(typeof window.shdUpdateSel==="function") window.shdUpdateSel(); };
+            if (!window.shdUpdateSel)    window.shdUpdateSel    = () => {
+                const ids=Array.from(document.querySelectorAll(".shd-check:checked")).map(cb=>cb.value);
+                const rm=window._shdRowMap||{}; const sums={pieces:0,weight:0,volume:0,deliveryFee:0,unitDeliveryFee:0};
+                ids.forEach(id=>{const r=rm[id]; if(!r) return; shdNumKeys.forEach(k=>{sums[k]+=parseFloat(r[k]||0);});});
+                const ce=document.getElementById("shd_sel_count"); if(ce) ce.textContent=`${ids.length}单`;
+                shdNumKeys.forEach(k=>{const el=document.getElementById(`shd_sel_${k}`); if(el) el.textContent=shFmtNum(sums[k]);});
+            };
+
+            const shdFilters  = window._shdFilters || {};
+            const shdDateStart = shParseDateOnly(shdFilters.dateStart);
+            const shdDateEnd   = shParseDateOnly(shdFilters.dateEnd);
+            const shdNosFilter = shParseTokens(shdFilters.batchNo);
+
+            const shdFiltered = (Array.isArray(shdData)?shdData:[]).filter(item=>{
+                if(shdFilters.accrualStatus  && item.accrualStatus  !== shdFilters.accrualStatus)  return false;
+                if(shdFilters.deliveryStatus && item.deliveryStatus !== shdFilters.deliveryStatus) return false;
+                if(shdFilters.customerName   && !(item.customerName||"").includes(shdFilters.customerName)) return false;
+                if(shdNosFilter.length){const id=(item.id||""); if(shdNosFilter.length===1){if(!id.includes(shdNosFilter[0])) return false;} else{if(!new Set(shdNosFilter).has(id)) return false;}}
+                if(shdDateStart||shdDateEnd){const d=shParseDateOnly(item.deliveryAt); if(!d) return false; if(shdDateStart&&d<shdDateStart) return false; if(shdDateEnd&&d>shdDateEnd) return false;}
+                return true;
+            });
+
+            const shdPageSize  = window._shdPageSize || 10;
+            const shdTotalPages= Math.max(1,Math.ceil(shdFiltered.length/shdPageSize));
+            let   shdCurPage   = window._shdPage || 1; if(shdCurPage>shdTotalPages) shdCurPage=shdTotalPages;
+            const shdPageStart = (shdCurPage-1)*shdPageSize;
+            const shdPaged     = shdFiltered.slice(shdPageStart,shdPageStart+shdPageSize);
+
+            const shdTotalSums={}; shdNumKeys.forEach(k=>{shdTotalSums[k]=0;}); shdFiltered.forEach(r=>shdNumKeys.forEach(k=>{shdTotalSums[k]+=parseFloat(r[k]||0);}));
+            window._shdRowMap=Object.fromEntries(shdPaged.map(r=>[r.id,r])); window._shdExportData=shdFiltered; window._shdExportCols=shdCols;
+
+            const shdRenderCell=(row,col)=>{
+                const val=row[col.key];
+                if(col.key==="id") return `<a class="wb-link" href="javascript:void(0)">${shEsc(val||"")}</a>`;
+                if(col.key==="accrualStatus"){const c=val==="已挂帐"?"#27ae60":"#e67e22"; return `<span style="color:${c};font-weight:bold;">${shEsc(val||"未挂帐")}</span>`;}
+                if(col.key==="deliveryStatus"){const cm={"已签收":"#27ae60","已送货":"#2980b9","送货中":"#e67e22","待送货":"#95a5a6"}; return `<span style="color:${cm[val]||"#999"};font-weight:bold;">${shEsc(val||"-")}</span>`;}
+                if(col.align==="right") return `<span class="wb-money">${shFmtNum(val)}</span>`;
+                return shEsc(val||"");
+            };
+            const shdFillerCnt=Math.max(0,shdPageSize-shdPaged.length);
+            const shdDataRows=shdPaged.map((row,idx)=>`<tr>
+                <td class="sticky-left-1 wb-rowno">${shdPageStart+idx+1}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="shd-check" value="${shEsc(row.id)}" onchange="shdUpdateSel()"></td>
+                ${shdCols.map(col=>`<td${col.align?` style="text-align:${col.align};"`:""}>` + shdRenderCell(row,col) + `</td>`).join("")}
+            </tr>`).join("");
+            const shdFillerRows=shdFillerCnt?Array.from({length:shdFillerCnt}).map(()=>`<tr class="wb-empty-row"><td class="sticky-left-1 wb-rowno">&nbsp;</td><td class="sticky-left-2">&nbsp;</td>${shdCols.map(col=>`<td${col.align?` style="text-align:${col.align};"`:""}>` + "&nbsp;" + `</td>`).join("")}</tr>`).join(""):"";
+
+            const shdBuildFilter=(col)=>{
+                if(!col.filter) return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`;
+                const f=col.filter;
+                if(f.type==="select"){
+                    const curVal=col.key==="deliveryStatus"?(shdFilters.deliveryStatus||""):(shdFilters.accrualStatus||"");
+                    const opts=(f.options||[]).map(opt=>{const sel=opt?(curVal===opt?"selected":""):(!curVal?"selected":""); return `<option value="${shEsc(opt)}" ${sel}>${opt||"全部"}</option>`;}).join("");
+                    return `<th class="sticky-filter"><select id="${shEsc(f.id)}" class="wb-filter-select">${opts}</select></th>`;
+                }
+                const fVal=col.key==="id"?(shdFilters.batchNo||""):"";
+                return `<th class="sticky-filter"><input id="${shEsc(f.id)}" class="wb-filter-input${(f.placeholder||"").includes("批量")?" wb-filter-input--batch":""}" placeholder="${shEsc(f.placeholder||"")}" value="${shEsc(fVal)}"></th>`;
+            };
+            const shdBuildFooter=(mode)=>{
+                const isSel=mode==="sel";
+                return shdCols.map(col=>{
+                    const as=col.align?` style="text-align:${col.align};"`:"";
+                    if(col.key==="id"){const id=isSel?"shd_sel_count":"shd_total_count"; const txt=isSel?"0单":`${shdFiltered.length}单`; return `<td${as}><span id="${id}" class="wb-foot__count">${txt}</span></td>`;}
+                    if(shdNumKeys.includes(col.key)){const id=isSel?`shd_sel_${col.key}`:`shd_tot_${col.key}`; const val=isSel?"":shFmtNum(shdTotalSums[col.key]); return `<td${as}><span id="${id}" class="wb-foot__amt">${shEsc(val)}</span></td>`;}
+                    return `<td${as}>&nbsp;</td>`;
+                }).join("");
+            };
+            const shdPagerBtns=(()=>{const btns=[];const delta=2;for(let p=1;p<=shdTotalPages;p++){if(p===1||p===shdTotalPages||(p>=shdCurPage-delta&&p<=shdCurPage+delta)){btns.push(`<button class="wb-pager__btn wb-pager__btn--num${p===shdCurPage?" wb-pager__btn--active":""}" onclick="shdSetPage(${p})">${p}</button>`);}else if(btns[btns.length-1]!=="…"){btns.push("…");}}return btns.map(b=>b==="…"?`<span class="wb-pager__ellipsis">…</span>`:b).join("");})();
+
+            contentHTML += `
+                <div class="wb-querybar">
+                    <div class="wb-q-item"><div class="wb-q-label">客户名称</div><input id="shd_q_customer" class="wb-q-control" type="text" placeholder="客户名称" value="${shEsc(shdFilters.customerName||"")}"></div>
+                    <div class="wb-q-item wb-q-item--date"><div class="wb-q-label">送货时间</div><div class="wb-q-date"><input id="shd_q_ds" class="wb-q-control" type="date" value="${shEsc(shdFilters.dateStart||"")}"><span class="wb-q-date__sep">~</span><input id="shd_q_de" class="wb-q-control" type="date" value="${shEsc(shdFilters.dateEnd||"")}"></div></div>
+                    <button class="wb-btn wb-btn--primary" onclick="shdApplyFilters()">查询</button>
+                    <button class="wb-btn" onclick="shdResetFilters()">重置</button>
+                </div>
+                <div class="wb-toolbar">
+                    <div class="wb-toolbar__left">
+                        <button class="wb-btn" onclick="shdSettle()">挂账</button>
+                        <button class="wb-btn" onclick="shdCancelSettle()">取消挂账</button>
+                    </div>
+                    <div class="wb-toolbar__right">
+                        <button class="wb-btn" onclick="shdExport()">导出</button>
+                        <button class="wb-btn" onclick="window.print()">打印</button>
+                        <div class="wb-pager">
+                            <span class="wb-pager__total">共 <strong>${shdFiltered.length}</strong> 条</span>
+                            <button class="wb-pager__btn" onclick="shdSetPage(1)" ${shdCurPage<=1?"disabled":""} title="首页">|◀</button>
+                            <button class="wb-pager__btn" onclick="shdSetPage(${Math.max(1,shdCurPage-1)})" ${shdCurPage<=1?"disabled":""} title="上一页">◀</button>
+                            ${shdPagerBtns}
+                            <button class="wb-pager__btn" onclick="shdSetPage(${Math.min(shdTotalPages,shdCurPage+1)})" ${shdCurPage>=shdTotalPages?"disabled":""} title="下一页">▶</button>
+                            <button class="wb-pager__btn" onclick="shdSetPage(${shdTotalPages})" ${shdCurPage>=shdTotalPages?"disabled":""} title="末页">▶|</button>
+                            <span class="wb-pager__jump">跳至 <input type="number" min="1" max="${shdTotalPages}" class="wb-pager__jump-input" onkeydown="if(event.key==='Enter'){const v=parseInt(this.value);if(v>=1&&v<=${shdTotalPages})shdSetPage(v);}" placeholder="${shdCurPage}"> 页</span>
+                            <select class="wb-pager__size" onchange="shdSetPageSize(this.value)">
+                                <option value="10" ${shdPageSize===10?"selected":""}>10 条/页</option>
+                                <option value="20" ${shdPageSize===20?"selected":""}>20 条/页</option>
+                                <option value="50" ${shdPageSize===50?"selected":""}>50 条/页</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px;--sticky-left-2:46px;">
+                    <table class="data-table" style="white-space:nowrap;">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header sticky-left-1"><span class="wb-funnel"></span></th>
+                                <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="shdToggleAll(this)"></th>
+                                ${shdCols.map(col=>`<th class="sticky-header"${col.align?` style="text-align:${col.align};"`:""}>` + shEsc(col.label) + `</th>`).join("")}
+                            </tr>
+                            <tr>
+                                <th class="sticky-filter sticky-left-1">筛选</th>
+                                <th class="sticky-filter sticky-left-2"></th>
+                                ${shdCols.map(col=>shdBuildFilter(col)).join("")}
+                            </tr>
+                        </thead>
+                        <tbody>${shdDataRows+shdFillerRows||`<tr><td colspan="${shdCols.length+2}" style="text-align:center;color:#999;padding:18px;">暂无数据</td></tr>`}</tbody>
+                        <tfoot>
+                            <tr class="wb-foot wb-foot--sel"><td class="sticky-left-1 wb-foot__label">选中</td><td class="sticky-left-2"></td>${shdBuildFooter("sel")}</tr>
+                            <tr class="wb-foot wb-foot--total"><td class="sticky-left-1 wb-foot__label">合计</td><td class="sticky-left-2"></td>${shdBuildFooter("total")}</tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+
+        // =====================================================================
+        // 提货挂账
+        // =====================================================================
+        } else if (shTab === "pickup") {
+            const shpDef = [
+                {id:"PH260302001",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"南京联畅物流有限公司",  pickupAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 10:00:00",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:22, weight:550.0, volume:18.5,pickupFee:130.00,unitPickupFee:5.91,pickupSite:"专线A",pickupOperator:"李磊",finishSite:"专线A",finishOperator:"王华", remark:""},
+                {id:"PH260302002",accrualStatus:"未挂帐",pickupStatus:"已完成",customerName:"合肥诚才物流有限公司",  pickupAt:"2026-03-02 09:30:00",finishAt:"2026-03-02 11:30:00",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:15, weight:420.0, volume:14.0,pickupFee:90.00, unitPickupFee:6.00,pickupSite:"专线B",pickupOperator:"王磊",finishSite:"专线B",finishOperator:"刘强",remark:""},
+                {id:"PH260302003",accrualStatus:"未挂帐",pickupStatus:"已提货",customerName:"镇江天地沃华物流",      pickupAt:"2026-03-02 13:00:00",finishAt:"2026-03-02 15:00:00",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:28, weight:780.0, volume:26.0,pickupFee:160.00,unitPickupFee:5.71,pickupSite:"专线A",pickupOperator:"陈磊",finishSite:"专线A",finishOperator:"赵华", remark:""},
+                {id:"PH260302004",accrualStatus:"未挂帐",pickupStatus:"提货中", customerName:"南京浦鹏物流有限公司",  pickupAt:"2026-03-02 14:30:00",finishAt:"",                   plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:10, weight:280.0, volume:9.5, pickupFee:65.00, unitPickupFee:6.50,pickupSite:"专线B",pickupOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"PH260302005",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"天长市乐运物流",        pickupAt:"2026-03-02 07:30:00",finishAt:"2026-03-02 09:30:00",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:45, weight:1280.0,volume:43.0,pickupFee:250.00,unitPickupFee:5.56,pickupSite:"专线A",pickupOperator:"王强",finishSite:"专线A",finishOperator:"刘磊",remark:""},
+                {id:"PH260303001",accrualStatus:"未挂帐",pickupStatus:"已完成",customerName:"安徽滁行物流有限公司",  pickupAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:00:00",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:18, weight:500.0, volume:16.5,pickupFee:100.00,unitPickupFee:5.56,pickupSite:"专线B",pickupOperator:"李华",finishSite:"专线B",finishOperator:"张磊",remark:""},
+                {id:"PH260303002",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"怀化飞鸿物流",          pickupAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 12:00:00",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:32, weight:900.0, volume:30.5,pickupFee:175.00,unitPickupFee:5.47,pickupSite:"专线A",pickupOperator:"陈强",finishSite:"专线A",finishOperator:"王磊",remark:""},
+                {id:"PH260303003",accrualStatus:"未挂帐",pickupStatus:"已提货",customerName:"昆山江南达物流",        pickupAt:"2026-03-03 12:00:00",finishAt:"2026-03-03 14:30:00",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:25, weight:680.0, volume:22.5,pickupFee:130.00,unitPickupFee:5.20,pickupSite:"专线B",pickupOperator:"刘磊",finishSite:"专线B",finishOperator:"赵强",remark:""},
+                {id:"PH260303004",accrualStatus:"未挂帐",pickupStatus:"提货中", customerName:"江西连淳物流",          pickupAt:"2026-03-03 14:00:00",finishAt:"",                   plate:"赣C45678",driver:"吴磊", phone:"18112345676",pieces:8,  weight:220.0, volume:7.5, pickupFee:50.00, unitPickupFee:6.25,pickupSite:"专线A",pickupOperator:"李磊",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"PH260303005",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"安徽滁行物流有限公司",  pickupAt:"2026-03-03 07:30:00",finishAt:"2026-03-03 09:30:00",plate:"皖F56789",driver:"郑伟", phone:"15212345677",pieces:40, weight:1100.0,volume:37.0,pickupFee:200.00,unitPickupFee:5.00,pickupSite:"专线B",pickupOperator:"张强",finishSite:"专线B",finishOperator:"王磊",remark:""},
+                {id:"PH260304001",accrualStatus:"未挂帐",pickupStatus:"已完成",customerName:"广东东安物流",          pickupAt:"2026-03-04 08:30:00",finishAt:"2026-03-04 10:30:00",plate:"粤G67890",driver:"何军", phone:"13612345678",pieces:16, weight:450.0, volume:15.0,pickupFee:90.00, unitPickupFee:5.63,pickupSite:"专线A",pickupOperator:"刘强",finishSite:"专线A",finishOperator:"李华", remark:""},
+                {id:"PH260304002",accrualStatus:"未挂帐",pickupStatus:"待提货", customerName:"浙江圆通供应链",        pickupAt:"2026-03-04 15:00:00",finishAt:"",                   plate:"浙H78901",driver:"林勇", phone:"18612345679",pieces:28, weight:780.0, volume:26.0,pickupFee:140.00,unitPickupFee:5.00,pickupSite:"专线B",pickupOperator:"王磊",finishSite:"",    finishOperator:"",    remark:"预约取货"},
+            ];
+            let shpData = JSON.parse(sessionStorage.getItem("BizShortHaulPickup"));
+            if (!shpData || !shpData.length) { shpData = shpDef; sessionStorage.setItem("BizShortHaulPickup", JSON.stringify(shpData)); }
+
+            const shpCols = [
+                {key:"id",             label:"提货批次",     filter:{id:"shp_f_no", placeholder:"支持批量搜索"}},
+                {key:"accrualStatus",  label:"挂帐状态",     align:"center", filter:{id:"shp_f_accrual",type:"select",options:["","未挂帐","已挂帐"]}},
+                {key:"pickupStatus",   label:"提货状态",     align:"center", filter:{id:"shp_f_status", type:"select",options:["","待提货","提货中","已提货","已完成"]}},
+                {key:"customerName",   label:"客户名称"},
+                {key:"pickupAt",       label:"提货时间"},
+                {key:"finishAt",       label:"完成时间"},
+                {key:"plate",          label:"提货车牌号"},
+                {key:"driver",         label:"提货司机"},
+                {key:"phone",          label:"提货手机号"},
+                {key:"pieces",         label:"提货件数",     align:"right"},
+                {key:"weight",         label:"提货重量(KG)", align:"right"},
+                {key:"volume",         label:"提货体积(m³)", align:"right"},
+                {key:"pickupFee",      label:"提货费",       align:"right"},
+                {key:"unitPickupFee",  label:"单票提货费",   align:"right"},
+                {key:"pickupSite",     label:"提货网点"},
+                {key:"pickupOperator", label:"提货操作人"},
+                {key:"finishSite",     label:"完成网点"},
+                {key:"finishOperator", label:"完成操作人"},
+                {key:"remark",         label:"提货备注"},
+            ];
+            const shpNumKeys = ["pieces","weight","volume","pickupFee","unitPickupFee"];
+
+            if (!window.shpSetPage)      window.shpSetPage      = (p) => { window._shpPage=p; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shpSetPageSize)  window.shpSetPageSize  = (s) => { window._shpPageSize=Number(s)||10; window._shpPage=1; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shpApplyFilters) window.shpApplyFilters = () => {
+                const g=(id)=>{const el=document.getElementById(id);return el?(el.value||"").trim():"";};
+                window._shpFilters={batchNo:g("shp_f_no"),accrualStatus:g("shp_f_accrual"),pickupStatus:g("shp_f_status"),customerName:g("shp_q_customer"),dateStart:g("shp_q_ds"),dateEnd:g("shp_q_de")};
+                window._shpPage=1; loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shpResetFilters) window.shpResetFilters = () => { window._shpFilters={}; window._shpPage=1; loadContent("ShortHaulBatchAccrual"); };
+            if (!window.shpExport)       window.shpExport       = () => {
+                const data=window._shpExportData||[]; if(!data.length) return alert("没有可导出的数据。");
+                const cols=window._shpExportCols||[]; const e=(v)=>{const s=(v??"").toString(); return /[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;};
+                const lines=[cols.map(c=>e(c.label)).join(",")]; data.forEach(row=>lines.push(cols.map(c=>e(row[c.key]??"")).join(","))); const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`提货批次挂帐_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove();
+            };
+            if (!window.shpSettle)       window.shpSettle       = () => {
+                const checked=Array.from(document.querySelectorAll(".shp-check:checked")); if(!checked.length) return alert("请先勾选需要挂帐的提货批次。");
+                const ids=new Set(checked.map(cb=>cb.value)); let list=JSON.parse(sessionStorage.getItem("BizShortHaulPickup")||"[]"); let count=0;
+                list.forEach(item=>{if(ids.has(item.id)&&item.accrualStatus!=="已挂帐"){item.accrualStatus="已挂帐";count++;}}); if(!count) return alert("所选批次均已挂帐。");
+                sessionStorage.setItem("BizShortHaulPickup",JSON.stringify(list)); if(typeof addAuditLog==="function") addAuditLog({time:new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-"),user:"管理员",module:"挂帐管理",action:"提货批次挂帐",detail:`挂帐 ${count} 个提货批次`});
+                alert(`✅ 挂帐完成！共挂帐 ${count} 个提货批次。`); loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shpCancelSettle) window.shpCancelSettle = () => {
+                const checked=Array.from(document.querySelectorAll(".shp-check:checked")); if(!checked.length) return alert("请先勾选需要取消挂帐的批次。");
+                if(!confirm(`确认取消挂帐 ${checked.length} 个提货批次吗？`)) return;
+                const ids=new Set(checked.map(cb=>cb.value)); let list=JSON.parse(sessionStorage.getItem("BizShortHaulPickup")||"[]"); let count=0;
+                list.forEach(item=>{if(ids.has(item.id)&&item.accrualStatus==="已挂帐"){item.accrualStatus="未挂帐";count++;}}); sessionStorage.setItem("BizShortHaulPickup",JSON.stringify(list));
+                alert(`✅ 已取消 ${count} 个提货批次挂帐。`); loadContent("ShortHaulBatchAccrual");
+            };
+            if (!window.shpToggleAll)    window.shpToggleAll    = (src) => { document.querySelectorAll(".shp-check").forEach(cb=>cb.checked=src.checked); if(typeof window.shpUpdateSel==="function") window.shpUpdateSel(); };
+            if (!window.shpUpdateSel)    window.shpUpdateSel    = () => {
+                const ids=Array.from(document.querySelectorAll(".shp-check:checked")).map(cb=>cb.value);
+                const rm=window._shpRowMap||{}; const sums={pieces:0,weight:0,volume:0,pickupFee:0,unitPickupFee:0};
+                ids.forEach(id=>{const r=rm[id]; if(!r) return; shpNumKeys.forEach(k=>{sums[k]+=parseFloat(r[k]||0);});});
+                const ce=document.getElementById("shp_sel_count"); if(ce) ce.textContent=`${ids.length}单`;
+                shpNumKeys.forEach(k=>{const el=document.getElementById(`shp_sel_${k}`); if(el) el.textContent=shFmtNum(sums[k]);});
+            };
+
+            const shpFilters   = window._shpFilters || {};
+            const shpDateStart = shParseDateOnly(shpFilters.dateStart);
+            const shpDateEnd   = shParseDateOnly(shpFilters.dateEnd);
+            const shpNosFilter = shParseTokens(shpFilters.batchNo);
+
+            const shpFiltered = (Array.isArray(shpData)?shpData:[]).filter(item=>{
+                if(shpFilters.accrualStatus && item.accrualStatus !== shpFilters.accrualStatus) return false;
+                if(shpFilters.pickupStatus  && item.pickupStatus  !== shpFilters.pickupStatus)  return false;
+                if(shpFilters.customerName  && !(item.customerName||"").includes(shpFilters.customerName)) return false;
+                if(shpNosFilter.length){const id=(item.id||""); if(shpNosFilter.length===1){if(!id.includes(shpNosFilter[0])) return false;} else{if(!new Set(shpNosFilter).has(id)) return false;}}
+                if(shpDateStart||shpDateEnd){const d=shParseDateOnly(item.pickupAt); if(!d) return false; if(shpDateStart&&d<shpDateStart) return false; if(shpDateEnd&&d>shpDateEnd) return false;}
+                return true;
+            });
+
+            const shpPageSize  = window._shpPageSize || 10;
+            const shpTotalPages= Math.max(1,Math.ceil(shpFiltered.length/shpPageSize));
+            let   shpCurPage   = window._shpPage || 1; if(shpCurPage>shpTotalPages) shpCurPage=shpTotalPages;
+            const shpPageStart = (shpCurPage-1)*shpPageSize;
+            const shpPaged     = shpFiltered.slice(shpPageStart,shpPageStart+shpPageSize);
+
+            const shpTotalSums={}; shpNumKeys.forEach(k=>{shpTotalSums[k]=0;}); shpFiltered.forEach(r=>shpNumKeys.forEach(k=>{shpTotalSums[k]+=parseFloat(r[k]||0);}));
+            window._shpRowMap=Object.fromEntries(shpPaged.map(r=>[r.id,r])); window._shpExportData=shpFiltered; window._shpExportCols=shpCols;
+
+            const shpRenderCell=(row,col)=>{
+                const val=row[col.key];
+                if(col.key==="id") return `<a class="wb-link" href="javascript:void(0)">${shEsc(val||"")}</a>`;
+                if(col.key==="accrualStatus"){const c=val==="已挂帐"?"#27ae60":"#e67e22"; return `<span style="color:${c};font-weight:bold;">${shEsc(val||"未挂帐")}</span>`;}
+                if(col.key==="pickupStatus"){const cm={"已完成":"#27ae60","已提货":"#2980b9","提货中":"#e67e22","待提货":"#95a5a6"}; return `<span style="color:${cm[val]||"#999"};font-weight:bold;">${shEsc(val||"-")}</span>`;}
+                if(col.align==="right") return `<span class="wb-money">${shFmtNum(val)}</span>`;
+                return shEsc(val||"");
+            };
+            const shpFillerCnt=Math.max(0,shpPageSize-shpPaged.length);
+            const shpDataRows=shpPaged.map((row,idx)=>`<tr>
+                <td class="sticky-left-1 wb-rowno">${shpPageStart+idx+1}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="shp-check" value="${shEsc(row.id)}" onchange="shpUpdateSel()"></td>
+                ${shpCols.map(col=>`<td${col.align?` style="text-align:${col.align};"`:""}>` + shpRenderCell(row,col) + `</td>`).join("")}
+            </tr>`).join("");
+            const shpFillerRows=shpFillerCnt?Array.from({length:shpFillerCnt}).map(()=>`<tr class="wb-empty-row"><td class="sticky-left-1 wb-rowno">&nbsp;</td><td class="sticky-left-2">&nbsp;</td>${shpCols.map(col=>`<td${col.align?` style="text-align:${col.align};"`:""}>` + "&nbsp;" + `</td>`).join("")}</tr>`).join(""):"";
+
+            const shpBuildFilter=(col)=>{
+                if(!col.filter) return `<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`;
+                const f=col.filter;
+                if(f.type==="select"){
+                    const curVal=col.key==="pickupStatus"?(shpFilters.pickupStatus||""):(shpFilters.accrualStatus||"");
+                    const opts=(f.options||[]).map(opt=>{const sel=opt?(curVal===opt?"selected":""):(!curVal?"selected":""); return `<option value="${shEsc(opt)}" ${sel}>${opt||"全部"}</option>`;}).join("");
+                    return `<th class="sticky-filter"><select id="${shEsc(f.id)}" class="wb-filter-select">${opts}</select></th>`;
+                }
+                const fVal=col.key==="id"?(shpFilters.batchNo||""):"";
+                return `<th class="sticky-filter"><input id="${shEsc(f.id)}" class="wb-filter-input${(f.placeholder||"").includes("批量")?" wb-filter-input--batch":""}" placeholder="${shEsc(f.placeholder||"")}" value="${shEsc(fVal)}"></th>`;
+            };
+            const shpBuildFooter=(mode)=>{
+                const isSel=mode==="sel";
+                return shpCols.map(col=>{
+                    const as=col.align?` style="text-align:${col.align};"`:"";
+                    if(col.key==="id"){const id=isSel?"shp_sel_count":"shp_total_count"; const txt=isSel?"0单":`${shpFiltered.length}单`; return `<td${as}><span id="${id}" class="wb-foot__count">${txt}</span></td>`;}
+                    if(shpNumKeys.includes(col.key)){const id=isSel?`shp_sel_${col.key}`:`shp_tot_${col.key}`; const val=isSel?"":shFmtNum(shpTotalSums[col.key]); return `<td${as}><span id="${id}" class="wb-foot__amt">${shEsc(val)}</span></td>`;}
+                    return `<td${as}>&nbsp;</td>`;
+                }).join("");
+            };
+            const shpPagerBtns=(()=>{const btns=[];const delta=2;for(let p=1;p<=shpTotalPages;p++){if(p===1||p===shpTotalPages||(p>=shpCurPage-delta&&p<=shpCurPage+delta)){btns.push(`<button class="wb-pager__btn wb-pager__btn--num${p===shpCurPage?" wb-pager__btn--active":""}" onclick="shpSetPage(${p})">${p}</button>`);}else if(btns[btns.length-1]!=="…"){btns.push("…");}}return btns.map(b=>b==="…"?`<span class="wb-pager__ellipsis">…</span>`:b).join("");})();
+
+            contentHTML += `
+                <div class="wb-querybar">
+                    <div class="wb-q-item"><div class="wb-q-label">客户名称</div><input id="shp_q_customer" class="wb-q-control" type="text" placeholder="客户名称" value="${shEsc(shpFilters.customerName||"")}"></div>
+                    <div class="wb-q-item wb-q-item--date"><div class="wb-q-label">提货时间</div><div class="wb-q-date"><input id="shp_q_ds" class="wb-q-control" type="date" value="${shEsc(shpFilters.dateStart||"")}"><span class="wb-q-date__sep">~</span><input id="shp_q_de" class="wb-q-control" type="date" value="${shEsc(shpFilters.dateEnd||"")}"></div></div>
+                    <button class="wb-btn wb-btn--primary" onclick="shpApplyFilters()">查询</button>
+                    <button class="wb-btn" onclick="shpResetFilters()">重置</button>
+                </div>
+                <div class="wb-toolbar">
+                    <div class="wb-toolbar__left">
+                        <button class="wb-btn" onclick="shpSettle()">挂账</button>
+                        <button class="wb-btn" onclick="shpCancelSettle()">取消挂账</button>
+                    </div>
+                    <div class="wb-toolbar__right">
+                        <button class="wb-btn" onclick="shpExport()">导出</button>
+                        <button class="wb-btn" onclick="window.print()">打印</button>
+                        <div class="wb-pager">
+                            <span class="wb-pager__total">共 <strong>${shpFiltered.length}</strong> 条</span>
+                            <button class="wb-pager__btn" onclick="shpSetPage(1)" ${shpCurPage<=1?"disabled":""} title="首页">|◀</button>
+                            <button class="wb-pager__btn" onclick="shpSetPage(${Math.max(1,shpCurPage-1)})" ${shpCurPage<=1?"disabled":""} title="上一页">◀</button>
+                            ${shpPagerBtns}
+                            <button class="wb-pager__btn" onclick="shpSetPage(${Math.min(shpTotalPages,shpCurPage+1)})" ${shpCurPage>=shpTotalPages?"disabled":""} title="下一页">▶</button>
+                            <button class="wb-pager__btn" onclick="shpSetPage(${shpTotalPages})" ${shpCurPage>=shpTotalPages?"disabled":""} title="末页">▶|</button>
+                            <span class="wb-pager__jump">跳至 <input type="number" min="1" max="${shpTotalPages}" class="wb-pager__jump-input" onkeydown="if(event.key==='Enter'){const v=parseInt(this.value);if(v>=1&&v<=${shpTotalPages})shpSetPage(v);}" placeholder="${shpCurPage}"> 页</span>
+                            <select class="wb-pager__size" onchange="shpSetPageSize(this.value)">
+                                <option value="10" ${shpPageSize===10?"selected":""}>10 条/页</option>
+                                <option value="20" ${shpPageSize===20?"selected":""}>20 条/页</option>
+                                <option value="50" ${shpPageSize===50?"selected":""}>50 条/页</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px;--sticky-left-2:46px;">
+                    <table class="data-table" style="white-space:nowrap;">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header sticky-left-1"><span class="wb-funnel"></span></th>
+                                <th class="sticky-header sticky-left-2"><input type="checkbox" onclick="shpToggleAll(this)"></th>
+                                ${shpCols.map(col=>`<th class="sticky-header"${col.align?` style="text-align:${col.align};"`:""}>` + shEsc(col.label) + `</th>`).join("")}
+                            </tr>
+                            <tr>
+                                <th class="sticky-filter sticky-left-1">筛选</th>
+                                <th class="sticky-filter sticky-left-2"></th>
+                                ${shpCols.map(col=>shpBuildFilter(col)).join("")}
+                            </tr>
+                        </thead>
+                        <tbody>${shpDataRows+shpFillerRows||`<tr><td colspan="${shpCols.length+2}" style="text-align:center;color:#999;padding:18px;">暂无数据</td></tr>`}</tbody>
+                        <tfoot>
+                            <tr class="wb-foot wb-foot--sel"><td class="sticky-left-1 wb-foot__label">选中</td><td class="sticky-left-2"></td>${shpBuildFooter("sel")}</tr>
+                            <tr class="wb-foot wb-foot--total"><td class="sticky-left-1 wb-foot__label">合计</td><td class="sticky-left-2"></td>${shpBuildFooter("total")}</tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+        } // end pickup tab
+
+        // =====================================================================
+        // 内部短驳挂账 — 页面设计稿，功能待开发
+        // =====================================================================
+        else if (shTab === "internal") {
+            // 字段定义（已设计，待对接真实业务）
+            const shiCols = [
+                {key:"id",             label:"短驳批次"},
+                {key:"accrualStatus",  label:"挂帐状态",     align:"center"},
+                {key:"batchStatus",    label:"批次状态",     align:"center"},
+                {key:"internalType",   label:"短驳类型"},
+                {key:"originSite",     label:"起始网点"},
+                {key:"targetSite",     label:"目标网点"},
+                {key:"startAt",        label:"操作时间"},
+                {key:"finishAt",       label:"完成时间"},
+                {key:"operator",       label:"操作人"},
+                {key:"vehicle",        label:"车牌/设备"},
+                {key:"pieces",         label:"件数",         align:"right"},
+                {key:"weight",         label:"重量(KG)",     align:"right"},
+                {key:"volume",         label:"体积(m³)",     align:"right"},
+                {key:"fee",            label:"短驳费",       align:"right"},
+                {key:"unitFee",        label:"单票短驳费",   align:"right"},
+                {key:"remark",         label:"备注"},
+            ];
+
+            // 展示用的静态样例数据（UI 原型，非真实数据）
+            const shiMockData = [
+                {id:"IB260302001",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"场内转运",originSite:"专线A装卸区",targetSite:"专线A分拣区",startAt:"2026-03-02 08:10:00",finishAt:"2026-03-02 09:05:00",operator:"李强",vehicle:"叉车01",pieces:45, weight:1200.0,volume:38.0,fee:60.00, unitFee:1.33,remark:""},
+                {id:"IB260302002",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"跨场转运",originSite:"专线A",        targetSite:"专线B",        startAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:20:00",operator:"王磊",vehicle:"皖CF0001",pieces:88, weight:2640.0,volume:82.0,fee:180.00,unitFee:2.05,remark:""},
+                {id:"IB260302003",accrualStatus:"未挂帐",batchStatus:"短驳中", internalType:"驳接转运",originSite:"专线C仓库",    targetSite:"专线A仓库",    startAt:"2026-03-02 14:00:00",finishAt:"",                   operator:"张辉",vehicle:"皖CF0003",pieces:32, weight:960.0, volume:28.5,fee:90.00, unitFee:2.81,remark:"跨仓转运"},
+                {id:"IB260302004",accrualStatus:"未挂帐",batchStatus:"待短驳", internalType:"场内转运",originSite:"专线B装卸区",targetSite:"专线B暂存区",startAt:"2026-03-02 16:00:00",finishAt:"",                   operator:"",   vehicle:"叉车02",pieces:20, weight:500.0, volume:15.0,fee:30.00, unitFee:1.50,remark:""},
+                {id:"IB260303001",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"跨场转运",originSite:"专线A",        targetSite:"专线C",        startAt:"2026-03-03 07:50:00",finishAt:"2026-03-03 10:30:00",operator:"陈磊",vehicle:"皖CF0002",pieces:62, weight:1860.0,volume:58.0,fee:150.00,unitFee:2.42,remark:""},
+                {id:"IB260303002",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"场内转运",originSite:"专线B分拣区",targetSite:"专线B发货区",startAt:"2026-03-03 09:15:00",finishAt:"2026-03-03 09:55:00",operator:"刘峰",vehicle:"叉车03",pieces:38, weight:950.0, volume:30.0,fee:50.00, unitFee:1.32,remark:""},
+                {id:"IB260303003",accrualStatus:"未挂帐",batchStatus:"短驳中", internalType:"驳接转运",originSite:"专线A仓库",    targetSite:"专线B仓库",    startAt:"2026-03-03 13:00:00",finishAt:"",                   operator:"赵伟",vehicle:"皖CF0004",pieces:55, weight:1650.0,volume:52.0,fee:120.00,unitFee:2.18,remark:"加急"},
+                {id:"IB260304001",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"跨场转运",originSite:"专线B",        targetSite:"专线A",        startAt:"2026-03-04 08:00:00",finishAt:"2026-03-04 10:45:00",operator:"孙强",vehicle:"皖CF0005",pieces:75, weight:2250.0,volume:70.0,fee:200.00,unitFee:2.67,remark:""},
+                {id:"IB260304002",accrualStatus:"未挂帐",batchStatus:"已完成",internalType:"场内转运",originSite:"专线C装卸区",targetSite:"专线C分拣区",startAt:"2026-03-04 11:00:00",finishAt:"2026-03-04 11:50:00",operator:"吴磊",vehicle:"叉车01",pieces:28, weight:700.0, volume:22.0,fee:40.00, unitFee:1.43,remark:""},
+                {id:"IB260304003",accrualStatus:"未挂帐",batchStatus:"待短驳", internalType:"驳接转运",originSite:"专线A仓库",    targetSite:"专线C仓库",    startAt:"2026-03-04 15:30:00",finishAt:"",                   operator:"",   vehicle:"皖CF0006",pieces:48, weight:1440.0,volume:45.0,fee:110.00,unitFee:2.29,remark:""},
+            ];
+
+            // 合计
+            const shiNumKeys = ["pieces","weight","volume","fee","unitFee"];
+            const shiTotalSums = {pieces:0,weight:0,volume:0,fee:0,unitFee:0};
+            shiMockData.forEach(r => shiNumKeys.forEach(k => { shiTotalSums[k] += parseFloat(r[k]||0); }));
+
+            const shiRenderCell = (row, col) => {
+                const val = row[col.key];
+                if (col.key === "id") return `<a class="wb-link" href="javascript:void(0)">${shEsc(val||"")}</a>`;
+                if (col.key === "accrualStatus") { const c = val==="已挂帐"?"#27ae60":"#e67e22"; return `<span style="color:${c};font-weight:bold;">${shEsc(val||"未挂帐")}</span>`; }
+                if (col.key === "batchStatus") { const cm={"已完成":"#27ae60","短驳中":"#e67e22","待短驳":"#95a5a6"}; return `<span style="color:${cm[val]||"#999"};font-weight:bold;">${shEsc(val||"-")}</span>`; }
+                if (col.align === "right") return `<span class="wb-money">${shFmtNum(val)}</span>`;
+                return shEsc(val||"");
+            };
+
+            const shiFillerCnt = Math.max(0, 10 - shiMockData.length);
+            const shiDataRows = shiMockData.map((row,idx) => `<tr>
+                <td class="sticky-left-1 wb-rowno">${idx+1}</td>
+                <td class="sticky-left-2"><input type="checkbox" class="shi-check" disabled title="功能待开发"></td>
+                ${shiCols.map(col => `<td${col.align?` style="text-align:${col.align};"`:""}>` + shiRenderCell(row,col) + `</td>`).join("")}
+            </tr>`).join("");
+            const shiFillerRows = shiFillerCnt ? Array.from({length:shiFillerCnt}).map(()=>`<tr class="wb-empty-row"><td class="sticky-left-1 wb-rowno">&nbsp;</td><td class="sticky-left-2">&nbsp;</td>${shiCols.map(col=>`<td>&nbsp;</td>`).join("")}</tr>`).join("") : "";
+
+            const shiBuildFooter = () => shiCols.map(col => {
+                const as = col.align ? ` style="text-align:${col.align};"` : "";
+                if (col.key === "id") return `<td${as}><span class="wb-foot__count">${shiMockData.length}单</span></td>`;
+                if (shiNumKeys.includes(col.key)) return `<td${as}><span class="wb-foot__amt">${shEsc(shFmtNum(shiTotalSums[col.key]))}</span></td>`;
+                return `<td${as}>&nbsp;</td>`;
+            }).join("");
+
+            contentHTML += `
+                <div style="background:#fffbf0;border:1px solid #f0c040;border-radius:6px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:18px;">🚧</span>
+                    <div>
+                        <span style="font-weight:600;color:#b8860b;font-size:14px;">功能开发中</span>
+                        <span style="color:#888;font-size:13px;margin-left:10px;">以下为页面设计原型，数据仅供参考，挂账等操作功能尚未开放。</span>
+                    </div>
+                </div>
+
+                <div class="wb-querybar">
+                    <div class="wb-q-item"><div class="wb-q-label">起始网点</div><input class="wb-q-control" type="text" placeholder="起始网点" disabled style="background:#f8f8f8;color:#aaa;"></div>
+                    <div class="wb-q-item"><div class="wb-q-label">短驳类型</div>
+                        <select class="wb-q-control" disabled style="background:#f8f8f8;color:#aaa;">
+                            <option>全部</option><option>场内转运</option><option>跨场转运</option><option>驳接转运</option>
+                        </select>
+                    </div>
+                    <div class="wb-q-item wb-q-item--date"><div class="wb-q-label">操作时间</div><div class="wb-q-date"><input class="wb-q-control" type="date" disabled style="background:#f8f8f8;"><span class="wb-q-date__sep">~</span><input class="wb-q-control" type="date" disabled style="background:#f8f8f8;"></div></div>
+                    <button class="wb-btn wb-btn--primary" disabled style="opacity:0.5;cursor:not-allowed;">查询</button>
+                    <button class="wb-btn" disabled style="opacity:0.5;cursor:not-allowed;">重置</button>
+                </div>
+
+                <div class="wb-toolbar">
+                    <div class="wb-toolbar__left">
+                        <button class="wb-btn" onclick="alert('内部短驳挂账功能开发中，敬请期待。')" style="color:#aaa;border-color:#ddd;">挂账</button>
+                        <button class="wb-btn" onclick="alert('内部短驳挂账功能开发中，敬请期待。')" style="color:#aaa;border-color:#ddd;">取消挂账</button>
+                    </div>
+                    <div class="wb-toolbar__right">
+                        <button class="wb-btn" onclick="alert('内部短驳挂账功能开发中，敬请期待。')" style="color:#aaa;border-color:#ddd;">导出</button>
+                        <span style="font-size:13px;color:#aaa;padding:0 8px;">共 ${shiMockData.length} 条（样例数据）</span>
+                    </div>
+                </div>
+
+                <div class="settlement-waybill-table wb-accrual-table" style="--sticky-left-1:46px;--sticky-left-2:46px;opacity:0.85;">
+                    <table class="data-table" style="white-space:nowrap;">
+                        <thead>
+                            <tr>
+                                <th class="sticky-header sticky-left-1"><span class="wb-funnel"></span></th>
+                                <th class="sticky-header sticky-left-2"></th>
+                                ${shiCols.map(col=>`<th class="sticky-header"${col.align?` style="text-align:${col.align};"`:""}>` + shEsc(col.label) + `</th>`).join("")}
+                            </tr>
+                            <tr>
+                                <th class="sticky-filter sticky-left-1">筛选</th>
+                                <th class="sticky-filter sticky-left-2"></th>
+                                ${shiCols.map(()=>`<th class="sticky-filter"><input class="wb-filter-input wb-filter-input--blank" disabled></th>`).join("")}
+                            </tr>
+                        </thead>
+                        <tbody>${shiDataRows + shiFillerRows}</tbody>
+                        <tfoot>
+                            <tr class="wb-foot wb-foot--total">
+                                <td class="sticky-left-1 wb-foot__label">合计</td>
+                                <td class="sticky-left-2"></td>
+                                ${shiBuildFooter()}
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+        } // end internal tab
+
+    } // end ShortHaulBatchAccrual
 
     // 旧模块下线（保留入口以避免老逻辑跳转时报错）
     else if (moduleCode === "APPaymentApply" || moduleCode === "APPrepayment" || moduleCode === "APPaymentVerify") {
@@ -6404,7 +7351,7 @@ function loadContent(moduleCode, element = null) {
         const parseTokens = (raw) => {
             const text = (raw || "").toString().trim();
             if (!text) return [];
-            return text.split(/[\n,，;；\\s]+/).map((t) => t.trim()).filter(Boolean);
+            return text.split(/[\n,，;；\s]+/).map((t) => t.trim()).filter(Boolean);
         };
 
         const parseDateOnly = (raw) => {
@@ -15909,7 +16856,7 @@ function loadContent(moduleCode, element = null) {
         );
 
         vouchers.forEach((v) => {
-            if (v.status === "已审核" || v.status === "已记账") {
+            if (v.status === "已审核" || v.status === "已记账" || v.status === "已过账") {
                 if (v.lines) {
                     v.lines.forEach((line) => {
                         const account = line.account ? line.account.trim() : "";
@@ -15917,47 +16864,42 @@ function loadContent(moduleCode, element = null) {
                         const val = parseFloat(line.debit) || 0;
                         const valCredit = parseFloat(line.credit) || 0;
 
-                        // ★★★ 智能匹配逻辑 (同时匹配代码和中文) ★★★
-
-                        // 1. 收入 (60开头 或 包含"收入") - 通常记贷方
+                        // 收入：小企业准则(50xx/51xx/53xx) + 企业准则(60xx/61xx/63xx) + 关键字
                         if (
-                            code.startsWith("60") ||
-                            code.startsWith("61") ||
-                            code.startsWith("63") ||
+                            code.startsWith("500") || code.startsWith("505") ||
+                            code.startsWith("510") || code.startsWith("530") ||
+                            code.startsWith("60") || code.startsWith("61") || code.startsWith("63") ||
                             account.includes("收入")
                         ) {
                             data.income += valCredit;
                         }
-                        // 2. 成本 (64开头 或 包含"成本") - 通常记借方
+                        // 成本：小企业准则(54xx) + 企业准则(6401/6402) + 关键字
                         else if (
-                            code.startsWith("6401") ||
-                            code.startsWith("6402") ||
+                            code.startsWith("540") ||
+                            code.startsWith("6401") || code.startsWith("6402") ||
                             account.includes("成本")
                         ) {
                             data.cost += val;
                         }
-                        // 3. 税金 (640301 或 包含"税金")
-                        else if (code.startsWith("640301") || account.includes("税金")) {
+                        // 税金附加：小企业准则(5403) + 企业准则(6403)
+                        else if (code.startsWith("5403") || code.startsWith("6403") || account.includes("税金")) {
                             data.tax += val;
                         }
-                        // 4. 销售费用 (6601 或 包含"销售")
-                        else if (code.startsWith("6601") || account.includes("销售")) {
+                        // 销售费用：小企业准则(5601) + 企业准则(6601)
+                        else if (code.startsWith("5601") || code.startsWith("6601") || account.includes("销售费用")) {
                             data.saleExp += val;
                         }
-                        // 5. 管理费用 (6602 或 包含"管理"、"办公"、"工资")
+                        // 管理费用：小企业准则(5602) + 企业准则(6602)
                         else if (
-                            code.startsWith("6602") ||
-                            account.includes("管理") ||
-                            account.includes("办公") ||
-                            account.includes("工资")
+                            code.startsWith("5602") || code.startsWith("6602") ||
+                            account.includes("管理费") || account.includes("办公") || account.includes("工资")
                         ) {
                             data.adminExp += val;
                         }
-                        // 6. 财务费用 (6603 或 包含"财务"、"利息")
+                        // 财务费用：小企业准则(5603) + 企业准则(6603)
                         else if (
-                            code.startsWith("6603") ||
-                            account.includes("财务") ||
-                            account.includes("利息")
+                            code.startsWith("5603") || code.startsWith("6603") ||
+                            account.includes("财务费") || account.includes("利息")
                         ) {
                             data.finExp += val;
                         }
@@ -16017,32 +16959,43 @@ function loadContent(moduleCode, element = null) {
                 return [];
             }
         })();
-        const rows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : [
-            { name: "一、营业总收入", codes: "6001,600110,6051", op: "+" },
-            { name: "减：营业成本", codes: "6401,6402", op: "-" },
-            { name: "营业税金及附加", codes: "640301", op: "-" },
-            { name: "销售费用", codes: "6601", op: "-" },
-            { name: "管理费用", codes: "6602", op: "-" },
-            { name: "财务费用", codes: "6603", op: "-" },
-            { name: "资产减值损失", codes: "6701", op: "-" },
-            { name: "加：其他收益", codes: "", op: "+" },
-            { name: "加：公允价值变动收益（损失以"-"号填列）", codes: "6101", op: "+" },
-            { name: "投资收益（损失以"-"号填列）", codes: "6111", op: "+" },
-            { name: "其中：对联营企业和合营企业的投资收益", codes: "", op: "+" },
-            { name: "汇兑收益（损失以"-"号填列）", codes: "", op: "+" },
-            { name: "二、营业利润（亏损以"-"号填列）", codes: "", op: "+" },
-            { name: "加：营业外收入", codes: "6301", op: "+" },
-            { name: "减：营业外支出", codes: "6711", op: "-" },
-            { name: "其中：非流动资产处置损失", codes: "", op: "-" },
-            { name: "三、利润总额（亏损总额以"-"号填列）", codes: "", op: "+" },
-            { name: "减：所得税费用", codes: "6801", op: "-" },
-            { name: "四、净利润（净亏损以"-"号填列）", codes: "", op: "+" },
-            { name: "归属于公司所有者的净利润", codes: "", op: "+" },
-            { name: "少数股东损益", codes: "", op: "+" },
-            { name: "五、每股收益：", codes: "", op: "+" },
-            { name: "（一）基本每股收益", codes: "", op: "+" },
-            { name: "（二）稀释每股收益", codes: "", op: "+" }
-        ]).map((item) => {
+        // 默认利润表模板：同时兼容小企业准则(5xxx)和企业准则(6xxx)科目编码
+        const defaultIncomeRows = [
+            // ── 收入 ──
+            { name: "一、营业总收入",                                   codes: "5001,5051,6001,6011,6051", op: "+" },
+            { name: "其中：主营业务收入",                               codes: "5001,6001,6011",           op: "+" },
+            { name: "其他业务收入",                                     codes: "5051,6051",               op: "+" },
+            // ── 成本与费用 ──
+            { name: "减：营业成本",                                     codes: "5401,5402,6401,6402",     op: "-" },
+            { name: "其中：主营业务成本",                               codes: "5401,6401",               op: "-" },
+            { name: "其他业务成本",                                     codes: "5402,6402",               op: "-" },
+            { name: "营业税金及附加",                                   codes: "5403,6403",               op: "-" },
+            { name: "减：销售费用",                                     codes: "5601,6601",               op: "-" },
+            { name: "减：管理费用",                                     codes: "5602,6602",               op: "-" },
+            { name: "减：财务费用",                                     codes: "5603,6603",               op: "-" },
+            { name: "资产减值损失",                                     codes: "5701,6701",               op: "-" },
+            // ── 其他损益 ──
+            { name: "加：其他收益",                                     codes: "",                        op: "+" },
+            { name: "加：公允价值变动收益（损失以"-"号填列）",         codes: "6101",                    op: "+" },
+            { name: "投资收益（损失以"-"号填列）",                     codes: "5101,6111",               op: "+" },
+            { name: "其中：对联营企业和合营企业的投资收益",            codes: "",                        op: "+" },
+            { name: "汇兑收益（损失以"-"号填列）",                     codes: "",                        op: "+" },
+            // ── 小计 ──
+            { name: "二、营业利润（亏损以"-"号填列）",                 codes: "",                        op: "+" },
+            { name: "加：营业外收入",                                   codes: "5301,6301",               op: "+" },
+            { name: "减：营业外支出",                                   codes: "5801,6711",               op: "-" },
+            { name: "其中：非流动资产处置损失",                         codes: "",                        op: "-" },
+            { name: "三、利润总额（亏损总额以"-"号填列）",             codes: "",                        op: "+" },
+            { name: "减：所得税费用",                                   codes: "5901,6801",               op: "-" },
+            { name: "四、净利润（净亏损以"-"号填列）",                 codes: "",                        op: "+" },
+            { name: "归属于公司所有者的净利润",                         codes: "",                        op: "+" },
+            { name: "少数股东损益",                                     codes: "",                        op: "+" },
+            { name: "五、每股收益：",                                   codes: "",                        op: "+" },
+            { name: "（一）基本每股收益",                               codes: "",                        op: "+" },
+            { name: "（二）稀释每股收益",                               codes: "",                        op: "+" }
+        ];
+
+        const rows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : defaultIncomeRows).map((item) => {
             const codes = parseCodes(item.codes);
             const amount = codes.length ? calcTemplateAmount(codes, item.op || "+") : 0;
             return { label: item.name || item.label || "", amount };
@@ -16155,7 +17108,7 @@ function loadContent(moduleCode, element = null) {
         );
 
         vouchers.forEach((v) => {
-            if (v.status === "已审核" || v.status === "已记账") {
+            if (v.status === "已审核" || v.status === "已记账" || v.status === "已过账" || v.status === "未审核") {
                 if (!v.lines) return;
 
                 // 检查这张凭证里有没有涉及资金 (1001 或 1002)
@@ -19759,11 +20712,9 @@ function loadContent(moduleCode, element = null) {
 
     // --------------------------------------------------------------------------
     // 模块：期初余额录入 (FinanceOpeningBalance)
-    // 功能：录入科目期初数据，支持辅助核算录入，实时试算平衡校验
+    // 功能：动态加载会计科目，录入期初余额，实时试算平衡校验（仅末级科目参与）
     // --------------------------------------------------------------------------
     else if (moduleCode === "FinanceOpeningBalance") {
-        // 1. 初始化页面结构
-        // 使用 Flex 布局：顶部操作栏 + 中间滚动表格 + 底部固定试算平衡条
         contentHTML = `
             <style>
                 .ob-btn { background: #fff; border: 1px solid #d9d9d9; color: #333; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: background 0.15s, border-color 0.15s; }
@@ -19772,8 +20723,7 @@ function loadContent(moduleCode, element = null) {
                 .ob-level-1 { background: #e6f0ff; color: #2c5fad; }
                 .ob-level-2 { background: #e6fff0; color: #1a7a4a; }
                 .ob-level-3 { background: #fff7e6; color: #a05a00; }
-                .ob-level-parent { background: #fafafa; }
-                .ob-level-parent td { color: #888; }
+                .ob-level-4 { background: #f9f0ff; color: #6a1fa0; }
                 .ob-parent-tip { font-size: 11px; color: #bbb; display: block; margin-top: 2px; }
             </style>
             <div style="display: flex; flex-direction: column; height: 100%; background-color: #f0f2f5;">
@@ -19787,7 +20737,6 @@ function loadContent(moduleCode, element = null) {
                         <button class="ob-btn" id="btn-trial">试算平衡</button>
                     </div>
                 </div>
-
                 <div style="flex: 1; overflow: auto; padding: 16px;">
                     <div style="background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -19807,7 +20756,6 @@ function loadContent(moduleCode, element = null) {
                         </table>
                     </div>
                 </div>
-
                 <div style="background: #fff; border-top: 1px solid #e8e8e8; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-family: monospace;">
                     <div style="display: flex; gap: 30px;">
                         <div>
@@ -19827,57 +20775,18 @@ function loadContent(moduleCode, element = null) {
         `;
 
         setTimeout(() => {
-        // 2. 模拟后端数据 (真实场景请用 fetch 从 API 获取)
-        // 数据结构说明: isLeaf=是否末级, hasAux=是否有辅助核算
         const openingStorageKey = "OpeningBalances";
-        const mockSubjects = [
-            { code: "1001", name: "库存现金", direction: "借", isLeaf: true, hasAux: false, balance: 0 },
-            { code: "1002", name: "银行存款", direction: "借", isLeaf: true, hasAux: false, balance: 0 },
-            { code: "1122", name: "应收账款", direction: "借", isLeaf: true, hasAux: true, balance: 0 }, // 带辅助
-            { code: "1221", name: "其他应收款", direction: "借", isLeaf: false, hasAux: false, balance: 0 },
-            { code: "122101", name: "备用金", direction: "借", isLeaf: true, hasAux: true, balance: 0 }, // 带辅助
-            { code: "2202", name: "应付账款", direction: "贷", isLeaf: true, hasAux: true, balance: 0 }, // 贷方科目
-            { code: "4001", name: "实收资本", direction: "贷", isLeaf: true, hasAux: false, balance: 0 },
-            { code: "6602", name: "管理费用", direction: "借", isLeaf: true, hasAux: true, balance: 0 }
-        ];
 
-        function loadOpeningBalances() {
+        // ── 1. 从 AcctSubjects 动态加载科目表（sessionStorage → localStorage → 空） ──
+        function loadAcctSubjects() {
             try {
-                const stored = JSON.parse(sessionStorage.getItem(openingStorageKey) || "[]");
-                return Array.isArray(stored) ? stored : [];
-            } catch (error) {
-                return [];
-            }
+                let list = JSON.parse(sessionStorage.getItem("AcctSubjects") || "null");
+                if (!list) list = JSON.parse(localStorage.getItem("AcctSubjects") || "null");
+                return Array.isArray(list) ? list : [];
+            } catch (e) { return []; }
         }
 
-        function persistOpeningBalances() {
-            const payload = mockSubjects.map(item => ({
-                code: item.code,
-                name: item.name,
-                direction: item.direction,
-                balance: parseFloat(item.balance) || 0
-            }));
-            sessionStorage.setItem(openingStorageKey, JSON.stringify(payload));
-        }
-
-        const storedOpening = loadOpeningBalances();
-        if (storedOpening.length) {
-            const openingMap = new Map(storedOpening.map(item => [item.code, item]));
-            mockSubjects.forEach(sub => {
-                const saved = openingMap.get(sub.code);
-                if (saved && saved.balance !== undefined) {
-                    sub.balance = parseFloat(saved.balance) || 0;
-                }
-            });
-        }
-
-        const tbody = document.getElementById("opening-balance-tbody");
-        const totalDebitEl = document.getElementById("total-debit");
-        const totalCreditEl = document.getElementById("total-credit");
-        const diffAmountEl = document.getElementById("diff-amount");
-        const statusBox = document.getElementById("balance-status");
-
-        // 获取科目级次配置
+        // ── 2. 判断科目级次（基于 SubjectCodeSetting 中的 lengths 配置） ──
         function getSubjectLevel(code) {
             try {
                 const s = JSON.parse(localStorage.getItem("SubjectCodeSetting") || sessionStorage.getItem("SubjectCodeSetting") || "{}");
@@ -19893,195 +20802,195 @@ function loadContent(moduleCode, element = null) {
             }
         }
 
-        const levelNames = ['一级', '二级', '三级', '四级', '五级'];
-        const levelClasses = ['ob-level-1', 'ob-level-2', 'ob-level-3', 'ob-level-3', 'ob-level-3'];
+        // ── 3. 构建工作科目列表：从 AcctSubjects 读取，按 code 排序，附加 balance ──
+        const acctSubjects = loadAcctSubjects();
+        // 按科目编码排序，保证层级展示正确
+        acctSubjects.sort((a, b) => a.code.localeCompare(b.code));
+        const allCodes = acctSubjects.map(s => s.code);
 
-        // 3. 渲染表格函数
+        // 判断是否末级科目（叶子节点）：无任何其他科目以其编码为前缀
+        function isLeafCode(code) {
+            return !allCodes.some(c => c !== code && c.startsWith(code) && c.length > code.length);
+        }
+
+        // 工作列表：每个条目含 code/name/direction/isLeaf/balance
+        const subjects = acctSubjects.map(s => ({
+            code:      s.code,
+            name:      s.name,
+            direction: s.direction || "借",
+            isLeaf:    isLeafCode(s.code),
+            balance:   0
+        }));
+
+        // ── 4. 读取已保存的期初余额并合并 ──
+        function loadOpeningBalances() {
+            try {
+                const stored = JSON.parse(sessionStorage.getItem(openingStorageKey) || "[]");
+                return Array.isArray(stored) ? stored : [];
+            } catch (e) { return []; }
+        }
+
+        function persistOpeningBalances() {
+            const payload = subjects.map(s => ({
+                code: s.code, name: s.name, direction: s.direction,
+                balance: parseFloat(s.balance) || 0
+            }));
+            sessionStorage.setItem(openingStorageKey, JSON.stringify(payload));
+        }
+
+        const savedBalances = loadOpeningBalances();
+        if (savedBalances.length) {
+            const savedMap = new Map(savedBalances.map(s => [s.code, parseFloat(s.balance) || 0]));
+            subjects.forEach(s => {
+                if (savedMap.has(s.code)) s.balance = savedMap.get(s.code);
+            });
+        }
+
+        // 父科目余额 = 所有直接/间接子科目余额之和
+        function syncParentBalances() {
+            subjects.forEach(parent => {
+                if (parent.isLeaf) return;
+                const children = subjects.filter(c => c.code !== parent.code && c.code.startsWith(parent.code) && c.code.length > parent.code.length);
+                if (children.length) {
+                    parent.balance = children.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
+                }
+            });
+        }
+        syncParentBalances();
+
+        const levelNames   = ['一级', '二级', '三级', '四级', '五级'];
+        const levelClasses = ['ob-level-1', 'ob-level-2', 'ob-level-3', 'ob-level-4', 'ob-level-4'];
+
+        const tbody       = document.getElementById("opening-balance-tbody");
+        const totalDebitEl  = document.getElementById("total-debit");
+        const totalCreditEl = document.getElementById("total-credit");
+        const statusBox     = document.getElementById("balance-status");
+
+        // ── 5. 试算平衡：仅末级科目（isLeaf=true）参与汇总 ──
+        function calculateTrialBalance() {
+            let debitTotal  = 0;
+            let creditTotal = 0;
+            subjects.forEach(sub => {
+                if (!sub.isLeaf) return;                          // 过滤父级科目
+                const val = parseFloat(sub.balance) || 0;
+                if (sub.direction === "借") debitTotal  += val;
+                else                        creditTotal += val;
+            });
+
+            totalDebitEl.innerText  = debitTotal.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+            totalCreditEl.innerText = creditTotal.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+
+            const diff = debitTotal - creditTotal;
+            if (Math.abs(diff) < 0.005) {                        // 严格相等（浮点容差）
+                statusBox.style.background = "#f6ffed";
+                statusBox.style.color      = "#52c41a";
+                statusBox.innerHTML        = `✅ 试算平衡`;
+            } else {
+                statusBox.style.background = "#ffebee";
+                statusBox.style.color      = "#d32f2f";
+                statusBox.innerHTML        = `⚠ 试算不平衡 | 差额: ${Math.abs(diff).toLocaleString('zh-CN',{minimumFractionDigits:2})}`;
+            }
+        }
+
+        // ── 6. 渲染表格 ──
         function renderTable() {
+            if (!subjects.length) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#999;">暂无科目数据，请先在【会计科目】中维护科目表。</td></tr>`;
+                calculateTrialBalance();
+                return;
+            }
+
+            const editableStyle = "border:1px solid #d9d9d9;border-radius:3px;padding:4px 8px;width:100%;text-align:right;box-sizing:border-box;";
+            const disabledStyle = "border:1px solid #e8e8e8;background:#f5f5f5;color:#bbb;padding:4px 8px;width:100%;text-align:right;cursor:not-allowed;border-radius:3px;box-sizing:border-box;";
+
             let html = "";
-            mockSubjects.forEach((sub, index) => {
-                const level = getSubjectLevel(sub.code);
-                // 一级科目且有子科目 → 不可录入，余额由子科目汇总
-                // 一级科目无子科目 → 可直接录入
-                const hasChildren = mockSubjects.some(c => c.code !== sub.code && c.code.startsWith(sub.code));
-                const isParent = (level === 1) && hasChildren;
-                const isEditable = !isParent;
+            subjects.forEach((sub, index) => {
+                const level      = getSubjectLevel(sub.code);
                 const levelLabel = levelNames[level - 1] || `${level}级`;
-                const levelClass = levelClasses[level - 1] || 'ob-level-3';
+                const levelClass = levelClasses[level - 1] || 'ob-level-4';
+                const isParent   = !sub.isLeaf;
+                const nameIndent = level > 1 ? `padding-left:${(level - 1) * 20 + 16}px;` : "padding-left:16px;";
+                const rowBg      = isParent ? "background:#fafafa;" : "";
 
-                const editableStyle = "border: 1px solid #d9d9d9; border-radius: 3px; padding: 4px 8px; width: 100%; text-align: right; box-sizing: border-box;";
-                const disabledStyle = "border: 1px solid #e8e8e8; background: #f5f5f5; color: #bbb; padding: 4px 8px; width: 100%; text-align: right; cursor: not-allowed; border-radius: 3px; box-sizing: border-box;";
-
-                const rowStyle = isParent
-                    ? "border-bottom: 1px solid #f0f0f0; height: 45px; background: #fafafa;"
-                    : "border-bottom: 1px solid #f0f0f0; height: 45px;";
-
-                // 名称缩进（子科目缩进显示）
-                const nameIndent = level > 1 ? `padding-left: ${(level - 1) * 20 + 16}px;` : "padding-left: 16px;";
-
-                // 期初余额单元格
-                let balanceCell = "";
+                let balanceCell;
                 if (isParent) {
                     balanceCell = `
                         <input type="number" readonly disabled
                             value="${parseFloat(sub.balance || 0).toFixed(2)}"
                             title="父科目余额由子科目汇总，不可直接修改"
                             style="${disabledStyle}">
-                        <span class="ob-parent-tip">汇总自子科目</span>`;
+                        <span class="ob-parent-tip">汇总子科目</span>`;
                 } else {
                     balanceCell = `
-                        <input type="number" class="balance-input" data-index="${index}" data-dir="${sub.direction}"
+                        <input type="number" class="ob-balance-input" data-index="${index}"
                             value="${sub.balance || ''}" placeholder="0.00"
                             style="${editableStyle}">`;
                 }
 
                 html += `
-                    <tr style="${rowStyle}">
-                        <td style="padding-left: 16px; font-family: monospace;">${sub.code}</td>
-                        <td style="text-align: center;">
-                            <span class="ob-level-badge ${levelClass}">${levelLabel}</span>
+                    <tr style="border-bottom:1px solid #f0f0f0;height:45px;${rowBg}">
+                        <td style="padding-left:16px;font-family:monospace;">${sub.code}</td>
+                        <td style="text-align:center;"><span class="ob-level-badge ${levelClass}">${levelLabel}</span></td>
+                        <td style="${nameIndent}">${isParent ? `<strong>${sub.name}</strong>` : sub.name}</td>
+                        <td style="text-align:center;">
+                            <span style="padding:2px 6px;border-radius:2px;font-size:12px;background:${sub.direction==='借'?'#e6f7ff':'#fff1f0'};color:${sub.direction==='借'?'#1890ff':'#f5222d'};">${sub.direction}</span>
                         </td>
-                        <td style="${nameIndent}">
-                            ${isParent ? `<strong>${sub.name}</strong>` : sub.name}
-                        </td>
-                        <td style="text-align: center;">
-                            <span style="padding: 2px 6px; border-radius: 2px; font-size: 12px; background: ${sub.direction==='借'?'#e6f7ff':'#fff1f0'}; color: ${sub.direction==='借'?'#1890ff':'#f5222d'};">
-                                ${sub.direction}
-                            </span>
-                        </td>
-                        <td style="padding-right: 16px;">
-                            ${balanceCell}
-                        </td>
-                        <td style="padding-right: 16px; text-align: right; color: #bbb; font-size: 13px;">0.00</td>
-                    </tr>
-                `;
+                        <td style="padding-right:16px;">${balanceCell}</td>
+                        <td style="padding-right:16px;text-align:right;color:#bbb;font-size:13px;">0.00</td>
+                    </tr>`;
             });
             tbody.innerHTML = html;
 
-            // 重新绑定事件
-            bindEvents();
-            calculateTrialBalance();
-        }
-
-        // 4. 核心逻辑：试算平衡计算器
-        function calculateTrialBalance() {
-            let debitTotal = 0;
-            let creditTotal = 0;
-
-            mockSubjects.forEach(sub => {
-                // 有子科目的父科目不参与统计，只统计叶子科目（可直接录入的科目）
-                const hasChildren = mockSubjects.some(c => c.code !== sub.code && c.code.startsWith(sub.code));
-                if (hasChildren) return;
-                const val = parseFloat(sub.balance) || 0;
-                if (sub.direction === "借") {
-                    debitTotal += val;
-                } else {
-                    creditTotal += val;
-                }
-            });
-
-            // 更新UI
-            totalDebitEl.innerText = debitTotal.toLocaleString('zh-CN', {minimumFractionDigits: 2});
-            totalCreditEl.innerText = creditTotal.toLocaleString('zh-CN', {minimumFractionDigits: 2});
-            
-            const diff = debitTotal - creditTotal;
-            diffAmountEl.innerText = Math.abs(diff).toLocaleString('zh-CN', {minimumFractionDigits: 2});
-
-            // 状态判断
-            if (Math.abs(diff) < 0.01) {
-                statusBox.style.background = "#f6ffed";
-                statusBox.style.color = "#52c41a";
-                statusBox.innerHTML = `✅ 试算平衡`;
-            } else {
-                statusBox.style.background = "#ffebee";
-                statusBox.style.color = "#d32f2f";
-                statusBox.innerHTML = `⚠️ 试算不平衡 | 差额: ${Math.abs(diff).toFixed(2)}`;
-            }
-        }
-
-        // 5. 事件绑定
-        function bindEvents() {
-            // 输入框变更事件
-            document.querySelectorAll('.balance-input').forEach(input => {
-                input.addEventListener('input', (e) => {
-                    const idx = e.target.dataset.index;
-                    mockSubjects[idx].balance = e.target.value;
-                    // 同步更新父科目汇总
+            // 输入框事件：实时更新余额 → 汇总父科目 → 试算
+            document.querySelectorAll('.ob-balance-input').forEach(input => {
+                input.addEventListener('input', e => {
+                    const idx = parseInt(e.target.dataset.index);
+                    subjects[idx].balance = parseFloat(e.target.value) || 0;
                     syncParentBalances();
+                    // 同步刷新父科目显示值（不重新渲染整表，仅更新禁用输入框）
+                    document.querySelectorAll('input[readonly]').forEach(ro => {
+                        const tr = ro.closest('tr');
+                        if (!tr) return;
+                        const codeEl = tr.querySelector('td:first-child');
+                        if (!codeEl) return;
+                        const parentCode = codeEl.innerText.trim();
+                        const parentSub  = subjects.find(s => s.code === parentCode);
+                        if (parentSub) ro.value = parseFloat(parentSub.balance || 0).toFixed(2);
+                    });
                     persistOpeningBalances();
                     calculateTrialBalance();
                 });
             });
 
-            // 辅助核算点击事件
-            document.querySelectorAll('.btn-aux-edit').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = e.target.dataset.index;
-                    const sub = mockSubjects[idx];
-                    const amount = prompt(`【${sub.name}】\n请输入辅助核算明细总额：`, sub.balance || 0);
-                    if (amount !== null) {
-                        mockSubjects[idx].balance = parseFloat(amount) || 0;
-                        syncParentBalances();
-                        persistOpeningBalances();
-                        renderTable();
-                    }
-                });
-            });
-
-            // 导入按钮
-            const btnImport = document.getElementById('btn-import');
-            if (btnImport) btnImport.onclick = () => {
-                alert('导入功能：请选择 Excel 文件导入期初余额数据。');
-            };
-
-            // 导出按钮
-            const btnExport = document.getElementById('btn-export');
-            if (btnExport) btnExport.onclick = () => {
-                const rows = mockSubjects.map(s => `${s.code}\t${s.name}\t${s.direction}\t${parseFloat(s.balance||0).toFixed(2)}`).join('\n');
-                const header = '科目编码\t科目名称\t方向\t期初余额\n';
-                const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/tab-separated-values;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = '期初余额.tsv'; a.click();
-                URL.revokeObjectURL(url);
-            };
-
-            // 保存按钮
-            const btnSave = document.getElementById('btn-save');
-            if (btnSave) btnSave.onclick = () => {
-                persistOpeningBalances();
-                alert('期初余额已保存。');
-            };
-
-            // 清零按钮
-            const btnClear = document.getElementById('btn-clear');
-            if (btnClear) btnClear.onclick = () => {
-                if (!confirm('确认将所有科目期初余额清零？')) return;
-                mockSubjects.forEach(s => { s.balance = 0; });
-                persistOpeningBalances();
-                renderTable();
-            };
-
-            // 试算平衡按钮
-            const btnTrial = document.getElementById('btn-trial');
-            if (btnTrial) btnTrial.onclick = () => {
-                calculateTrialBalance();
-                document.getElementById('balance-status')?.scrollIntoView({ behavior: 'smooth' });
-            };
+            calculateTrialBalance();
         }
 
-        // 子科目变动后自动汇总父科目余额
-        function syncParentBalances() {
-            mockSubjects.forEach(parent => {
-                if (parent.isLeaf) return;
-                const children = mockSubjects.filter(c => c.code !== parent.code && c.code.startsWith(parent.code));
-                if (children.length) {
-                    parent.balance = children.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
-                }
-            });
-        }
+        // ── 7. 按钮事件 ──
+        document.getElementById('btn-import').onclick = () => {
+            alert('导入功能：请选择 Excel / CSV 文件导入期初余额数据。');
+        };
+        document.getElementById('btn-export').onclick = () => {
+            const rows = subjects.map(s => `${s.code}\t${s.name}\t${s.direction}\t${parseFloat(s.balance||0).toFixed(2)}`).join('\n');
+            const blob = new Blob(['\uFEFF科目编码\t科目名称\t方向\t期初余额\n' + rows], { type: 'text/tab-separated-values;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = '期初余额.tsv'; a.click();
+        };
+        document.getElementById('btn-save').onclick = () => {
+            persistOpeningBalances();
+            alert('期初余额已保存。');
+        };
+        document.getElementById('btn-clear').onclick = () => {
+            if (!confirm('确认将所有科目期初余额清零？')) return;
+            subjects.forEach(s => { s.balance = 0; });
+            persistOpeningBalances();
+            renderTable();
+        };
+        document.getElementById('btn-trial').onclick = () => {
+            calculateTrialBalance();
+            statusBox.scrollIntoView({ behavior: 'smooth' });
+        };
 
-        // 初始化运行
+        // 初始渲染
         renderTable();
         }, 0);
     }
