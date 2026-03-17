@@ -1271,7 +1271,48 @@
                     });
                 }
 
-                alert(`✅ 已登记客户确认！\n\n1. 关联的 ${updatedCount} 笔运单已锁定。\n2. 已自动在【应收管理】中生成一笔待核销的应收账款。`);
+                // --- E. 联动会计引擎：按「客户对账确认」模板生成会计凭证 ---
+                let engineVoucherMsg = '';
+                try {
+                    // 从 localStorage / sessionStorage 读取模板（兼容两种存储）
+                    let tplStore = {};
+                    try { tplStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}'); } catch(e){}
+                    if (!tplStore['客户对账确认']) {
+                        try { tplStore = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}'); } catch(e){}
+                    }
+                    const tpl = tplStore['客户对账确认'];
+                    if (tpl && tpl.entries && tpl.entries.length) {
+                        const totalAmt = parseFloat(String(item.amount).replace(/,/g,'')) || 0;
+                        const vWord = tpl.voucherWord || '转';
+                        const voucherId = vWord + new Date().getFullYear() + String(Math.floor(Math.random()*9000+1000));
+                        const summTpl = tpl.summaryTemplate || ('客户对账确认-{客户}');
+                        const summBase = summTpl.replace(/\{客户\}/g, item.client)
+                                                .replace(/\{reconId\}/g, item.id)
+                                                .replace(/\{金额\}/g, totalAmt.toFixed(2));
+                        const lines = tpl.entries.map(e => ({
+                            summary: e.summary || summBase,
+                            account: (e.subjectCode ? e.subjectCode + ' ' : '') + (e.subjectName || ''),
+                            debit:   e.dir === '借' ? totalAmt.toFixed(2) : '',
+                            credit:  e.dir === '贷' ? totalAmt.toFixed(2) : ''
+                        }));
+                        const newVoucher = {
+                            id: voucherId,
+                            date: new Date().toISOString().split('T')[0],
+                            amount: totalAmt.toFixed(2),
+                            user: '会计引擎(自动)',
+                            status: '待审核',
+                            source: '客户对账确认',
+                            sourceId: item.id,
+                            lines: lines
+                        };
+                        const vList = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+                        vList.unshift(newVoucher);
+                        sessionStorage.setItem('ManualVouchers', JSON.stringify(vList));
+                        engineVoucherMsg = `\n3. 已按「客户对账确认」引擎模板生成会计凭证【${voucherId}】，可在【凭证审核中心】查看。`;
+                    }
+                } catch(e) { console.warn('[会计引擎]凭证生成失败', e); }
+
+                alert(`✅ 已登记客户确认！\n\n1. 关联的 ${updatedCount} 笔运单已锁定。\n2. 已自动在【应收管理】中生成一笔待核销的应收账款。${engineVoucherMsg}`);
                 window.closeReconConfirmModal();
                 loadContent('ReconCustomer');
             };
@@ -1280,41 +1321,60 @@
 
 
         /**
-         * 2. 从对账单申请开票 (推送到发票池)
-         * 点击“申请开票”时触发
+         * 2. 从对账单结算 → 跳转到运单结算页面，预过滤该对账单关联的运单
+         */
+        window.settleFromRecon = function (reconId) {
+            // 查找该对账单关联的所有运单号
+            const waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            const relatedNos = waybills
+                .filter(w => w.reconId === reconId)
+                .map(w => w.waybillNo || w.id || '')
+                .filter(Boolean);
+
+            // 跳转到运单结算，预填运单号筛选，展示该对账单的运单
+            window._arWaybillFilters = relatedNos.length ? { waybillNos: relatedNos.join(' ') } : {};
+            window._arWaybillPage = 1;
+            loadContent('ARCollectionVerify');
+        };
+
+        /**
+         * 3. 取消对账（恢复运单为已挂帐，可重新发起对账）
+         */
+        window.cancelRecon = function (reconId) {
+            if (!confirm(`确认取消对账单【${reconId}】吗？\n关联运单将恢复为【已挂帐】状态，可重新发起对账。`)) return;
+
+            // 1. 从列表中直接删除该对账单
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const recon = recons.find(r => r.id === reconId);
+            if (!recon) return alert('未找到对账单数据。');
+            recons = recons.filter(r => r.id !== reconId);
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+
+            // 2. 恢复关联运单状态为”已挂帐”，清空 reconId
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            let restoredCount = 0;
+            waybills.forEach(w => {
+                if (w.reconId === reconId) {
+                    w.status = '已挂帐';
+                    w.reconId = '';
+                    restoredCount++;
+                }
+            });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'), user: '管理员', module: '客户对账', action: '取消对账', detail: `对账单 ${reconId} 已取消，${restoredCount} 票运单恢复为已挂帐。` });
+            }
+            alert(`✅ 对账已取消！\n${restoredCount} 票运单已恢复为【已挂帐】状态，可重新发起对账。`);
+            loadContent('ReconCustomer');
+        };
+
+        /**
+         * 原申请开票保留（兼容旧调用）
          */
         window.applyInvoiceFromRecon = function (reconId, client, amount) {
-            if (!confirm(`确认将对账单【${reconId}】推送到开票系统吗？`)) return;
-
-            // 1. 推送到发票待办队列
-            let queue = JSON.parse(sessionStorage.getItem('PendingInvoiceQueue') || "[]");
-
-            // 防止重复提交
-            if (queue.some(q => q.sourceId === reconId)) {
-                alert("⚠️ 该对账单已在开票列表中，请勿重复提交。");
-                return;
-            }
-
-            queue.push({
-                sourceId: reconId,
-                sourceType: '对账单',
-                client: client,
-                amount: amount,
-                createTime: new Date().toLocaleString()
-            });
-            sessionStorage.setItem('PendingInvoiceQueue', JSON.stringify(queue));
-
-            // 2. 更新对账单状态为“开票中”
-            let list = JSON.parse(sessionStorage.getItem('CustomerRecons'));
-            let item = list.find(r => r.id === reconId);
-            if (item) {
-                item.status = '开票中'; // 或者 '已申请'
-                sessionStorage.setItem('CustomerRecons', JSON.stringify(list));
-            }
-
-            alert(`✅ 申请成功！\n数据已推送至【销项发票台账】，请通知财务开票。`);
-            loadContent('ReconCustomer'); // 刷新
-        }
+            window.settleFromRecon(reconId, client, amount);
+        };
 
 
 

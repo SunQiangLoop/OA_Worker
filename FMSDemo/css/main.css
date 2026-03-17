@@ -41,6 +41,152 @@
             flex-shrink: 0;
         }
 
+        /* 内容包装器：tab-bar + content-area 垂直排列 */
+        .content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 标签栏 */
+        .tab-bar {
+            display: flex;
+            align-items: center;
+            background: #eef0f3;
+            border-bottom: 1px solid #d0d4da;
+            height: 38px;
+            padding: 0 6px 0 4px;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .tab-list {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            overflow-x: auto;
+            flex: 1;
+            height: 100%;
+            padding-top: 4px;
+            scrollbar-width: none;
+        }
+
+        .tab-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            height: 30px;
+            background: #dce0e6;
+            border: 1px solid #c8cdd5;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: #555;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+            position: relative;
+        }
+
+        .tab-item:hover {
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        .tab-item.active {
+            background: #ffffff;
+            color: #2c3e50;
+            font-weight: 600;
+            border-color: #c8cdd5;
+            border-bottom-color: #ffffff;
+            box-shadow: inset 0 2px 0 #e74c3c;
+        }
+
+        .tab-close {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #999;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .tab-close:hover {
+            background: #d0d4da;
+            color: #333;
+        }
+
+        /* 标签栏右侧下拉操作 */
+        .tab-bar-actions {
+            position: relative;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+
+        .tab-dropdown-btn {
+            width: 26px;
+            height: 26px;
+            border: 1px solid #c8cdd5;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .tab-dropdown-btn:hover {
+            background: #e8eaf0;
+            color: #333;
+        }
+
+        .tab-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 4px);
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+            z-index: 9999;
+            min-width: 130px;
+            overflow: hidden;
+        }
+
+        .tab-dropdown-menu.open {
+            display: block;
+        }
+
+        .tab-dropdown-item {
+            padding: 9px 18px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #333;
+            transition: background 0.1s;
+        }
+
+        .tab-dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
         /* 内容区 */
         .content-area {
             flex-grow: 1;
@@ -428,6 +574,62 @@
     border-radius: 6px;
     font-size: 12px;
     background: #fff;
+}
+
+.wb-pager__btn--num {
+    min-width: 28px;
+    padding: 0 6px;
+}
+
+.wb-pager__btn--active {
+    background: #2980b9;
+    color: #fff;
+    border-color: #2980b9;
+    font-weight: 600;
+}
+
+.wb-pager__btn--num:hover:not(:disabled):not(.wb-pager__btn--active) {
+    background: #eef5fb;
+    border-color: #2980b9;
+    color: #2980b9;
+}
+
+.wb-pager__ellipsis {
+    font-size: 12px;
+    color: #999;
+    padding: 0 2px;
+    line-height: 28px;
+}
+
+.wb-pager__total {
+    font-size: 12px;
+    color: #556;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+
+.wb-pager__jump {
+    font-size: 12px;
+    color: #556;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.wb-pager__jump-input {
+    width: 46px;
+    height: 26px;
+    border: 1px solid #d7dde3;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 12px;
+    padding: 0 4px;
+}
+
+.wb-pager__btn:hover:not(:disabled) {
+    background: #f0f4f8;
+    border-color: #aac4d8;
 }
 
 .wb-accrual-table .data-table th,

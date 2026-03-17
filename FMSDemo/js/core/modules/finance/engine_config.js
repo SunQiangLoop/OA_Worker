@@ -699,6 +699,33 @@ const ENGINE_DATA = [
             }
         ]
     }
+    ,{
+        name: "对账",
+        children: [
+            {
+                name: "客户对账",
+                items: [
+                    "客户对账确认",
+                    "客户对账结算",
+                    "客户对账差异处理"
+                ]
+            },
+            {
+                name: "网点对账",
+                items: [
+                    "网点对账结算",
+                    "网点对账差异处理"
+                ]
+            },
+            {
+                name: "承运商对账",
+                items: [
+                    "承运商对账结算",
+                    "承运商对账差异处理"
+                ]
+            }
+        ]
+    }
 ];
 
 const ENGINE_TEMPLATE_STORAGE_KEY = "EngineVoucherTemplates";
@@ -708,17 +735,96 @@ const DEFAULT_PAYMENT_METHOD_SUBJECTS = [
     { id: "pm_bank", name: "银行卡", subjectCode: "1002.01", subjectName: "银行存款-基本户" }
 ];
 
+// ─── 自定义模板数据管理 ───────────────────────────────────────────
+const ENGINE_CUSTOM_KEY = "EngineCustomData";
+
+function loadCustomData() {
+    try {
+        return JSON.parse(localStorage.getItem(ENGINE_CUSTOM_KEY) || '{"categories":[],"aliases":{}}');
+    } catch(e) { return { categories: [], aliases: {} }; }
+}
+
+function saveCustomData(data) {
+    localStorage.setItem(ENGINE_CUSTOM_KEY, JSON.stringify(data));
+}
+
+// 获取 item 的显示名称（优先 alias）
+function getDisplayName(originalName) {
+    const data = loadCustomData();
+    return (data.aliases && data.aliases[originalName]) || originalName;
+}
+
+// 获取所有树数据（内置 + 自定义）
+function getAllTreeData() {
+    const custom = loadCustomData();
+    const customCats = (custom.categories || []).map(cat => ({ ...cat, _custom: true }));
+    return [...ENGINE_DATA, ...customCats];
+}
+
+// 系统预置初始模板（仅在对应 key 不存在时生效，用户保存后以用户数据为准）
+const ENGINE_DEFAULT_TEMPLATES = {
+    "收款单": {
+        name: "收款单", category: "收付款单", group: "收款单",
+        voucherWord: "收", summaryTemplate: "收款-{clientName}-{id}", remark: "",
+        entries: [
+            { dir: "借", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1122", subjectName: "应收账款",   summary: "", usePaymentMethod: false }
+        ]
+    },
+    "付款单": {
+        name: "付款单", category: "收付款单", group: "付款单",
+        voucherWord: "付", summaryTemplate: "付款-{clientName}-{id}", remark: "",
+        entries: [
+            { dir: "借", subjectCode: "1123", subjectName: "预付账款",   summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",   summary: "", usePaymentMethod: false }
+        ]
+    },
+    "应收核销": {
+        name: "应收核销", category: "核销", group: "应收",
+        voucherWord: "转", summaryTemplate: "", remark: "",
+        entries: [
+            { dir: "借", subjectCode: "1122", subjectName: "应收账款",     summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "5001", subjectName: "主营业务收入", summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",     summary: "", usePaymentMethod: false }
+        ]
+    },
+    "应付核销": {
+        name: "应付核销", category: "核销", group: "应付",
+        voucherWord: "转", summaryTemplate: "", remark: "",
+        entries: [
+            { dir: "借", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1123", subjectName: "预付账款",   summary: "", usePaymentMethod: false },
+            { dir: "借", subjectCode: "2221", subjectName: "应交税费",   summary: "", usePaymentMethod: false }
+        ]
+    }
+};
+
 function loadEngineTemplateStore() {
-    // 优先读 sessionStorage，不存在则从 localStorage 恢复（页面刷新后可持久化）
-    let store = JSON.parse(sessionStorage.getItem(ENGINE_TEMPLATE_STORAGE_KEY) || "null");
-    if (!store || Object.keys(store).length === 0) {
-        const lsData = localStorage.getItem(ENGINE_TEMPLATE_STORAGE_KEY);
-        if (lsData) {
-            store = JSON.parse(lsData);
-            sessionStorage.setItem(ENGINE_TEMPLATE_STORAGE_KEY, JSON.stringify(store));
+    // 始终优先读 localStorage（持久化数据），sessionStorage 作为本次会话缓存
+    const lsData = localStorage.getItem(ENGINE_TEMPLATE_STORAGE_KEY);
+    let store = lsData ? JSON.parse(lsData) : null;
+    if (!store) {
+        // localStorage 没有时，降级到 sessionStorage
+        store = JSON.parse(sessionStorage.getItem(ENGINE_TEMPLATE_STORAGE_KEY) || "null");
+    }
+    if (!store) store = {};
+    // 注入预置模板：key 不存在，或 entries 里没有任何已填科目码（空模板），则用预置值覆盖
+    // 用户通过「保存模板」后 entries 会有 subjectCode，此后不再覆盖
+    const hasConfiguredEntries = (tpl) =>
+        tpl && Array.isArray(tpl.entries) && tpl.entries.some(e => (e.subjectCode || '').trim());
+    let dirty = false;
+    for (const [key, tpl] of Object.entries(ENGINE_DEFAULT_TEMPLATES)) {
+        if (!hasConfiguredEntries(store[key])) {
+            store[key] = tpl;
+            dirty = true;
         }
     }
-    return store || {};
+    if (dirty) {
+        sessionStorage.setItem(ENGINE_TEMPLATE_STORAGE_KEY, JSON.stringify(store));
+        try { localStorage.setItem(ENGINE_TEMPLATE_STORAGE_KEY, JSON.stringify(store)); } catch(e) {}
+    }
+    return store;
 }
 
 function saveEngineTemplateStore(store) {
@@ -727,7 +833,7 @@ function saveEngineTemplateStore(store) {
 }
 
 function findEngineCategory(itemName) {
-    for (const category of ENGINE_DATA) {
+    for (const category of getAllTreeData()) {
         if (!category.children) continue;
         for (const child of category.children) {
             if (!child.items) continue;
@@ -736,7 +842,7 @@ function findEngineCategory(itemName) {
             }
         }
     }
-    return { category: "未分类", group: "-" };
+    return { category: "自定义", group: "-" };
 }
 
 function buildEmptyTemplate(itemName, categoryInfo) {
@@ -854,39 +960,56 @@ window.generateVoucherFromEngineTemplate = function(itemName, doc, options) {
 };
 
 /**
- * 渲染左侧树形菜单 HTML
+ * 渲染左侧树形菜单 HTML（含新增/重命名/删除按钮）
  */
 function renderEngineTree() {
-    let html = '';
-    ENGINE_DATA.forEach((category, index) => {
+    const customData = loadCustomData();
+    const allData = getAllTreeData();
+    let html = `
+        <div style="padding:8px 10px 4px; border-bottom:1px solid #eee; margin-bottom:4px;">
+            <button onclick="window.showAddEngineModal()" style="width:100%; padding:6px 0; background:#2980b9; color:#fff; border:none; border-radius:5px; font-size:12px; cursor:pointer;">＋ 新增模板</button>
+        </div>
+    `;
+
+    allData.forEach((category, index) => {
         const categoryId = `engine-cat-${index}`;
-        // Level 1: 挂帐、结算...
+        const isCustomCat = !!category._custom;
+        const catName = getDisplayName(category.name);
         html += `
-            <div class="tree-node level-1" onclick="window.toggleEngineCategory('${categoryId}')">
-                <span>${category.name}</span>
-                <span class="engine-toggle-icon" data-target="${categoryId}">▾</span>
+            <div class="tree-node level-1" style="display:flex; justify-content:space-between; align-items:center;">
+                <span onclick="window.toggleEngineCategory('${categoryId}')" style="flex:1; cursor:pointer;">${catName}</span>
+                <span style="display:flex; gap:4px; flex-shrink:0;">
+                    <span class="engine-toggle-icon" data-target="${categoryId}" onclick="window.toggleEngineCategory('${categoryId}')" style="cursor:pointer;">▾</span>
+                    ${isCustomCat ? `<span onclick="window.deleteCategoryEngine('${category.name}')" title="删除分类" style="color:#e74c3c;cursor:pointer;font-size:11px;padding:0 2px;">✕</span>` : ''}
+                </span>
             </div>
         `;
-        
+
         if (category.children) {
             html += `<div id="${categoryId}" class="engine-category">`;
             category.children.forEach((sub, subIndex) => {
                 const subId = `${categoryId}-sub-${subIndex}`;
-                // Level 2: 运单, 异动...
+                const subName = getDisplayName(`${category.name}::${sub.name}`) || sub.name;
                 html += `
-                    <div class="tree-node level-2" onclick="window.toggleEngineSubCategory('${subId}')">
-                        <span>${sub.name}</span>
-                        <span class="engine-toggle-icon" data-target="${subId}">▾</span>
+                    <div class="tree-node level-2" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span onclick="window.toggleEngineSubCategory('${subId}')" style="flex:1; cursor:pointer;">${subName}</span>
+                        <span class="engine-toggle-icon" data-target="${subId}" onclick="window.toggleEngineSubCategory('${subId}')" style="cursor:pointer;">▾</span>
                     </div>
                 `;
-                
+
                 if (sub.items) {
                     html += `<div id="${subId}" class="engine-subcategory">`;
                     sub.items.forEach(item => {
-                        // Level 3: 具体费用 (点击触发右侧加载)
-                        html += `<div class="tree-node level-3" onclick="loadEngineConfig('${item}')">
-                                    <i class="icon-file-text"></i> ${item}
-                                 </div>`;
+                        const displayItem = getDisplayName(item);
+                        const isCustomItem = isCustomCat;
+                        html += `
+                            <div class="tree-node level-3" style="display:flex; justify-content:space-between; align-items:center; padding-right:6px;">
+                                <span onclick="loadEngineConfig('${item}')" style="flex:1; cursor:pointer; overflow:hidden; text-overflow:ellipsis;" title="${displayItem}">${displayItem}</span>
+                                <span style="display:flex; gap:3px; flex-shrink:0; opacity:0.6;">
+                                    <span onclick="window.renameEngineItem('${item}')" title="重命名" style="cursor:pointer; font-size:11px; color:#2980b9;">✎</span>
+                                    ${isCustomItem ? `<span onclick="window.deleteCustomEngineItem('${item}', '${category.name}')" title="删除" style="cursor:pointer; font-size:11px; color:#e74c3c;">✕</span>` : ''}
+                                </span>
+                            </div>`;
                     });
                     html += `</div>`;
                 }
@@ -894,6 +1017,38 @@ function renderEngineTree() {
             html += `</div>`;
         }
     });
+
+    // 新增模板弹窗（隐藏）
+    html += `
+        <div id="engine-add-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:9999;">
+            <div style="position:absolute; top:15%; left:50%; transform:translateX(-50%); width:440px; background:#fff; border-radius:8px; padding:24px; box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; font-size:16px;">新增模板配置</h3>
+                    <span onclick="document.getElementById('engine-add-modal').style.display='none'" style="cursor:pointer; font-size:18px; color:#999;">✕</span>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">模板名称 <span style="color:red;">*</span></label>
+                    <input id="engine-new-name" type="text" placeholder="例如：月结客户对账结算" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">所属大类（可新建）</label>
+                    <input id="engine-new-category" type="text" placeholder="例如：对账 或 自定义" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;" list="engine-cat-list">
+                    <datalist id="engine-cat-list">
+                        ${getAllTreeData().map(c => `<option value="${c.name}">`).join('')}
+                    </datalist>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">子分类（可新建）</label>
+                    <input id="engine-new-group" type="text" placeholder="例如：客户对账" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button onclick="document.getElementById('engine-add-modal').style.display='none'" style="padding:7px 16px; border:1px solid #ddd; border-radius:5px; background:#f5f5f5; cursor:pointer;">取消</button>
+                    <button onclick="window.submitNewEngineTemplate()" style="padding:7px 16px; border:none; border-radius:5px; background:#2980b9; color:#fff; cursor:pointer;">确认新增</button>
+                </div>
+            </div>
+        </div>
+    `;
+
     return html;
 }
 
@@ -969,6 +1124,10 @@ window.loadEngineConfig = function(itemName) {
                         <option value="收" ${template.voucherWord === "收" ? "selected" : ""}>收</option>
                         <option value="付" ${template.voucherWord === "付" ? "selected" : ""}>付</option>
                     </select>
+                </div>
+                <div>
+                    <label style="font-size:12px; color:#7f8c8d;">摘要模板</label>
+                    <input id="engine-summary-template" type="text" value="${(template.summaryTemplate || '').replace(/"/g, '&quot;')}" placeholder="例如：{clientName}-{id}" style="width:100%; padding:8px; border:1px solid #dfe6e9; border-radius:6px; box-sizing:border-box;">
                 </div>
             </div>
 
@@ -1125,4 +1284,120 @@ window.saveEngineTemplate = function(itemName, isWriteOff) {
     setEngineTemplate(itemName, template);
 
     alert("✅ 模板已保存并生效。");
+};
+
+// ─── 新增模板 ────────────────────────────────────────────────────
+window.showAddEngineModal = function() {
+    const modal = document.getElementById('engine-add-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        const nameEl = document.getElementById('engine-new-name');
+        if (nameEl) nameEl.value = '';
+        const catEl = document.getElementById('engine-new-category');
+        if (catEl) catEl.value = '';
+        const grpEl = document.getElementById('engine-new-group');
+        if (grpEl) grpEl.value = '';
+    }
+};
+
+window.submitNewEngineTemplate = function() {
+    const name = (document.getElementById('engine-new-name')?.value || '').trim();
+    const category = (document.getElementById('engine-new-category')?.value || '').trim() || '自定义';
+    const group = (document.getElementById('engine-new-group')?.value || '').trim() || '默认';
+
+    if (!name) return alert('请填写模板名称。');
+
+    const allItems = [];
+    getAllTreeData().forEach(cat => (cat.children || []).forEach(sub => (sub.items || []).forEach(i => allItems.push(i))));
+    if (allItems.includes(name)) return alert('该模板名称已存在，请换一个名称。');
+
+    const data = loadCustomData();
+    let cat = data.categories.find(c => c.name === category);
+    if (!cat) {
+        cat = { name: category, children: [] };
+        data.categories.push(cat);
+    }
+    let grp = cat.children.find(g => g.name === group);
+    if (!grp) {
+        grp = { name: group, items: [] };
+        cat.children.push(grp);
+    }
+    grp.items.push(name);
+    saveCustomData(data);
+
+    // 初始化一个空模板
+    const categoryInfo = { category, group };
+    const tpl = buildEmptyTemplate(name, categoryInfo);
+    setEngineTemplate(name, tpl);
+
+    document.getElementById('engine-add-modal').style.display = 'none';
+
+    // 重新渲染左侧树
+    const treeEl = document.getElementById('engineTreeContainer') || document.getElementById('engine-tree');
+    if (treeEl) treeEl.innerHTML = renderEngineTree();
+
+    // 自动打开新模板
+    loadEngineConfig(name);
+    alert(`✅ 模板「${name}」已新增，请配置分录后保存。`);
+};
+
+// ─── 重命名 ──────────────────────────────────────────────────────
+window.renameEngineItem = function(originalName) {
+    const currentDisplay = getDisplayName(originalName);
+    const newName = prompt(`重命名模板「${currentDisplay}」：`, currentDisplay);
+    if (!newName || newName.trim() === currentDisplay) return;
+    const data = loadCustomData();
+    if (!data.aliases) data.aliases = {};
+    data.aliases[originalName] = newName.trim();
+    saveCustomData(data);
+
+    // 重新渲染左侧树
+    const treeEl = document.getElementById('engineTreeContainer') || document.getElementById('engine-tree');
+    if (treeEl) treeEl.innerHTML = renderEngineTree();
+};
+
+// ─── 删除自定义模板 ───────────────────────────────────────────────
+window.deleteCustomEngineItem = function(itemName, categoryName) {
+    const displayName = getDisplayName(itemName);
+    if (!confirm(`确认删除自定义模板「${displayName}」吗？\n相关模板配置也将一并删除。`)) return;
+
+    // 从自定义数据中移除
+    const data = loadCustomData();
+    (data.categories || []).forEach(cat => {
+        if (cat.name !== categoryName) return;
+        (cat.children || []).forEach(grp => {
+            grp.items = (grp.items || []).filter(i => i !== itemName);
+        });
+    });
+    // 清空空分组/分类
+    data.categories = data.categories.map(cat => ({
+        ...cat,
+        children: (cat.children || []).filter(grp => grp.items && grp.items.length > 0)
+    })).filter(cat => cat.children && cat.children.length > 0);
+    if (data.aliases) delete data.aliases[itemName];
+    saveCustomData(data);
+
+    // 从模板存储中删除
+    const store = loadEngineTemplateStore();
+    delete store[itemName];
+    saveEngineTemplateStore(store);
+
+    // 重新渲染
+    const treeEl = document.getElementById('engineTreeContainer') || document.getElementById('engine-tree');
+    if (treeEl) treeEl.innerHTML = renderEngineTree();
+
+    // 清空右侧面板
+    const contentArea = document.getElementById('configPanel') || document.getElementById('engine-content-area');
+    if (contentArea) contentArea.innerHTML = '<div style="padding:40px; color:#999; text-align:center;">请从左侧选择模板进行配置</div>';
+};
+
+// ─── 删除自定义分类 ───────────────────────────────────────────────
+window.deleteCategoryEngine = function(categoryName) {
+    if (!confirm(`确认删除整个分类「${categoryName}」及其所有模板吗？`)) return;
+    const data = loadCustomData();
+    data.categories = (data.categories || []).filter(c => c.name !== categoryName);
+    saveCustomData(data);
+
+    const treeEl = document.getElementById('engineTreeContainer') || document.getElementById('engine-tree');
+    if (treeEl) treeEl.innerHTML = renderEngineTree();
 };

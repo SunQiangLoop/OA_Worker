@@ -6,14 +6,20 @@
 // ============================================================
 
 function _woGenerateId() {
+    const today = new Date();
+    const dateStr = today.getFullYear().toString()
+        + String(today.getMonth() + 1).padStart(2, '0')
+        + String(today.getDate()).padStart(2, '0');
+    const prefix = 'HX-' + dateStr + '-';
     const list = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
-    const re = /^WO-(\d+)$/;
+    const re = new RegExp('^HX-' + dateStr + '-(\\d+)$');
+    // 兼容旧格式 WO-XXXX
     let max = 0;
     list.forEach(r => {
         const m = (r.id || '').match(re);
         if (m) max = Math.max(max, parseInt(m[1], 10));
     });
-    return 'WO-' + String(max + 1).padStart(4, '0');
+    return prefix + String(max + 1).padStart(4, '0');
 }
 
 function _woGenerateVoucherId(prefix) {
@@ -490,32 +496,76 @@ window.confirmWriteOff = function () {
 
     const woId = _woGenerateId();
 
-    // 凭证字号：AR→收，AP→付，Expense→转
-    const voucherPrefix = type === 'AR' ? '收' : type === 'AP' ? '付' : '转';
+    // 凭证字号：AR→收，AP→付，Expense→转（用 let 允许模板覆盖）
+    let voucherPrefix = type === 'AR' ? '收' : type === 'AP' ? '付' : '转';
+
+    // 模板名称映射
+    const tplNameMap = { AR: '应收核销', AP: '应付核销', Expense: '报销核销' };
+    const tplName = tplNameMap[type] || '应收核销';
 
     // 生成会计凭证
     let voucherId = '';
     try {
-        const methods = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
-        const pm = methods.find(m => m.subjectCode && m.subjectName) || { subjectCode: '1002', subjectName: '银行存款' };
         const summary = remark || (counterparty + ' 核销 ' + (selectedArIds.length > 1 ? selectedArIds.join(',') : primaryBillId));
 
+        // ── 优先使用会计引擎自定义模板 ────────────────────────────────
+        let tplStore = {};
+        try { tplStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}'); } catch(e){}
+        if (!tplStore[tplName]) {
+            try { tplStore = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}'); } catch(e){}
+        }
+        const tpl = tplStore[tplName];
+
         let lines = [];
-        if (type === 'AR') {
-            lines = [
-                { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: amount.toFixed(2), credit: '' },
-                { summary, account: '1122 应收账款',                        debit: '',              credit: amount.toFixed(2) }
-            ];
-        } else if (type === 'AP') {
-            lines = [
-                { summary, account: '2202 应付账款',                        debit: amount.toFixed(2), credit: '' },
-                { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: '',              credit: amount.toFixed(2) }
-            ];
+        if (tpl && tpl.entries && tpl.entries.length) {
+            // 使用引擎模板生成分录
+            // 计算借方合计和贷方条目数，处理含税科目的金额拆分
+            const debitEntries  = tpl.entries.filter(e => e.dir === '借');
+            const creditEntries = tpl.entries.filter(e => e.dir === '贷');
+            // 检测是否有税金科目（科目代码以222开头，或科目名含"税"）
+            const taxEntry = creditEntries.length > 1
+                ? creditEntries.find(e => /^222/.test(e.subjectCode || '') || (e.subjectName || '').includes('税'))
+                : null;
+            const TAX_RATE = 0.09;
+            const taxAmt  = taxEntry ? parseFloat((amount * TAX_RATE / (1 + TAX_RATE)).toFixed(2)) : 0;
+            const netAmt  = taxEntry ? parseFloat((amount - taxAmt).toFixed(2)) : 0;
+
+            lines = tpl.entries.map(e => {
+                let entryAmt = amount; // 默认全额
+                if (taxEntry) {
+                    const isTax = e === taxEntry;
+                    const isNonTaxCredit = e.dir === '贷' && !isTax;
+                    if (isTax) entryAmt = taxAmt;
+                    else if (isNonTaxCredit) entryAmt = netAmt;
+                }
+                return {
+                    summary: e.summary || summary,
+                    account: ((e.subjectCode || '') + ' ' + (e.subjectName || '')).trim(),
+                    debit:   e.dir === '借' ? entryAmt.toFixed(2) : '',
+                    credit:  e.dir === '贷' ? entryAmt.toFixed(2) : ''
+                };
+            });
+            voucherPrefix = tpl.voucherWord || voucherPrefix;
         } else {
-            lines = [
-                { summary, account: '6602 管理费用',                        debit: amount.toFixed(2), credit: '' },
-                { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: '',              credit: amount.toFixed(2) }
-            ];
+            // ── 降级：使用内置默认分录 ─────────────────────────────────
+            const methods = JSON.parse(sessionStorage.getItem('ConfigPaymentMethods') || '[]');
+            const pm = methods.find(m => m.subjectCode && m.subjectName) || { subjectCode: '1002', subjectName: '银行存款' };
+            if (type === 'AR') {
+                lines = [
+                    { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: amount.toFixed(2), credit: '' },
+                    { summary, account: '1122 应收账款',                        debit: '',              credit: amount.toFixed(2) }
+                ];
+            } else if (type === 'AP') {
+                lines = [
+                    { summary, account: '2202 应付账款',                        debit: amount.toFixed(2), credit: '' },
+                    { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: '',              credit: amount.toFixed(2) }
+                ];
+            } else {
+                lines = [
+                    { summary, account: '6602 管理费用',                        debit: amount.toFixed(2), credit: '' },
+                    { summary, account: pm.subjectCode + ' ' + pm.subjectName, debit: '',              credit: amount.toFixed(2) }
+                ];
+            }
         }
 
         voucherId = _woGenerateVoucherId(voucherPrefix);

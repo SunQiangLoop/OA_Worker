@@ -36,21 +36,21 @@
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">挂帐管理</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('SettlementWaybill', this)">运单挂帐</div>
-                <div class="sub-menu-item" onclick="loadContent('AbnormalManagement', this)">异动挂账</div>
+                <!-- <div class="sub-menu-item" onclick="loadContent('AbnormalManagement', this)">异动挂账</div>
                 <div class="sub-menu-item" onclick="loadContent('ShuttleBatchAccrual', this)">短驳批次挂帐</div>
                 <div class="sub-menu-item" onclick="loadContent('DepartureBatchAccrual', this)">发车批次挂账</div>
                 <div class="sub-menu-item" onclick="loadContent('ArrivalBatchAccrual', this)">到车批次挂账</div>
                 <div class="sub-menu-item" onclick="loadContent('DeliveryBatchAccrual', this)">送货批次挂账</div>
-                <div class="sub-menu-item" onclick="loadContent('PickupBatchAccrual', this)">提货批次挂账</div>
+                <div class="sub-menu-item" onclick="loadContent('PickupBatchAccrual', this)">提货批次挂账</div> -->
             </div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">对账管理</div>
             <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('ReconSite', this)">网点对账</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconCustomer', this)">客户对账</div>
+                <!-- <div class="sub-menu-item" onclick="loadContent('ReconSite', this)">网点对账</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconCarrier', this)">承运商对账</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconDriver', this)">司机对账</div>
-                <div class="sub-menu-item" onclick="loadContent('ReconDiffHandle', this)">对账差异处理</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconDiffHandle', this)">对账差异处理</div> -->
             </div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应收管理</div>
@@ -171,7 +171,20 @@
             <div class="menu-item" onclick="loadContent('PaymentMethodConfig', this)">收支方式配置</div>
         </div>
 
-        <div class="content-area" id="content-area">
+        <div class="content-wrapper">
+            <div class="tab-bar" id="tab-bar">
+                <div class="tab-list" id="tab-list"></div>
+                <div class="tab-bar-actions">
+                    <button class="tab-dropdown-btn" id="tab-dropdown-btn" onclick="toggleTabDropdown(event)" title="标签操作">▼</button>
+                    <div class="tab-dropdown-menu" id="tab-dropdown-menu">
+                        <div class="tab-dropdown-item" onclick="tabCloseAll()">关闭全部</div>
+                        <div class="tab-dropdown-item" onclick="tabCloseOthers()">关闭其他页</div>
+                        <div class="tab-dropdown-item" onclick="tabCloseCurrent()">关闭当前页</div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-area" id="content-area">
+            </div>
         </div>
     </div>
 

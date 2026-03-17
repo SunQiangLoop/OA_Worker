@@ -61,7 +61,16 @@ function getModuleName(code) {
         FinanceOpeningBalance: "期初余额录入",
         Permission: "权限管理",
         DriverProfileDetail: "司机档案详情",
-
+        ARWriteOff: "应收核销",
+        APWriteOff: "应付核销",
+        ExpenseWriteOff: "报销核销",
+        VoucherDetail: "凭证详情",
+        VoucherQueryPrint: "凭证打印",
+        ReconDetail: "对账详情",
+        ReconSiteDetail: "网点对账详情",
+        EngineTemplate: "引擎模板",
+        EngineMapping: "科目映射",
+        ARAgeAnalysis: "账龄分析",
     };
     return names[code] || "未知模块";
 }
@@ -495,6 +504,112 @@ if (typeof initDemoFinanceData === "function") {
     initDemoFinanceData();
 }
 
+// =========================================================================
+// 标签页管理器 (Tab Manager)
+// =========================================================================
+var _tabList = [];       // [{code: 'Dashboard', name: '首页'}, ...]
+var _activeTabCode = null;
+
+/** 渲染标签栏 DOM */
+function renderTabBar() {
+    var tabListEl = document.getElementById('tab-list');
+    if (!tabListEl) return;
+
+    tabListEl.innerHTML = _tabList.map(function(tab) {
+        var isActive = tab.code === _activeTabCode;
+        var closeBtn = tab.code !== 'Dashboard'
+            ? '<button class="tab-close" onclick="event.stopPropagation(); tabClose(\'' + tab.code + '\')" title="关闭">×</button>'
+            : '';
+        return '<div class="tab-item' + (isActive ? ' active' : '') + '" onclick="tabSwitch(\'' + tab.code + '\')">'
+            + '<span>' + tab.name + '</span>'
+            + closeBtn
+            + '</div>';
+    }).join('');
+}
+
+/** 添加或激活标签 */
+function addOrActivateTab(code) {
+    var name = getModuleName(code);
+    if (name === '未知模块') name = code;
+
+    var existing = null;
+    for (var i = 0; i < _tabList.length; i++) {
+        if (_tabList[i].code === code) { existing = _tabList[i]; break; }
+    }
+    if (!existing) {
+        _tabList.push({ code: code, name: name });
+    }
+    _activeTabCode = code;
+    renderTabBar();
+}
+
+/** 切换到指定标签（点击标签时调用） */
+function tabSwitch(code) {
+    loadContent(code);
+}
+
+/** 关闭指定标签 */
+function tabClose(code) {
+    if (code === 'Dashboard') return;
+    var idx = -1;
+    for (var i = 0; i < _tabList.length; i++) {
+        if (_tabList[i].code === code) { idx = i; break; }
+    }
+    if (idx === -1) return;
+    _tabList.splice(idx, 1);
+
+    if (_activeTabCode === code) {
+        // 跳到相邻标签
+        var newIdx = Math.min(idx, _tabList.length - 1);
+        _activeTabCode = _tabList[newIdx].code;
+        loadContent(_activeTabCode);
+    } else {
+        renderTabBar();
+    }
+}
+
+/** 关闭全部（保留首页） */
+function tabCloseAll() {
+    _tabList = [{ code: 'Dashboard', name: '首页' }];
+    _activeTabCode = 'Dashboard';
+    loadContent('Dashboard');
+    closeTabDropdown();
+}
+
+/** 关闭其他页 */
+function tabCloseOthers() {
+    _tabList = _tabList.filter(function(t) {
+        return t.code === _activeTabCode || t.code === 'Dashboard';
+    });
+    renderTabBar();
+    closeTabDropdown();
+}
+
+/** 关闭当前页 */
+function tabCloseCurrent() {
+    var code = _activeTabCode;
+    closeTabDropdown();
+    tabClose(code);
+}
+
+/** 切换下拉菜单显示 */
+function toggleTabDropdown(event) {
+    event.stopPropagation();
+    var menu = document.getElementById('tab-dropdown-menu');
+    if (menu) menu.classList.toggle('open');
+}
+
+/** 关闭下拉菜单 */
+function closeTabDropdown() {
+    var menu = document.getElementById('tab-dropdown-menu');
+    if (menu) menu.classList.remove('open');
+}
+
+// 点击页面其他区域关闭下拉菜单
+document.addEventListener('click', function() {
+    closeTabDropdown();
+});
+
 /**
  * 加载内容到内容区，并更新菜单激活状态
  */
@@ -509,6 +624,9 @@ function loadContent(moduleCode, element = null) {
     }
 
     window.g_currentModule = moduleCode;
+
+    // 注册/激活标签页
+    addOrActivateTab(moduleCode);
 
     allItems.forEach((item) => item.classList.remove("active"));
 
@@ -1009,49 +1127,59 @@ function loadContent(moduleCode, element = null) {
 	        // 1. 初始化数据
 	        let waybills = JSON.parse(sessionStorage.getItem("BizWaybills"));
 
-	        // 运单挂账表头字段（按用户给定字段补齐）
+	        // 运单挂账表头字段
 	        const accrualColumns = [
-	            { key: "site", label: "网点" },
-	            { key: "waybillNo", label: "运单号", filter: { id: "wb_f_waybillNos", placeholder: "支持批量搜索" } },
-	            { key: "goodsNo", label: "货号", filter: { id: "wb_f_goodsNos", placeholder: "支持批量搜索" } },
-	            { key: "createdAt", label: "开单时间" },
-	            { key: "originStation", label: "发站" },
-	            { key: "destinationStation", label: "到站" },
-	            { key: "routeLine", label: "路由" },
-	            { key: "shipper", label: "发货人" },
-	            { key: "consignee", label: "收货人" },
-	            { key: "waybillAccrualStatus", label: "运单挂账状态", align: "center", filter: { id: "wb_f_waybill_status", type: "select", options: ["", "未挂账", "已挂账", "对账中", "已开票"] } },
-	            { key: "cashPay", label: "现付", align: "right" },
-	            { key: "cashPayAccrualStatus", label: "现付挂账状态", align: "center" },
-	            { key: "arrivePay", label: "到付", align: "right" },
-	            { key: "arrivePayAccrualStatus", label: "到付挂账状态", align: "center" },
-	            { key: "monthlyPay", label: "月结", align: "right" },
-	            { key: "monthlyPayAccrualStatus", label: "月结挂账状态", align: "center" },
-	            { key: "cashReturn", label: "现返", align: "right" },
-	            { key: "cashReturnAccrualStatus", label: "现返挂账状态", align: "center" },
-	            { key: "debtReturn", label: "欠返", align: "right" },
-	            { key: "debtReturnAccrualStatus", label: "欠返挂账状态", align: "center" },
-	            { key: "transferFeeTotal", label: "中转费合计", align: "right" },
-	            { key: "transferFeeAccrualStatus", label: "中转费挂账状态", align: "center" },
-	            { key: "codAmount", label: "代收货款", align: "right" },
-	            { key: "codAccrualStatus", label: "代收货款挂账状态", align: "center" },
-	            { key: "codServiceFee", label: "货款手续费", align: "right" },
-	            { key: "codServiceFeeAccrualStatus", label: "货款手续费挂账状态", align: "center" },
-	            { key: "pickupFee", label: "单票提货费", align: "right" },
-	            { key: "pickupFeeAccrualStatus", label: "单票提货费挂账状态", align: "center" },
-	            { key: "warehouseFee", label: "到站单票进仓费", align: "right" },
-	            { key: "warehouseFeeAccrualStatus", label: "到站单票进仓费挂账状态", align: "center" },
-	            { key: "advanceFee", label: "开单垫付费", align: "right" },
-	            { key: "advanceFeeAccrualStatus", label: "垫付费挂账状态", align: "center" },
-	            { key: "collectFreight", label: "代收运费", align: "right" },
-	            { key: "collectFreightAccrualStatus", label: "代收运费挂账状态", align: "center" },
-	            { key: "remark", label: "运单备注" },
-	            { key: "flag", label: "运单标识" },
-	            { key: "invoiceStatus", label: "开票状态", align: "center" },
+	            // ── 基本信息 ──
+	            { key: "site",                  label: "网点" },
+	            { key: "waybillNo",             label: "运单号",     filter: { id: "wb_f_waybillNos", placeholder: "支持批量搜索" } },
+	            { key: "customerName",          label: "客户名称" },
+	            { key: "goodsNo",               label: "司机单号",   filter: { id: "wb_f_goodsNos", placeholder: "支持批量搜索" } },
+	            { key: "createdAt",             label: "开单时间" },
+	            { key: "loadAt",                label: "装车时间" },
+	            { key: "unloadAt",              label: "卸车时间" },
+	            { key: "finishAt",              label: "完成时间" },
+	            // ── 路线 ──
+	            { key: "originStation",         label: "发站" },
+	            { key: "destinationStation",    label: "到站" },
+	            { key: "routeLine",             label: "路由" },
+	            // ── 货物 ──
+	            { key: "chargeType",            label: "计费方式",   align: "center" },
+	            { key: "goods",                 label: "货物品名" },
+	            { key: "weightVolume",          label: "重量/体积" },
+	            // ── 承运 ──
+	            { key: "plate",                 label: "车牌号" },
+	            { key: "driver",                label: "司机" },
+	            // ── 人员 ──
+	            { key: "shipper",               label: "发货人" },
+	            { key: "consignee",             label: "收货人" },
+	            // ── 状态 ──
+	            { key: "waybillAccrualStatus",  label: "运单挂账状态", align: "center", filter: { id: "wb_f_waybill_status", type: "select", options: ["", "未挂账", "已挂账", "对账中", "已结算"] } },
+	            // ── 费用 ──
+	            { key: "cashPay",               label: "现付",       align: "right" },
+	            { key: "cashPayAccrualStatus",  label: "现付状态",   align: "center" },
+	            { key: "arrivePay",             label: "到付",       align: "right" },
+	            { key: "arrivePayAccrualStatus",label: "到付状态",   align: "center" },
+	            { key: "monthlyPay",            label: "月结",       align: "right" },
+	            { key: "monthlyPayAccrualStatus",label: "月结状态",  align: "center" },
+	            { key: "cashReturn",            label: "现返",       align: "right" },
+	            { key: "cashReturnAccrualStatus",label: "现返状态",  align: "center" },
+	            { key: "debtReturn",            label: "欠返",       align: "right" },
+	            { key: "debtReturnAccrualStatus",label: "欠返状态",  align: "center" },
+	            { key: "pickupFee",             label: "单票提货费", align: "right" },
+	            // ── 税务 ──
+	            { key: "taxRate",               label: "税率",       align: "center" },
+	            { key: "taxAmount",             label: "税额",       align: "right" },
+	            // ── 付款 ──
+	            { key: "payStatus",             label: "付款状态",   align: "center" },
+	            { key: "paidAmount",            label: "已付金额",   align: "right" },
+	            { key: "paidAt",                label: "付款时间" },
+	            // ── 其他 ──
+	            { key: "remark",                label: "运单备注" },
+	            { key: "invoiceStatus",         label: "开票状态",   align: "center" },
 	        ];
 
-	        const excelWaybills =             [
-	                        {
+	        const excelWaybills = [
+                        {
                                     "seq": "1",
                                     "orderNo": "YD2601131639000125",
                                     "creator": "余风华/13337717906/镇江天地沃华物流有限公司",
@@ -1070,10 +1198,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "338.3",
                                     "driver": "房毛斗/17280055706",
                                     "plate": "豫NN2450",
-                                    "goodsPack": "配件/20",
+                                    "goodsPack": "配件/20托",
                                     "weightVolume": "32000.0/120.0",
-                                    "origin": "徐州徐工玖行能源科技有限公司",
-                                    "destination": "赤岸镇",
+                                    "chargeType": "按车计费",
+                                    "origin": "江苏省 徐州市 铜山区 棠张镇 徐工玖行能源科技有限公司",
+                                    "destination": "浙江省 金华市 义乌市 赤岸镇 工业园区18号",
                                     "paidAmount": "5300",
                                     "paidAt": "2026-01-15 17:33:43",
                         },
@@ -1096,10 +1225,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "127.66",
                                     "driver": "平杰/18755497760",
                                     "plate": "皖CC9056",
-                                    "goodsPack": "配件/18",
+                                    "goodsPack": "机械配件/18件",
                                     "weightVolume": "8000.0/18.0",
-                                    "origin": "安徽卓基工业设备有限公司",
-                                    "destination": "无锡市标准件厂有限公司",
+                                    "chargeType": "按吨计费",
+                                    "origin": "安徽省 合肥市 包河区 骆岗街道 安徽卓基工业设备有限公司",
+                                    "destination": "江苏省 无锡市 惠山区 玉祁街道 无锡市标准件厂有限公司",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-14 17:41:07",
                         },
@@ -1122,10 +1252,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "191.49",
                                     "driver": "李春阳/18019838831",
                                     "plate": "皖M4C508",
-                                    "goodsPack": "饮品/2400",
+                                    "goodsPack": "饮品/2400件",
                                     "weightVolume": "33.2/0.001",
-                                    "origin": "今麦郎饮品(天长)有限公司",
-                                    "destination": "倍乐生商贸公司物流中心",
+                                    "chargeType": "按件计费",
+                                    "origin": "安徽省 滁州市 天长市 经济开发区 今麦郎饮品(天长)有限公司",
+                                    "destination": "江苏省 南京市 浦口区 商贸物流园 倍乐生商贸公司物流中心",
                                     "paidAmount": "3000",
                                     "paidAt": "2026-01-15 15:15:05",
                         },
@@ -1148,10 +1279,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "134.04",
                                     "driver": "杨兆拍/17351883288",
                                     "plate": "苏BY7552",
-                                    "goodsPack": "饮品/2400",
+                                    "goodsPack": "饮品/2400件",
                                     "weightVolume": "33.2/0.001",
-                                    "origin": "今麦郎饮品(天长)有限公司",
-                                    "destination": "长泾镇",
+                                    "chargeType": "按件计费",
+                                    "origin": "安徽省 滁州市 天长市 经济开发区 今麦郎饮品(天长)有限公司",
+                                    "destination": "江苏省 无锡市 江阴市 长泾镇 华阳物流园2号库",
                                     "paidAmount": "2100",
                                     "paidAt": "2026-01-15 15:15:06",
                         },
@@ -1174,10 +1306,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "127.66",
                                     "driver": "蔡银刚/18119566359",
                                     "plate": "皖LE8339",
-                                    "goodsPack": "电器/500",
+                                    "goodsPack": "家用电器/500件",
                                     "weightVolume": "12000.0/60.0",
-                                    "origin": "安徽省 合肥市 长丰县 岗集镇合淮路8号中国南山·合肥智慧物流港",
-                                    "destination": "江苏省 苏州市 常熟市 人和路10号常熟宥望电商智能交付中心",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 长丰县 岗集镇 合淮路8号中国南山·合肥智慧物流港",
+                                    "destination": "江苏省 苏州市 常熟市 东南街道 人和路10号常熟宥望电商智能交付中心",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-16 17:28:37",
                         },
@@ -1200,10 +1333,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "82.98",
                                     "driver": "杨占杰/13913942613",
                                     "plate": "苏AF6661",
-                                    "goodsPack": "电器/500",
+                                    "goodsPack": "家用电器/500件",
                                     "weightVolume": "12000.0/60.0",
-                                    "origin": "安徽省 合肥市 长丰县 岗集镇合淮路8号中国南山·合肥智慧物流港",
-                                    "destination": "江苏省 南京市 栖霞区 龙潭街道港城路2号蔚然(南京)动力科技有限公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 长丰县 岗集镇 合淮路8号中国南山·合肥智慧物流港",
+                                    "destination": "江苏省 南京市 栖霞区 龙潭街道 港城路2号蔚然(南京)动力科技有限公司",
                                     "paidAmount": "1300",
                                     "paidAt": "2026-01-16 17:28:44",
                         },
@@ -1226,10 +1360,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "430.85",
                                     "driver": "潘庆和/13206345218",
                                     "plate": "鲁AT2888",
-                                    "goodsPack": "电子产品/60",
+                                    "goodsPack": "电子产品/60件",
                                     "weightVolume": "28000.0/0.001",
-                                    "origin": "德阳南服务区(京昆高速北京方向)225",
-                                    "destination": "安徽金瑞玻纤金瑞玻纤厂288",
+                                    "chargeType": "按吨计费",
+                                    "origin": "四川省 德阳市 旌阳区 京昆高速南服务区(北京方向) 225号",
+                                    "destination": "安徽省 铜陵市 铜陵经济技术开发区 金瑞玻纤路288号 安徽金瑞玻纤厂",
                                     "paidAmount": "6750",
                                     "paidAt": "2026-01-15 17:33:13",
                         },
@@ -1252,10 +1387,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "424.47",
                                     "driver": "孔令松/15327502779",
                                     "plate": "鄂H06D10",
-                                    "goodsPack": "化肥/1",
-                                    "weightVolume": "0.0/0.001",
-                                    "origin": "湖北凯龙楚兴化工集团有限公司",
-                                    "destination": "金华瑞尔生物科技有限公司",
+                                    "goodsPack": "化肥/整车",
+                                    "weightVolume": "28000.0/90.0",
+                                    "chargeType": "按车计费",
+                                    "origin": "湖北省 荆门市 钟祥市 工业园区 湖北凯龙楚兴化工集团有限公司",
+                                    "destination": "浙江省 金华市 金东区 多湖街道 金华瑞尔生物科技有限公司",
                                     "paidAmount": "6650",
                                     "paidAt": "2026-01-16 17:28:48",
                         },
@@ -1278,10 +1414,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "114.89",
                                     "driver": "王元敏/15056735592",
                                     "plate": "皖LD0889",
-                                    "goodsPack": "木托盘/750",
+                                    "goodsPack": "木托盘/750件",
                                     "weightVolume": "27.0/160.0",
-                                    "origin": "常州市杰隆工具有限公司",
-                                    "destination": "远洋物流四期肥东物流园",
+                                    "chargeType": "按方计费",
+                                    "origin": "江苏省 常州市 武进区 南夏墅工业区 常州市杰隆工具有限公司",
+                                    "destination": "安徽省 合肥市 肥东县 店埠镇 远洋物流四期肥东物流园",
                                     "paidAmount": "1800",
                                     "paidAt": "2026-01-14 17:41:21",
                         },
@@ -1304,10 +1441,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "134.47",
                                     "driver": "闫爱斌/15562668016",
                                     "plate": "鲁AU6678",
-                                    "goodsPack": "消泡剂/28",
+                                    "goodsPack": "消泡剂/28桶",
                                     "weightVolume": "28000.0/40.0",
-                                    "origin": "仪征冠宏化工研究有限公司",
-                                    "destination": "济南圣泉环保科技有限公司",
+                                    "chargeType": "按吨计费",
+                                    "origin": "江苏省 扬州市 仪征市 化工园区 仪征冠宏化工研究有限公司",
+                                    "destination": "山东省 济南市 历城区 港沟街道 济南圣泉环保科技有限公司",
                                     "paidAmount": "2000",
                                     "paidAt": "2026-01-15 15:15:07",
                         },
@@ -1330,10 +1468,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "223.4",
                                     "driver": "谢永化/13979421476",
                                     "plate": "赣FF1760",
-                                    "goodsPack": "配件/20",
+                                    "goodsPack": "生物制品/20托",
                                     "weightVolume": "32000.0/120.0",
-                                    "origin": "江西翼邦生物技术有限公司",
-                                    "destination": "揭阳高新区",
+                                    "chargeType": "按车计费",
+                                    "origin": "江西省 吉安市 吉安县 工业园区 江西翼邦生物技术有限公司",
+                                    "destination": "广东省 揭阳市 揭阳高新技术产业开发区 空港经济区物流中心",
                                     "paidAmount": "3500",
                                     "paidAt": "2026-01-15 15:15:13",
                         },
@@ -1356,10 +1495,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "114.89",
                                     "driver": "邓二斯麻乃/15809306991",
                                     "plate": "甘N74881",
-                                    "goodsPack": "木托盘/750",
+                                    "goodsPack": "木托盘/750件",
                                     "weightVolume": "27.0/160.0",
-                                    "origin": "新北区蒲田农场",
-                                    "destination": "远洋物流四期肥东物流园",
+                                    "chargeType": "按方计费",
+                                    "origin": "江苏省 常州市 新北区 春江镇 蒲田农场工业园区",
+                                    "destination": "安徽省 合肥市 肥东县 店埠镇 远洋物流四期肥东物流园",
                                     "paidAmount": "1800",
                                     "paidAt": "2026-01-14 17:41:23",
                         },
@@ -1382,10 +1522,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "861.7",
                                     "driver": "翁伟/15838622789",
                                     "plate": "豫PR9151",
-                                    "goodsPack": "海绵卷/135",
+                                    "goodsPack": "海绵卷/135卷",
                                     "weightVolume": "4.8/138.0",
-                                    "origin": "安徽财纳伽善科技有限公司",
-                                    "destination": "广西中投木业有限责任公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 庐江县 白湖工业区 安徽财纳伽善科技有限公司",
+                                    "destination": "广西壮族自治区 桂林市 平乐县 平乐镇 广西中投木业有限责任公司",
                                     "paidAmount": "13500",
                                     "paidAt": "2026-01-16 17:28:53",
                         },
@@ -1408,10 +1549,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "108.51",
                                     "driver": "徐长奎/15020105580",
                                     "plate": "鲁RV5528",
-                                    "goodsPack": "配件/18",
+                                    "goodsPack": "机械配件/18件",
                                     "weightVolume": "10000.0/25.0",
-                                    "origin": "江苏新众亚智能物流装备制造有限公司",
-                                    "destination": "江苏天成科技集团(南通饲料有限公司)",
+                                    "chargeType": "按吨计费",
+                                    "origin": "江苏省 南通市 海安市 工业园区 江苏新众亚智能物流装备制造有限公司",
+                                    "destination": "江苏省 南通市 如皋市 长江镇 江苏天成科技集团饲料有限公司",
                                     "paidAmount": "1700",
                                     "paidAt": "2026-01-15 15:16:05",
                         },
@@ -1434,10 +1576,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "287.23",
                                     "driver": "岳喜友/15855098070",
                                     "plate": "皖M97863",
-                                    "goodsPack": "托盘纸/500",
+                                    "goodsPack": "托盘纸/500件",
                                     "weightVolume": "20.0/160.0",
-                                    "origin": "安徽永盛印务科技有限公司-南门",
-                                    "destination": "中国邮政速递转运中心",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 经济技术开发区 翠庭路 安徽永盛印务科技有限公司南门",
+                                    "destination": "安徽省 合肥市 包河区 金寨南路 中国邮政速递合肥转运中心",
                                     "paidAmount": "4500",
                                     "paidAt": "2026-01-14 17:41:27",
                         },
@@ -1460,10 +1603,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "84.04",
                                     "driver": "曹新山/18265821116",
                                     "plate": "鲁RJ5015",
-                                    "goodsPack": "消泡剂/28",
+                                    "goodsPack": "消泡剂/28桶",
                                     "weightVolume": "28000.0/75.0",
-                                    "origin": "江苏巴德聚氨酯股份有限公司",
-                                    "destination": "仪征冠宏化工研究有限公司",
+                                    "chargeType": "按吨计费",
+                                    "origin": "江苏省 南京市 栖霞区 经济开发区 江苏巴德聚氨酯股份有限公司",
+                                    "destination": "江苏省 扬州市 仪征市 化工园区 仪征冠宏化工研究有限公司",
                                     "paidAmount": "1250",
                                     "paidAt": "2026-01-14 17:41:35",
                         },
@@ -1486,10 +1630,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "140.43",
                                     "driver": "付成勇/13856999596",
                                     "plate": "皖AC1306",
-                                    "goodsPack": "电器/1000",
+                                    "goodsPack": "家用电器/1000件",
                                     "weightVolume": "30.0/130.0",
-                                    "origin": "安徽省 合肥市 肥西县 美的安得物流安得智联皖北分公司",
-                                    "destination": "江苏省南京市栖霞区龙潭街道港城路2号蔚然(南京)动力科技有限公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 肥西县 桃花工业园 美的安得物流安得智联皖北分公司",
+                                    "destination": "江苏省 南京市 栖霞区 龙潭街道 港城路2号蔚然(南京)动力科技有限公司",
                                     "paidAmount": "2200",
                                     "paidAt": "2026-01-16 17:28:54",
                         },
@@ -1512,10 +1657,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "210.64",
                                     "driver": "王翔/18455058005",
                                     "plate": "苏A4B002",
-                                    "goodsPack": "配件/1668",
+                                    "goodsPack": "文具配件/1668件",
                                     "weightVolume": "8000.0/53.0",
-                                    "origin": "天长市嘉丰美术用品有限公司",
-                                    "destination": "上海剑成供应链科技有限公司",
+                                    "chargeType": "按件计费",
+                                    "origin": "安徽省 滁州市 天长市 开发区 天长市嘉丰美术用品有限公司",
+                                    "destination": "上海市 浦东新区 外高桥保税区 上海剑成供应链科技有限公司",
                                     "paidAmount": "3300",
                                     "paidAt": "2026-01-14 17:41:37",
                         },
@@ -1538,10 +1684,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "204.26",
                                     "driver": "曹子柱/13634400808",
                                     "plate": "黑ACM678",
-                                    "goodsPack": "木托盘/750",
+                                    "goodsPack": "木托盘/750件",
                                     "weightVolume": "27.0/160.0",
-                                    "origin": "沈阳惠众环通包装股份有限公司",
-                                    "destination": "予智(哈尔滨)供应链管理有限公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "辽宁省 沈阳市 于洪区 于洪工业区 沈阳惠众环通包装股份有限公司",
+                                    "destination": "黑龙江省 哈尔滨市 道里区 工业大道 予智(哈尔滨)供应链管理有限公司",
                                     "paidAmount": "3200",
                                     "paidAt": "2026-01-15 17:34:24",
                         },
@@ -1564,10 +1711,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "300",
                                     "driver": "王广战/18751601622",
                                     "plate": "苏CPG169",
-                                    "goodsPack": "电缆/10",
+                                    "goodsPack": "电力电缆/10盘",
                                     "weightVolume": "28000.0/70.0",
-                                    "origin": "江苏江扬电缆有限公司",
-                                    "destination": "创园大道",
+                                    "chargeType": "按吨计费",
+                                    "origin": "江苏省 扬州市 江都区 真武镇 江苏江扬电缆有限公司",
+                                    "destination": "安徽省 合肥市 新站综合开发试验区 创园大道物流园区",
                                     "paidAmount": "4700",
                                     "paidAt": "2026-01-16 17:23:54",
                         },
@@ -1590,10 +1738,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "352.81",
                                     "driver": "罗香颖/18977821852",
                                     "plate": "桂MF2892",
-                                    "goodsPack": "三聚磷酸钠/1",
-                                    "weightVolume": "35000.0/0.001",
-                                    "origin": "六塘工业园六塘工业园兴发厂",
-                                    "destination": "东莞市嘉吉实业有限公司",
+                                    "goodsPack": "三聚磷酸钠/整车",
+                                    "weightVolume": "35000.0/80.0",
+                                    "chargeType": "按车计费",
+                                    "origin": "广西壮族自治区 来宾市 兴宾区 六塘镇 六塘工业园兴发化工厂",
+                                    "destination": "广东省 东莞市 南城区 宏远路 东莞市嘉吉实业有限公司",
                                     "paidAmount": "5075",
                                     "paidAt": "2026-01-17 17:50:26",
                         },
@@ -1613,13 +1762,14 @@ function loadContent(moduleCode, element = null) {
                                     "finishAt": "2026-01-17 13:44:04",
                                     "freightAmount": "5000",
                                     "taxRate": "6%",
-                                    "taxAmount": "319.14999999999998",
+                                    "taxAmount": "319.15",
                                     "driver": "王成强/13921777996",
                                     "plate": "苏CV3966",
-                                    "goodsPack": "配件/20",
+                                    "goodsPack": "配件/20托",
                                     "weightVolume": "32000.0/120.0",
-                                    "origin": "徐州徐工玖行能源科技有限公司",
-                                    "destination": "赤岸镇",
+                                    "chargeType": "按车计费",
+                                    "origin": "江苏省 徐州市 铜山区 棠张镇 徐工玖行能源科技有限公司",
+                                    "destination": "浙江省 金华市 义乌市 赤岸镇 工业园区18号",
                                     "paidAmount": "5000",
                                     "paidAt": "2026-01-17 17:50:27",
                         },
@@ -1642,10 +1792,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "734.04",
                                     "driver": "周生/18566580964",
                                     "plate": "渝DB9836",
-                                    "goodsPack": "配件/20",
+                                    "goodsPack": "配件/20托",
                                     "weightVolume": "32000.0/120.0",
-                                    "origin": "德阳欣旺达新能源有限公司",
-                                    "destination": "丰巢快递柜(飞毛腿6号宿舍楼负一楼4号丰巢柜)",
+                                    "chargeType": "按车计费",
+                                    "origin": "四川省 德阳市 旌阳区 经济开发区 德阳欣旺达新能源有限公司",
+                                    "destination": "广东省 深圳市 龙华区 清湖街道 飞毛腿园区6号楼丰巢快递柜",
                                     "paidAmount": "11500",
                                     "paidAt": "2026-01-17 17:50:32",
                         },
@@ -1668,10 +1819,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "300",
                                     "driver": "刘庆昌/13585382618",
                                     "plate": "苏CLD796",
-                                    "goodsPack": "电缆/10",
+                                    "goodsPack": "电力电缆/10盘",
                                     "weightVolume": "28000.0/70.0",
-                                    "origin": "江苏江扬电缆有限公司",
-                                    "destination": "创园大道",
+                                    "chargeType": "按吨计费",
+                                    "origin": "江苏省 扬州市 江都区 真武镇 江苏江扬电缆有限公司",
+                                    "destination": "安徽省 合肥市 新站综合开发试验区 创园大道物流园区",
                                     "paidAmount": "4700",
                                     "paidAt": "2026-01-16 17:23:55",
                         },
@@ -1694,10 +1846,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "255.32",
                                     "driver": "周玉清/13235347968",
                                     "plate": "鲁NE3553",
-                                    "goodsPack": "工业品/6000",
+                                    "goodsPack": "工业品/6000件",
                                     "weightVolume": "28000.0/150.0",
-                                    "origin": "科冠工业集团",
-                                    "destination": "山东欧曼汽车环保科技有限公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "江苏省 苏州市 昆山市 开发区 科冠工业集团有限公司",
+                                    "destination": "山东省 济南市 历城区 仙台街道 山东欧曼汽车环保科技有限公司",
                                     "paidAmount": "4000",
                                     "paidAt": "2026-01-16 17:17:35",
                         },
@@ -1720,10 +1873,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "31.91",
                                     "driver": "王东/19855005951",
                                     "plate": "苏AE2028",
-                                    "goodsPack": "配件/12",
+                                    "goodsPack": "机械配件/12件",
                                     "weightVolume": "8000.0/25.0",
-                                    "origin": "安徽卓基工业设备有限公司",
-                                    "destination": "南京布雷博制动系统有限公司",
+                                    "chargeType": "按吨计费",
+                                    "origin": "安徽省 合肥市 包河区 骆岗街道 安徽卓基工业设备有限公司",
+                                    "destination": "江苏省 南京市 江宁区 滨江开发区 南京布雷博制动系统有限公司",
                                     "paidAmount": "500",
                                     "paidAt": "2026-01-16 11:07:10",
                         },
@@ -1746,10 +1900,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "342.73",
                                     "driver": "韦远锋/13737952533",
                                     "plate": "桂BL0969",
-                                    "goodsPack": "三聚磷酸钠/1",
-                                    "weightVolume": "35000.0/0.001",
-                                    "origin": "六塘工业园六塘工业园兴发厂",
-                                    "destination": "东莞市嘉吉实业有限公司",
+                                    "goodsPack": "三聚磷酸钠/整车",
+                                    "weightVolume": "35000.0/80.0",
+                                    "chargeType": "按车计费",
+                                    "origin": "广西壮族自治区 来宾市 兴宾区 六塘镇 六塘工业园兴发化工厂",
+                                    "destination": "广东省 东莞市 南城区 宏远路 东莞市嘉吉实业有限公司",
                                     "paidAmount": "4930",
                                     "paidAt": "2026-01-17 17:50:29",
                         },
@@ -1772,10 +1927,11 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "331.91",
                                     "driver": "权良波/19965556276",
                                     "plate": "皖N73639",
-                                    "goodsPack": "海绵卷/135",
+                                    "goodsPack": "海绵卷/135卷",
                                     "weightVolume": "4.8/138.0",
-                                    "origin": "安徽财纳伽善科技有限公司",
-                                    "destination": "温州正森环保科技有限公司",
+                                    "chargeType": "按方计费",
+                                    "origin": "安徽省 合肥市 庐江县 白湖工业区 安徽财纳伽善科技有限公司",
+                                    "destination": "浙江省 温州市 龙湾区 永中街道 温州正森环保科技有限公司",
                                     "paidAmount": "5200",
                                     "paidAt": "2026-01-16 17:24:20",
                         },
@@ -1798,14 +1954,14 @@ function loadContent(moduleCode, element = null) {
                                     "taxAmount": "134.04",
                                     "driver": "张顺民/15056111618",
                                     "plate": "皖M7B225",
-                                    "goodsPack": "化肥/1",
-                                    "weightVolume": "0.0/0.001",
-                                    "origin": "锦泰生物科技(安徽)有限公司",
-                                    "destination": "江苏福齐天生物科技有限公司",
+                                    "goodsPack": "化肥/整车",
+                                    "weightVolume": "28000.0/90.0",
+                                    "chargeType": "按车计费",
+                                    "origin": "安徽省 合肥市 经济技术开发区 柏堰科技园 锦泰生物科技(安徽)有限公司",
+                                    "destination": "江苏省 盐城市 射阳县 临海镇 江苏福齐天生物科技有限公司",
                                     "paidAmount": "2100",
                                     "paidAt": "2026-01-16 17:24:19",
                         },
-                        
             ];
 
         // 强制重置数据以显示乐享模板字段
@@ -1944,33 +2100,115 @@ function loadContent(moduleCode, element = null) {
 	            };
 	        }
 
-	        if (!window.settlementWaybillToolbarSettle) {
-	            window.settlementWaybillToolbarSettle = function () {
-	                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
-	                if (!checked.length) return alert("请先勾选需要挂账的运单。");
-	                if (checked.length > 1) return alert("当前演示版一次只支持对单票挂账，请逐票操作。");
-	                const id = checked[0].value;
-	                if (typeof window.settleWaybill === "function") {
-	                    window.settleWaybill(id);
-	                } else {
-	                    alert("未找到挂账逻辑 (settleWaybill)。");
-	                }
-	            };
-	        }
+        if (!window.settlementWaybillToolbarSettle) {
+            window.settlementWaybillToolbarSettle = function () {
+                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+                if (!checked.length) return alert("请先勾选需要挂账的运单。");
+                const ids = checked.map(cb => cb.value);
+                if (typeof window.batchSettleWaybills === "function") {
+                    window.batchSettleWaybills(ids);
+                } else {
+                    alert("未找到挂账逻辑 (batchSettleWaybills)。");
+                }
+            };
+        }
 
-		        if (!window.settlementWaybillToolbarCancel) {
-		            window.settlementWaybillToolbarCancel = function () {
-		                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
-		                if (!checked.length) return alert("请先勾选需要取消挂账的运单。");
-		                if (checked.length > 1) return alert("当前演示版一次只支持对单票取消挂账，请逐票操作。");
-		                const id = checked[0].value;
-		                if (typeof window.cancelWaybill === "function") {
-		                    window.cancelWaybill(id);
-		                } else {
-		                    alert("未找到取消挂账逻辑 (cancelWaybill)。");
-		                }
-		            };
-		        }
+        if (!window.settlementWaybillToolbarCancel) {
+            window.settlementWaybillToolbarCancel = function () {
+                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+                if (!checked.length) return alert("请先勾选需要取消挂账的运单。");
+                const ids = checked.map(cb => cb.value);
+                if (typeof window.batchCancelWaybills === "function") {
+                    window.batchCancelWaybills(ids);
+                } else {
+                    alert("未找到取消挂账逻辑 (batchCancelWaybills)。");
+                }
+            };
+        }
+
+        if (!window.settlementWaybillCreateRecon) {
+            window.settlementWaybillCreateRecon = function () {
+                const checked = Array.from(document.querySelectorAll(".wb-check:checked"));
+                if (!checked.length) return alert("请先勾选需要发起对账的运单。");
+
+                // 读取运单数据
+                let waybills = JSON.parse(sessionStorage.getItem("BizWaybills")) || [];
+                const checkedIds = new Set(checked.map(cb => cb.value));
+
+                // 检查是否有运单已存在有效对账单（非已取消）
+                const alreadyInRecon = waybills.filter(w => checkedIds.has(w.id) && w.reconId && w.reconId !== '');
+                if (alreadyInRecon.length > 0) {
+                    const ids = alreadyInRecon.map(w => w.id).join('、');
+                    return alert(`⚠️ 不可重复生成对账单！\n以下运单已存在对账单，请勿重复操作：\n${ids}\n\n如需重新对账，请先在【客户对账】页面取消原对账单。`);
+                }
+
+                // 过滤已挂帐且未对账的运单
+                const toRecon = waybills.filter(w => checkedIds.has(w.id) && (w.status === '已挂帐' || w.status === '已挂账'));
+                if (!toRecon.length) return alert('勾选的运单中没有状态为【已挂帐】的运单，请先执行挂账操作。');
+
+                // 按客户分组（提取公司名，格式可能是"姓名/手机/公司名"）
+                const extractClient = (w) => {
+                    const raw = w.client || w.consignee || w.customerName || '未知客户';
+                    const parts = raw.split('/');
+                    return parts.length >= 3 ? parts[parts.length - 1].trim() : raw.trim();
+                };
+                const groups = {};
+                toRecon.forEach(w => {
+                    const clientKey = extractClient(w);
+                    if (!groups[clientKey]) groups[clientKey] = [];
+                    groups[clientKey].push(w);
+                });
+
+                // 生成对账单
+                const now = new Date();
+                const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+                const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+
+                let recons = JSON.parse(sessionStorage.getItem("CustomerRecons")) || [];
+                const newReconIds = [];
+                let reconIdx = recons.length + 1;
+
+                Object.keys(groups).forEach(client => {
+                    const items = groups[client];
+                    const reconId = `RC${dateStr}${timeStr}${String(reconIdx).padStart(3, '0')}`;
+                    reconIdx++;
+
+                    // 计算总金额
+                    const total = items.reduce((sum, w) => {
+                        const n = parseFloat((w.totalAmount || w.freightAmount || '0').toString().replace(/,/g, ''));
+                        return sum + (isFinite(n) ? n : 0);
+                    }, 0);
+                    const amountStr = '¥' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    recons.push({
+                        id: reconId,
+                        client: client,
+                        period: period,
+                        amount: amountStr,
+                        waybillCount: items.length,
+                        status: '待客户确认',
+                        createdAt: now.toISOString().slice(0, 10)
+                    });
+
+                    // 更新运单 reconId 并将状态改为"对账中"
+                    waybills = waybills.map(w => {
+                        if (items.find(it => it.id === w.id)) {
+                            return { ...w, reconId: reconId, status: '对账中' };
+                        }
+                        return w;
+                    });
+
+                    newReconIds.push(reconId);
+                });
+
+                sessionStorage.setItem("CustomerRecons", JSON.stringify(recons));
+                sessionStorage.setItem("BizWaybills", JSON.stringify(waybills));
+
+                alert(`✅ 对账单已生成！\n共创建 ${newReconIds.length} 张对账单：\n${newReconIds.join('\n')}\n\n即将跳转到客户对账页面。`);
+                loadContent('ReconCustomer');
+            };
+        }
 
 		        if (!window.settlementWaybillUpdateSelection) {
 		            window.settlementWaybillUpdateSelection = function () {
@@ -2061,60 +2299,52 @@ function loadContent(moduleCode, element = null) {
 	        };
 
 	        const decoratedWaybills = (Array.isArray(waybills) ? waybills : []).map((w, idx) => {
-	            const site = w && w.site ? w.site : (idx % 2 === 0 ? "专线A" : "专线B");
-	            const waybillNo = (w && (w.id || w.orderNo)) ? (w.id || w.orderNo) : "";
-	            const goodsNo = (w && (w.goodsNo || w.driverOrderNo)) ? (w.goodsNo || w.driverOrderNo) : "";
-	            const createdAt = (w && w.createdAt) ? w.createdAt : (w && w.bizDate ? w.bizDate : "");
-	            const originStation = w && w.origin ? w.origin : "";
-	            const destinationStation = w && w.destination ? w.destination : "";
-	            const routeLine = w && w.routeLine ? w.routeLine : (site === "专线A" ? "专线A->专线B" : "专线B->专线A");
-	            const shipper = w && w.shipper ? w.shipper : (w && w.creator ? (w.creator.split("/")[0] || "") : "");
-	            const consignee = w && w.consignee ? w.consignee : "";
-	            const waybillAccrualStatus = normalizeAccrualStatus(w && w.status ? w.status : "");
-
-	            const baseAmount = (w && (w.totalAmount || w.freightAmount || w.amount || w.paidAmount)) ? (w.totalAmount || w.freightAmount || w.amount || w.paidAmount) : "";
-	            const cashPay = formatMoney(baseAmount);
+	            const site             = w.site || (idx % 2 === 0 ? "专线A" : "专线B");
+	            const waybillNo        = w.id || w.orderNo || "";
+	            const goodsNo          = w.goodsNo || w.driverOrderNo || "";
+	            const createdAt        = w.createdAt || w.bizDate || "";
+	            const loadAt           = w.loadAt || "";
+	            const unloadAt         = w.unloadAt || "";
+	            const finishAt         = w.finishAt || "";
+	            const originStation    = w.origin || "";
+	            const destinationStation = w.destination || "";
+	            const routeLine        = w.routeLine || (originStation && destinationStation ? `${originStation.slice(0,6)} → ${destinationStation.slice(0,6)}` : (site === "专线A" ? "专线A→专线B" : "专线B→专线A"));
+	            // 客户名称：从 creator 字段提取公司名（格式：姓名/手机/公司名）
+	            const creatorParts     = (w.creator || w.client || "").split("/");
+	            const customerName     = creatorParts.length >= 3 ? creatorParts[creatorParts.length - 1].trim() : (w.client || "");
+	            const shipper          = w.shipper || creatorParts[0] || "";
+	            const consignee        = w.consignee || "";
+	            // 货物信息：goodsPack 格式 "品名/数量单位"
+	            const goodsPackParts   = (w.goodsPack || "").split("/");
+	            const goods            = goodsPackParts[0] || w.goods || "";
+	            const weightVolume     = w.weightVolume || "";
+	            const plate            = w.plate || "";
+	            const driver           = w.driver || "";
+	            const taxRate          = w.taxRate || "";
+	            const taxAmount        = w.taxAmount ? formatMoney(w.taxAmount) : "";
+	            const payStatus        = w.payStatus || w.auditInfo || "";
+	            const paidAmount       = w.paidAmount ? formatMoney(w.paidAmount) : "";
+	            const paidAt           = w.paidAt || "";
+	            const waybillAccrualStatus = normalizeAccrualStatus(w.status || "");
+	            const baseAmount       = w.totalAmount || w.freightAmount || w.amount || w.paidAmount || "";
+	            const cashPay          = formatMoney(baseAmount);
 	            const cashPayAccrualStatus = waybillAccrualStatus;
 
 	            return {
 	                ...w,
-	                site,
-	                waybillNo,
-	                goodsNo,
-	                createdAt,
-	                originStation,
-	                destinationStation,
-	                routeLine,
-	                shipper,
-	                consignee,
-	                waybillAccrualStatus,
-	                cashPay,
-	                cashPayAccrualStatus,
-	                arrivePay: "",
-	                arrivePayAccrualStatus: "",
-	                monthlyPay: "",
-	                monthlyPayAccrualStatus: "",
-	                cashReturn: "",
-	                cashReturnAccrualStatus: "",
-	                debtReturn: "",
-	                debtReturnAccrualStatus: "",
-	                transferFeeTotal: "",
-	                transferFeeAccrualStatus: "",
-	                codAmount: "",
-	                codAccrualStatus: "",
-	                codServiceFee: "",
-	                codServiceFeeAccrualStatus: "",
+	                site, waybillNo, goodsNo, createdAt, loadAt, unloadAt, finishAt,
+	                originStation, destinationStation, routeLine,
+	                customerName, shipper, consignee,
+	                goods, weightVolume, plate, driver,
+	                taxRate, taxAmount, payStatus, paidAmount, paidAt,
+	                waybillAccrualStatus, cashPay, cashPayAccrualStatus,
+	                arrivePay: "", arrivePayAccrualStatus: "",
+	                monthlyPay: "", monthlyPayAccrualStatus: "",
+	                cashReturn: "", cashReturnAccrualStatus: "",
+	                debtReturn: "", debtReturnAccrualStatus: "",
 	                pickupFee: "",
-	                pickupFeeAccrualStatus: "",
-	                warehouseFee: "",
-	                warehouseFeeAccrualStatus: "",
-	                advanceFee: "",
-	                advanceFeeAccrualStatus: "",
-	                collectFreight: "",
-	                collectFreightAccrualStatus: "",
-	                remark: (w && w.remark) ? w.remark : "",
-	                flag: (w && w.flag) ? w.flag : "",
-	                invoiceStatus: (w && w.invoiceStatus) ? w.invoiceStatus : "",
+	                remark: w.remark || "",
+	                invoiceStatus: w.invoiceStatus || "",
 	            };
 	        });
 
@@ -2201,6 +2431,24 @@ function loadContent(moduleCode, element = null) {
 		            if (col.key === "waybillNo") {
 		                const id = esc(value || w.id || "");
 		                return `<a class="wb-link" href="javascript:void(0)">${id}</a>`;
+		            }
+		            if (col.key === "waybillAccrualStatus") {
+		                const s = (value || "").toString();
+		                const colorMap = { "已挂账": "#27ae60", "对账中": "#2980b9", "未挂账": "#e67e22", "已结算": "#8e44ad" };
+		                const c = colorMap[s] || "#999";
+		                return `<span style="color:${c};font-weight:bold;">${esc(s) || "-"}</span>`;
+		            }
+		            if (col.key === "cashPayAccrualStatus" || col.key === "arrivePayAccrualStatus" || col.key === "monthlyPayAccrualStatus" || col.key === "cashReturnAccrualStatus" || col.key === "debtReturnAccrualStatus") {
+		                const s = (value || "").toString();
+		                if (!s) return `<span style="color:#bdc3c7;">-</span>`;
+		                const c = s === "已挂账" ? "#27ae60" : s === "对账中" ? "#2980b9" : "#e67e22";
+		                return `<span style="color:${c};">${esc(s)}</span>`;
+		            }
+		            if (col.key === "payStatus") {
+		                const s = (value || "").toString();
+		                if (!s) return `<span style="color:#bdc3c7;">-</span>`;
+		                const c = s === "已到账" ? "#27ae60" : s === "未到账" ? "#e74c3c" : "#f39c12";
+		                return `<span style="color:${c};font-weight:bold;">${esc(s)}</span>`;
 		            }
 		            if (col.key === "invoiceStatus") {
 		                const s = (value || "").toString();
@@ -2332,21 +2580,35 @@ function loadContent(moduleCode, element = null) {
 		                        <div class="wb-toolbar__left">
 		                            <button class="wb-btn" onclick="settlementWaybillToolbarSettle()">挂账</button>
 		                            <button class="wb-btn" onclick="settlementWaybillToolbarCancel()">取消挂账</button>
+		                            <button class="wb-btn" style="background:#27ae60; color:#fff; border-color:#27ae60;" onclick="settlementWaybillCreateRecon()">发起对账</button>
 		                        </div>
 		                        <div class="wb-toolbar__right">
 	                            <button class="wb-btn" onclick="settlementWaybillExport()">导出</button>
 	                            <button class="wb-btn" onclick="settlementWaybillPrint()">打印</button>
 		                            <div class="wb-pager">
-	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(1)" ${currentPage <= 1 ? "disabled" : ""}>|&lt;</button>
-	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.max(1, currentPage - 1)})" ${currentPage <= 1 ? "disabled" : ""}>&lt;</button>
-	                                <span class="wb-pager__text">第</span>
-	                                <span class="wb-pager__page">${currentPage}</span>
-	                                <span class="wb-pager__text">页/共${totalPages}页</span>
-	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;</button>
-	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${totalPages})" ${currentPage >= totalPages ? "disabled" : ""}>&gt;|</button>
+	                                <span class="wb-pager__total">共 <strong>${filteredWaybills.length}</strong> 条</span>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(1)" ${currentPage <= 1 ? "disabled" : ""} title="首页">|◀</button>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.max(1, currentPage - 1)})" ${currentPage <= 1 ? "disabled" : ""} title="上一页">◀</button>
+	                                ${(() => {
+	                                    const btns = [];
+	                                    const delta = 2;
+	                                    for (let p = 1; p <= totalPages; p++) {
+	                                        if (p === 1 || p === totalPages || (p >= currentPage - delta && p <= currentPage + delta)) {
+	                                            btns.push(`<button class="wb-pager__btn wb-pager__btn--num${p === currentPage ? ' wb-pager__btn--active' : ''}" onclick="settlementWaybillSetPage(${p})">${p}</button>`);
+	                                        } else if (btns[btns.length - 1] !== '…') {
+	                                            btns.push('…');
+	                                        }
+	                                    }
+	                                    return btns.map(b => b === '…' ? `<span class="wb-pager__ellipsis">…</span>` : b).join('');
+	                                })()}
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage >= totalPages ? "disabled" : ""} title="下一页">▶</button>
+	                                <button class="wb-pager__btn" onclick="settlementWaybillSetPage(${totalPages})" ${currentPage >= totalPages ? "disabled" : ""} title="末页">▶|</button>
+	                                <span class="wb-pager__jump">跳至 <input type="number" min="1" max="${totalPages}" class="wb-pager__jump-input" onkeydown="if(event.key==='Enter'){const v=parseInt(this.value);if(v>=1&&v<=${totalPages})settlementWaybillSetPage(v);}" placeholder="${currentPage}"> 页</span>
 	                                <select class="wb-pager__size" onchange="settlementWaybillSetPageSize(this.value)">
-	                                    <option value="10" ${pageSize === 10 ? "selected" : ""}>0-9</option>
-	                                    <option value="30" ${pageSize === 30 ? "selected" : ""}>0-29</option>
+	                                    <option value="10"  ${pageSize === 10  ? "selected" : ""}>10 条/页</option>
+	                                    <option value="20"  ${pageSize === 20  ? "selected" : ""}>20 条/页</option>
+	                                    <option value="50"  ${pageSize === 50  ? "selected" : ""}>50 条/页</option>
+	                                    <option value="100" ${pageSize === 100 ? "selected" : ""}>100 条/页</option>
 	                                </select>
 		                            </div>
 		                        </div>
@@ -4866,22 +5128,26 @@ function loadContent(moduleCode, element = null) {
                 let action = "";
                 let statusNote = "";
 
+                const cancelBtn = `<button onclick="cancelRecon('${r.id}')" class="btn-primary" style="padding:4px 8px; font-size:12px; background:#e74c3c; margin-left:4px;">取消对账</button>`;
                 if (r.status === "待客户确认") {
                     statusColor = "#f39c12";
-                    action = `<button class="btn-primary" style="padding:4px 8px; font-size:12px;" onclick="confirmRecon('${r.id}')">登记客户确认结果</button>`;
+                    action = `<button class="btn-primary" style="padding:4px 8px; font-size:12px;" onclick="confirmRecon('${r.id}')">登记确认结果</button>${cancelBtn}`;
                 } else if (r.status === "已确认" || (r.status && r.status.indexOf("已确认") === 0)) {
                     statusColor = "#27ae60";
-                    action = `<button onclick="applyInvoiceFromRecon('${r.id}', '${r.client}', '${r.amount}')" class="btn-primary" style="padding:4px 8px; font-size:12px;">申请开票</button>`;
+                    action = `<button onclick="settleFromRecon('${r.id}')" class="btn-primary" style="padding:4px 8px; font-size:12px; background:#27ae60;">结算</button>${cancelBtn}`;
                     if (r.status.indexOf("人工登记") !== -1) {
                         const tooltip = `确认人：${r.confirmBy || "-"}\n附件：${r.confirmAttachment || "-"}`;
                         statusNote = `<span title="${tooltip}" style="display:inline-block; margin-left:6px; padding:2px 6px; font-size:11px; color:#2c3e50; background:#eef6ff; border:1px solid #bcd9ff; border-radius:10px;">人工登记</span>`;
                     }
-                } else if (r.status === "已开票") {
+                } else if (r.status === "已结算") {
                     statusColor = "#2980b9";
-                    action = `<span style="color:#999;">已开票</span>`;
+                    action = `<span style="color:#2980b9; font-weight:bold;">已推送运单结算</span>`;
+                } else if (r.status === "已开票" || r.status === "开票中") {
+                    statusColor = "#2980b9";
+                    action = `<span style="color:#999;">${r.status}</span>`;
                 } else {
                     statusColor = "#999";
-                    action = `<span style="color:#ccc;">流程结束</span>`;
+                    action = `<span style="color:#ccc;">-</span>`;
                 }
 
                 return `<tr>
@@ -4971,7 +5237,9 @@ function loadContent(moduleCode, element = null) {
                     <td>${index + 1}</td>
                     <td><strong>${d.id}</strong></td>
                     <td>${d.bizDate || '-'}</td>
-                    <td>${d.route || '常规路线'}</td>
+                    <td style="font-size:12px;">${d.origin || d.route || '-'}</td>
+                    <td style="font-size:12px;">${d.destination || '-'}</td>
+                    <td>${d.chargeType || '-'}</td>
                     <td>${typeLabel}${d.goods || '普通货物'}</td>
                     <td>${d.weight || '-'}</td>
                     <td style="text-align:right; font-weight:bold;">${d.totalAmount || d.amount}</td>
@@ -4980,7 +5248,7 @@ function loadContent(moduleCode, element = null) {
             `;
         }).join('');
 
-        const emptyRow = rows ? '' : '<tr><td colspan="8" style="text-align:center; padding:20px; color:#999;">暂无关联运单明细，请检查数据源。</td></tr>';
+        const emptyRow = rows ? '' : '<tr><td colspan="10" style="text-align:center; padding:20px; color:#999;">暂无关联运单明细，请检查数据源。</td></tr>';
 
         const reconConfirmInfo = (recon && recon.confirmAttachment)
             ? `
@@ -5029,7 +5297,9 @@ function loadContent(moduleCode, element = null) {
                         <th style="width:50px;">序号</th>
                         <th>运单号</th>
                         <th>业务日期</th>
-                        <th>运输路线</th>
+                        <th>发站</th>
+                        <th>到站</th>
+                        <th>计费方式</th>
                         <th>货物名称</th>
                         <th>计费重量/单位</th>
                         <th style="text-align:right;">应收金额 (RMB)</th>
@@ -5930,10 +6200,10 @@ function loadContent(moduleCode, element = null) {
     else if (moduleCode === "ARCollectionVerify") {
         let waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
 
-        // 只展示已挂账的运单（status = 已挂帐 / 已挂账），这是结算的前提
+        // 展示对账中/已对账/已结算的运单
         waybills = waybills.filter(w => {
             const s = (w.status || "").replace(/挂帐/g, "挂账");
-            return s === "已挂账" || s === "对账中" || w.settlementStatus === "已结算";
+            return s === "已挂账" || s === "对账中" || s === "已对账" || s === "已结算" || w.settlementStatus === "已结算";
         });
 
         if (!window.arWaybillSetTab) {
@@ -6027,6 +6297,51 @@ function loadContent(moduleCode, element = null) {
             } else {
                 alert("结算功能未加载，请刷新页面。");
             }
+        };
+
+        window.arWaybillToolbarCancelSettle = function () {
+            const checked = Array.from(document.querySelectorAll(".ar-check:checked"));
+            if (!checked.length) return alert("请先勾选需要取消结算的运单。");
+            const ids = checked.map(cb => cb.value).filter(Boolean);
+
+            // 找到这些运单中"已结算"状态的
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            const targets = waybills.filter(w => ids.includes(w.id) && (w.status === '已结算' || w.settlementStatus === '已结算'));
+            if (!targets.length) return alert('所选运单中无【已结算】状态的运单。');
+
+            if (!confirm(`确认取消 ${targets.length} 票运单的结算状态？\n运单将恢复为【对账中】，对应对账单可重新进行结算操作。`)) return;
+
+            // 收集涉及的 reconId，用于回退对账单状态
+            const reconIds = [...new Set(targets.map(w => w.reconId).filter(Boolean))];
+
+            // 回退运单状态
+            waybills.forEach(w => {
+                if (ids.includes(w.id) && (w.status === '已结算' || w.settlementStatus === '已结算')) {
+                    w.status = '对账中';
+                    w.settlementStatus = '';
+                    w.settleTime = '';
+                }
+            });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+            // 回退对账单状态（已结算 → 已确认，可重新结算）
+            if (reconIds.length) {
+                let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+                recons.forEach(r => {
+                    if (reconIds.includes(r.id) && r.status === '已结算') {
+                        r.status = '已确认（人工登记）';
+                        r.settleTime = '';
+                    }
+                });
+                sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+            }
+
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: new Date().toLocaleString(), user: '管理员', module: '运单结算', action: '取消结算', detail: `取消 ${targets.length} 票运单结算，涉及对账单：${reconIds.join(',')}` });
+            }
+
+            alert(`✅ 已取消 ${targets.length} 票运单的结算！\n对应对账单已恢复为【已确认】状态，可重新点击"结算"操作。`);
+            loadContent('ARCollectionVerify');
         };
 
         window.arWaybillToolbarRequestInvoice = function () {
@@ -6443,6 +6758,7 @@ function loadContent(moduleCode, element = null) {
             <div class="wb-toolbar">
                 <div class="wb-toolbar__left">
                     <button class="wb-btn wb-btn--primary" onclick="arWaybillToolbarSettle()" title="对选中运单生成收款凭证，状态变为已结算">结算</button>
+                    <button class="wb-btn" style="background:#e74c3c;color:#fff;border-color:#e74c3c;" onclick="arWaybillToolbarCancelSettle()" title="取消已结算运单，恢复为对账中，对账单可重新结算">取消结算</button>
                     <button class="wb-btn" style="background:#2980b9;color:#fff;border-color:#2980b9;" onclick="arWaybillToolbarRequestInvoice()" title="将已结算运单推送到销项发票台账进行开票">申请开票</button>
                     <button class="wb-btn" onclick="arWaybillAddToBatch()">加入批单夹</button>
                 </div>
@@ -6954,7 +7270,7 @@ function loadContent(moduleCode, element = null) {
             const fmtAmt = isNaN(amt) ? r.totalAmount : amt.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
             const detailCount = Array.isArray(r.details) ? r.details.length : 0;
             const voucherCell = r.relatedVoucherId
-                ? `<a href="javascript:void(0)" onclick="loadContent('VoucherEntryReview')" style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</a>`
+                ? `<span style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</span>`
                 : '<span style="color:#ccc;">—</span>';
 
             let actions = '';
@@ -7120,7 +7436,7 @@ function loadContent(moduleCode, element = null) {
             const fmtAmt = isNaN(amt) ? r.totalAmount : amt.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
             const detailCount = Array.isArray(r.details) ? r.details.length : 0;
             const voucherCell = r.relatedVoucherId
-                ? `<a href="javascript:void(0)" onclick="loadContent('VoucherEntryReview')" style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</a>`
+                ? `<span style="color:#3498db;font-size:12px;">${r.relatedVoucherId}</span>`
                 : '<span style="color:#ccc;">—</span>';
 
             let actions = '';
@@ -10964,13 +11280,14 @@ function loadContent(moduleCode, element = null) {
         setTimeout(() => {
             let treeData = JSON.parse(sessionStorage.getItem('AcctSetTree') || 'null');
             if (!treeData) {
+                // 默认所有账套状态为 disabled，需手动启用
                 treeData = [{
                     id: 1, name: '集团总账套', code: 'ZJKZ', type: 'merge',
-                    principle: '企业准则', status: 'enabled', principleInherited: false, expanded: true,
+                    principle: '企业准则', status: 'disabled', principleInherited: false, expanded: true,
                     children: [
-                        {id: 2, name: '分公司-华北', code: 'FJBN', type: 'calc', principle: '企业准则', status: 'enabled', principleInherited: true, expanded: false, children: []},
-                        {id: 3, name: '分公司-华东', code: 'FJBD', type: 'calc', principle: '企业准则', status: 'enabled', principleInherited: true, expanded: true, children: [
-                            {id: 5, name: '子公司-上海', code: 'ZJSH', type: 'calc', principle: '企业准则', status: 'init', principleInherited: true, expanded: false, children: []}
+                        {id: 2, name: '分公司-华北', code: 'FJBN', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []},
+                        {id: 3, name: '分公司-华东', code: 'FJBD', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: true, children: [
+                            {id: 5, name: '子公司-上海', code: 'ZJSH', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []}
                         ]},
                         {id: 4, name: '分公司-华南', code: 'FJHN', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []}
                     ]
@@ -10979,6 +11296,21 @@ function loadContent(moduleCode, element = null) {
             }
             window._acctTreeData = treeData;
             window._acctDisablingId = null;
+
+            // 将已启用账套同步到 FinanceAccountBooks，供会计期间识别
+            window.acctSyncToFinanceBooks = function() {
+                const books = [];
+                function collect(nodes) {
+                    nodes.forEach(n => {
+                        if (n.status === 'enabled') {
+                            books.push({ id: String(n.id), code: n.code, name: n.name, site: n.name, status: '已启用' });
+                        }
+                        if (n.children) collect(n.children);
+                    });
+                }
+                collect(window._acctTreeData);
+                sessionStorage.setItem('FinanceAccountBooks', JSON.stringify(books));
+            };
 
             window.acctFindNode = function(nodes, id) {
                 for (const n of nodes) {
@@ -11001,17 +11333,19 @@ function loadContent(moduleCode, element = null) {
                         let statusBadge = '';
                         if (node.status === 'enabled') statusBadge = '<span class="badge-acct-enabled">已启用</span>';
                         else if (node.status === 'init') statusBadge = '<span class="badge-acct-init">待初始化</span>';
-                        else statusBadge = '<span class="badge-acct-disabled">已停用封账</span>';
+                        else statusBadge = '<span class="badge-acct-disabled">已停用</span>';
                         const principleText = node.principleInherited
                             ? node.principle + ' <span style="color:#999;font-size:12px;">(继承)</span>'
                             : node.principle;
+                        // 所有账套都显示：新增子账套、引擎配置、复制
                         let actions = '';
-                        if (node.status !== 'disabled') {
-                            actions += `<button class="acct-action-link" onclick="window.acctOpenAddModal(${node.id})">新增子账套</button>`;
-                            if (node.type === 'merge') actions += `<button class="acct-action-link" onclick="loadContent('SettlementEngineConfig')">引擎配置</button>`;
-                            actions += `<button class="acct-action-link danger" onclick="window.acctOpenDisable(${node.id})">停用</button>`;
+                        actions += `<button class="acct-action-link" onclick="window.acctOpenAddModal(${node.id})">新增子账套</button>`;
+                        actions += `<button class="acct-action-link" onclick="loadContent('SettlementEngineConfig')">引擎配置</button>`;
+                        actions += `<button class="acct-action-link" onclick="window.acctHandleCopy(${node.id})">复制</button>`;
+                        if (node.status === 'disabled') {
+                            actions += `<button class="acct-action-link" style="color:#27ae60;" onclick="window.acctHandleEnable(${node.id})">启用</button>`;
                         } else {
-                            actions += `<button class="acct-action-link" onclick="window.acctHandleEnable(${node.id})">启用</button>`;
+                            actions += `<button class="acct-action-link danger" onclick="window.acctOpenDisable(${node.id})">停用</button>`;
                         }
                         const toggleBtn = hasChildren
                             ? `<span class="acct-toggle-btn" onclick="window.acctToggleNode(${node.id})">${node.expanded ? '▼' : '▶'}</span>`
@@ -11047,11 +11381,32 @@ function loadContent(moduleCode, element = null) {
                 const name = document.getElementById('acctFormName').value.trim();
                 const code = document.getElementById('acctFormCode').value.trim();
                 if (!name || !code) { alert('请填写账套名称和编码'); return; }
-                const newNode = { id: Date.now(), name, code, type: document.getElementById('acctFormType').value, principle: document.getElementById('acctFormPrinciple').value, status: 'init', principleInherited: true, expanded: false, children: [] };
+                // 新增账套默认禁用，需手动启用
+                const newNode = { id: Date.now(), name, code, type: document.getElementById('acctFormType').value, principle: document.getElementById('acctFormPrinciple').value, status: 'disabled', principleInherited: true, expanded: false, children: [] };
                 const parentId = Number(document.getElementById('acctFormParent').value) || null;
                 if (parentId) { const parent = window.acctFindNode(window._acctTreeData, parentId); if (parent) parent.children.push(newNode); } else { window._acctTreeData.push(newNode); }
                 sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
                 window.acctCloseAddModal(); window.acctRenderTree();
+            };
+            window.acctHandleCopy = function(id) {
+                const src = window.acctFindNode(window._acctTreeData, id);
+                if (!src) return;
+                const copyName = prompt('复制账套，请输入新账套名称：', src.name + '-副本');
+                if (!copyName) return;
+                const copyCode = prompt('请输入新账套编码：', src.code + '2');
+                if (!copyCode) return;
+                const newNode = { id: Date.now(), name: copyName, code: copyCode, type: src.type, principle: src.principle, status: 'disabled', principleInherited: src.principleInherited, expanded: false, children: [] };
+                // 复制到同级（找父节点）
+                function findParentAndInsert(nodes, targetId) {
+                    for (let i = 0; i < nodes.length; i++) {
+                        if (nodes[i].id === targetId) { nodes.splice(i + 1, 0, newNode); return true; }
+                        if (nodes[i].children && findParentAndInsert(nodes[i].children, targetId)) return true;
+                    }
+                    return false;
+                }
+                if (!findParentAndInsert(window._acctTreeData, id)) window._acctTreeData.push(newNode);
+                sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
+                window.acctRenderTree();
             };
             window.acctOpenDisable = function(id) {
                 const node = window.acctFindNode(window._acctTreeData, id);
@@ -11063,13 +11418,33 @@ function loadContent(moduleCode, element = null) {
             window.acctCloseDisableModal = function() { document.getElementById('acctDisableModal').classList.remove('show'); };
             window.acctHandleDisableConfirm = function() {
                 const node = window.acctFindNode(window._acctTreeData, window._acctDisablingId);
-                if (node) { function dis(n) { n.status='disabled'; if(n.children) n.children.forEach(dis); } dis(node); sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData)); }
+                if (node) {
+                    function dis(n) { n.status = 'disabled'; if (n.children) n.children.forEach(dis); }
+                    dis(node);
+                    sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
+                    // 同步移除已停用账套的会计期间数据
+                    if (typeof window.removeAccountPeriodsForBook === 'function') {
+                        window.removeAccountPeriodsForBook(String(node.id));
+                    }
+                    window.acctSyncToFinanceBooks();
+                }
                 window.acctCloseDisableModal(); window.acctRenderTree();
             };
             window.acctHandleEnable = function(id) {
                 const node = window.acctFindNode(window._acctTreeData, id);
-                if (node) { node.status='enabled'; sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData)); window.acctRenderTree(); }
+                if (node) {
+                    node.status = 'enabled';
+                    sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
+                    // 同步到 FinanceAccountBooks，并初始化当年期间
+                    window.acctSyncToFinanceBooks();
+                    if (typeof window.ensureAccountPeriodsForBook === 'function') {
+                        window.ensureAccountPeriodsForBook({ id: String(node.id), code: node.code, name: node.name }, new Date().getFullYear());
+                    }
+                    window.acctRenderTree();
+                }
             };
+            // 初始同步一次（页面加载时保证 FinanceAccountBooks 与树状态一致）
+            window.acctSyncToFinanceBooks();
             window.acctRenderTree();
         }, 0);
     }
@@ -12870,6 +13245,60 @@ function loadContent(moduleCode, element = null) {
                 document.querySelectorAll('.ve-split-dropdown').forEach(function (d) { d.classList.remove('show'); });
             });
 
+            // ── 编辑模式：从凭证审核中心跳转进来时预填数据 ──────────────
+            if (window._voucherEditId) {
+                var editId = window._voucherEditId;
+                window._voucherEditId = null;
+                var allV = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+                var editV = allV.find(function(v) { return v.id === editId; });
+                if (editV) {
+                    // 回填凭证字
+                    var wordMatch = editId.match(/^([^\d-]+)/);
+                    var editWord = wordMatch ? wordMatch[1] : '转';
+                    var wordEl2 = document.getElementById('veVoucherWord');
+                    if (wordEl2) wordEl2.value = editWord;
+                    // 回填日期
+                    var dateEl2 = document.getElementById('veDateInput');
+                    if (dateEl2 && editV.date) dateEl2.value = editV.date;
+                    // 显示凭证号（只读）
+                    var noEl2 = document.getElementById('veVoucherNo');
+                    if (noEl2) { noEl2.value = editId; noEl2.readOnly = true; }
+                    // 回填分录行
+                    var nextRowId = 0;
+                    window.veRows = (editV.lines || []).map(function(ln) {
+                        nextRowId++;
+                        var subj = ln.subject || ln.account || '';
+                        return { id: nextRowId, summary: ln.summary || '', subject: subj, auxiliary: ln.auxiliary || '无', debit: parseFloat(ln.debit) || 0, credit: parseFloat(ln.credit) || 0 };
+                    });
+                    while (window.veRows.length < 2) { window.veRows.push({ id: ++nextRowId, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }); }
+                    window.veNextId = nextRowId + 1;
+                    // 覆盖保存逻辑 → 更新已有凭证而不是新增
+                    window.veSaveVoucher = function() {
+                        var w  = (document.getElementById('veVoucherWord') || {}).value || editWord;
+                        var d  = (document.getElementById('veDateInput')   || {}).value || editV.date;
+                        var att = parseInt((document.getElementById('veAttachCount') || {}).value) || 0;
+                        var totalD = 0;
+                        var ls = window.veRows.map(function(r) {
+                            totalD += r.debit;
+                            return { summary: r.summary, subject: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
+                        });
+                        var store = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+                        var i = store.findIndex(function(v) { return v.id === editId; });
+                        if (i !== -1) {
+                            store[i].date        = d;
+                            store[i].attachCount = att;
+                            store[i].amount      = totalD.toFixed(2);
+                            store[i].summary     = (window.veRows[0] && window.veRows[0].summary) || store[i].summary;
+                            store[i].lines       = ls;
+                            sessionStorage.setItem('ManualVouchers', JSON.stringify(store));
+                        }
+                        return editId;
+                    };
+                    // 提示
+                    setTimeout(function() { veShowToast('已载入凭证 ' + editId + '，修改后点击保存', 'success'); }, 100);
+                }
+            }
+
             // 初始化
             veUpdateVoucherNo();
             veRenderEntryTable();
@@ -13754,6 +14183,34 @@ function loadContent(moduleCode, element = null) {
         };
 
         const buildRelatedDocsHtml = (voucher) => {
+            // ── 特殊处理：收款单 RCV-* → 展示关联运单号 ────────────────
+            const rcvId = voucher.sourceId || voucher.sourceNo || "";
+            if (/^RCV-/i.test(rcvId)) {
+                const rcvList = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
+                const rcvRec = rcvList.find(r => r.id === rcvId);
+                if (rcvRec && Array.isArray(rcvRec.details) && rcvRec.details.length) {
+                    const wbNos = rcvRec.details.map(d => d.waybillNo).filter(Boolean);
+                    if (wbNos.length) {
+                        const showNos = wbNos.slice(0, 3);
+                        const moreN = wbNos.length - showNos.length;
+                        const wbLinks = showNos.map(no =>
+                            `<a href="javascript:void(0)"
+                                class="doc-no-link doc-no-link--waybill"
+                                data-doc-type="waybill"
+                                data-doc-ids="${wbNos.join(',')}"
+                                data-voucher-id="${voucher.id || ''}"
+                                onclick="openRelatedDocDrawer(this)"
+                                style="color:#1d4ed8;text-decoration:none;margin-right:4px;font-size:11px;white-space:nowrap;"
+                                title="运单">${no}</a>`
+                        ).join("");
+                        const moreHtml2 = moreN > 0 ? `<span style="color:#94a3b8;font-size:11px;">+${moreN}</span>` : "";
+                        return wbLinks + moreHtml2;
+                    }
+                }
+                // 没有明细时退回显示 RCV ID
+                return `<span style="color:#64748b;font-size:11px;">${rcvId}</span>`;
+            }
+            // ── 通用逻辑 ─────────────────────────────────────────────────
             const info = resolveRelatedDocs(voucher);
             if (!info || !Array.isArray(info.ids) || info.ids.length === 0) return "";
             const typeKey = info.type || "manual";
@@ -13800,7 +14257,7 @@ function loadContent(moduleCode, element = null) {
                     </td>
                     <td>${start + index + 1}</td>
                     <td>${v.date || "-"}</td>
-                    <td><a href="javascript:void(0)" onclick="openVoucherDetail('${v.id}')" class="voucher-link">${v.id || "-"}</a></td>
+                    <td><a href="javascript:void(0)" onclick="openVoucherForEdit('${v.id}')" class="voucher-link" title="点击编辑此凭证">${v.id || "-"}</a></td>
                     <td class="amount-cell">${formatAmount(v.amount)}</td>
                     <td>${auditUser}</td>
                     <td>${maker}</td>
@@ -13863,6 +14320,12 @@ function loadContent(moduleCode, element = null) {
         if (!Number.isFinite(raw)) return;
         const target = Math.min(Math.max(raw, 1), totalPages);
         window.renderVoucherAuditPage(target);
+    };
+
+    // 点击凭证字号 → 跳转凭证录入页面编辑
+    window.openVoucherForEdit = function(voucherId) {
+        window._voucherEditId = voucherId;
+        loadContent('VoucherEntryReview');
     };
 
     contentHTML += `
@@ -19681,11 +20144,25 @@ function loadContent(moduleCode, element = null) {
             .sec-modal { background: #fff; border-radius: 4px; padding: 24px; min-width: 360px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; }
             .sec-modal-icon { font-size: 36px; margin-bottom: 12px; }
             .sec-modal-msg { font-size: 15px; margin-bottom: 20px; color: #333; }
+            .sec-leaf { display: flex !important; justify-content: space-between; align-items: center; }
+            .sec-leaf-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .sec-leaf-edit { opacity: 0; font-size: 11px; color: #2980b9; cursor: pointer; padding: 0 4px; flex-shrink: 0; transition: opacity 0.15s; }
+            .sec-leaf-del { opacity: 0; font-size: 11px; color: #e74c3c; cursor: pointer; padding: 0 4px; flex-shrink: 0; transition: opacity 0.15s; }
+            .sec-leaf:hover .sec-leaf-edit, .sec-leaf:hover .sec-leaf-del { opacity: 1; }
+            .sec-add-form { text-align: left; }
+            .sec-add-form .sec-form-group { margin-bottom: 12px; }
+            .sec-add-form label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+            .sec-add-modal-body { background:#fff; border-radius:6px; padding:24px; width:420px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
         </style>
 
         <div class="sec-container">
             <!-- 左侧树形菜单 -->
             <div class="sec-sidebar">
+                <!-- 新增模板按钮 -->
+                <div style="padding:8px 10px; border-bottom:1px solid #e8e8e8; display:flex; flex-direction:column; gap:6px;">
+                    <button onclick="secShowAddModal()" style="width:100%; padding:7px 0; background:#2980b9; color:#fff; border:none; border-radius:4px; font-size:13px; cursor:pointer; font-weight:500;">＋ 新增模板</button>
+                    <button onclick="secRestoreDefaults()" style="width:100%; padding:5px 0; background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:4px; font-size:12px; cursor:pointer;">↺ 恢复默认模板</button>
+                </div>
                 <!-- 挂帐 -->
                 <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(0)">
                     <span>挂帐</span><span class="sec-toggle-icon" id="sec-icon-cat-0">▸</span>
@@ -19892,15 +20369,71 @@ function loadContent(moduleCode, element = null) {
                         <span>收款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-0">▾</span>
                     </div>
                     <div class="sec-sub-items" id="sec-sub-5-0" style="display:block;">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'收款单','收付款单','收款单')">收款单</div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="收款单" data-cat="收付款单" data-grp="收款单" onclick="secLoadConfig(this,'收款单','收付款单','收款单')"><span class="sec-leaf-text">收款单</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('收款单')" title="重命名">✎</span></div>
                     </div>
                     <div class="sec-tree-node sec-level-2" onclick="secToggleSub(5,1)">
                         <span>付款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-1">▾</span>
                     </div>
                     <div class="sec-sub-items" id="sec-sub-5-1" style="display:block;">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'付款单','收付款单','付款单')">付款单</div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="付款单" data-cat="收付款单" data-grp="付款单" onclick="secLoadConfig(this,'付款单','收付款单','付款单')"><span class="sec-leaf-text">付款单</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('付款单')" title="重命名">✎</span></div>
                     </div>
                 </div>
+
+                <!-- 对账 -->
+                <div class="sec-tree-node sec-level-1" style="border-top:2px solid #e8f4fd;margin-top:8px;" onclick="secToggleCategory(6)">
+                    <span>对账</span><span class="sec-toggle-icon" id="sec-icon-cat-6">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-6">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,0)">
+                        <span>客户对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-6-0">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="客户对账结算" data-cat="对账" data-grp="客户对账" onclick="secLoadConfig(this,'客户对账结算','对账','客户对账')"><span class="sec-leaf-text">客户对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('客户对账结算')" title="重命名">✎</span></div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="客户对账差异处理" data-cat="对账" data-grp="客户对账" onclick="secLoadConfig(this,'客户对账差异处理','对账','客户对账')"><span class="sec-leaf-text">客户对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('客户对账差异处理')" title="重命名">✎</span></div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,1)">
+                        <span>网点对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-6-1">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="网点对账结算" data-cat="对账" data-grp="网点对账" onclick="secLoadConfig(this,'网点对账结算','对账','网点对账')"><span class="sec-leaf-text">网点对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('网点对账结算')" title="重命名">✎</span></div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="网点对账差异处理" data-cat="对账" data-grp="网点对账" onclick="secLoadConfig(this,'网点对账差异处理','对账','网点对账')"><span class="sec-leaf-text">网点对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('网点对账差异处理')" title="重命名">✎</span></div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,2)">
+                        <span>承运商对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-6-2">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="承运商对账结算" data-cat="对账" data-grp="承运商对账" onclick="secLoadConfig(this,'承运商对账结算','对账','承运商对账')"><span class="sec-leaf-text">承运商对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('承运商对账结算')" title="重命名">✎</span></div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="承运商对账差异处理" data-cat="对账" data-grp="承运商对账" onclick="secLoadConfig(this,'承运商对账差异处理','对账','承运商对账')"><span class="sec-leaf-text">承运商对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('承运商对账差异处理')" title="重命名">✎</span></div>
+                    </div>
+                </div>
+
+                <!-- 核销 -->
+                <div class="sec-tree-node sec-level-1" style="border-top:2px solid #e8f4fd;margin-top:8px;" onclick="secToggleCategory(7)">
+                    <span>核销</span><span class="sec-toggle-icon" id="sec-icon-cat-7">▸</span>
+                </div>
+                <div class="sec-cat-children" id="sec-cat-7">
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(7,0)">
+                        <span>应收</span><span class="sec-toggle-icon" id="sec-icon-sub-7-0">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-7-0">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="应收核销" data-cat="核销" data-grp="应收" onclick="secLoadConfig(this,'应收核销','核销','应收')"><span class="sec-leaf-text">应收核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('应收核销')" title="重命名">✎</span></div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(7,1)">
+                        <span>应付</span><span class="sec-toggle-icon" id="sec-icon-sub-7-1">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-7-1">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="应付核销" data-cat="核销" data-grp="应付" onclick="secLoadConfig(this,'应付核销','核销','应付')"><span class="sec-leaf-text">应付核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('应付核销')" title="重命名">✎</span></div>
+                    </div>
+                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(7,2)">
+                        <span>报销</span><span class="sec-toggle-icon" id="sec-icon-sub-7-2">▸</span>
+                    </div>
+                    <div class="sec-sub-items" id="sec-sub-7-2">
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="报销核销" data-cat="核销" data-grp="报销" onclick="secLoadConfig(this,'报销核销','核销','报销')"><span class="sec-leaf-text">报销核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('报销核销')" title="重命名">✎</span></div>
+                    </div>
+                </div>
+
+                <!-- 自定义分类（动态渲染） -->
+                <div id="sec-custom-cats"></div>
             </div>
 
             <!-- 右侧面板 -->
@@ -19996,6 +20529,90 @@ function loadContent(moduleCode, element = null) {
         setTimeout(function () {
             var secCurrentIsSettlement = false;
 
+            // ─── 删除内置模板（持久化到 localStorage） ───────────────────
+            var SEC_DELETED_KEY = 'SecEngineDeletedBuiltins';
+            function secLoadDeleted() {
+                try { return JSON.parse(localStorage.getItem(SEC_DELETED_KEY) || '[]'); } catch(e){ return []; }
+            }
+            function secSaveDeleted(arr) { localStorage.setItem(SEC_DELETED_KEY, JSON.stringify(arr)); }
+
+            // 应用已删除列表 — 从 DOM 中移除已删除的内置节点
+            (function applyDeleted() {
+                var deleted = secLoadDeleted();
+                if (!deleted.length) return;
+                document.querySelectorAll('.sec-tree-node.sec-level-3').forEach(function(node) {
+                    var m = (node.getAttribute('onclick') || '').match(/secLoadConfig\(this,'([^']+)'/);
+                    if (m && deleted.indexOf(m[1]) !== -1) node.remove();
+                });
+            })();
+
+            window.secDeleteBuiltinItem = function(itemName) {
+                if (!confirm('确认隐藏模板「' + itemName + '」？\n（模板配置数据保留，刷新页面可通过"恢复默认"按钮还原）')) return;
+                // 从 DOM 中移除
+                document.querySelectorAll('.sec-leaf').forEach(function(node) {
+                    var m = (node.getAttribute('onclick') || '').match(/secLoadConfig\(this,'([^']+)'/);
+                    if (m && m[1] === itemName) node.remove();
+                });
+                // 持久化已删除列表（仅隐藏，不删除配置数据）
+                var deleted = secLoadDeleted();
+                if (deleted.indexOf(itemName) === -1) deleted.push(itemName);
+                secSaveDeleted(deleted);
+                // 清空右侧面板
+                var panel = document.getElementById('secConfigPanel');
+                var empty = document.getElementById('secEmptyState');
+                if (panel) panel.style.display = 'none';
+                if (empty) empty.style.display = 'block';
+                secShowToast('🗑 模板「' + itemName + '」已隐藏');
+            };
+
+            // ─── 删除内置大类分类 ─────────────────────────────────────────
+            var SEC_DEL_CATS_KEY = 'SecDeletedBuiltinCats';
+            function secLoadDeletedCats() {
+                try { return JSON.parse(localStorage.getItem(SEC_DEL_CATS_KEY) || '[]'); } catch(e){ return []; }
+            }
+            function secSaveDeletedCats(arr) { localStorage.setItem(SEC_DEL_CATS_KEY, JSON.stringify(arr)); }
+
+            // 应用已删除大类
+            (function applyDeletedCats() {
+                var deletedCats = secLoadDeletedCats();
+                if (!deletedCats.length) return;
+                deletedCats.forEach(function(catId) {
+                    var catEl = document.getElementById('sec-cat-' + catId);
+                    if (catEl) {
+                        var prev = catEl.previousElementSibling;
+                        while (prev && !prev.classList.contains('sec-level-1')) { prev = prev.previousElementSibling; }
+                        if (prev) prev.remove();
+                        catEl.remove();
+                    }
+                });
+            })();
+
+            window.secDeleteBuiltinCategory = function(catId) {
+                var catEl = document.getElementById('sec-cat-' + catId);
+                var headerNode = catEl ? catEl.previousElementSibling : null;
+                while (headerNode && !headerNode.classList.contains('sec-level-1')) { headerNode = headerNode.previousElementSibling; }
+                var catName = headerNode ? (headerNode.querySelector('span:first-child') || headerNode).textContent.trim() : '该分类';
+                if (!confirm('确认隐藏分类「' + catName + '」及其所有模板？\n（刷新后可通过"恢复默认"按钮还原）')) return;
+                if (headerNode) headerNode.remove();
+                if (catEl) catEl.remove();
+                var deletedCats = secLoadDeletedCats();
+                if (deletedCats.indexOf(catId) === -1) deletedCats.push(catId);
+                secSaveDeletedCats(deletedCats);
+                var panel = document.getElementById('secConfigPanel');
+                var empty = document.getElementById('secEmptyState');
+                if (panel) panel.style.display = 'none';
+                if (empty) empty.style.display = 'block';
+                secShowToast('🗑 分类「' + catName + '」已隐藏');
+            };
+
+            // 恢复所有默认
+            window.secRestoreDefaults = function() {
+                if (!confirm('确认恢复所有内置模板？（下次刷新页面后生效）')) return;
+                localStorage.removeItem(SEC_DELETED_KEY);
+                localStorage.removeItem(SEC_DEL_CATS_KEY);
+                secShowToast('✅ 已清除隐藏记录，刷新页面后全部恢复');
+            };
+
             window.secToggleCategory = function (index) {
                 var el = document.getElementById('sec-cat-' + index);
                 var icon = document.getElementById('sec-icon-cat-' + index);
@@ -20037,10 +20654,55 @@ function loadContent(moduleCode, element = null) {
                 return html;
             }
 
+            // 预置默认分录模板（新浏览器/新标签页无缓存时使用）
+            var SEC_DEFAULT_TEMPLATES = {
+                '收款单':  { voucherWord: '收', summaryTemplate: '收款-{clientName}-{id}', remark: '', entries: [
+                    { dir: '借', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
+                    { dir: '贷', subjectCode: '1122', subjectName: '应收账款',   summary: '' }
+                ]},
+                '付款单':  { voucherWord: '付', summaryTemplate: '付款-{clientName}-{id}', remark: '', entries: [
+                    { dir: '借', subjectCode: '1123', subjectName: '预付账款',   summary: '' },
+                    { dir: '贷', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
+                    { dir: '贷', subjectCode: '2221', subjectName: '应交税费',   summary: '' }
+                ]},
+                '应收核销': { voucherWord: '转', summaryTemplate: '', remark: '', entries: [
+                    { dir: '借', subjectCode: '1122', subjectName: '应收账款',     summary: '' },
+                    { dir: '贷', subjectCode: '5001', subjectName: '主营业务收入', summary: '' },
+                    { dir: '贷', subjectCode: '2221', subjectName: '应交税费',     summary: '' }
+                ]},
+                '应付核销': { voucherWord: '转', summaryTemplate: '', remark: '', entries: [
+                    { dir: '借', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
+                    { dir: '贷', subjectCode: '1123', subjectName: '预付账款',   summary: '' },
+                    { dir: '借', subjectCode: '2221', subjectName: '应交税费',   summary: '' }
+                ]}
+            };
+
+            // 判断模板是否有实际配置的分录（至少一条有科目码）
+            function secHasEntries(tpl) {
+                return tpl && Array.isArray(tpl.entries) && tpl.entries.some(function(e) { return (e.subjectCode || '').trim(); });
+            }
+
             // 从 EngineVoucherTemplates 加载已保存的模板
+            // 优先 localStorage（持久化），sessionStorage 次之，都无则用预置默认值
             function secLoadStoredTemplate(name) {
                 try {
-                    var store = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+                    // 始终从 localStorage 读取完整 store
+                    var store = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || 'null');
+                    if (!store) store = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+
+                    // 对4个预置模板：如果 store 里没有配置好的分录，用默认值补充并持久化
+                    var dirty = false;
+                    Object.keys(SEC_DEFAULT_TEMPLATES).forEach(function(key) {
+                        if (!secHasEntries(store[key])) {
+                            store[key] = SEC_DEFAULT_TEMPLATES[key];
+                            dirty = true;
+                        }
+                    });
+                    if (dirty) {
+                        try { localStorage.setItem('EngineVoucherTemplates', JSON.stringify(store)); } catch(e) {}
+                        sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(store));
+                    }
+
                     return store[name] || null;
                 } catch(e) { return null; }
             }
@@ -20205,6 +20867,271 @@ function loadContent(moduleCode, element = null) {
             window.secCloseToast = function () {
                 document.getElementById('secToastModal').classList.remove('active');
             };
+
+            // ─── 为一级大类注入 ✕ 删除按钮（悬浮显示）─────────────────
+            document.querySelectorAll('.sec-tree-node.sec-level-1').forEach(function(node) {
+                var m = (node.getAttribute('onclick') || '').match(/secToggleCategory\((\d+)\)/);
+                if (!m) return; // 跳过自定义分类（有自己的 ✕）
+                var catId = parseInt(m[1]);
+                var iconSpan = node.querySelector('.sec-toggle-icon');
+                if (!iconSpan) return;
+                var wrap = document.createElement('span');
+                wrap.style.cssText = 'display:flex;align-items:center;gap:5px;';
+                iconSpan.parentNode.insertBefore(wrap, iconSpan);
+                wrap.appendChild(iconSpan);
+                var delEl = document.createElement('span');
+                delEl.className = 'sec-cat-del';
+                delEl.style.cssText = 'color:#e74c3c;cursor:pointer;font-size:11px;padding:0 4px;opacity:0;transition:opacity 0.2s;line-height:1;';
+                delEl.title = '隐藏此分类';
+                delEl.textContent = '✕';
+                delEl.setAttribute('onclick', 'event.stopPropagation();secDeleteBuiltinCategory(' + catId + ')');
+                wrap.appendChild(delEl);
+                node.addEventListener('mouseenter', function() { delEl.style.opacity = '1'; });
+                node.addEventListener('mouseleave', function() { delEl.style.opacity = '0'; });
+            });
+
+            // ─── 为所有旧式叶节点注入 ✎ 重命名 + ✕ 删除按钮 ──────────
+            document.querySelectorAll('.sec-tree-node.sec-level-3:not(.sec-leaf)').forEach(function(node) {
+                var origText = node.textContent.trim();
+                var onclick = node.getAttribute('onclick') || '';
+                var match = onclick.match(/secLoadConfig\(this,'([^']+)'/);
+                var itemName = match ? match[1] : origText;
+                var safe = itemName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                node.classList.add('sec-leaf');
+                node.innerHTML = '<span class="sec-leaf-text">' + origText + '</span>' +
+                    '<span style="display:flex;gap:3px;">' +
+                    '<span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem(\'' + safe + '\')" title="重命名">✎</span>' +
+                    '<span class="sec-leaf-del" onclick="event.stopPropagation();secDeleteBuiltinItem(\'' + safe + '\')" title="删除">✕</span>' +
+                    '</span>';
+            });
+
+            // ─── 为已有 .sec-leaf 的静态节点补充 ✕ 删除按钮 ─────────────
+            document.querySelectorAll('.sec-tree-node.sec-level-3.sec-leaf').forEach(function(node) {
+                if (node.querySelector('.sec-leaf-del')) return; // 已有则跳过
+                var match = (node.getAttribute('onclick') || '').match(/secLoadConfig\(this,'([^']+)'/);
+                if (!match) return;
+                var safe = match[1].replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                var editSpan = node.querySelector('.sec-leaf-edit');
+                var delSpan = document.createElement('span');
+                delSpan.className = 'sec-leaf-del';
+                delSpan.title = '删除';
+                delSpan.textContent = '✕';
+                delSpan.setAttribute('onclick', 'event.stopPropagation();secDeleteBuiltinItem(\'' + safe + '\')');
+                if (editSpan) {
+                    // Wrap edit + del in flex container
+                    var wrap = document.createElement('span');
+                    wrap.style.cssText = 'display:flex;gap:3px;';
+                    node.insertBefore(wrap, editSpan);
+                    wrap.appendChild(editSpan);
+                    wrap.appendChild(delSpan);
+                } else {
+                    node.appendChild(delSpan);
+                }
+            });
+
+            // ─── 重命名（存 alias 到 localStorage） ──────────────────────
+            window.secRenameItem = function(originalName) {
+                var aliases = {};
+                try { aliases = JSON.parse(localStorage.getItem('EngineAliases') || '{}'); } catch(e){}
+                var current = aliases[originalName] || originalName;
+                var newName = prompt('重命名「' + current + '」为：', current);
+                if (!newName || newName.trim() === current) return;
+                newName = newName.trim();
+                aliases[originalName] = newName;
+                localStorage.setItem('EngineAliases', JSON.stringify(aliases));
+                // 更新页面显示
+                document.querySelectorAll('.sec-leaf').forEach(function(node) {
+                    var onclick = node.getAttribute('onclick') || '';
+                    var match = onclick.match(/secLoadConfig\(this,'([^']+)'/);
+                    var key = match ? match[1] : '';
+                    if (key === originalName) {
+                        var textSpan = node.querySelector('.sec-leaf-text');
+                        if (textSpan) textSpan.textContent = newName;
+                    }
+                });
+                secShowToast('✅ 已重命名为「' + newName + '」');
+            };
+
+            // ─── 应用已保存的别名到显示名称 ──────────────────────────────
+            (function applyAliases() {
+                var aliases = {};
+                try { aliases = JSON.parse(localStorage.getItem('EngineAliases') || '{}'); } catch(e){}
+                document.querySelectorAll('.sec-leaf').forEach(function(node) {
+                    var onclick = node.getAttribute('onclick') || '';
+                    var match = onclick.match(/secLoadConfig\(this,'([^']+)'/);
+                    var key = match ? match[1] : '';
+                    if (key && aliases[key]) {
+                        var textSpan = node.querySelector('.sec-leaf-text');
+                        if (textSpan) textSpan.textContent = aliases[key];
+                    }
+                });
+            })();
+
+            // ─── 自定义分类管理 ───────────────────────────────────────────
+            var SEC_CUSTOM_KEY = 'SecEngineCustom';
+            function secLoadCustom() {
+                try { return JSON.parse(localStorage.getItem(SEC_CUSTOM_KEY) || '[]'); } catch(e){ return []; }
+            }
+            function secSaveCustom(data) { localStorage.setItem(SEC_CUSTOM_KEY, JSON.stringify(data)); }
+
+            // 自动清除与内置分类同名的自定义分类（防止重复显示）
+            (function secDedupeCustom() {
+                var builtinNames = ['挂帐','结算','账户结算','账户管理','在线账户管理','收付款单','对账','核销'];
+                var data = secLoadCustom();
+                var filtered = data.filter(function(cat) { return builtinNames.indexOf(cat.name) === -1; });
+                if (filtered.length !== data.length) secSaveCustom(filtered);
+            })();
+
+            function secRenderCustomTree() {
+                var customData = secLoadCustom();
+                var container = document.getElementById('sec-custom-cats');
+                if (!container) return;
+                if (!customData.length) { container.innerHTML = ''; return; }
+                var html = '<div style="border-top:2px solid #e8f4fd; margin-top:8px;">';
+                customData.forEach(function(cat, ci) {
+                    html += '<div class="sec-tree-node sec-level-1" onclick="secToggleCustomCat(' + ci + ')" style="display:flex;justify-content:space-between;">' +
+                        '<span>' + cat.name + '</span>' +
+                        '<span style="display:flex;gap:4px;">' +
+                        '<span class="sec-toggle-icon" id="sec-custom-icon-' + ci + '">▸</span>' +
+                        '<span onclick="event.stopPropagation();secDeleteCustomCat(' + ci + ')" style="color:#e74c3c;cursor:pointer;font-size:11px;padding:0 4px;" title="删除分类">✕</span>' +
+                        '</span></div>';
+                    html += '<div class="sec-cat-children" id="sec-custom-cat-' + ci + '">';
+                    (cat.children || []).forEach(function(grp, gi) {
+                        html += '<div class="sec-tree-node sec-level-2" onclick="secToggleCustomSub(' + ci + ',' + gi + ')" style="display:flex;justify-content:space-between;">' +
+                            '<span>' + grp.name + '</span>' +
+                            '<span class="sec-toggle-icon" id="sec-custom-sub-' + ci + '-' + gi + '">▸</span></div>';
+                        html += '<div class="sec-sub-items" id="sec-custom-sub-items-' + ci + '-' + gi + '">';
+                        (grp.items || []).forEach(function(item) {
+                            var safeItem = item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                            html += '<div class="sec-tree-node sec-level-3 sec-leaf" onclick="secLoadConfig(this,\'' + safeItem + '\',\'' + cat.name.replace(/'/g,"\\'") + '\',\'' + grp.name.replace(/'/g,"\\'") + '\')">' +
+                                '<span class="sec-leaf-text">' + item + '</span>' +
+                                '<span style="display:flex;gap:3px;">' +
+                                '<span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem(\'' + safeItem + '\')" title="重命名">✎</span>' +
+                                '<span class="sec-leaf-del" onclick="event.stopPropagation();secDeleteCustomItem(\'' + safeItem + '\',' + ci + ',' + gi + ')" title="删除">✕</span>' +
+                                '</span></div>';
+                        });
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            window.secToggleCustomCat = function(ci) {
+                var el = document.getElementById('sec-custom-cat-' + ci);
+                var icon = document.getElementById('sec-custom-icon-' + ci);
+                if (!el) return;
+                var hidden = el.style.display !== 'block';
+                el.style.display = hidden ? 'block' : 'none';
+                if (icon) icon.textContent = hidden ? '▾' : '▸';
+            };
+            window.secToggleCustomSub = function(ci, gi) {
+                var el = document.getElementById('sec-custom-sub-items-' + ci + '-' + gi);
+                var icon = document.getElementById('sec-custom-sub-' + ci + '-' + gi);
+                if (!el) return;
+                var hidden = el.style.display !== 'block';
+                el.style.display = hidden ? 'block' : 'none';
+                if (icon) icon.textContent = hidden ? '▾' : '▸';
+            };
+            window.secDeleteCustomCat = function(ci) {
+                var data = secLoadCustom();
+                if (!confirm('确认删除分类「' + (data[ci] && data[ci].name) + '」及其所有模板？')) return;
+                data.splice(ci, 1);
+                secSaveCustom(data);
+                secRenderCustomTree();
+            };
+            window.secDeleteCustomItem = function(itemName, ci, gi) {
+                if (!confirm('确认删除模板「' + itemName + '」？')) return;
+                var data = secLoadCustom();
+                if (data[ci] && data[ci].children && data[ci].children[gi]) {
+                    data[ci].children[gi].items = data[ci].children[gi].items.filter(function(i){ return i !== itemName; });
+                    if (!data[ci].children[gi].items.length) data[ci].children.splice(gi, 1);
+                    if (!data[ci].children.length) data.splice(ci, 1);
+                }
+                secSaveCustom(data);
+                // 删除模板数据
+                try {
+                    var store = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
+                    delete store[itemName];
+                    localStorage.setItem('EngineVoucherTemplates', JSON.stringify(store));
+                } catch(e){}
+                secRenderCustomTree();
+                secShowToast('模板「' + itemName + '」已删除');
+            };
+
+            // ─── 新增模板 modal ───────────────────────────────────────────
+            window.secShowAddModal = function() {
+                var modal = document.getElementById('secAddModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'secAddModal';
+                    modal.className = 'sec-modal-overlay';
+                    modal.innerHTML = '<div class="sec-add-modal-body">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                        '<h3 style="margin:0;font-size:16px;">新增模板配置</h3>' +
+                        '<span onclick="document.getElementById(\'secAddModal\').classList.remove(\'active\')" style="cursor:pointer;font-size:20px;color:#999;line-height:1;">✕</span>' +
+                        '</div>' +
+                        '<div class="sec-add-form">' +
+                        '<div class="sec-form-group"><label>模板名称 <span style="color:red;">*</span></label>' +
+                        '<input id="secNewName" class="sec-form-input" type="text" placeholder="例如：月结客户对账结算"></div>' +
+                        '<div class="sec-form-group"><label>所属大类（可新建）</label>' +
+                        '<input id="secNewCat" class="sec-form-input" type="text" placeholder="例如：对账 / 自定义"></div>' +
+                        '<div class="sec-form-group"><label>子分类（可新建）</label>' +
+                        '<input id="secNewGrp" class="sec-form-input" type="text" placeholder="例如：客户对账"></div>' +
+                        '</div>' +
+                        '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">' +
+                        '<button class="sec-btn" onclick="document.getElementById(\'secAddModal\').classList.remove(\'active\')">取消</button>' +
+                        '<button class="sec-btn sec-btn-save" onclick="secSubmitAddTemplate()">确认新增</button>' +
+                        '</div></div>';
+                    document.body.appendChild(modal);
+                }
+                modal.classList.add('active');
+                setTimeout(function(){ var el = document.getElementById('secNewName'); if(el) el.value=''; el = document.getElementById('secNewCat'); if(el) el.value=''; el = document.getElementById('secNewGrp'); if(el) el.value=''; }, 0);
+            };
+
+            window.secSubmitAddTemplate = function() {
+                var name = (document.getElementById('secNewName') && document.getElementById('secNewName').value || '').trim();
+                var catName = (document.getElementById('secNewCat') && document.getElementById('secNewCat').value || '').trim() || '自定义';
+                var grpName = (document.getElementById('secNewGrp') && document.getElementById('secNewGrp').value || '').trim() || '默认';
+                if (!name) { alert('请填写模板名称'); return; }
+                // 检查重复
+                var data = secLoadCustom();
+                var allItems = [];
+                data.forEach(function(c){ (c.children||[]).forEach(function(g){ (g.items||[]).forEach(function(i){ allItems.push(i); }); }); });
+                document.querySelectorAll('.sec-leaf').forEach(function(n){ var m=(n.getAttribute('onclick')||'').match(/secLoadConfig\(this,'([^']+)'/); if(m) allItems.push(m[1]); });
+                if (allItems.indexOf(name) !== -1) { alert('模板名称「' + name + '」已存在，请换一个'); return; }
+                var cat = data.find(function(c){ return c.name === catName; });
+                if (!cat) { cat = { name: catName, children: [] }; data.push(cat); }
+                var grp = (cat.children || (cat.children=[])).find(function(g){ return g.name === grpName; });
+                if (!grp) { grp = { name: grpName, items: [] }; cat.children.push(grp); }
+                grp.items.push(name);
+                secSaveCustom(data);
+                // 初始化空模板
+                try {
+                    var store = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
+                    if (!store[name]) { store[name] = { name: name, category: catName, group: grpName, voucherWord: '转', summaryTemplate: '', remark: '', entries: [] }; }
+                    localStorage.setItem('EngineVoucherTemplates', JSON.stringify(store));
+                    var ss = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+                    ss[name] = store[name];
+                    sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(ss));
+                } catch(e){}
+                document.getElementById('secAddModal').classList.remove('active');
+                secRenderCustomTree();
+                // 自动展开并选中
+                setTimeout(function(){
+                    var leaves = document.querySelectorAll('.sec-leaf');
+                    for (var i=0; i<leaves.length; i++) {
+                        var m=(leaves[i].getAttribute('onclick')||'').match(/secLoadConfig\(this,'([^']+)'/);
+                        if (m && m[1] === name) { leaves[i].click(); break; }
+                    }
+                }, 100);
+                secShowToast('✅ 模板「' + name + '」已新增，请配置分录后保存');
+            };
+
+            // 初始化渲染自定义分类
+            secRenderCustomTree();
+
         }, 0);
     }
 
