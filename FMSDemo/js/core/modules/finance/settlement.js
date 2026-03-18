@@ -1611,6 +1611,8 @@ window.arSettleWaybillsBatch = function () {
 
     const today = new Date().toISOString().slice(0, 10);
 
+    const client = toSettle.length > 0 ? (toSettle[0].client || toSettle[0].customerName || '') : '';
+
     // 更新运单状态
     list.forEach(w => {
         if (!ids.includes(w.id) || w.settlementStatus === '已结算') return;
@@ -1620,8 +1622,33 @@ window.arSettleWaybillsBatch = function () {
     });
     sessionStorage.setItem('BizWaybills', JSON.stringify(list));
 
+    // 凭证1：运单结算 → 确认债权（借：应收账款 / 贷：主营业务收入 + 应交税费）
+    let voucherTip = '';
+    try {
+        const doc = {
+            type: '运单结算',
+            waybillNo: toSettle.map(w => w.id).join(','),
+            clientName: client,
+            amount: total,
+            date: today
+        };
+        if (typeof window.generateVoucherFromEngineTemplate === 'function') {
+            const result = window.generateVoucherFromEngineTemplate('运单结算', doc, {});
+            if (result && result.success) {
+                // 将凭证号回写到每张运单
+                list.forEach(w => { if (ids.includes(w.id)) w.settlementVoucherId = result.voucherId; });
+                sessionStorage.setItem('BizWaybills', JSON.stringify(list));
+                voucherTip = `\n已生成凭证1（确认债权）：${result.voucherId}`;
+            } else {
+                voucherTip = `\n⚠️ 凭证未生成：${(result && result.error) || '请在会计引擎中配置"运单结算"模板'}`;
+            }
+        }
+    } catch (e) {
+        voucherTip = '\n凭证生成异常：' + e.message;
+    }
+
     if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应收管理', action: '结算', detail: '运单结算，共 ' + toSettle.length + ' 票，合计：¥' + totalStr });
-    alert(`✅ 结算完成！\n已结算 ${toSettle.length} 票运单，合计：¥${totalStr}\n\n请勾选已结算运单，点【申请开票】推送至发票台账。`);
+    alert(`✅ 结算完成！\n已结算 ${toSettle.length} 票运单，合计：¥${totalStr}${voucherTip}\n\n下一步：录入收款单 → 前往应收核销完成核销（自动生成收款凭证）。`);
     loadContent('ARCollectionVerify');
 };
 

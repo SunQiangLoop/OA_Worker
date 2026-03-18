@@ -570,9 +570,11 @@ window.confirmWriteOff = function () {
 
         voucherId = _woGenerateVoucherId(voucherPrefix);
         let vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+        const waybillNoStr = type === 'AR' && selectedArIds.length > 0 ? selectedArIds.join(',') : '';
         vouchers.unshift({
             id: voucherId, date, amount: amount.toFixed(2),
-            summary, user: '核销确认', status: '已记账',
+            summary, user: '核销确认', status: '未审核',
+            waybillNo: waybillNoStr,
             lines, sourceType: 'WriteOff', sourceId: woId
         });
         sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));

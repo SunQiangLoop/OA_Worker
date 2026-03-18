@@ -419,7 +419,8 @@
     }
 
     function buildVoucherObject(template, date, summary, entries, idOverride) {
-        const word = (template.voucherWord || "转").toString().trim() || "转";
+        const rawWord = (template.voucherWord || "转").toString().trim() || "转";
+        const word = typeof window.resolveVoucherWord === "function" ? window.resolveVoucherWord(rawWord) : rawWord;
         const id = idOverride || (typeof window.generateSequentialVoucherId === "function"
             ? window.generateSequentialVoucherId(word)
             : `${word}-${Date.now()}`);

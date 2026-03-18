@@ -108,6 +108,10 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "2203", name: "预收账款",       type: "负债", direction: "贷", aux: "客户",       status: "启用", remark: "客户预付货款" },
         { code: "2211", name: "应付职工薪酬",   type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
         { code: "2221", name: "应交税费",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "222101", name: "应交税费-应交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "222102", name: "应交城建税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "222103", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "222104", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
         { code: "2231", name: "应付利息",       type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
         { code: "2241", name: "其他应付款",     type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
         { code: "2501", name: "长期借款",       type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年以上借款" },
@@ -361,6 +365,30 @@ function saveSubjectCodeSetting() {
     }
     alert("科目级次与编码长度已保存。");
 }
+
+// ── 凭证字号设置 ──────────────────────────────────────────────────────────
+function getVoucherWordSetting() {
+    return localStorage.getItem("VoucherWordMode") || "spt";
+}
+
+// 全局解析：将模板/系统内部的原始字（收/付/转）按当前设置映射为实际字号
+window.resolveVoucherWord = function (word) {
+    const mode = getVoucherWordSetting();
+    if (mode === "ji") return "记";
+    return (word || "转").toString().trim() || "转";
+};
+
+window.saveVoucherWordSetting = function () {
+    const radio = document.querySelector('input[name="voucher-word-mode"]:checked');
+    if (!radio) { alert("请先选择凭证字号方式。"); return; }
+    localStorage.setItem("VoucherWordMode", radio.value);
+    const tip = document.getElementById("voucher-word-save-tip");
+    if (tip) {
+        tip.style.display = "inline";
+        setTimeout(() => { tip.style.display = "none"; }, 2000);
+    }
+};
+// ─────────────────────────────────────────────────────────────────────────
 
 window.updateSubjectCodeInputs = function(levelCount, lengths) {
     const selectEl = document.getElementById("subject-level-count");
@@ -1134,7 +1162,7 @@ function loadContent(moduleCode, element = null) {
 	            // ── 基本信息 ──
 	            { key: "site",                  label: "网点" },
 	            { key: "waybillNo",             label: "运单号",     filter: { id: "wb_f_waybillNos", placeholder: "支持批量搜索" } },
-	            { key: "customerName",          label: "客户名称" },
+	            { key: "creator",          label: "客户名称" },
 	            { key: "goodsNo",               label: "司机单号",   filter: { id: "wb_f_goodsNos", placeholder: "支持批量搜索" } },
 	            { key: "createdAt",             label: "开单时间" },
 	            { key: "loadAt",                label: "装车时间" },
@@ -3077,13 +3105,13 @@ function loadContent(moduleCode, element = null) {
         if (shTab === "delivery") {
             const shdDef = [
                 {id:"SH260302001",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"南京联畅物流有限公司",  deliveryAt:"2026-03-02 09:00:00",finishAt:"2026-03-02 11:30:00",deliveryMethod:"自驾送货",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:18, weight:450.0, volume:15.0,deliveryFee:120.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"专线B",finishOperator:"王华", remark:""},
-                {id:"SH260302002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"合肥诚才物流有限公司",  deliveryAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:00:00",deliveryMethod:"外包配送",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:25, weight:680.5, volume:22.0,deliveryFee:180.00,unitDeliveryFee:7.20, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"专线A",finishOperator:"刘强",remark:""},
-                {id:"SH260302003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"镇江天地沃华物流",      deliveryAt:"2026-03-02 14:00:00",finishAt:"2026-03-02 16:30:00",deliveryMethod:"上门派送",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:12, weight:320.0, volume:10.5,deliveryFee:85.00, unitDeliveryFee:7.08, deliverySite:"专线B",deliveryOperator:"陈磊",finishSite:"专线B",finishOperator:"赵华", remark:"需冷链"},
-                {id:"SH260302004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"南京浦鹏物流有限公司",  deliveryAt:"2026-03-02 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:30, weight:900.0, volume:30.0,deliveryFee:200.00,unitDeliveryFee:6.67, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
-                {id:"SH260302005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"天长市乐运物流",        deliveryAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 11:00:00",deliveryMethod:"外包配送",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:42, weight:1200.5,volume:40.0,deliveryFee:280.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"王强",finishSite:"专线B",finishOperator:"刘磊",remark:""},
+                {id:"SH260302002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"朱树伟/18905693469/合肥诚才物流有限公司",  deliveryAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:00:00",deliveryMethod:"外包配送",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:25, weight:680.5, volume:22.0,deliveryFee:180.00,unitDeliveryFee:7.20, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"专线A",finishOperator:"刘强",remark:""},
+                {id:"SH260302003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"余风华/13337717906/镇江天地沃华物流有限公司",      deliveryAt:"2026-03-02 14:00:00",finishAt:"2026-03-02 16:30:00",deliveryMethod:"上门派送",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:12, weight:320.0, volume:10.5,deliveryFee:85.00, unitDeliveryFee:7.08, deliverySite:"专线B",deliveryOperator:"陈磊",finishSite:"专线B",finishOperator:"赵华", remark:"需冷链"},
+                {id:"SH260302004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"焦大海/18018079866/南京浦鹏物流有限公司",  deliveryAt:"2026-03-02 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:30, weight:900.0, volume:30.0,deliveryFee:200.00,unitDeliveryFee:6.67, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"SH260302005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"董长于/15212085999/天长市乐运物流有限公司",        deliveryAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 11:00:00",deliveryMethod:"外包配送",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:42, weight:1200.5,volume:40.0,deliveryFee:280.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"王强",finishSite:"专线B",finishOperator:"刘磊",remark:""},
                 {id:"SH260303001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 11:00:00",deliveryMethod:"自驾送货",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:8,  weight:220.0, volume:7.5, deliveryFee:60.00, unitDeliveryFee:7.50, deliverySite:"专线A",deliveryOperator:"李华",finishSite:"专线A",finishOperator:"张磊",remark:""},
-                {id:"SH260303002",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"怀化飞鸿物流",          deliveryAt:"2026-03-03 10:00:00",finishAt:"2026-03-03 13:30:00",deliveryMethod:"上门派送",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:55, weight:1500.0,volume:52.0,deliveryFee:350.00,unitDeliveryFee:6.36, deliverySite:"专线B",deliveryOperator:"陈强",finishSite:"专线B",finishOperator:"王磊",remark:""},
-                {id:"SH260303003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"昆山江南达物流",        deliveryAt:"2026-03-03 13:00:00",finishAt:"2026-03-03 15:20:00",deliveryMethod:"外包配送",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:20, weight:580.0, volume:18.0,deliveryFee:140.00,unitDeliveryFee:7.00, deliverySite:"专线A",deliveryOperator:"刘磊",finishSite:"专线A",finishOperator:"赵强",remark:""},
+                {id:"SH260303002",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"黄光辉/15016793637/怀化飞鸿物流有限公司",          deliveryAt:"2026-03-03 10:00:00",finishAt:"2026-03-03 13:30:00",deliveryMethod:"上门派送",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:55, weight:1500.0,volume:52.0,deliveryFee:350.00,unitDeliveryFee:6.36, deliverySite:"专线B",deliveryOperator:"陈强",finishSite:"专线B",finishOperator:"王磊",remark:""},
+                {id:"SH260303003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"翠娟/18013266866/昆山江南达物流有限公司",        deliveryAt:"2026-03-03 13:00:00",finishAt:"2026-03-03 15:20:00",deliveryMethod:"外包配送",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:20, weight:580.0, volume:18.0,deliveryFee:140.00,unitDeliveryFee:7.00, deliverySite:"专线A",deliveryOperator:"刘磊",finishSite:"专线A",finishOperator:"赵强",remark:""},
                 {id:"SH260303004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"江西连淳物流",          deliveryAt:"2026-03-03 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"赣C45678",driver:"吴磊", phone:"18112345676",pieces:15, weight:420.0, volume:14.0,deliveryFee:100.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"",    finishOperator:"",    remark:""},
                 {id:"SH260303005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:30:00",deliveryMethod:"外包配送",plate:"皖F56789",driver:"郑伟", phone:"15212345677",pieces:38, weight:1050.0,volume:35.5,deliveryFee:240.00,unitDeliveryFee:6.32, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"专线A",finishOperator:"王磊",remark:""},
                 {id:"SH260304001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"广东东安物流",          deliveryAt:"2026-03-04 09:30:00",finishAt:"2026-03-04 12:00:00",deliveryMethod:"上门派送",plate:"粤G67890",driver:"何军", phone:"13612345678",pieces:22, weight:620.0, volume:20.5,deliveryFee:150.00,unitDeliveryFee:6.82, deliverySite:"专线B",deliveryOperator:"刘强",finishSite:"专线B",finishOperator:"李华", remark:""},
@@ -3276,8 +3304,8 @@ function loadContent(moduleCode, element = null) {
             const shpDef = [
                 {id:"PH260302001",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"南京联畅物流有限公司",  pickupAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 10:00:00",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:22, weight:550.0, volume:18.5,pickupFee:130.00,unitPickupFee:5.91,pickupSite:"专线A",pickupOperator:"李磊",finishSite:"专线A",finishOperator:"王华", remark:""},
                 {id:"PH260302002",accrualStatus:"未挂帐",pickupStatus:"已完成",customerName:"合肥诚才物流有限公司",  pickupAt:"2026-03-02 09:30:00",finishAt:"2026-03-02 11:30:00",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:15, weight:420.0, volume:14.0,pickupFee:90.00, unitPickupFee:6.00,pickupSite:"专线B",pickupOperator:"王磊",finishSite:"专线B",finishOperator:"刘强",remark:""},
-                {id:"PH260302003",accrualStatus:"未挂帐",pickupStatus:"已提货",customerName:"镇江天地沃华物流",      pickupAt:"2026-03-02 13:00:00",finishAt:"2026-03-02 15:00:00",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:28, weight:780.0, volume:26.0,pickupFee:160.00,unitPickupFee:5.71,pickupSite:"专线A",pickupOperator:"陈磊",finishSite:"专线A",finishOperator:"赵华", remark:""},
-                {id:"PH260302004",accrualStatus:"未挂帐",pickupStatus:"提货中", customerName:"南京浦鹏物流有限公司",  pickupAt:"2026-03-02 14:30:00",finishAt:"",                   plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:10, weight:280.0, volume:9.5, pickupFee:65.00, unitPickupFee:6.50,pickupSite:"专线B",pickupOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
+                {id:"PH260302003",accrualStatus:"未挂帐",pickupStatus:"已提货",customerName:"余风华/13337717906/镇江天地沃华物流有限公司",      pickupAt:"2026-03-02 13:00:00",finishAt:"2026-03-02 15:00:00",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:28, weight:780.0, volume:26.0,pickupFee:160.00,unitPickupFee:5.71,pickupSite:"专线A",pickupOperator:"陈磊",finishSite:"专线A",finishOperator:"赵华", remark:""},
+                {id:"PH260302004",accrualStatus:"未挂帐",pickupStatus:"提货中", customerName:"焦大海/18018079866/南京浦鹏物流有限公司",  pickupAt:"2026-03-02 14:30:00",finishAt:"",                   plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:10, weight:280.0, volume:9.5, pickupFee:65.00, unitPickupFee:6.50,pickupSite:"专线B",pickupOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
                 {id:"PH260302005",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"天长市乐运物流",        pickupAt:"2026-03-02 07:30:00",finishAt:"2026-03-02 09:30:00",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:45, weight:1280.0,volume:43.0,pickupFee:250.00,unitPickupFee:5.56,pickupSite:"专线A",pickupOperator:"王强",finishSite:"专线A",finishOperator:"刘磊",remark:""},
                 {id:"PH260303001",accrualStatus:"未挂帐",pickupStatus:"已完成",customerName:"安徽滁行物流有限公司",  pickupAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:00:00",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:18, weight:500.0, volume:16.5,pickupFee:100.00,unitPickupFee:5.56,pickupSite:"专线B",pickupOperator:"李华",finishSite:"专线B",finishOperator:"张磊",remark:""},
                 {id:"PH260303002",accrualStatus:"已挂帐",pickupStatus:"已完成",customerName:"怀化飞鸿物流",          pickupAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 12:00:00",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:32, weight:900.0, volume:30.5,pickupFee:175.00,unitPickupFee:5.47,pickupSite:"专线A",pickupOperator:"陈强",finishSite:"专线A",finishOperator:"王磊",remark:""},
@@ -8226,16 +8254,9 @@ function loadContent(moduleCode, element = null) {
                 actions += `<button onclick="window.submitReceiptForReview('${r.id}')" style="padding:3px 8px;border:1px solid #e67e22;color:#e67e22;background:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">提交审核</button>`;
                 actions += `<button onclick="window.deleteReceipt('${r.id}')" style="padding:3px 8px;border:1px solid #e74c3c;color:#e74c3c;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">删除</button>`;
             } else if (r.status === '待审核') {
-                actions += `<button onclick="window.approveReceipt('${r.id}')" style="padding:3px 8px;border:none;background:#27ae60;color:#fff;border-radius:4px;cursor:pointer;margin-right:4px;font-size:12px;">审核通过</button>`;
-                if (!r.relatedVoucherId) {
-                    actions += `<button onclick="window.generateReceiptVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
-                }
+                actions += `<button onclick="window.approveReceipt('${r.id}')" style="padding:3px 8px;border:none;background:#27ae60;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">审核通过</button>`;
             } else if (r.status === '已审核') {
-                if (!r.relatedVoucherId) {
-                    actions += `<button onclick="window.generateReceiptVoucher('${r.id}')" style="padding:3px 8px;border:none;background:#8e44ad;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;">生成凭证</button>`;
-                } else {
-                    actions += `<span style="color:#27ae60;font-size:12px;">✓ 已完成</span>`;
-                }
+                actions += `<span style="color:#27ae60;font-size:12px;">✓ 待核销</span>`;
             }
 
             return `<tr>
@@ -8301,7 +8322,10 @@ function loadContent(moduleCode, element = null) {
 
         <div style="margin-top:12px;padding:12px 16px;background:#fffbf0;border:1px solid #fdebd0;border-radius:8px;font-size:12px;color:#7d6608;line-height:1.8;">
             <strong>操作流程：</strong>
-            新建收款单（录入客户+运单明细）→ 提交审核 → 审核通过 → 生成凭证（需先在<strong>会计引擎 → 收付款单 → 收款单</strong>配置模板）→ 凭证审核中心过账
+            ① <strong>运单结算</strong>（自动生成凭证1：借 应收账款 / 贷 主营业务收入 + 应交税费）→
+            ② <strong>录入收款单</strong>（仅记录付款信息，不生成凭证）→
+            ③ <strong>应收核销</strong>（选择收款单后确认核销，自动生成凭证2：借 银行存款 / 贷 应收账款）→
+            ④ <strong>申请开票</strong>
         </div>
 
         <!-- 收款单录入弹窗 -->
@@ -8468,7 +8492,7 @@ function loadContent(moduleCode, element = null) {
 
         <div style="margin-top:12px;padding:12px 16px;background:#fef9f0;border:1px solid #fdebd0;border-radius:8px;font-size:12px;color:#7d6608;line-height:1.8;">
             <strong>操作流程：</strong>
-            新建付款单（录入承运商/司机+批次明细）→ 提交审核 → 审核通过 → 生成凭证（需先在<strong>会计引擎 → 收付款单 → 付款单</strong>配置模板）→ 凭证审核中心过账
+            新建付款单（录入承运商/司机+批次明细）→ 提交审核 → 审核通过 → 生成凭证（需先在<strong>会计引擎 → 核销 → 应付核销</strong>配置模板）→ 凭证审核中心过账
         </div>
 
         <!-- 付款单录入弹窗 -->
@@ -12490,11 +12514,13 @@ function loadContent(moduleCode, element = null) {
                         </div>
                     </div>
                     
-                    <div class="action-bar" style="margin-bottom: 12px;">
-                        <button class="btn-primary" onclick="createNextYearPeriods()">➕ 新增</button>
-                        <button class="btn-primary" onclick="setPeriodStatusBulk('已开启')">✅ 开启</button>
-                        <button class="btn-primary" onclick="setPeriodStatusBulk('未开启')">⛔ 关闭</button>                      
+                    <div class="action-bar" style="margin-bottom: 8px;">
+                        <button class="btn-primary" onclick="createNextYearPeriods()">➕ 新增期间</button>
+                        <button class="btn-primary" onclick="setPeriodStatusBulk('已开启')">✅ 开启期间</button>
                     </div>
+                    <p style="color:#e67e22; font-size:13px; margin-bottom:12px; padding:8px 12px; background:#fff8e1; border-radius:4px; border-left:3px solid #f39c12;">
+                        ⚠️ 期间关闭请通过「月末结账」流程执行，系统完成结账检查后自动关闭期间。如需管理员强制操作，请联系系统管理员。
+                    </p>
 
                     <table class="data-table">
                         <thead>
@@ -13477,6 +13503,10 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
 
     else if (moduleCode === "VoucherEntryReview") {
+        var veWordMode = getVoucherWordSetting();
+        var veWordOptions = veWordMode === "ji"
+            ? '<option value="记" selected>记</option>'
+            : '<option value="收">收</option><option value="付">付</option><option value="转" selected>转</option>';
         var veSessionSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
         var veLocalSubjects = JSON.parse(localStorage.getItem("AcctSubjects") || "[]");
         var veSubjectList = (Array.isArray(veSessionSubjects) && veSessionSubjects.length > 1) ? veSessionSubjects
@@ -13642,9 +13672,7 @@ function loadContent(moduleCode, element = null) {
                     <div class="ve-form-field">
                         <label><span class="ve-required-star">*</span>凭证字</label>
                         <select class="ve-input-xs" id="veVoucherWord" onchange="veUpdateVoucherNo()">
-                            <option value="收">收</option>
-                            <option value="付">付</option>
-                            <option value="转" selected>转</option>
+                            ${veWordOptions}
                         </select>
                     </div>
                     <div class="ve-form-field">
@@ -15130,6 +15158,26 @@ function loadContent(moduleCode, element = null) {
         };
 
         const buildRelatedDocsHtml = (voucher) => {
+            // ── 特殊处理：核销凭证 WriteOff → 展示已核销的运单号 ────────
+            if (voucher.sourceType === 'WriteOff' && voucher.waybillNo) {
+                const wbNos = voucher.waybillNo.split(/[,，;]/).map(s => s.trim()).filter(Boolean);
+                if (wbNos.length) {
+                    const showNos = wbNos.slice(0, 3);
+                    const moreN = wbNos.length - showNos.length;
+                    const wbLinks = showNos.map(no =>
+                        `<a href="javascript:void(0)"
+                            class="doc-no-link doc-no-link--waybill"
+                            data-doc-type="waybill"
+                            data-doc-ids="${wbNos.join(',')}"
+                            data-voucher-id="${voucher.id || ''}"
+                            onclick="openRelatedDocDrawer(this)"
+                            style="color:#1d4ed8;text-decoration:none;margin-right:4px;font-size:11px;white-space:nowrap;"
+                            title="运单">${no}</a>`
+                    ).join("");
+                    const moreHtml = moreN > 0 ? `<span style="color:#94a3b8;font-size:11px;">+${moreN}</span>` : "";
+                    return wbLinks + moreHtml;
+                }
+            }
             // ── 特殊处理：收款单 RCV-* → 展示关联运单号 ────────────────
             const rcvId = voucher.sourceId || voucher.sourceNo || "";
             if (/^RCV-/i.test(rcvId)) {
@@ -16443,6 +16491,45 @@ function loadContent(moduleCode, element = null) {
 
             // 自动触发一次检查
             setTimeout(refreshClosingCheck, 200);
+        }
+
+        // ---- 年末封账区块（月末结账页面底部，始终显示） ----
+        const _yearMeta = typeof getCurrentPeriodMeta === "function" ? getCurrentPeriodMeta() : { year: new Date().getFullYear() };
+        const _thisYear = _yearMeta.year || new Date().getFullYear();
+        const _yearClosed = sessionStorage.getItem(`${_thisYear}-YearClosed`) === "true";
+        let _allMonthsClosed = true;
+        let _closedMonthCount = 0;
+        for (let _m = 1; _m <= 12; _m++) {
+            if (sessionStorage.getItem(`${_thisYear}-${_m}-MonthClosed`) === "true") {
+                _closedMonthCount++;
+            } else {
+                _allMonthsClosed = false;
+            }
+        }
+
+        if (_yearClosed) {
+            contentHTML += `
+                <div style="margin-top:28px; background:#fdf3e7; border:1px solid #e67e22; border-radius:8px; padding:24px; text-align:center;">
+                    <h3 style="color:#e67e22; margin:0 0 8px;">🔒 ${_thisYear} 年度已完成年末封账</h3>
+                    <p style="color:#666; margin:0;">本年度数据已永久锁定，不可再进行凭证录入或期间反结账。</p>
+                </div>
+            `;
+        } else if (_allMonthsClosed) {
+            contentHTML += `
+                <div style="margin-top:28px; background:#fff8e1; border:1px solid #f39c12; border-radius:8px; padding:24px;">
+                    <h3 style="color:#e67e22; margin:0 0 10px;">年末封账</h3>
+                    <p style="color:#555; margin-bottom:8px;">${_thisYear} 年全部 12 个会计期间已完成月末结账，可执行年末封账。</p>
+                    <p style="color:#999; font-size:13px; margin-bottom:18px;">年末封账将永久锁定本年所有期间，并在下一年度建立期初余额。此操作<strong>不可撤销</strong>。</p>
+                    <button class="btn-primary" style="background:#e67e22; padding:10px 30px; font-size:15px;" onclick="executeYearEndClose(${_thisYear})">执行年末封账</button>
+                </div>
+            `;
+        } else {
+            contentHTML += `
+                <div style="margin-top:28px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:20px;">
+                    <h3 style="color:#6c757d; margin:0 0 8px;">年末封账</h3>
+                    <p style="color:#aaa; margin:0;">${_thisYear} 年度已完成 <strong>${_closedMonthCount} / 12</strong> 个月结账，全部月份结账完成后方可执行年末封账。</p>
+                </div>
+            `;
         }
     }
 
@@ -18823,6 +18910,7 @@ function loadContent(moduleCode, element = null) {
         const { standard, locked } = getAccountingStandardState();
         const taxLocked = localStorage.getItem("TaxAccrualLocked") === "true";
         const subjectSetting = getSubjectCodeSetting();
+        const wordMode = localStorage.getItem("VoucherWordMode") || "spt";
         const summaryTemplates = getVoucherSummaryTemplates();
         const defaultIncomeTemplate = [
             { name: "一、营业总收入", codes: "6001,600110,6051", op: "+" },
@@ -19016,23 +19104,33 @@ function loadContent(moduleCode, element = null) {
         };
 
         const TAX_ACCRUAL_RULE_KEY = "TaxAccrualRules";
+        // 借方科目随会计准则变动：小企业准则用 5403，企业准则用 6403
+        const TAX_DEBIT_CODE = standard === "enterprise" ? "6403" : "5403";
+
         const loadTaxAccrualRules = () => {
             try {
-                const stored = JSON.parse(sessionStorage.getItem(TAX_ACCRUAL_RULE_KEY) || "[]");
-                if (Array.isArray(stored) && stored.length) return stored;
+                const stored = JSON.parse(
+                    localStorage.getItem(TAX_ACCRUAL_RULE_KEY)
+                    || sessionStorage.getItem(TAX_ACCRUAL_RULE_KEY)
+                    || "[]"
+                );
+                if (Array.isArray(stored) && stored.length) {
+                    // 自动同步借方科目：当会计准则切换时，5403↔6403 自动更新
+                    return stored.map(row => ({
+                        ...row,
+                        debitCode: (row.debitCode === "5403" || row.debitCode === "6403")
+                            ? TAX_DEBIT_CODE
+                            : row.debitCode
+                    }));
+                }
             } catch (error) {
                 // ignore
             }
+            // 3 条初始化默认模板（可修改后保存）
             return [
-                {
-                    taxName: "城市维护建设税",
-                    baseCodes: "2221",
-                    direction: "贷方发生额",
-                    rate: "7",
-                    debitCode: "640301",
-                    creditCode: "2221",
-                    aux: "部门"
-                }
+                { taxName: "城市维护建设税", baseCodes: "222101", direction: "贷方净额", rate: "7",  debitCode: TAX_DEBIT_CODE, creditCode: "222102", aux: "部门/项目" },
+                { taxName: "教育附加",       baseCodes: "222101", direction: "贷方净额", rate: "3",  debitCode: TAX_DEBIT_CODE, creditCode: "222103", aux: "部门/项目" },
+                { taxName: "地方教育附加",   baseCodes: "222101", direction: "贷方净额", rate: "2",  debitCode: TAX_DEBIT_CODE, creditCode: "222104", aux: "部门/项目" }
             ];
         };
 
@@ -19087,8 +19185,46 @@ function loadContent(moduleCode, element = null) {
                 creditCode: row.querySelector(".tax-credit-select")?.value || "",
                 aux: row.querySelector(".tax-aux-input")?.value || ""
             }));
+            localStorage.setItem(TAX_ACCRUAL_RULE_KEY, JSON.stringify(data));
             sessionStorage.setItem(TAX_ACCRUAL_RULE_KEY, JSON.stringify(data));
             alert("✅ 计提税金及附加设置已保存。");
+        };
+
+        window.toggleTaxDirTip = function() {
+            // 弹出小提示框显示取数方向举例
+            const existing = document.getElementById("tax-dir-tip-popup");
+            if (existing) { existing.remove(); return; }
+            const popup = document.createElement("div");
+            popup.id = "tax-dir-tip-popup";
+            popup.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#fff;border:1px solid #3498db;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:20px 24px;max-width:420px;width:90%;";
+            popup.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <strong style="font-size:14px;color:#2c3e50;">取数方向说明</strong>
+                    <span onclick="document.getElementById('tax-dir-tip-popup').remove()" style="cursor:pointer;font-size:18px;color:#999;line-height:1;">✕</span>
+                </div>
+                <div style="font-size:13px;color:#555;line-height:2;">
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#2980b9;">贷方发生额</strong><br>
+                        以增值税科目当期贷方发生额整体作为计提基数，不扣减进项。<br>
+                        <span style="color:#888;">举例：销项税 10 万，进项抵扣 8 万 → 基数 = <strong>10 万</strong></span>
+                    </div>
+                    <div>
+                        <strong style="color:#27ae60;">贷方净额</strong><br>
+                        以贷方发生额减去借方发生额（抵扣进项后）的净值作为基数。<br>
+                        <span style="color:#888;">举例：销项 10 万，进项 8 万 → 基数 = <strong>10 − 8 = 2 万</strong></span>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+            // 点击遮罩外部关闭
+            setTimeout(() => {
+                document.addEventListener("click", function handler(e) {
+                    if (!popup.contains(e.target) && !e.target.closest('[onclick*="toggleTaxDirTip"]')) {
+                        popup.remove();
+                        document.removeEventListener("click", handler);
+                    }
+                });
+            }, 100);
         };
 
         window.toggleTaxAccrualLock = function(input) {
@@ -19779,29 +19915,60 @@ function loadContent(moduleCode, element = null) {
                     <span style="font-size:12px; color:#95a5a6;">提示：一旦产生凭证数据，将锁定准则，不可更改。</span>
                 </div>
 
-                <!-- ============ 2. 科目编码级次设置 ============ -->
-                <div class="subject-code-setting">
-                    <div style="font-weight:bold; color:#2c3e50;">科目编码级次设置</div>
-                    <div class="setting-row">
-                        <label>设置科目级次</label>
-                        <select id="subject-level-count" onchange="updateSubjectCodeInputs()">
-                            <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2</option>
-                            <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3</option>
-                            <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4</option>
-                            <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5</option>
-                        </select>
-                        <label>设置科目编码长度</label>
-                        <input type="number" id="subject-length-1" value="${subjectSetting.lengths[0] || 4}" min="1">
-                        <input type="number" id="subject-length-2" value="${subjectSetting.lengths[1] || 2}" min="1">
-                        <input type="number" id="subject-length-3" value="${subjectSetting.lengths[2] || 2}" min="1" style="${subjectSetting.levels < 3 ? "display:none;" : ""}">
-                        <input type="number" id="subject-length-4" value="${subjectSetting.lengths[3] || 2}" min="1" style="${subjectSetting.levels < 4 ? "display:none;" : ""}">
-                        <input type="number" id="subject-length-5" value="${subjectSetting.lengths[4] || 2}" min="1" style="${subjectSetting.levels < 5 ? "display:none;" : ""}">
-                        <button class="btn-primary" onclick="saveSubjectCodeSetting()">保存设置</button>
+                <!-- ============ 2. 科目编码级次设置 + 凭证字号设置 ============ -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+
+                    <!-- 科目编码级次设置 -->
+                    <div class="subject-code-setting" style="margin-top:0;">
+                        <div style="font-weight:bold; color:#2c3e50;">科目编码级次设置</div>
+                        <div class="setting-row">
+                            <label>设置科目级次</label>
+                            <select id="subject-level-count" onchange="updateSubjectCodeInputs()">
+                                <option value="2" ${subjectSetting.levels === 2 ? "selected" : ""}>2</option>
+                                <option value="3" ${subjectSetting.levels === 3 ? "selected" : ""}>3</option>
+                                <option value="4" ${subjectSetting.levels === 4 ? "selected" : ""}>4</option>
+                                <option value="5" ${subjectSetting.levels === 5 ? "selected" : ""}>5</option>
+                            </select>
+                            <label>设置科目编码长度</label>
+                            <input type="number" id="subject-length-1" value="${subjectSetting.lengths[0] || 4}" min="1">
+                            <input type="number" id="subject-length-2" value="${subjectSetting.lengths[1] || 2}" min="1">
+                            <input type="number" id="subject-length-3" value="${subjectSetting.lengths[2] || 2}" min="1" style="${subjectSetting.levels < 3 ? "display:none;" : ""}">
+                            <input type="number" id="subject-length-4" value="${subjectSetting.lengths[3] || 2}" min="1" style="${subjectSetting.levels < 4 ? "display:none;" : ""}">
+                            <input type="number" id="subject-length-5" value="${subjectSetting.lengths[4] || 2}" min="1" style="${subjectSetting.levels < 5 ? "display:none;" : ""}">
+                            <button class="btn-primary" onclick="saveSubjectCodeSetting()">保存设置</button>
+                        </div>
+                        <div id="subject-code-example" style="margin-top:8px; font-size:12px; color:#95a5a6;">
+                            示例：级次=3，长度=4/2/2，对应 1000 → 100001 → 10000101。
+                        </div>
                     </div>
-                    <div id="subject-code-example" style="margin-top:8px; font-size:12px; color:#95a5a6;">
-                        示例：级次=3，长度=4/2/2，对应 1000 → 100001 → 10000101。
+
+                    <!-- 凭证字号设置 -->
+                    <div class="subject-code-setting" style="margin-top:0;">
+                        <div style="font-weight:bold; color:#2c3e50; margin-bottom:6px;">凭证字号设置</div>
+                        <p style="font-size:12px; color:#95a5a6; margin:0 0 12px;">设置凭证字号方式，全局生效，影响凭证录入、会计引擎及期末结转。</p>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:10px 12px; border-radius:6px; border:1px solid ${wordMode === 'ji' ? '#3498db' : '#e6eaf0'}; background:${wordMode === 'ji' ? '#f0f7ff' : '#fff'}; transition:all 0.15s;">
+                                <input type="radio" name="voucher-word-mode" value="ji" ${wordMode === 'ji' ? 'checked' : ''} style="margin-top:3px; flex-shrink:0;">
+                                <div>
+                                    <div style="font-size:13px; font-weight:600; color:#2c3e50;">记 — 统一字号</div>
+                                    <div style="font-size:12px; color:#7f8c8d; margin-top:2px;">所有凭证统一使用"记"字，适合不区分凭证类别的场景。</div>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:10px 12px; border-radius:6px; border:1px solid ${wordMode !== 'ji' ? '#3498db' : '#e6eaf0'}; background:${wordMode !== 'ji' ? '#f0f7ff' : '#fff'}; transition:all 0.15s;">
+                                <input type="radio" name="voucher-word-mode" value="spt" ${wordMode !== 'ji' ? 'checked' : ''} style="margin-top:3px; flex-shrink:0;">
+                                <div>
+                                    <div style="font-size:13px; font-weight:600; color:#2c3e50;">收 / 付 / 转 — 分类字号</div>
+                                    <div style="font-size:12px; color:#7f8c8d; margin-top:2px;">收款用"收"，付款用"付"，转账及其他用"转"。</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div style="margin-top:14px; display:flex; align-items:center; gap:10px;">
+                            <button class="btn-primary" onclick="saveVoucherWordSetting()">保存设置</button>
+                            <span id="voucher-word-save-tip" style="font-size:12px; color:#27ae60; display:none;">✅ 已保存</span>
+                        </div>
                     </div>
-                </div>
+
+                </div><!-- end 两列设置网格 -->
 
                 <!-- ============ 3. 凭证摘要模板设置中心 ============ -->
                 <div class="summary-template-panel">
@@ -19858,6 +20025,13 @@ function loadContent(moduleCode, element = null) {
                             <div class="tax-accrual-desc">
                                 模块概述：本模块用于预设每月期末处理时"税金及附加"的计算规则。系统将根据此处配置的比例、基数科目，在期末自动计算税额并生成会计凭证。
                             </div>
+                            <div style="margin-top:10px; padding:10px 14px; background:#f0f7ff; border-left:3px solid #3498db; border-radius:0 6px 6px 0; font-size:12px; color:#555; line-height:1.8;">
+                                <strong style="color:#2c3e50;">取数方向说明：</strong><br>
+                                📌 <strong>贷方发生额</strong>：以增值税科目当期贷方发生额作为计算基数。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;举例：本月销项税 10 万，进项抵扣 8 万 → 取数基数 = <strong>10 万</strong>。<br>
+                                📌 <strong>贷方净额</strong>：以贷方发生额减去借方发生额（即已抵扣进项后）的净值作为基数。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;举例：销项 10 万，进项 8 万 → 取数基数 = <strong>10 − 8 = 2 万</strong>。
+                            </div>
                             <div class="tax-rule-card">
                                 <div class="tax-rule-header">
                                     <div style="font-weight:600; color:#374151;">核心规则配置</div>
@@ -19874,7 +20048,7 @@ function loadContent(moduleCode, element = null) {
                                         <tr>
                                             <th>税种名称</th>
                                             <th>计算基数科目</th>
-                                            <th>取数方向</th>
+                                            <th>取数方向 <span onclick="toggleTaxDirTip()" title="点击查看说明" style="cursor:pointer; color:#e74c3c; font-size:15px; font-weight:700; vertical-align:middle;">❓</span></th>
                                             <th>计提比例(%)</th>
                                             <th>借方科目</th>
                                             <th>贷方科目</th>
@@ -21000,6 +21174,10 @@ function loadContent(moduleCode, element = null) {
     // [2.0 版本] 会计引擎配置 - 树形导航 + 搜索
     // =========================================================================
     else if (moduleCode === 'SettlementEngineConfig') {
+        var secWordMode = localStorage.getItem('VoucherWordMode') || 'spt';
+        var secWordOptions = secWordMode === 'ji'
+            ? '<option value="记">记</option>'
+            : '<option value="转">转</option><option value="收">收</option><option value="付">付</option>';
         contentHTML += `
         <style>
             .sec-container { display: flex; height: calc(100vh - 140px); background: #fff; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
@@ -21072,248 +21250,20 @@ function loadContent(moduleCode, element = null) {
                     <button onclick="secShowAddModal()" style="width:100%; padding:7px 0; background:#2980b9; color:#fff; border:none; border-radius:4px; font-size:13px; cursor:pointer; font-weight:500;">＋ 新增模板</button>
                     <button onclick="secRestoreDefaults()" style="width:100%; padding:5px 0; background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:4px; font-size:12px; cursor:pointer;">↺ 恢复默认模板</button>
                 </div>
-                <!-- 挂帐 -->
-                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(0)">
-                    <span>挂帐</span><span class="sec-toggle-icon" id="sec-icon-cat-0">▸</span>
+                <!-- 运单结算 -->
+                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(5)">
+                    <span>运单结算</span><span class="sec-toggle-icon" id="sec-icon-cat-5">▾</span>
                 </div>
-                <div class="sec-cat-children" id="sec-cat-0">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(0,0)">
-                        <span>运单</span><span class="sec-toggle-icon" id="sec-icon-sub-0-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-0-0">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付挂帐','挂帐','运单')">现付挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现返挂帐','挂帐','运单')">现返挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'欠付挂帐','挂帐','运单')">欠付挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'月结挂帐','挂帐','运单')">月结挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付挂帐','挂帐','运单')">回付挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'代收货款挂帐','挂帐','运单')">总部代收货款挂帐</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(0,1)">
-                        <span>异动</span><span class="sec-toggle-icon" id="sec-icon-sub-0-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-0-1">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现返异动增款挂帐','挂帐','异动')">现返异动增款挂帐</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'欠返异动增款挂帐','挂帐','异动')">欠返异动增款挂帐</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>干线</span><span class="sec-stub-tag">暂未开放</span></div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>送货</span><span class="sec-stub-tag">暂未开放</span></div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>短驳</span><span class="sec-stub-tag">暂未开放</span></div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>应收挂帐</span><span class="sec-stub-tag">暂未开放</span></div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>应付挂帐</span><span class="sec-stub-tag">暂未开放</span></div>
-                    <div class="sec-tree-node sec-level-2 sec-stub"><span>提货</span><span class="sec-stub-tag">暂未开放</span></div>
-                </div>
-
-                <!-- 结算 -->
-                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(1)">
-                    <span>结算</span><span class="sec-toggle-icon" id="sec-icon-cat-1">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-1">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,0)">
-                        <span>运单</span><span class="sec-toggle-icon" id="sec-icon-sub-1-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-1-0">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付结算','结算','运单')">现付结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付结算','结算','运单')">到付结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'月结结算','结算','运单')">月结结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付结算','结算','运单')">回付结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货到打卡结算','结算','运单')">货到打卡结算</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,1)">
-                        <span>干线</span><span class="sec-toggle-icon" id="sec-icon-sub-1-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-1-1">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付运输费结算','结算','干线')">现付运输费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付运输费结算','结算','干线')">到付运输费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'回付运输费结算','结算','干线')">回付运输费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'整车保险费结算','结算','干线')">整车保险费结算</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,2)">
-                        <span>送货</span><span class="sec-toggle-icon" id="sec-icon-sub-1-2">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-1-2">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费结算','结算','送货')">送货费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费异动增款结算','结算','送货')">送货费异动增款结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'送货费异动减款结算','结算','送货')">送货费异动减款结算</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,3)">
-                        <span>短驳</span><span class="sec-toggle-icon" id="sec-icon-sub-1-3">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-1-3">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'短驳费结算','结算','短驳')">短驳费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'网点对账结算','结算','短驳')">网点对账结算</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(1,4)">
-                        <span>提货</span><span class="sec-toggle-icon" id="sec-icon-sub-1-4">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-1-4">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费结算','结算','提货')">提货费结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费异动增款结算','结算','提货')">提货费异动增款结算</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提货费异动减款结算','结算','提货')">提货费异动减款结算</div>
-                    </div>
-                </div>
-
-                <!-- 账户结算 -->
-                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(2)">
-                    <span>账户结算</span><span class="sec-toggle-icon" id="sec-icon-cat-2">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-2">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,0)">
-                        <span>账户收款（网点间交易）</span><span class="sec-toggle-icon" id="sec-icon-sub-2-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-2-0">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付出发网点收款','账户结算','账户收款（网点间交易）')">到付出发网点收款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款出发网点收款','账户结算','账户收款（网点间交易）')">货款出发网点收款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款总部收款','账户结算','账户收款（网点间交易）')">货款总部收款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'成本中转费收款','账户结算','账户收款（网点间交易）')">成本中转费收款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'单票送货费收款','账户结算','账户收款（网点间交易）')">单票送货费收款</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,1)">
-                        <span>账户扣款（网点间交易）</span><span class="sec-toggle-icon" id="sec-icon-sub-2-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-2-1">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付目的网点付款','账户结算','账户扣款（网点间交易）')">到付目的网点付款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款目的网点付款','账户结算','账户扣款（网点间交易）')">货款目的网点付款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款总部付款','账户结算','账户扣款（网点间交易）')">货款总部付款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'成本中转费付款','账户结算','账户扣款（网点间交易）')">成本中转费付款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'单票送货费付款','账户结算','账户扣款（网点间交易）')">单票送货费付款</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(2,2)">
-                        <span>利息账户</span><span class="sec-toggle-icon" id="sec-icon-sub-2-2">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-2-2">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'利息收入','账户结算','利息账户')">利息收入</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'利息支出','账户结算','利息账户')">利息支出</div>
-                    </div>
-                </div>
-
-                <!-- 账户管理 -->
-                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(3)">
-                    <span>账户管理</span><span class="sec-toggle-icon" id="sec-icon-cat-3">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-3">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,0)">
-                        <span>充值管理</span><span class="sec-toggle-icon" id="sec-icon-sub-3-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-3-0">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户充值','账户管理','充值管理')">账户充值</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'充值入金手续费','账户管理','充值管理')">充值入金手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,1)">
-                        <span>提现管理</span><span class="sec-toggle-icon" id="sec-icon-sub-3-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-3-1">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户提现','账户管理','提现管理')">账户提现</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提现手续费','账户管理','提现管理')">提现手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,2)">
-                        <span>扫码收款</span><span class="sec-toggle-icon" id="sec-icon-sub-3-2">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-3-2">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付入金手续费','账户管理','扫码收款')">现付入金手续费</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付入金手续费','账户管理','扫码收款')">到付入金手续费</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款入金手续费','账户管理','扫码收款')">货款入金手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(3,3)">
-                        <span>在线打款</span><span class="sec-toggle-icon" id="sec-icon-sub-3-3">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-3-3">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款','账户管理','在线打款')">在线打款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款手续费','账户管理','在线打款')">在线打款手续费</div>
-                    </div>
-                </div>
-
-                <!-- 在线账户管理 -->
-                <div class="sec-tree-node sec-level-1" onclick="secToggleCategory(4)">
-                    <span>在线账户管理</span><span class="sec-toggle-icon" id="sec-icon-cat-4">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-4">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,0)">
-                        <span>充值管理</span><span class="sec-toggle-icon" id="sec-icon-sub-4-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-4-0">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户充值','在线账户管理','充值管理')">账户充值</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'后台充值','在线账户管理','充值管理')">后台充值</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'充值入金手续费','在线账户管理','充值管理')">充值入金手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,1)">
-                        <span>提现管理</span><span class="sec-toggle-icon" id="sec-icon-sub-4-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-4-1">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'账户提现','在线账户管理','提现管理')">账户提现</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'后台提现','在线账户管理','提现管理')">后台提现</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'提现手续费','在线账户管理','提现管理')">提现手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,2)">
-                        <span>扫码收款</span><span class="sec-toggle-icon" id="sec-icon-sub-4-2">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-4-2">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付入金手续费','在线账户管理','扫码收款')">现付入金手续费</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付入金手续费','在线账户管理','扫码收款')">到付入金手续费</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'货款入金手续费','在线账户管理','扫码收款')">货款入金手续费</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,3)">
-                        <span>收支方式</span><span class="sec-toggle-icon" id="sec-icon-sub-4-3">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-4-3">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'现付','在线账户管理','收支方式')">现付</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'到付','在线账户管理','收支方式')">到付</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'代收货款','在线账户管理','收支方式')">代收货款</div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(4,4)">
-                        <span>在线打款</span><span class="sec-toggle-icon" id="sec-icon-sub-4-4">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-4-4">
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款','在线账户管理','在线打款')">在线打款</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款手续费','在线账户管理','在线打款')">在线打款手续费</div>
-                        <div class="sec-tree-node sec-level-3" onclick="secLoadConfig(this,'在线打款运输费','在线账户管理','在线打款')">在线打款运输费</div>
-                    </div>
-                </div>
-
-                <!-- 收付款单 -->
-                <div class="sec-tree-node sec-level-1" style="border-top:2px solid #e8f4fd;margin-top:8px;" onclick="secToggleCategory(5)">
-                    <span>收付款单</span><span class="sec-toggle-icon" id="sec-icon-cat-5">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-5">
+                <div class="sec-cat-children" id="sec-cat-5" style="display:block;">
                     <div class="sec-tree-node sec-level-2" onclick="secToggleSub(5,0)">
-                        <span>收款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-0">▾</span>
+                        <span>应收结算</span><span class="sec-toggle-icon" id="sec-icon-sub-5-0">▾</span>
                     </div>
                     <div class="sec-sub-items" id="sec-sub-5-0" style="display:block;">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="收款单" data-cat="收付款单" data-grp="收款单" onclick="secLoadConfig(this,'收款单','收付款单','收款单')"><span class="sec-leaf-text">收款单</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('收款单')" title="重命名">✎</span></div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="运单结算" data-cat="运单结算" data-grp="应收结算" onclick="secLoadConfig(this,'运单结算','运单结算','应收结算')"><span class="sec-leaf-text">运单结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('运单结算')" title="重命名">✎</span></div>
+                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="应收核销" data-cat="运单结算" data-grp="应收结算" onclick="secLoadConfig(this,'应收核销','运单结算','应收结算')"><span class="sec-leaf-text">应收核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('应收核销')" title="重命名">✎</span></div>
                     </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(5,1)">
-                        <span>付款单</span><span class="sec-toggle-icon" id="sec-icon-sub-5-1">▾</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-5-1" style="display:block;">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="付款单" data-cat="收付款单" data-grp="付款单" onclick="secLoadConfig(this,'付款单','收付款单','付款单')"><span class="sec-leaf-text">付款单</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('付款单')" title="重命名">✎</span></div>
-                    </div>
-                </div>
-
-                <!-- 对账 -->
-                <div class="sec-tree-node sec-level-1" style="border-top:2px solid #e8f4fd;margin-top:8px;" onclick="secToggleCategory(6)">
-                    <span>对账</span><span class="sec-toggle-icon" id="sec-icon-cat-6">▸</span>
-                </div>
-                <div class="sec-cat-children" id="sec-cat-6">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,0)">
-                        <span>客户对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-6-0">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="客户对账结算" data-cat="对账" data-grp="客户对账" onclick="secLoadConfig(this,'客户对账结算','对账','客户对账')"><span class="sec-leaf-text">客户对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('客户对账结算')" title="重命名">✎</span></div>
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="客户对账差异处理" data-cat="对账" data-grp="客户对账" onclick="secLoadConfig(this,'客户对账差异处理','对账','客户对账')"><span class="sec-leaf-text">客户对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('客户对账差异处理')" title="重命名">✎</span></div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,1)">
-                        <span>网点对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-1">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-6-1">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="网点对账结算" data-cat="对账" data-grp="网点对账" onclick="secLoadConfig(this,'网点对账结算','对账','网点对账')"><span class="sec-leaf-text">网点对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('网点对账结算')" title="重命名">✎</span></div>
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="网点对账差异处理" data-cat="对账" data-grp="网点对账" onclick="secLoadConfig(this,'网点对账差异处理','对账','网点对账')"><span class="sec-leaf-text">网点对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('网点对账差异处理')" title="重命名">✎</span></div>
-                    </div>
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(6,2)">
-                        <span>承运商对账</span><span class="sec-toggle-icon" id="sec-icon-sub-6-2">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-6-2">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="承运商对账结算" data-cat="对账" data-grp="承运商对账" onclick="secLoadConfig(this,'承运商对账结算','对账','承运商对账')"><span class="sec-leaf-text">承运商对账结算</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('承运商对账结算')" title="重命名">✎</span></div>
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="承运商对账差异处理" data-cat="对账" data-grp="承运商对账" onclick="secLoadConfig(this,'承运商对账差异处理','对账','承运商对账')"><span class="sec-leaf-text">承运商对账差异处理</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('承运商对账差异处理')" title="重命名">✎</span></div>
-                    </div>
+                    <!-- 用户在运单结算下新增的子分类动态注入此处 -->
+                    <div id="sec-cat-5-extra"></div>
                 </div>
 
                 <!-- 核销 -->
@@ -21321,12 +21271,6 @@ function loadContent(moduleCode, element = null) {
                     <span>核销</span><span class="sec-toggle-icon" id="sec-icon-cat-7">▸</span>
                 </div>
                 <div class="sec-cat-children" id="sec-cat-7">
-                    <div class="sec-tree-node sec-level-2" onclick="secToggleSub(7,0)">
-                        <span>应收</span><span class="sec-toggle-icon" id="sec-icon-sub-7-0">▸</span>
-                    </div>
-                    <div class="sec-sub-items" id="sec-sub-7-0">
-                        <div class="sec-tree-node sec-level-3 sec-leaf" data-item="应收核销" data-cat="核销" data-grp="应收" onclick="secLoadConfig(this,'应收核销','核销','应收')"><span class="sec-leaf-text">应收核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('应收核销')" title="重命名">✎</span></div>
-                    </div>
                     <div class="sec-tree-node sec-level-2" onclick="secToggleSub(7,1)">
                         <span>应付</span><span class="sec-toggle-icon" id="sec-icon-sub-7-1">▸</span>
                     </div>
@@ -21339,7 +21283,12 @@ function loadContent(moduleCode, element = null) {
                     <div class="sec-sub-items" id="sec-sub-7-2">
                         <div class="sec-tree-node sec-level-3 sec-leaf" data-item="报销核销" data-cat="核销" data-grp="报销" onclick="secLoadConfig(this,'报销核销','核销','报销')"><span class="sec-leaf-text">报销核销</span><span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem('报销核销')" title="重命名">✎</span></div>
                     </div>
+                    <!-- 用户在核销下新增的子分类动态注入此处 -->
+                    <div id="sec-cat-7-extra"></div>
                 </div>
+
+                <!-- === 旧分类已移除，直接跳到自定义分类渲染 === -->
+
 
                 <!-- 自定义分类（动态渲染） -->
                 <div id="sec-custom-cats"></div>
@@ -21368,9 +21317,7 @@ function loadContent(moduleCode, element = null) {
                         <div class="sec-form-group">
                             <label>凭证字</label>
                             <select class="sec-form-input" id="secCfgVoucherWord">
-                                <option value="转">转</option>
-                                <option value="收">收</option>
-                                <option value="付">付</option>
+                                ${secWordOptions}
                             </select>
                         </div>
                         <div class="sec-form-group">
@@ -21394,6 +21341,7 @@ function loadContent(moduleCode, element = null) {
                                     <th style="width:80px">方向</th>
                                     <th>会计科目</th>
                                     <th style="width:180px">摘要</th>
+                                    <th style="width:80px">金额类型</th>
                                     <th style="width:80px;display:none" id="secThPm">收支方式</th>
                                     <th style="width:60px">操作</th>
                                 </tr>
@@ -21565,24 +21513,18 @@ function loadContent(moduleCode, element = null) {
 
             // 预置默认分录模板（新浏览器/新标签页无缓存时使用）
             var SEC_DEFAULT_TEMPLATES = {
-                '收款单':  { voucherWord: '收', summaryTemplate: '收款-{clientName}-{id}', remark: '', entries: [
-                    { dir: '借', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
-                    { dir: '贷', subjectCode: '1122', subjectName: '应收账款',   summary: '' }
+                '运单结算': { voucherWord: '转', summaryTemplate: '运单结算-{clientName}', remark: '', taxRate: 0.09, entries: [
+                    { dir: '借', subjectCode: '1122', subjectName: '应收账款',     summary: '确认应收债权', amountType: 'gross', usePaymentMethod: false },
+                    { dir: '贷', subjectCode: '5001', subjectName: '主营业务收入', summary: '确认运输收入', amountType: 'net',   usePaymentMethod: false },
+                    { dir: '贷', subjectCode: '2221', subjectName: '应交税费',     summary: '确认销项税额', amountType: 'tax',   usePaymentMethod: false }
                 ]},
-                '付款单':  { voucherWord: '付', summaryTemplate: '付款-{clientName}-{id}', remark: '', entries: [
-                    { dir: '借', subjectCode: '1123', subjectName: '预付账款',   summary: '' },
-                    { dir: '贷', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
-                    { dir: '贷', subjectCode: '2221', subjectName: '应交税费',   summary: '' }
+                '应收核销': { voucherWord: '收', summaryTemplate: '收款核销-{counterparty}', remark: '', taxRate: 0, entries: [
+                    { dir: '借', subjectCode: '1002', subjectName: '银行存款',   summary: '收到客户款项', amountType: 'gross', usePaymentMethod: false },
+                    { dir: '贷', subjectCode: '1122', subjectName: '应收账款',   summary: '冲销应收账款', amountType: 'gross', usePaymentMethod: false }
                 ]},
-                '应收核销': { voucherWord: '转', summaryTemplate: '', remark: '', entries: [
-                    { dir: '借', subjectCode: '1122', subjectName: '应收账款',     summary: '' },
-                    { dir: '贷', subjectCode: '5001', subjectName: '主营业务收入', summary: '' },
-                    { dir: '贷', subjectCode: '2221', subjectName: '应交税费',     summary: '' }
-                ]},
-                '应付核销': { voucherWord: '转', summaryTemplate: '', remark: '', entries: [
-                    { dir: '借', subjectCode: '1002', subjectName: '银行存款',   summary: '' },
-                    { dir: '贷', subjectCode: '1123', subjectName: '预付账款',   summary: '' },
-                    { dir: '借', subjectCode: '2221', subjectName: '应交税费',   summary: '' }
+                '应付核销': { voucherWord: '付', summaryTemplate: '', remark: '', taxRate: 0, entries: [
+                    { dir: '借', subjectCode: '2202', subjectName: '应付账款',   summary: '', amountType: 'gross', usePaymentMethod: false },
+                    { dir: '贷', subjectCode: '1002', subjectName: '银行存款',   summary: '', amountType: 'gross', usePaymentMethod: false }
                 ]}
             };
 
@@ -21599,8 +21541,24 @@ function loadContent(moduleCode, element = null) {
                     var store = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || 'null');
                     if (!store) store = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
 
-                    // 对4个预置模板：如果 store 里没有配置好的分录，用默认值补充并持久化
+                    // 清理废弃的旧模板
                     var dirty = false;
+                    ['收款单', '付款单'].forEach(function(k) {
+                        if (store[k]) { delete store[k]; dirty = true; }
+                    });
+                    // 修复错误的"应收核销"（借方是1122应收账款 → 旧错误数据，应改为1002银行存款）
+                    if (store['应收核销']) {
+                        var oldDebit = (store['应收核销'].entries || []).find(function(e) { return e.dir === '借'; });
+                        if (oldDebit && (oldDebit.subjectCode || '').startsWith('1122')) {
+                            delete store['应收核销']; dirty = true;
+                        }
+                    }
+                    // 修复缺少 amountType 的"运单结算"
+                    if (store['运单结算']) {
+                        var missingAmtType = (store['运单结算'].entries || []).some(function(e) { return !e.amountType; });
+                        if (missingAmtType) { delete store['运单结算']; dirty = true; }
+                    }
+                    // 对预置模板：如果 store 里没有配置好的分录，用默认值补充并持久化
                     Object.keys(SEC_DEFAULT_TEMPLATES).forEach(function(key) {
                         if (!secHasEntries(store[key])) {
                             store[key] = SEC_DEFAULT_TEMPLATES[key];
@@ -21621,6 +21579,7 @@ function loadContent(moduleCode, element = null) {
                 var pmDisplay = secCurrentIsSettlement ? 'table-cell' : 'none';
                 var pmChecked = (entry && entry.usePaymentMethod) ? ' checked' : '';
                 var subjectCode = (entry && entry.subjectCode) || '';
+                var amtType = (entry && entry.amountType) || 'gross';
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td><select class="sec-form-input sec-entry-dir">' +
@@ -21629,6 +21588,11 @@ function loadContent(moduleCode, element = null) {
                     '</select></td>' +
                     '<td><select class="sec-form-input sec-entry-subject">' + secGetSubjectOptionsHtml(subjectCode) + '</select></td>' +
                     '<td><input type="text" class="sec-form-input sec-entry-summary" placeholder="摘要模板（可含{客户}等占位符）" value="' + ((entry && entry.summary) || '') + '"></td>' +
+                    '<td><select class="sec-form-input sec-entry-amttype">' +
+                        '<option value="gross"' + (amtType === 'gross' ? ' selected' : '') + '>含税全额</option>' +
+                        '<option value="net"'   + (amtType === 'net'   ? ' selected' : '') + '>不含税额</option>' +
+                        '<option value="tax"'   + (amtType === 'tax'   ? ' selected' : '') + '>税额</option>' +
+                    '</select></td>' +
                     '<td style="text-align:center;display:' + pmDisplay + '" class="sec-td-pm"><input type="checkbox" class="sec-entry-pm"' + pmChecked + '></td>' +
                     '<td style="text-align:center"><button class="sec-btn sec-btn-remove" onclick="secRemoveEntry(this)">删除</button></td>';
                 tbody.appendChild(tr);
@@ -21657,25 +21621,33 @@ function loadContent(moduleCode, element = null) {
 
                 // ★ 加载已保存模板数据
                 var stored = secLoadStoredTemplate(name);
+                // 全局字号解析：若基础设置为"记"则统一覆盖
+                var resolveWord = typeof window.resolveVoucherWord === 'function'
+                    ? window.resolveVoucherWord
+                    : function(w){ return w || '转'; };
                 if (stored) {
-                    document.getElementById('secCfgVoucherWord').value = stored.voucherWord || '转';
+                    document.getElementById('secCfgVoucherWord').value = resolveWord(stored.voucherWord || '转');
                     document.getElementById('secCfgSummary').value = stored.summaryTemplate || stored.summary || '';
                     document.getElementById('secCfgRemark').value = stored.remark || '';
                     var tbody = document.getElementById('secEntryBody');
                     tbody.innerHTML = '';
                     (stored.entries || []).forEach(function(entry) { secRenderEntryRow(tbody, entry); });
                 } else {
-                    // 收款单/付款单给默认分录引导
-                    if (name === '收款单') {
-                        document.getElementById('secCfgVoucherWord').value = '收';
-                        document.getElementById('secCfgSummary').value = '收款-{clientName}-{id}';
+                    // 根据模板名称给出默认引导（初始值，用户可修改）
+                    if (name === '运单结算') {
+                        document.getElementById('secCfgVoucherWord').value = resolveWord('转');
+                        document.getElementById('secCfgSummary').value = '运单结算-{clientName}';
                         document.getElementById('secEntryBody').innerHTML = '';
-                    } else if (name === '付款单') {
-                        document.getElementById('secCfgVoucherWord').value = '付';
-                        document.getElementById('secCfgSummary').value = '付款-{clientName}-{id}';
+                    } else if (name === '应收核销') {
+                        document.getElementById('secCfgVoucherWord').value = resolveWord('收');
+                        document.getElementById('secCfgSummary').value = '收款核销-{counterparty}';
+                        document.getElementById('secEntryBody').innerHTML = '';
+                    } else if (name === '应付核销') {
+                        document.getElementById('secCfgVoucherWord').value = resolveWord('付');
+                        document.getElementById('secCfgSummary').value = '';
                         document.getElementById('secEntryBody').innerHTML = '';
                     } else {
-                        document.getElementById('secCfgVoucherWord').value = '转';
+                        document.getElementById('secCfgVoucherWord').value = resolveWord('转');
                         document.getElementById('secCfgSummary').value = '';
                         document.getElementById('secEntryBody').innerHTML = '';
                     }
@@ -21699,7 +21671,7 @@ function loadContent(moduleCode, element = null) {
 
             window.secSaveTemplate = function () {
                 var name = document.getElementById('secCfgTitle').textContent;
-                var pathText = document.getElementById('secCfgPath').textContent; // 格式: "分类：收付款单 / 收款单"
+                var pathText = document.getElementById('secCfgPath').textContent; // 格式: "分类：运单结算 / 应收结算"
                 var parts = pathText.replace('分类：', '').split(' / ');
                 var category = (parts[0] || '').trim();
                 var group = (parts[1] || '').trim();
@@ -21720,6 +21692,7 @@ function loadContent(moduleCode, element = null) {
                     var dirEl = tr.querySelector('.sec-entry-dir');
                     var subjEl = tr.querySelector('.sec-entry-subject');
                     var summEl = tr.querySelector('.sec-entry-summary');
+                    var amtEl = tr.querySelector('.sec-entry-amttype');
                     var pmEl = tr.querySelector('.sec-entry-pm');
                     var usePaymentMethod = pmEl ? pmEl.checked : false;
                     var subjectValue = subjEl ? subjEl.value : '';
@@ -21734,6 +21707,7 @@ function loadContent(moduleCode, element = null) {
                         subjectCode: subjectCode,
                         subjectName: subjectName,
                         summary: summEl ? summEl.value.trim() : '',
+                        amountType: amtEl ? amtEl.value : 'gross',
                         usePaymentMethod: usePaymentMethod
                     });
                 });
@@ -21883,21 +21857,67 @@ function loadContent(moduleCode, element = null) {
             }
             function secSaveCustom(data) { localStorage.setItem(SEC_CUSTOM_KEY, JSON.stringify(data)); }
 
-            // 自动清除与内置分类同名的自定义分类（防止重复显示）
+            // 清除已删除旧分类的残留自定义数据（运单结算和核销允许用户扩展，不做过滤）
             (function secDedupeCustom() {
-                var builtinNames = ['挂帐','结算','账户结算','账户管理','在线账户管理','收付款单','对账','核销'];
+                var removedCats = ['挂帐','结算','账户结算','账户管理','在线账户管理','对账'];
                 var data = secLoadCustom();
-                var filtered = data.filter(function(cat) { return builtinNames.indexOf(cat.name) === -1; });
+                var filtered = data.filter(function(cat) { return removedCats.indexOf(cat.name) === -1; });
                 if (filtered.length !== data.length) secSaveCustom(filtered);
             })();
+
+            // 内置大类名 → extra 占位节点 id
+            var SEC_BUILTIN_EXTRA = { '运单结算': 'sec-cat-5-extra', '核销': 'sec-cat-7-extra' };
 
             function secRenderCustomTree() {
                 var customData = secLoadCustom();
                 var container = document.getElementById('sec-custom-cats');
                 if (!container) return;
-                if (!customData.length) { container.innerHTML = ''; return; }
-                var html = '<div style="border-top:2px solid #e8f4fd; margin-top:8px;">';
+
+                // 先清空所有 extra 节点（避免重复注入）
+                Object.keys(SEC_BUILTIN_EXTRA).forEach(function(catName) {
+                    var el = document.getElementById(SEC_BUILTIN_EXTRA[catName]);
+                    if (el) el.innerHTML = '';
+                });
+
+                var freeCats = []; // 不属于内置大类的自定义分类
+
                 customData.forEach(function(cat, ci) {
+                    var extraId = SEC_BUILTIN_EXTRA[cat.name];
+                    if (extraId) {
+                        // 注入到对应内置大类的 extra 节点
+                        var extraEl = document.getElementById(extraId);
+                        if (!extraEl) return;
+                        var html = '';
+                        (cat.children || []).forEach(function(grp, gi) {
+                            var subId = 'sec-extra-sub-' + ci + '-' + gi;
+                            html += '<div class="sec-tree-node sec-level-2" onclick="secToggleExtraSub(\'' + subId + '\')">' +
+                                '<span>' + grp.name + '</span>' +
+                                '<span class="sec-toggle-icon" id="' + subId + '-icon">▸</span></div>';
+                            html += '<div class="sec-sub-items" id="' + subId + '">';
+                            (grp.items || []).forEach(function(item) {
+                                var safe = item.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                                var safeCat = cat.name.replace(/'/g,"\\'");
+                                var safeGrp = grp.name.replace(/'/g,"\\'");
+                                html += '<div class="sec-tree-node sec-level-3 sec-leaf" onclick="secLoadConfig(this,\'' + safe + '\',\'' + safeCat + '\',\'' + safeGrp + '\')">' +
+                                    '<span class="sec-leaf-text">' + item + '</span>' +
+                                    '<span style="display:flex;gap:3px;">' +
+                                    '<span class="sec-leaf-edit" onclick="event.stopPropagation();secRenameItem(\'' + safe + '\')" title="重命名">✎</span>' +
+                                    '<span class="sec-leaf-del" onclick="event.stopPropagation();secDeleteCustomItem(\'' + safe + '\',' + ci + ',' + gi + ')" title="删除">✕</span>' +
+                                    '</span></div>';
+                            });
+                            html += '</div>';
+                        });
+                        extraEl.innerHTML = html;
+                    } else {
+                        freeCats.push({ cat: cat, ci: ci });
+                    }
+                });
+
+                // 渲染不属于内置大类的自定义分类
+                if (!freeCats.length) { container.innerHTML = ''; return; }
+                var html = '<div style="border-top:2px solid #e8f4fd; margin-top:8px;">';
+                freeCats.forEach(function(entry) {
+                    var cat = entry.cat, ci = entry.ci;
                     html += '<div class="sec-tree-node sec-level-1" onclick="secToggleCustomCat(' + ci + ')" style="display:flex;justify-content:space-between;">' +
                         '<span>' + cat.name + '</span>' +
                         '<span style="display:flex;gap:4px;">' +
@@ -21926,6 +21946,15 @@ function loadContent(moduleCode, element = null) {
                 html += '</div>';
                 container.innerHTML = html;
             }
+
+            window.secToggleExtraSub = function(subId) {
+                var el = document.getElementById(subId);
+                var icon = document.getElementById(subId + '-icon');
+                if (!el) return;
+                var hidden = el.style.display !== 'block';
+                el.style.display = hidden ? 'block' : 'none';
+                if (icon) icon.textContent = hidden ? '▾' : '▸';
+            };
 
             window.secToggleCustomCat = function(ci) {
                 var el = document.getElementById('sec-custom-cat-' + ci);
@@ -21971,37 +22000,59 @@ function loadContent(moduleCode, element = null) {
 
             // ─── 新增模板 modal ───────────────────────────────────────────
             window.secShowAddModal = function() {
+                // 构建大类选项：内置 + 已有自定义分类
+                var customData = secLoadCustom();
+                var customCatNames = customData.map(function(c){ return c.name; })
+                    .filter(function(n){ return !SEC_BUILTIN_EXTRA[n]; });
+                var catOptions = '<option value="运单结算">运单结算</option><option value="核销">核销</option>';
+                customCatNames.forEach(function(n){
+                    catOptions += '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>';
+                });
+                catOptions += '<option value="__new__">＋ 新建分类...</option>';
+
                 var modal = document.getElementById('secAddModal');
-                if (!modal) {
-                    modal = document.createElement('div');
-                    modal.id = 'secAddModal';
-                    modal.className = 'sec-modal-overlay';
-                    modal.innerHTML = '<div class="sec-add-modal-body">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-                        '<h3 style="margin:0;font-size:16px;">新增模板配置</h3>' +
-                        '<span onclick="document.getElementById(\'secAddModal\').classList.remove(\'active\')" style="cursor:pointer;font-size:20px;color:#999;line-height:1;">✕</span>' +
-                        '</div>' +
-                        '<div class="sec-add-form">' +
-                        '<div class="sec-form-group"><label>模板名称 <span style="color:red;">*</span></label>' +
-                        '<input id="secNewName" class="sec-form-input" type="text" placeholder="例如：月结客户对账结算"></div>' +
-                        '<div class="sec-form-group"><label>所属大类（可新建）</label>' +
-                        '<input id="secNewCat" class="sec-form-input" type="text" placeholder="例如：对账 / 自定义"></div>' +
-                        '<div class="sec-form-group"><label>子分类（可新建）</label>' +
-                        '<input id="secNewGrp" class="sec-form-input" type="text" placeholder="例如：客户对账"></div>' +
-                        '</div>' +
-                        '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">' +
-                        '<button class="sec-btn" onclick="document.getElementById(\'secAddModal\').classList.remove(\'active\')">取消</button>' +
-                        '<button class="sec-btn sec-btn-save" onclick="secSubmitAddTemplate()">确认新增</button>' +
-                        '</div></div>';
-                    document.body.appendChild(modal);
-                }
+                if (modal) modal.remove(); // 每次重建，确保选项最新
+                modal = document.createElement('div');
+                modal.id = 'secAddModal';
+                modal.className = 'sec-modal-overlay';
+                modal.innerHTML = '<div class="sec-add-modal-body">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                    '<h3 style="margin:0;font-size:16px;">新增模板配置</h3>' +
+                    '<span onclick="document.getElementById(\'secAddModal\').remove()" style="cursor:pointer;font-size:20px;color:#999;line-height:1;">✕</span>' +
+                    '</div>' +
+                    '<div class="sec-add-form">' +
+                    '<div class="sec-form-group"><label>模板名称 <span style="color:red;">*</span></label>' +
+                    '<input id="secNewName" class="sec-form-input" type="text" placeholder="例如：月结收款结算"></div>' +
+                    '<div class="sec-form-group"><label>所属大类 <span style="color:red;">*</span></label>' +
+                    '<select id="secNewCatSel" class="sec-form-input" onchange="secToggleNewCatInput(this)">' + catOptions + '</select>' +
+                    '<input id="secNewCatInput" class="sec-form-input" type="text" placeholder="输入新分类名称" style="display:none;margin-top:6px;"></div>' +
+                    '<div class="sec-form-group"><label>子分类（可新建）</label>' +
+                    '<input id="secNewGrp" class="sec-form-input" type="text" placeholder="例如：应收结算（留空则用"默认"）"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">' +
+                    '<button class="sec-btn" onclick="document.getElementById(\'secAddModal\').remove()">取消</button>' +
+                    '<button class="sec-btn sec-btn-save" onclick="secSubmitAddTemplate()">确认新增</button>' +
+                    '</div></div>';
+                document.body.appendChild(modal);
                 modal.classList.add('active');
-                setTimeout(function(){ var el = document.getElementById('secNewName'); if(el) el.value=''; el = document.getElementById('secNewCat'); if(el) el.value=''; el = document.getElementById('secNewGrp'); if(el) el.value=''; }, 0);
+            };
+
+            window.secToggleNewCatInput = function(sel) {
+                var inp = document.getElementById('secNewCatInput');
+                if (inp) inp.style.display = sel.value === '__new__' ? 'block' : 'none';
             };
 
             window.secSubmitAddTemplate = function() {
                 var name = (document.getElementById('secNewName') && document.getElementById('secNewName').value || '').trim();
-                var catName = (document.getElementById('secNewCat') && document.getElementById('secNewCat').value || '').trim() || '自定义';
+                var selEl = document.getElementById('secNewCatSel');
+                var selVal = selEl ? selEl.value : '';
+                var catName;
+                if (selVal === '__new__') {
+                    catName = (document.getElementById('secNewCatInput') && document.getElementById('secNewCatInput').value || '').trim();
+                    if (!catName) { alert('请输入新分类名称'); return; }
+                } else {
+                    catName = selVal || '自定义';
+                }
                 var grpName = (document.getElementById('secNewGrp') && document.getElementById('secNewGrp').value || '').trim() || '默认';
                 if (!name) { alert('请填写模板名称'); return; }
                 // 检查重复
@@ -22752,6 +22803,34 @@ function loadContent(moduleCode, element = null) {
         if (typeof loadContent === "function") loadContent("PeriodEndClose");
     };
 
+    window.executeYearEndClose = function (year) {
+        const y = parseInt(year) || new Date().getFullYear();
+        // 验证全年12个月是否已全部月末结账
+        for (let m = 1; m <= 12; m++) {
+            if (sessionStorage.getItem(`${y}-${m}-MonthClosed`) !== "true") {
+                alert(`❌ ${y} 年第 ${m} 期尚未完成月末结账，请先完成所有月份的月末结账。`);
+                return;
+            }
+        }
+        if (!confirm(`确认执行 ${y} 年度年末封账？\n\n执行后将永久锁定本年全部期间，不可撤销！`)) return;
+
+        sessionStorage.setItem(`${y}-YearClosed`, "true");
+
+        if (typeof addAuditLog === "function") {
+            addAuditLog({
+                level: "高危",
+                time: new Date().toLocaleString(),
+                user: "系统",
+                module: "年末封账",
+                action: "年末封账",
+                detail: `${y} 年度年末封账完成，全年 12 期已永久锁定`
+            });
+        }
+
+        alert(`✅ ${y} 年度年末封账完成！本年所有期间已永久锁定。`);
+        if (typeof loadContent === "function") loadContent("PeriodEndClose");
+    };
+
     window.toggleAcctPeriodStatus = function (inputEl, periodLabel) {
         const row = inputEl && inputEl.closest ? inputEl.closest("tr") : null;
         if (!row) return;
@@ -22808,34 +22887,7 @@ function loadContent(moduleCode, element = null) {
             alert("请先勾选会计期间。");
             return;
         }
-        if (status === "未开启") {
-            const meta = getCurrentPeriodMeta();
-            const currentPeriod = getCurrentPeriodString(meta);
-            const selectedRows = Array.from(document.querySelectorAll(".period-select:checked"))
-                .map(cb => cb.closest("tr"))
-                .filter(Boolean);
-            const hasCurrent = selectedRows.some(row => row.dataset.period === currentPeriod);
-            if (hasCurrent) {
-                if (!confirm("系统将进行期末检查，检查通过后自动结账并关闭期间，是否继续？")) {
-                    return;
-                }
-                if (typeof window.refreshClosingCheck === "function") {
-                    window.refreshClosingCheck();
-                }
-                if (!window._monthCloseReady) {
-                    alert("期末检查未通过，无法关闭当前期间。");
-                    return;
-                }
-                const metaKey = meta.key;
-                sessionStorage.setItem(`${metaKey}-MonthClosed`, "true");
-                window.syncAccountPeriodStatusByMeta("已关闭");
-            }
-            if (typeof window.setAccountPeriodsStatus === "function") {
-                window.setAccountPeriodsStatus(ids, "未开启");
-            }
-            loadContent("AcctPeriod");
-            return;
-        }
+        // 管理员直接设置期间状态，期间正常关闭请通过「月末结账」流程执行
         if (typeof window.setAccountPeriodsStatus === "function") {
             window.setAccountPeriodsStatus(ids, status);
         }

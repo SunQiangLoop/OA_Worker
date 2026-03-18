@@ -4,21 +4,16 @@
  */
 const ENGINE_DATA = [
     // =========================================================
-    // 收付款单模板（对应收款单/付款单页面的凭证生成）
+    // 运单结算模板（对应运单结算页面凭证1 + 应收核销凭证2）
     // =========================================================
     {
-        name: "收付款单",
+        name: "运单结算",
         children: [
             {
-                name: "收款单",
+                name: "应收结算",
                 items: [
-                    "收款单"
-                ]
-            },
-            {
-                name: "付款单",
-                items: [
-                    "付款单"
+                    "运单结算",
+                    "应收核销"
                 ]
             }
         ]
@@ -763,39 +758,35 @@ function getAllTreeData() {
 
 // 系统预置初始模板（仅在对应 key 不存在时生效，用户保存后以用户数据为准）
 const ENGINE_DEFAULT_TEMPLATES = {
-    "收款单": {
-        name: "收款单", category: "收付款单", group: "收款单",
-        voucherWord: "收", summaryTemplate: "收款-{clientName}-{id}", remark: "",
+    // ── 凭证1：运单结算时确认债权 ──────────────────────────────
+    // 借：应收账款（含税全额）= 贷：主营业务收入（不含税）+ 贷：应交税费（税额9%）
+    "运单结算": {
+        name: "运单结算", category: "运单结算", group: "应收结算",
+        voucherWord: "转", summaryTemplate: "运单结算-{clientName}", remark: "",
+        taxRate: 0.09,
         entries: [
-            { dir: "借", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "1122", subjectName: "应收账款",   summary: "", usePaymentMethod: false }
+            { dir: "借", subjectCode: "1122", subjectName: "应收账款",     summary: "确认应收债权", amountType: "gross", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "5001", subjectName: "主营业务收入", summary: "确认运输收入", amountType: "net",   usePaymentMethod: false },
+            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",     summary: "确认销项税额", amountType: "tax",   usePaymentMethod: false }
         ]
     },
-    "付款单": {
-        name: "付款单", category: "收付款单", group: "付款单",
-        voucherWord: "付", summaryTemplate: "付款-{clientName}-{id}", remark: "",
-        entries: [
-            { dir: "借", subjectCode: "1123", subjectName: "预付账款",   summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",   summary: "", usePaymentMethod: false }
-        ]
-    },
+    // ── 凭证2：应收核销时冲抵债权 ──────────────────────────────
+    // 借：银行存款（实收全额）= 贷：应收账款（冲销债权全额）
     "应收核销": {
-        name: "应收核销", category: "核销", group: "应收",
-        voucherWord: "转", summaryTemplate: "", remark: "",
+        name: "应收核销", category: "运单结算", group: "应收结算",
+        voucherWord: "收", summaryTemplate: "收款核销-{counterparty}", remark: "",
+        taxRate: 0,
         entries: [
-            { dir: "借", subjectCode: "1122", subjectName: "应收账款",     summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "5001", subjectName: "主营业务收入", summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",     summary: "", usePaymentMethod: false }
+            { dir: "借", subjectCode: "1002", subjectName: "银行存款",   summary: "收到客户款项", amountType: "gross", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1122", subjectName: "应收账款",   summary: "冲销应收账款", amountType: "gross", usePaymentMethod: false }
         ]
     },
     "应付核销": {
         name: "应付核销", category: "核销", group: "应付",
-        voucherWord: "转", summaryTemplate: "", remark: "",
+        voucherWord: "付", summaryTemplate: "", remark: "",
         entries: [
-            { dir: "借", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false },
-            { dir: "贷", subjectCode: "1123", subjectName: "预付账款",   summary: "", usePaymentMethod: false },
-            { dir: "借", subjectCode: "2221", subjectName: "应交税费",   summary: "", usePaymentMethod: false }
+            { dir: "借", subjectCode: "2202", subjectName: "应付账款",   summary: "", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false }
         ]
     }
 };
@@ -814,6 +805,23 @@ function loadEngineTemplateStore() {
     const hasConfiguredEntries = (tpl) =>
         tpl && Array.isArray(tpl.entries) && tpl.entries.some(e => (e.subjectCode || '').trim());
     let dirty = false;
+    // 清理已废弃的 key（旧版本遗留）
+    const obsoleteKeys = ['收款单', '付款单'];
+    obsoleteKeys.forEach(k => { if (store[k]) { delete store[k]; dirty = true; } });
+    // 修正"应收核销"：若旧模板借方是应收账款（错误方向），强制用预置值覆盖
+    if (store['应收核销']) {
+        const oldDebit = (store['应收核销'].entries || []).find(e => e.dir === '借');
+        if (oldDebit && (oldDebit.subjectCode || '').startsWith('1122')) {
+            delete store['应收核销'];
+            dirty = true;
+        }
+    }
+    // "运单结算"：若旧模板缺少 amountType 字段则强制重建（保证借贷平衡）
+    if (store['运单结算']) {
+        const missingAmtType = (store['运单结算'].entries || []).some(e => !e.amountType);
+        if (missingAmtType) { delete store['运单结算']; dirty = true; }
+    }
+    // 注入/修正预置模板（key 不存在则用预置值）
     for (const [key, tpl] of Object.entries(ENGINE_DEFAULT_TEMPLATES)) {
         if (!hasConfiguredEntries(store[key])) {
             store[key] = tpl;
@@ -908,10 +916,23 @@ window.generateVoucherFromEngineTemplate = function(itemName, doc, options) {
 
     const voucherWord = template.voucherWord || "转";
     const amountTotal = parseAmountValue(doc.amount || doc.totalAmount);
+    const taxRate = parseFloat(template.taxRate) || 0;
+
+    // 按 taxRate 预计算含税/不含税/税额，保证借贷平衡
+    // tax = round(amount × rate / (1+rate), 2)，net = amount - tax，避免浮点累计误差
+    const taxAmt  = taxRate > 0 ? parseFloat((amountTotal * taxRate / (1 + taxRate)).toFixed(2)) : 0;
+    const netAmt  = taxRate > 0 ? parseFloat((amountTotal - taxAmt).toFixed(2)) : amountTotal;
+
+    const resolveEntryAmount = (entry) => {
+        const t = entry.amountType || 'gross';
+        if (t === 'tax') return taxAmt;
+        if (t === 'net') return netAmt;
+        return amountTotal; // 'gross' 或未设置
+    };
+
     const lines = [];
 
     for (const entry of template.entries) {
-        const entryAmount = amountTotal;
         let subjectCode = entry.subjectCode;
         let subjectName = entry.subjectName;
         if (entry.usePaymentMethod) {
@@ -927,6 +948,7 @@ window.generateVoucherFromEngineTemplate = function(itemName, doc, options) {
             return { success: false, error: "科目未填写完整" };
         }
 
+        const entryAmount = resolveEntryAmount(entry);
         const digest = renderTemplatePlaceholder(entry.summary || template.summaryTemplate || itemName, doc);
         lines.push({
             summary: digest,
@@ -1068,7 +1090,10 @@ window.loadEngineConfig = function(itemName) {
     const template = getEngineTemplate(itemName, categoryInfo);
     const subjectOptions = window.getEngineSubjectOptions();
 
-    const entryRowsHtml = (template.entries || []).map((entry, index) => `
+    const amtTypeLabel = { gross: '含税全额', net: '不含税', tax: '税额(9%)' };
+    const entryRowsHtml = (template.entries || []).map((entry, index) => {
+        const curAmtType = entry.amountType || 'gross';
+        return `
         <tr data-row-index="${index}">
             <td>
                 <select class="engine-dir" style="width:100%; padding:6px;">
@@ -1086,13 +1111,20 @@ window.loadEngineConfig = function(itemName) {
                     }).join("")}
                 </select>
             </td>
+            <td>
+                <select class="engine-amt-type" style="width:100%; padding:6px;">
+                    <option value="gross" ${curAmtType === 'gross' ? 'selected' : ''}>含税全额</option>
+                    <option value="net"   ${curAmtType === 'net'   ? 'selected' : ''}>不含税</option>
+                    <option value="tax"   ${curAmtType === 'tax'   ? 'selected' : ''}>税额(9%)</option>
+                </select>
+            </td>
             <td><input class="engine-summary" type="text" value="${entry.summary || ""}" placeholder="摘要模板"></td>
             ${isWriteOff ? `<td style="text-align:center;"><input class="engine-pm" type="checkbox" ${entry.usePaymentMethod ? "checked" : ""} onchange="window.togglePaymentMethodSubject(this)"></td>` : ""}
             <td style="text-align:center;">
                 <button class="btn-remove" onclick="window.removeEngineEntry('${itemName}', ${index})">删除</button>
             </td>
         </tr>
-    `).join("");
+    `}).join("");
 
     const topTipHTML = isWriteOff
         ? `<div style="color:#c0392b; font-size:12px; line-height:1.6;">
@@ -1147,6 +1179,7 @@ window.loadEngineConfig = function(itemName) {
                         <tr style="background:#f4f6f8; text-align:left;">
                             <th style="padding:8px; border-bottom:1px solid #e1e5ea;">方向</th>
                             <th style="padding:8px; border-bottom:1px solid #e1e5ea;">会计科目</th>
+                            <th style="padding:8px; border-bottom:1px solid #e1e5ea;">金额类型</th>
                             <th style="padding:8px; border-bottom:1px solid #e1e5ea;">摘要</th>
                             ${isWriteOff ? `<th style="padding:8px; border-bottom:1px solid #e1e5ea;">收支方式</th>` : ""}
                             <th style="padding:8px; border-bottom:1px solid #e1e5ea;">操作</th>
@@ -1221,7 +1254,7 @@ window.getEngineSubjectOptions = function() {
 window.addEngineEntry = function(itemName) {
     const categoryInfo = findEngineCategory(itemName);
     const template = getEngineTemplate(itemName, categoryInfo);
-    template.entries.push({ dir: "借", subjectCode: "", subjectName: "", summary: "", usePaymentMethod: false });
+    template.entries.push({ dir: "借", subjectCode: "", subjectName: "", summary: "", amountType: "gross", usePaymentMethod: false });
     setEngineTemplate(itemName, template);
     window.loadEngineConfig(itemName);
 };
@@ -1267,6 +1300,7 @@ window.saveEngineTemplate = function(itemName, isWriteOff) {
             dir: row.querySelector(".engine-dir")?.value || "借",
             subjectCode: (subjectCode || "").trim(),
             subjectName: (subjectName || "").trim(),
+            amountType: row.querySelector(".engine-amt-type")?.value || "gross",
             summary: row.querySelector(".engine-summary")?.value.trim() || "",
             usePaymentMethod: isWriteOff ? !!row.querySelector(".engine-pm")?.checked : false
         };
