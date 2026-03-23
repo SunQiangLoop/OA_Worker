@@ -51,6 +51,28 @@ function generateSequentialVoucherId(word) {
 
 window.getNextVoucherSeqStrict = getNextVoucherSeqStrict;
 window.generateSequentialVoucherId = generateSequentialVoucherId;
+window.getManualVouchers = getManualVouchers;
+window.saveManualVouchers = saveManualVouchers;
+
+/**
+ * 初始化演示凭证数据
+ * 若 ManualVouchers 为空，且种子数据文件已加载（__voucherSeedRows），
+ * 则自动将种子凭证写入 sessionStorage，保证期末结转有数据可操作。
+ */
+function initVouchersFromSeed() {
+    try {
+        const existing = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+        const seed = Array.isArray(window.__voucherSeedRows) ? window.__voucherSeedRows : [];
+        if (existing.length === 0 && seed.length > 0) {
+            sessionStorage.setItem('ManualVouchers', JSON.stringify(seed));
+            console.log('[系统] 已加载演示凭证种子数据，共', seed.length, '张凭证。');
+        }
+    } catch (e) {
+        console.warn('[系统] 加载凭证种子数据失败：', e);
+    }
+}
+// 页面加载完成后立即执行（DOMContentLoaded 之前 script 都已执行，延迟 0ms 确保 seed 文件已加载）
+setTimeout(initVouchersFromSeed, 0);
 
 /**
  * 当前登录会话信息（可由登录模块覆写）
