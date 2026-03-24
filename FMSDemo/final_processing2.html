@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!--
+  文件用途：期末处理 — 结账向导页（期末调汇 / 结转损益 / 总账期末结账）
+  关联文件：
+    - 期末处理.html（主面板，来源页）
+    - final_processing.html（方案管理）
+  URL参数：?step=profit | close
+  数据共享：localStorage，key前缀 QM_
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结账向导 — 期末处理</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: #f0f2f5;
+    color: #1f2937;
+    min-height: 100vh;
+  }
+
+  /* ── 顶部栏 ── */
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .breadcrumb a { color: #3b82f6; text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb .sep { color: #9ca3af; }
+  .breadcrumb .current { color: #374151; font-weight: 600; }
+
+  .period-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ── 步骤导航条 ── */
+  .steps-nav {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 20px 40px;
+  }
+
+  .steps-nav-inner {
+    display: flex;
+    align-items: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .nav-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-step-connector {
+    position: absolute;
+    top: 20px;
+    left: calc(50% + 24px);
+    right: calc(-50% + 24px);
+    height: 3px;
+    background: #e5e7eb;
+    z-index: 0;
+  }
+
+  .nav-step-connector.done { background: #34d399; }
+
+  .nav-step:last-child .nav-step-connector { display: none; }
+
+  .nav-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    border: 3px solid #e5e7eb;
+    background: #f9fafb;
+    color: #9ca3af;
+    transition: all 0.25s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-circle.done {
+    background: #d1fae5;
+    border-color: #34d399;
+    color: #059669;
+  }
+
+  .nav-circle.active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    box-shadow: 0 0 0 5px rgba(59,130,246,0.12);
+  }
+
+  .nav-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+  }
+
+  .nav-step.done .nav-label { color: #059669; }
+  .nav-step.active .nav-label { color: #1d4ed8; }
+
+  .nav-sublabel {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ── 主内容区 ── */
+  .main {
+    max-width: 860px;
+    margin: 28px auto;
+    padding: 0 24px;
+  }
+
+  /* ── 通用卡片 ── */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: #3b82f6;
+    border-radius: 2px;
+  }
+
+  /* ── 检查清单 ── */
+  .check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+
+  .check-item.ok { border-color: #a7f3d0; background: #f0fdf4; }
+  .check-item.warn { border-color: #fde68a; background: #fffbeb; }
+  .check-item.fail { border-color: #fca5a5; background: #fef2f2; }
+
+  .check-icon { font-size: 18px; flex-shrink: 0; }
+  .check-text { flex: 1; color: #374151; }
+  .check-action { flex-shrink: 0; }
+
+  /* ── 表单行 ── */
+  .form-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .form-label {
+    font-size: 13px;
+    color: #374151;
+    font-weight: 500;
+    min-width: 110px;
+  }
+
+  .form-select, .form-input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #1f2937;
+    outline: none;
+    background: #fff;
+    min-width: 180px;
+  }
+
+  .form-select:focus, .form-input:focus { border-color: #3b82f6; }
+
+  /* ── 表格 ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: #f9fafb;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f9fafb; }
+
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ── 按钮 ── */
+  .btn {
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.18s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-primary:disabled { background: #93c5fd; border-color: #93c5fd; cursor: not-allowed; }
+
+  .btn-success { background: #059669; color: #fff; border-color: #059669; }
+  .btn-success:hover { background: #047857; }
+
+  .btn-outline { background: #fff; color: #374151; border-color: #d1d5db; }
+  .btn-outline:hover { background: #f9fafb; }
+
+  .btn-warning { background: #d97706; color: #fff; border-color: #d97706; }
+  .btn-warning:hover { background: #b45309; }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  /* ── 结果卡片 ── */
+  .result-card {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .result-card.success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 1.5px solid #34d399;
+  }
+
+  .result-card.info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1.5px solid #60a5fa;
+  }
+
+  .result-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .result-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #065f46;
+    margin-bottom: 6px;
+  }
+
+  .result-card.info .result-title { color: #1e3a8a; }
+
+  .result-body {
+    font-size: 13px;
+    color: #047857;
+    line-height: 1.7;
+  }
+
+  .result-card.info .result-body { color: #1e40af; }
+
+  /* ── 凭证方式单选 ── */
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-size: 13px;
+    color: #374151;
+  }
+
+  .radio-option:hover { border-color: #93c5fd; background: #f8faff; }
+  .radio-option.selected { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+
+  .radio-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #3b82f6;
+  }
+
+  /* ── 步骤切换按钮行 ── */
+  .step-nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+  }
+
+  /* ── 底部栏 ── */
+  .bottom-bar {
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 7px;
+    transition: all 0.18s;
+    background: #fff;
+  }
+
+  .back-btn:hover { background: #f9fafb; border-color: #9ca3af; }
+
+  /* ── 大号完成提示 ── */
+  .big-done {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(5,150,105,0.3);
+  }
+
+  .big-done .icon { font-size: 60px; margin-bottom: 12px; }
+  .big-done .title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .big-done .subtitle { font-size: 15px; opacity: 0.9; }
+
+  /* ── 统计摘要行 ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    text-align: center;
+  }
+
+  .stat-label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+  .stat-value { font-size: 20px; font-weight: 700; color: #1f2937; }
+
+  /* ── 净利润高亮 ── */
+  .profit-highlight {
+    background: #fffbeb;
+    border: 1.5px solid #fde68a;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .profit-label { font-size: 14px; color: #92400e; font-weight: 600; }
+  .profit-value { font-size: 24px; font-weight: 800; color: #059669; }
+  .profit-value.loss { color: #dc2626; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    animation: scaleIn 0.22s ease;
+    text-align: center;
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .modal-icon { font-size: 48px; margin-bottom: 12px; }
+  .modal-title { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 10px; }
+  .modal-body { font-size: 14px; color: #374151; margin-bottom: 24px; line-height: 1.7; }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  /* ── Toast ── */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toast {
+    background: #1f2937;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease;
+    max-width: 340px;
+  }
+
+  .toast.success { background: #059669; }
+  .toast.warning { background: #d97706; }
+  .toast.error { background: #dc2626; }
+
+  @keyframes slideIn {
+    from { transform: translateX(110%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .toast.removing {
+    animation: slideOut 0.3s ease forwards;
+  }
+
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(110%); opacity: 0; }
+  }
+
+  /* ── 收入/费用表格颜色 ── */
+  .income-row td { color: #059669; }
+  .expense-row td { color: #374151; }
+  .total-row td { font-weight: 700; border-top: 2px solid #e5e7eb; }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- 顶部面包屑栏 -->
+<div class="topbar">
+  <div class="breadcrumb">
+    <a href="final_processing1.html">期末处理</a>
+    <span class="sep">›</span>
+    <span class="current">结账向导</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7280;">
+    当前期间：<span class="period-badge" id="periodBadge">2026-02</span>
+  </div>
+</div>
+
+<!-- 步骤导航条 -->
+<div class="steps-nav">
+  <div class="steps-nav-inner">
+    <div class="nav-step" id="navStep-profit" onclick="goToStep('profit')">
+      <div class="nav-step-connector" id="conn-profit"></div>
+      <div class="nav-circle" id="circle-profit">⚖️</div>
+      <div class="nav-label">结转损益</div>
+      <div class="nav-sublabel">本年利润结转</div>
+    </div>
+    <div class="nav-step" id="navStep-close" onclick="goToStep('close')">
+      <div class="nav-step-connector" id="conn-close"></div>
+      <div class="nav-circle" id="circle-close">🔒</div>
+      <div class="nav-label">总账结账</div>
+      <div class="nav-sublabel">期末最终结账</div>
+    </div>
+  </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main" id="mainContent">
+  <!-- 由JS渲染 -->
+</div>
+
+<!-- 底部栏 -->
+<div class="bottom-bar">
+  <a href="final_processing1.html" class="back-btn">← 返回期末处理</a>
+</div>
+
+<script>
+// ── localStorage 工具 ──
+function lsGet(key) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+  catch(e) { return null; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(e) { return false; }
+}
+
+// ── sessionStorage 工具（访问主系统真实数据）──
+function ssGet(key) {
+  try { const v = sessionStorage.getItem(key); return v ? JSON.parse(v) : null; }
+  catch(e) { return null; }
+}
+function ssSet(key, val) {
+  try { sessionStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(e) { return false; }
+}
+
+// ── URL参数 ──
+function getUrlParam(name) {
+  return new URLSearchParams(location.search).get(name);
+}
+
+// ── 当前步骤 ──
+let activeStep = getUrlParam('step') || 'profit';
+
+// ── 当前期间 ──
+const currentPeriod = lsGet('QM_CurrentPeriod') || '2026-02';
+document.getElementById('periodBadge').textContent = currentPeriod;
+
+// ── 获取/设置结账状态 ──
+function getStatus() {
+  return lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
+}
+function saveStatus(s) {
+  lsSet('QM_ClosingStatus', s);
+}
+
+// ── 获取/保存凭证（使用主系统 sessionStorage.ManualVouchers）──
+function getVouchers() { return ssGet('ManualVouchers') || []; }
+function saveVouchers(v) { ssSet('ManualVouchers', v); }
+
+// ── 生成凭证序号（与主系统兼容，扫描所有 ManualVouchers）──
+function nextVoucherNo(word) {
+  const vouchers = getVouchers();
+  const prefix = word + '-';
+  let max = 0;
+  vouchers.forEach(v => {
+    if (v.id && v.id.startsWith(prefix)) {
+      const num = parseInt(v.id.slice(prefix.length), 10);
+      if (!isNaN(num) && num > max) max = num;
+    }
+  });
+  return prefix + String(max + 1).padStart(4, '0');
+}
+
+// ── 同步会计期间状态（操作 FinanceAccountPeriods）──
+function syncAccountPeriodStatus(period, status) {
+  try {
+    const list = JSON.parse(sessionStorage.getItem('FinanceAccountPeriods') || '[]');
+    let changed = false;
+    list.forEach(item => {
+      if (item.period === period) { item.status = status; changed = true; }
+    });
+    if (changed) sessionStorage.setItem('FinanceAccountPeriods', JSON.stringify(list));
+    return changed;
+  } catch(e) { return false; }
+}
+
+// ── 当月最后一天 ──
+function periodLastDay(period) {
+  const [y, m] = period.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+// ── 判断损益科目类型 ──
+function getAccountPLType(code) {
+  // 收入类：60xx（主营/其他业务收入）或 50xx（小企业准则收入）
+  if (/^60/.test(code) || /^50/.test(code)) return 'income';
+  // 成本/费用/税金及附加类：64xx 65xx 66xx 67xx 68xx 69xx
+  if (/^6[4-9]/.test(code)) return 'expense';
+  return null; // 非损益科目
+}
+
+// ── 从 ManualVouchers 计算本期损益科目余额 ──
+function calcPLData() {
+  const vouchers = getVouchers();
+  // 本期已记账/已审核凭证，排除系统结转凭证本身
+  const periodVouchers = vouchers.filter(v =>
+    (v.status === '已记账' || v.status === '已审核') &&
+    ((v.date || '').startsWith(currentPeriod) || v.period === currentPeriod) &&
+    !(v.user || '').includes('结转损益')
+  );
+
+  const accMap = {};
+  periodVouchers.forEach(v => {
+    (v.lines || []).forEach(l => {
+      const rawCode = (l.accountCode || l.account || '').toString();
+      const code = rawCode.split(' ')[0].trim();
+      const plType = getAccountPLType(code);
+      if (!plType) return;
+
+      const name = l.accountName || l.name || code;
+      const d = parseFloat(l.debit || 0);
+      const c = parseFloat(l.credit || 0);
+
+      if (!accMap[code]) accMap[code] = { code, name, type: plType, debit: 0, credit: 0 };
+      accMap[code].debit  += d;
+      accMap[code].credit += c;
+    });
+  });
+
+  return Object.values(accMap).map(a => {
+    let amount = 0;
+    if (a.type === 'income') {
+      // 收入科目：贷方余额（贷 - 借）
+      amount = Math.max(a.credit - a.debit, 0);
+    } else {
+      // 费用科目：借方余额（借 - 贷）
+      amount = Math.max(a.debit - a.credit, 0);
+    }
+    return { ...a, amount };
+  }).filter(a => a.amount > 0.001).sort((a, b) => a.code.localeCompare(b.code));
+}
+
+// ── 格式化金额 ──
+function fmt(n, sign = true) {
+  const prefix = sign ? '¥' : '';
+  return prefix + Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── 切换步骤 ──
+function goToStep(step) {
+  activeStep = step;
+  const url = new URL(location.href);
+  url.searchParams.set('step', step);
+  history.replaceState(null, '', url.toString());
+  updateStepsNav();
+  renderStep();
+}
+
+// ── 更新步骤导航样式 ──
+function updateStepsNav() {
+  const status = getStatus();
+  // 同时检查 sessionStorage 标志（主系统期间状态）
+  const profitKey = currentPeriod + '-ProfitTransferred';
+  const monthClosedKey = currentPeriod + '-MonthClosed';
+  const steps = ['profit', 'close'];
+  const doneMap = {
+    profit: status.profitDone || ssGet(profitKey) === true || ssGet(profitKey) === 'true',
+    close:  status.closed     || ssGet(monthClosedKey) === true || ssGet(monthClosedKey) === 'true'
+  };
+
+  steps.forEach((s, idx) => {
+    const navEl = document.getElementById('navStep-' + s);
+    const circleEl = document.getElementById('circle-' + s);
+    const connEl = document.getElementById('conn-' + s);
+    const icons = ['⚖️', '🔒'];
+
+    navEl.className = 'nav-step';
+    circleEl.className = 'nav-circle';
+
+    if (doneMap[s]) {
+      navEl.classList.add('done');
+      circleEl.classList.add('done');
+      circleEl.textContent = '✓';
+    } else if (s === activeStep) {
+      navEl.classList.add('active');
+      circleEl.classList.add('active');
+      circleEl.textContent = icons[idx];
+    } else {
+      circleEl.textContent = icons[idx];
+    }
+
+    // 连接线颜色
+    if (connEl && idx < steps.length - 1) {
+      connEl.className = 'nav-step-connector' + (doneMap[s] ? ' done' : '');
+    }
+  });
+}
+
+// ══════════════════════════════════════
+//  渲染各步骤内容
+// ══════════════════════════════════════
+function renderStep() {
+  if (activeStep === 'profit') renderProfit();
+  else if (activeStep === 'close') renderClose();
+  else renderProfit(); // 默认显示结转损益
+}
+
+// ── 步骤一：结转损益 ──
+let profitMethod = 'single'; // 'single' | 'category'
+
+function renderProfit() {
+  const status = getStatus();
+  const main = document.getElementById('mainContent');
+  const plData = calcPLData();
+
+  const totalIncome  = plData.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+  const totalExpense = plData.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const netProfit    = totalIncome - totalExpense;
+
+  let tableRows = '';
+  if (plData.length === 0) {
+    tableRows = `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px;">本期暂无损益类科目发生额（凭证需状态为"已记账"）</td></tr>`;
+  } else {
+    tableRows = plData.map(r => {
+      const dir = r.type === 'income' ? '贷' : '借';
+      return `
+      <tr class="${r.type === 'income' ? 'income-row' : 'expense-row'}">
+        <td>${r.code}</td>
+        <td>${r.name}</td>
+        <td style="text-align:center;"><span style="background:${dir==='贷'?'#d1fae5':'#fee2e2'};color:${dir==='贷'?'#065f46':'#991b1b'};padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">${dir}方</span></td>
+        <td class="num">${fmt(r.amount)}</td>
+        <td style="color:#6b7280;font-size:12px;">结转至 4103 本年利润</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // 检查是否已做过结转（通过 sessionStorage 标志）
+  const profitKey = currentPeriod + '-ProfitTransferred';
+  const alreadyTransferred = ssGet(profitKey) === true || ssGet(profitKey) === 'true';
+  const isDone = status.profitDone || alreadyTransferred;
+
+  // 查找本期结转凭证 ID
+  const vouchers = getVouchers();
+  const transVouchers = vouchers.filter(v =>
+    (v.user || '').includes('结转损益') &&
+    (v.period === currentPeriod || (v.date || '').startsWith(currentPeriod))
+  );
+  const transIds = transVouchers.map(v => v.id).join('、') || '—';
+
+  const doneBlock = isDone ? `
+    <div class="result-card success">
+      <div class="result-icon">✅</div>
+      <div class="result-title">损益结转已完成</div>
+      <div class="result-body">
+        所有损益科目余额已结转至 4103 本年利润<br>
+        本期净利润：<b>${fmt(netProfit)}</b><br>
+        已生成结转凭证：${transIds}
+      </div>
+    </div>
+  ` : '';
+
+  const noDataWarning = plData.length === 0 ? `
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;">
+      ⚠️ 未找到本期已记账的损益类凭证，请确认凭证已过账后再执行结转。
+    </div>` : '';
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="card-title">损益科目本期余额（来源：已记账凭证）</div>
+      ${noDataWarning}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>科目编码</th>
+              <th>科目名称</th>
+              <th style="text-align:center;">余额方向</th>
+              <th>本期净余额</th>
+              <th>处理方式</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+            ${plData.length > 0 ? `<tr class="total-row">
+              <td colspan="3">合计</td>
+              <td class="num">
+                收入 ${fmt(totalIncome)}<br>
+                费用 ${fmt(totalExpense)}
+              </td>
+              <td></td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    ${plData.length > 0 ? `
+    <div class="profit-highlight">
+      <span class="profit-label">本期预计净利润（税前）：</span>
+      <span class="profit-value ${netProfit < 0 ? 'loss' : ''}">${fmt(netProfit)}</span>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="card-title">凭证生成方式</div>
+      <div class="radio-group">
+        <label class="radio-option ${profitMethod === 'single' ? 'selected' : ''}" onclick="setProfitMethod('single')">
+          <input type="radio" name="method" value="single" ${profitMethod === 'single' ? 'checked' : ''}>
+          <div>
+            <div style="font-weight:600;">按普通方式结转</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">收入类和费用类汇总为一张凭证</div>
+          </div>
+        </label>
+        <label class="radio-option ${profitMethod === 'category' ? 'selected' : ''}" onclick="setProfitMethod('category')">
+          <input type="radio" name="method" value="category" ${profitMethod === 'category' ? 'checked' : ''}>
+          <div>
+            <div style="font-weight:600;">按损益科目类别结转</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">收入类和费用类分别生成两张凭证</div>
+          </div>
+        </label>
+      </div>
+      <div class="form-group">
+        <span class="form-label">结转目标科目：</span>
+        <input class="form-input" value="4103 本年利润" style="width:200px" readonly>
+      </div>
+    </div>
+
+    ${doneBlock}
+
+    <div class="step-nav-row">
+      <a href="final_processing1.html" class="btn btn-outline">← 返回主页</a>
+      <div style="display:flex;gap:10px;">
+        ${isDone
+          ? `<button class="btn btn-success" onclick="goToStep('close')">下一步：总账结账 →</button>`
+          : `<button class="btn btn-primary" onclick="doProfit()" id="btnProfit" ${plData.length===0?'disabled title="无可结转的损益数据"':''}>执行结转</button>`}
+      </div>
+    </div>
+  `;
+}
+
+function setProfitMethod(m) {
+  profitMethod = m;
+  renderProfit();
+}
+
+function doProfit() {
+  const plData = calcPLData();
+  if (plData.length === 0) {
+    showToast('本期无已记账损益类凭证，无法结转', 'error');
+    return;
+  }
+
+  const totalIncome  = plData.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+  const totalExpense = plData.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const netProfit    = totalIncome - totalExpense;
+
+  showModal('确认执行结转损益',
+    `<div style="text-align:left;">
+      <p>将所有损益科目余额结转至 <b>4103 本年利润</b>：</p>
+      <ul style="margin:12px 0 12px 16px;line-height:2;font-size:13px;">
+        <li>收入类科目合计：${fmt(totalIncome)}</li>
+        <li>费用类科目合计：${fmt(totalExpense)}</li>
+        <li>本期净利润：<b style="color:${netProfit>=0?'#059669':'#dc2626'}">${fmt(netProfit)}</b></li>
+      </ul>
+      <p>生成方式：${profitMethod === 'single' ? '普通方式（1张凭证）' : '按类别（2张凭证）'}</p>
+    </div>`,
+    () => {
+      setTimeout(() => {
+        const vouchers = getVouchers();
+        const dateStr = currentPeriod + '-' + String(periodLastDay(currentPeriod)).padStart(2, '0');
+        const generated = [];
+
+        if (profitMethod === 'single') {
+          // ── 一张凭证：收入借方清零 + 费用贷方清零 + 4103 差额 ──
+          const vId = nextVoucherNo('转');
+          const lines = [];
+          // 收入科目：借方（清零贷方余额）
+          plData.filter(r => r.type === 'income').forEach(r => {
+            lines.push({ accountCode: r.code, accountName: r.name, summary: '结转损益', debit: parseFloat(r.amount.toFixed(2)), credit: 0 });
+          });
+          // 费用科目：贷方（清零借方余额）
+          plData.filter(r => r.type === 'expense').forEach(r => {
+            lines.push({ accountCode: r.code, accountName: r.name, summary: '结转损益', debit: 0, credit: parseFloat(r.amount.toFixed(2)) });
+          });
+          // 4103 本年利润：差额（净利润为贷，净亏损为借）
+          if (netProfit > 0) {
+            lines.push({ accountCode: '4103', accountName: '本年利润', summary: '结转损益', debit: 0, credit: parseFloat(netProfit.toFixed(2)) });
+          } else if (netProfit < 0) {
+            lines.push({ accountCode: '4103', accountName: '本年利润', summary: '结转损益', debit: parseFloat((-netProfit).toFixed(2)), credit: 0 });
+          }
+          vouchers.push({ id: vId, date: dateStr, period: currentPeriod, summary: '结转损益', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines });
+          generated.push(vId);
+        } else {
+          // ── 两张凭证：收入类 + 费用类 ──
+          const incomeItems = plData.filter(r => r.type === 'income');
+          const expenseItems = plData.filter(r => r.type === 'expense');
+
+          if (incomeItems.length > 0) {
+            const vId1 = nextVoucherNo('转');
+            const lines1 = incomeItems.map(r => ({ accountCode: r.code, accountName: r.name, summary: '结转收入', debit: parseFloat(r.amount.toFixed(2)), credit: 0 }));
+            lines1.push({ accountCode: '4103', accountName: '本年利润', summary: '结转收入', debit: 0, credit: parseFloat(totalIncome.toFixed(2)) });
+            vouchers.push({ id: vId1, date: dateStr, period: currentPeriod, summary: '结转损益—收入类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines1 });
+            generated.push(vId1);
+          }
+
+          if (expenseItems.length > 0) {
+            const vId2 = nextVoucherNo('转');
+            const lines2 = [{ accountCode: '4103', accountName: '本年利润', summary: '结转费用', debit: parseFloat(totalExpense.toFixed(2)), credit: 0 }];
+            expenseItems.forEach(r => lines2.push({ accountCode: r.code, accountName: r.name, summary: '结转费用', debit: 0, credit: parseFloat(r.amount.toFixed(2)) }));
+            vouchers.push({ id: vId2, date: dateStr, period: currentPeriod, summary: '结转损益—费用类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines2 });
+            generated.push(vId2);
+          }
+        }
+
+        saveVouchers(vouchers);
+
+        // 标记结转完成（sessionStorage + localStorage 双写）
+        const profitKey = currentPeriod + '-ProfitTransferred';
+        ssSet(profitKey, true);
+        const status = getStatus();
+        status.profitDone = true;
+        saveStatus(status);
+
+        // 同步到 QM_StepsDone
+        const steps = lsGet('QM_StepsDone') || {};
+        if (!steps[currentPeriod]) steps[currentPeriod] = {};
+        steps[currentPeriod].profit = true;
+        lsSet('QM_StepsDone', steps);
+
+        showToast(`✅ 结转完成，生成凭证 ${generated.join('、')}，本期净利润 ${fmt(netProfit)}`, 'success');
+        updateStepsNav();
+        renderProfit();
+      }, 500);
+    }
+  );
+}
+
+// ── 步骤二：总账期末结账 ──
+function calcClosingStats() {
+  const vouchers = getVouchers();
+  const periodVouchers = vouchers.filter(v =>
+    (v.status === '已记账' || v.status === '已审核') &&
+    (v.period === currentPeriod || (v.date || '').startsWith(currentPeriod))
+  );
+
+  let totalDebit = 0, totalCredit = 0;
+  const catMap = {}; // firstChar -> { debit, credit, codes: Set }
+  const catLabels = {
+    '1': '资产类（1xxx）', '2': '负债类（2xxx）',
+    '3': '权益类（3xxx）', '4': '权益类（4xxx）',
+    '5': '损益/成本类（5xxx）', '6': '损益/费用类（6xxx）',
+    '7': '成本类（7xxx）'
+  };
+
+  periodVouchers.forEach(v => {
+    (v.lines || []).forEach(l => {
+      const code = (l.accountCode || l.account || '').toString().split(' ')[0].trim();
+      const d = parseFloat(l.debit || 0);
+      const c = parseFloat(l.credit || 0);
+      totalDebit  += d;
+      totalCredit += c;
+      const cat = code.charAt(0);
+      if (cat && /[1-9]/.test(cat)) {
+        if (!catMap[cat]) catMap[cat] = { debit: 0, credit: 0, codes: new Set() };
+        catMap[cat].debit  += d;
+        catMap[cat].credit += c;
+        if (code) catMap[cat].codes.add(code);
+      }
+    });
+  });
+
+  const diff = Math.abs(totalDebit - totalCredit);
+  const balanced = diff < 0.01;
+
+  // 检查既未记账也未审核的凭证（草稿/待审核）
+  const unposted = vouchers.filter(v =>
+    v.status !== '已记账' && v.status !== '已审核' &&
+    !(v.user || '').includes('系统') &&
+    (v.period === currentPeriod || (v.date || '').startsWith(currentPeriod))
+  ).length;
+
+  return { periodVouchers, totalDebit, totalCredit, diff, balanced, unposted, catMap, catLabels };
+}
+
+function renderClose() {
+  const status = getStatus();
+  const main = document.getElementById('mainContent');
+  const stats = calcClosingStats();
+  const { periodVouchers, totalDebit, totalCredit, diff, balanced, unposted, catMap, catLabels } = stats;
+
+  // 检查 sessionStorage 中期间是否已锁定
+  const monthClosedKey = currentPeriod + '-MonthClosed';
+  const alreadyClosed = ssGet(monthClosedKey) === true || ssGet(monthClosedKey) === 'true';
+  const isDone = status.closed || alreadyClosed;
+
+  // 检查损益结转是否完成
+  const profitKey = currentPeriod + '-ProfitTransferred';
+  const profitDone = status.profitDone || ssGet(profitKey) === true || ssGet(profitKey) === 'true';
+
+  const checks = [
+    { ok: periodVouchers.length > 0, text: `本期存在已记账凭证（共 ${periodVouchers.length} 张）` },
+    { ok: unposted === 0,            text: unposted > 0 ? `有 ${unposted} 张凭证尚未过账，请先完成过账` : '所有凭证已过账' },
+    { ok: profitDone,                text: `损益科目已结转${!profitDone ? ' — <a href="?step=profit" style="color:#dc2626">前往执行</a>' : ''}` },
+    { ok: balanced,                  text: balanced ? '借贷平衡，差额为零 ✓' : `借贷不平衡，差额 ${fmt(diff)}，请检查凭证` },
+  ];
+  const allPassed = checks.every(c => c.ok);
+
+  const checkItems = checks.map(c => `
+    <div class="check-item ${c.ok ? 'ok' : 'fail'}">
+      <span class="check-icon">${c.ok ? '✅' : '❌'}</span>
+      <span class="check-text">${c.text}</span>
+    </div>`).join('');
+
+  // 生成科目类别汇总行
+  const catRows = Object.entries(catMap)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([cat, d]) => `
+    <tr>
+      <td>${catLabels[cat] || cat + 'xxx'}</td>
+      <td style="text-align:center;">${d.codes.size}</td>
+      <td class="num">${fmt(d.debit)}</td>
+      <td class="num">${fmt(d.credit)}</td>
+    </tr>`).join('');
+
+  const bigDoneBlock = isDone ? `
+    <div class="big-done">
+      <div class="icon">🎉</div>
+      <div class="title">${currentPeriod} 已成功结账</div>
+      <div class="subtitle">账务数据已锁定，不可修改。如需调整请联系系统管理员。</div>
+    </div>
+  ` : '';
+
+  main.innerHTML = `
+    ${bigDoneBlock}
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">本期已记账凭证</div>
+        <div class="stat-value">${periodVouchers.length} 张</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本期借方合计</div>
+        <div class="stat-value" style="font-size:15px;">${fmt(totalDebit)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本期贷方合计</div>
+        <div class="stat-value" style="font-size:15px;">${fmt(totalCredit)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">结账前检查清单</div>
+      <div class="check-list">${checkItems}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">本期试算平衡预览</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>科目类别</th><th style="text-align:center;">科目数</th><th style="text-align:right">借方合计</th><th style="text-align:right">贷方合计</th></tr>
+          </thead>
+          <tbody>
+            ${catRows || '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:16px;">暂无数据</td></tr>'}
+            <tr class="total-row">
+              <td><b>合计</b></td><td></td>
+              <td class="num"><b>${fmt(totalDebit)}</b></td>
+              <td class="num"><b>${fmt(totalCredit)}</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="text-align:right;font-size:12px;margin-top:8px;${balanced?'color:#059669':'color:#dc2626'}">
+        ${balanced ? '✓ 借贷平衡，差额为零' : `⚠ 差额 ${fmt(diff)}`}
+      </div>
+    </div>
+
+    <div class="step-nav-row">
+      <button class="btn btn-outline" onclick="goToStep('profit')">← 上一步</button>
+      <div>
+        ${isDone
+          ? `<div style="display:flex;align-items:center;gap:12px;">
+               <span style="color:#059669;font-weight:700;font-size:15px;">✅ 本期已结账</span>
+               <button class="btn btn-warning btn-sm" onclick="doUnclose()">↩ 反结账</button>
+             </div>`
+          : `<button class="btn btn-primary" id="btnClose"
+              ${allPassed ? '' : 'disabled title="请先完成所有检查项"'}
+              onclick="doClose()">
+              🔒 执行结账
+            </button>`}
+      </div>
+    </div>
+  `;
+}
+
+function doClose() {
+  const stats = calcClosingStats();
+  showModal('确认期末结账',
+    `<div>
+      <p style="font-size:15px;font-weight:700;margin-bottom:8px;">⚠️ 此操作不可逆！</p>
+      <p style="font-size:14px;line-height:1.7;color:#374151;">
+        确认对 <b>${currentPeriod}</b> 执行期末结账？<br>
+        结账后本期凭证将被锁定，无法新增或修改。<br>
+        本期凭证 <b>${stats.periodVouchers.length}</b> 张，借贷合计 <b>${fmt(stats.totalDebit)}</b>。<br><br>
+        确认无误请点击"确认结账"。
+      </p>
+    </div>`,
+    () => {
+      setTimeout(() => {
+        // 写入 sessionStorage 锁定标志（主系统读取此 key 判断期间是否锁定）
+        const monthClosedKey = currentPeriod + '-MonthClosed';
+        ssSet(monthClosedKey, true);
+
+        // 联动：将 FinanceAccountPeriods 中对应期间状态改为"已关闭"
+        syncAccountPeriodStatus(currentPeriod, '已关闭');
+
+        // 同步 localStorage QM_ 状态
+        const status = getStatus();
+        status.closed = true;
+        saveStatus(status);
+
+        const steps = lsGet('QM_StepsDone') || {};
+        if (!steps[currentPeriod]) steps[currentPeriod] = {};
+        steps[currentPeriod].close = true;
+        lsSet('QM_StepsDone', steps);
+
+        showToast(`🎉 ${currentPeriod} 期末结账成功！本期账务已锁定，会计期间已关闭。`, 'success');
+        updateStepsNav();
+        renderClose();
+      }, 800);
+    }
+  );
+}
+
+// ── 反结账 ──
+function doUnclose() {
+  showModal('确认反结账',
+    `<div style="text-align:left;">
+      <p style="font-size:15px;font-weight:700;margin-bottom:8px;">↩ 撤销 ${currentPeriod} 结账</p>
+      <p style="font-size:14px;line-height:1.7;color:#374151;">
+        反结账后，本期账务锁定将被解除，可重新录入和修改凭证。<br>
+        会计期间状态将恢复为"已开启"。<br><br>
+        <span style="color:#d97706;">⚠️ 已生成的结转凭证不会自动删除，如需重新结转请手动删除后再执行。</span>
+      </p>
+    </div>`,
+    () => {
+      setTimeout(() => {
+        // 清除 sessionStorage 锁定标志
+        sessionStorage.removeItem(currentPeriod + '-MonthClosed');
+
+        // 联动：将 FinanceAccountPeriods 中对应期间状态改回"已开启"
+        syncAccountPeriodStatus(currentPeriod, '已开启');
+
+        // 清除 localStorage QM_ 状态
+        const status = getStatus();
+        status.closed = false;
+        saveStatus(status);
+
+        const steps = lsGet('QM_StepsDone') || {};
+        if (steps[currentPeriod]) steps[currentPeriod].close = false;
+        lsSet('QM_StepsDone', steps);
+
+        showToast(`✅ ${currentPeriod} 反结账完成，期间已重新开启`, 'success');
+        updateStepsNav();
+        renderClose();
+      }, 400);
+    }
+  );
+}
+
+// ══════════════════════════════════════
+//  弹窗 Modal（支持取消回调）
+// ══════════════════════════════════════
+function showModal(title, bodyHtml, onConfirm, onCancel) {
+  const existing = document.getElementById('globalModal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'globalModal';
+
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon">🔔</div>
+      <div class="modal-title">${title}</div>
+      <div class="modal-body">${bodyHtml}</div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" id="modalConfirmBtn">确认结账</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // 根据调用场景修改按钮文字
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  if (title.includes('调汇')) confirmBtn.textContent = '确认执行';
+  else if (title.includes('结转')) confirmBtn.textContent = '确认结转';
+  else if (title.includes('反结账')) confirmBtn.textContent = '确认反结账';
+  else if (title.includes('结账')) confirmBtn.textContent = '确认结账';
+  else confirmBtn.textContent = '确认';
+
+  if (onConfirm) {
+    confirmBtn.onclick = () => { closeModal(); onConfirm(); };
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeModal();
+      if (onCancel) onCancel();
+    }
+  });
+}
+
+function closeModal() {
+  const m = document.getElementById('globalModal');
+  if (m) m.remove();
+}
+
+// ── Toast ──
+function showToast(msg, type = '') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast${type ? ' ' + type : ''}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ── 初始化 ──
+updateStepsNav();
+renderStep();
+
+// 监听其他页面的 localStorage 变更
+window.addEventListener('storage', (e) => {
+  if (e.key && e.key.startsWith('QM_')) {
+    updateStepsNav();
+    renderStep();
+  }
+});
+</script>
+</body>
+</html>

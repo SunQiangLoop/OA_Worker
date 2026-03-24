@@ -45,8 +45,6 @@ function getModuleName(code) {
         VoucherEntryReview: "凭证录入",
         FinanceVoucherAudit: "凭证审核中心",
         SubjectSummary: "科目汇总表",
-        PeriodEndProfit: "结转损益",
-        PeriodEndClose: "月末结账",
         AcctSubjectBalance: "科目余额表",
         AcctSubjectDetail: "科目明细账",
         ReportBalanceSheet: "资产负债表",
@@ -4510,99 +4508,157 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // 2. 客户对账 (ReconCustomer) - [修复版：独立变量]
+    // 2. 客户对账-业务员 (ReconCustomer)
     // =========================================================================
     else if (moduleCode === "ReconCustomer") {
-        let recons = JSON.parse(sessionStorage.getItem("CustomerRecons"));
+        let recons = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");
         if (!Array.isArray(recons)) recons = [];
 
-        // 注意：这里使用的是 recons 变量
-        const rows = recons
-            .map((r) => {
-                let statusColor = "#333";
-                let action = "";
-                let statusNote = "";
+        const rows = recons.map((r) => {
+            let statusColor = "#999", statusLabel = r.status, action = "";
+            const cancelBtn = `<button onclick="cancelRecon('${r.id}')" style="padding:4px 8px;font-size:12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:4px;">取消对账</button>`;
 
-                const cancelBtn = `<button onclick="cancelRecon('${r.id}')" class="btn-primary" style="padding:4px 8px; font-size:12px; background:#e74c3c; margin-left:4px;">取消对账</button>`;
-                if (r.status === "待客户确认") {
-                    statusColor = "#f39c12";
-                    action = `<button class="btn-primary" style="padding:4px 8px; font-size:12px;" onclick="confirmRecon('${r.id}')">登记确认结果</button>${cancelBtn}`;
-                } else if (r.status === "已确认" || (r.status && r.status.indexOf("已确认") === 0)) {
-                    statusColor = "#27ae60";
-                    action = `<button onclick="settleFromRecon('${r.id}')" class="btn-primary" style="padding:4px 8px; font-size:12px; background:#27ae60;">结算</button>${cancelBtn}`;
-                    if (r.status.indexOf("人工登记") !== -1) {
-                        const tooltip = `确认人：${r.confirmBy || "-"}\n附件：${r.confirmAttachment || "-"}`;
-                        statusNote = `<span title="${tooltip}" style="display:inline-block; margin-left:6px; padding:2px 6px; font-size:11px; color:#2c3e50; background:#eef6ff; border:1px solid #bcd9ff; border-radius:10px;">人工登记</span>`;
-                    }
-                } else if (r.status === "已结算") {
-                    statusColor = "#2980b9";
-                    action = `<span style="color:#2980b9; font-weight:bold;">已推送运单结算</span>`;
-                } else if (r.status === "已开票" || r.status === "开票中") {
-                    statusColor = "#2980b9";
-                    action = `<span style="color:#999;">${r.status}</span>`;
-                } else {
-                    statusColor = "#999";
-                    action = `<span style="color:#ccc;">-</span>`;
-                }
+            if (r.status === "待客户确认") {
+                statusColor = "#f39c12";
+                action = `<button onclick="sendReconToCustomer('${r.id}')" style="padding:4px 10px;font-size:12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;">📤 发送对账单</button>${cancelBtn}`;
+            } else if (r.status === "已发送对账单") {
+                statusColor = "#3498db";
+                statusLabel = "⏳ 等待客户确认";
+                action = `<span style="color:#3498db;font-size:12px;">对账单已发送</span>${cancelBtn}`;
+            } else if (r.status === "客户已确认") {
+                statusColor = "#27ae60";
+                const tip = r.customerConfirmTime ? `客户于 ${r.customerConfirmTime} 确认` : "";
+                statusLabel = `<span title="${tip}">✅ 客户已确认</span>`;
+                action = `<button onclick="settleFromRecon('${r.id}')" style="padding:4px 10px;font-size:12px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;">结算 →</button>${cancelBtn}`;
+            } else if (r.status === "客户打回") {
+                statusColor = "#e74c3c";
+                const reason = r.customerRejectReason || "未填写原因";
+                statusLabel = `<span title="打回原因：${reason}" style="cursor:help;">❌ 客户打回</span>`;
+                action = `<button onclick="regenReconFromReject('${r.id}')" style="padding:4px 10px;font-size:12px;background:#e67e22;color:#fff;border:none;border-radius:4px;cursor:pointer;">🔁 重新生成对账单</button><button onclick="deleteRejectedRecon('${r.id}')" style="padding:4px 8px;font-size:12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:4px;">🗑 删除</button>`;
+            } else if (r.status === "已结算") {
+                statusColor = "#2980b9"; statusLabel = "✔ 已结算";
+                action = `<span style="color:#2980b9;font-size:12px;">已推送结算</span>`;
+            } else if (r.status && r.status.indexOf("已确认") === 0) {
+                statusColor = "#27ae60";
+                action = `<button onclick="settleFromRecon('${r.id}')" style="padding:4px 10px;font-size:12px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;">结算 →</button>${cancelBtn}`;
+            } else {
+                action = cancelBtn;
+            }
 
-                return `<tr>
-                        <td>
-                            <a href="javascript:void(0)" onclick="viewReconDetails('${r.id
-                    }')" style="color:#3498db; font-weight:bold; text-decoration:underline;">${r.id
-                    }</a>
-                            <span style="font-size:12px; color:#999; margin-left:5px;">(${r.waybillCount || "-"
-                    }单)</span>
-                        </td>
-                        <td>${r.client}</td>
-                        <td>${r.period}</td>
-                        <td style="text-align:right; font-weight:bold;">${r.amount
-                    }</td>
-                        <td><span style="color:${statusColor}; font-weight:bold;">${r.status
-                    }</span>${statusNote}</td>
-                        <td>${action}</td>
-                    </tr>`;
-            })
-            .join("");
+            const rejectRow = r.status === "客户打回" ? `<tr style="background:#fff5f5;"><td colspan="6" style="padding:6px 14px;font-size:12px;color:#c0392b;">💬 打回原因：${r.customerRejectReason || "未填写"}</td></tr>` : "";
 
-        const emptyReconRow =
-            rows || '<tr><td colspan="6" style="text-align:center; color:#999;">暂无对账单数据，请先在运单挂帐生成对账单。</td></tr>';
+            return `<tr>
+                <td><a href="javascript:void(0)" onclick="viewReconDetails('${r.id}')" style="color:#3498db;font-weight:bold;text-decoration:underline;">${r.id}</a>
+                    <span style="font-size:12px;color:#999;margin-left:4px;">(${r.waybillCount || "-"}单)</span></td>
+                <td>${r.client}</td>
+                <td>${r.period}</td>
+                <td style="text-align:right;font-weight:bold;">${r.amount}</td>
+                <td><span style="color:${statusColor};font-weight:bold;">${statusLabel}</span></td>
+                <td>${action}</td>
+            </tr>${rejectRow}`;
+        }).join("");
 
         contentHTML += `
-                    <div class="filter-area" style="background:white;padding:15px;margin-bottom:20px;">
-                        <button class="btn-primary" onclick="loadContent('ReconCustomer')">刷新列表</button>
-                    </div>
-                    <table class="data-table">
-                        <thead><tr><th>对账单号 (点击查看运单明细)</th><th>客户名称</th><th>对账期间</th><th style="text-align:right;">应收金额</th><th>状态</th><th>操作</th></tr></thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                    <div id="recon-confirm-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:999;">
-                        <div style="position:absolute; top:8%; left:50%; transform:translateX(-50%); width:620px; background:white; padding:20px; border-radius:8px;">
-                            <h3 style="margin-top:0;">登记客户确认结果 <button onclick="closeReconConfirmModal()" style="float:right;">&times;</button></h3>
-                            <div style="margin-bottom:12px; color:#666; font-size:12px;">请上传完整的微信聊天截图、邮件截图或盖章对账单扫描件。</div>
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block; color:#666; margin-bottom:5px;">确认人姓名</label>
-                                <input id="recon_confirm_name" type="text" placeholder="例如：对方财务王总" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                            </div>
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block; color:#666; margin-bottom:5px;">确认时间</label>
-                                <input id="recon_confirm_time" type="datetime-local" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                            </div>
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block; color:#666; margin-bottom:5px;">确认凭证 <span style="color:#e74c3c;">*</span></label>
-                                <input id="recon_confirm_file" type="file" style="width:100%; padding:6px;">
-                            </div>
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block; color:#666; margin-bottom:5px;">备注说明</label>
-                                <input id="recon_confirm_remark" type="text" placeholder="例如：客户对运费无异议，但要求下周再开票" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                            </div>
-                            <div style="text-align:right; border-top:1px solid #eee; padding-top:12px;">
-                                <input type="hidden" id="recon_confirm_id">
-                                <button class="btn-primary" style="background:#95a5a6;" onclick="closeReconConfirmModal()">取消</button>
-                                <button class="btn-primary" style="background:#27ae60;" onclick="submitReconConfirm()">提交登记</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+        <div style="background:#fff;padding:14px 18px;margin-bottom:16px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px;">
+            <button class="btn-primary" onclick="loadContent('ReconCustomer')">刷新列表</button>
+            <span style="font-size:12px;color:#999;">提示：点击"发送对账单"后，客户可在【客户对账-客户】页面查看并确认。</span>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>对账单号</th><th>客户名称</th><th>对账期间</th><th style="text-align:right;">应收金额</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">暂无对账单数据</td></tr>'}</tbody>
+        </table>
+        <!-- 重新生成对账单弹窗 -->
+        <div id="regen-recon-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;">
+            <div style="position:absolute;top:10%;left:50%;transform:translateX(-50%);width:680px;background:#fff;padding:24px;border-radius:10px;max-height:80vh;overflow-y:auto;">
+                <h3 style="margin-top:0;">🔁 重新生成对账单 <button onclick="closeRegenModal()" style="float:right;background:none;border:none;font-size:18px;cursor:pointer;">×</button></h3>
+                <div id="regen-reject-reason-bar" style="background:#fff5f5;border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#c0392b;"></div>
+                <p style="font-size:13px;color:#555;margin-bottom:12px;">以下为该对账单原始关联运单，请取消勾选有异议的运单，然后重新生成对账单。</p>
+                <div id="regen-waybill-list" style="max-height:300px;overflow-y:auto;border:1px solid #eee;border-radius:6px;margin-bottom:16px;"></div>
+                <div style="text-align:right;border-top:1px solid #eee;padding-top:12px;">
+                    <input type="hidden" id="regen-recon-id">
+                    <button onclick="closeRegenModal()" style="padding:8px 16px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:8px;">取消</button>
+                    <button onclick="submitRegenRecon()" style="padding:8px 16px;background:#e67e22;color:#fff;border:none;border-radius:4px;cursor:pointer;">✔ 确认生成新对账单</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // =========================================================================
+    // 2.2. 客户对账-客户视角 (ReconCustomerPortal)
+    // =========================================================================
+    else if (moduleCode === "ReconCustomerPortal") {
+        let recons = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");
+        const visible = recons.filter(r => ["已发送对账单","客户已确认","客户打回"].includes(r.status));
+        const allWaybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+
+        const rows = visible.map(r => {
+            const cnt = r.waybillCount || allWaybills.filter(w => w.reconId === r.id).length;
+            const isPending = r.status === "已发送对账单";
+            const isConfirmed = r.status === "客户已确认";
+            const isRejected = r.status === "客户打回";
+
+            const statusBadge = isPending
+                ? `<span style="background:#fff7ed;color:#ea580c;border:1px solid #fdba74;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">待确认</span>`
+                : isConfirmed
+                ? `<span style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">✅ 已确认</span>`
+                : `<span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">❌ 已打回</span>`;
+
+            const actionBtn = isPending
+                ? `<button onclick="viewReconDetailFromPortal('${r.id}')" style="padding:4px 10px;font-size:12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;">查看并操作</button>`
+                : `<button onclick="viewReconDetailFromPortal('${r.id}')" style="padding:4px 10px;font-size:12px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;">查看明细</button>`;
+
+            const rejectReasonCell = isRejected
+                ? `<span style="font-size:12px;color:#dc2626;">💬 ${r.customerRejectReason || '-'}</span>`
+                : `<span style="color:#ccc;font-size:12px;">-</span>`;
+
+            return `<tr>
+                <td><a href="javascript:void(0)" onclick="viewReconDetailFromPortal('${r.id}')" style="color:#3498db;font-weight:bold;text-decoration:underline;font-size:13px;">${r.id}</a></td>
+                <td>${r.client}</td>
+                <td>${r.period}</td>
+                <td style="text-align:center;">${cnt}</td>
+                <td style="text-align:right;font-weight:bold;">¥${r.amount}</td>
+                <td>${statusBadge}</td>
+                <td>${rejectReasonCell}</td>
+                <td>${actionBtn}</td>
+            </tr>`;
+        }).join("");
+
+        contentHTML += `
+        <div style="background:#fff;padding:14px 18px;margin-bottom:16px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <span style="font-weight:700;font-size:15px;">客户对账确认</span>
+                <span style="font-size:12px;color:#999;margin-left:10px;">以下为业务员发送的对账单，点击对账单号查看运单明细并操作。</span>
+            </div>
+            <button onclick="loadContent('ReconCustomerPortal')" class="btn-primary">刷新</button>
+        </div>
+        <div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;">
+        <table class="data-table">
+            <thead><tr>
+                <th>对账单号</th>
+                <th>客户名称</th>
+                <th>对账期间</th>
+                <th style="text-align:center;">运单数</th>
+                <th style="text-align:right;">应收金额</th>
+                <th>状态</th>
+                <th>驳回原因</th>
+                <th>操作</th>
+            </tr></thead>
+            <tbody>${rows || '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">暂无对账单，业务员发送后将在此显示。</td></tr>'}</tbody>
+        </table>
+        </div>
+        <!-- 打回弹窗 -->
+        <div id="reject-recon-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1001;">
+            <div style="position:absolute;top:25%;left:50%;transform:translateX(-50%);width:480px;background:#fff;padding:24px;border-radius:10px;">
+                <h3 style="margin-top:0;color:#dc2626;">❌ 打回对账单</h3>
+                <p style="font-size:13px;color:#666;">请填写打回原因，业务员将据此重新生成对账单。</p>
+                <textarea id="reject-reason-input" placeholder="例如：第3笔运单号运费有误，应为2200元；第5笔运单已作废..." style="width:100%;height:100px;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="text-align:right;margin-top:14px;">
+                    <input type="hidden" id="reject-recon-id">
+                    <button onclick="closeRejectModal()" style="padding:8px 16px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:8px;">取消</button>
+                    <button onclick="submitCustomerReject()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">确认打回</button>
+                </div>
+            </div>
+        </div>`;
     }
 
     // =========================================================================
@@ -4660,10 +4716,32 @@ function loadContent(moduleCode, element = null) {
             `
             : "";
 
+        const _backTo = window.g_reconDetailBackTo || 'ReconCustomer';
+        const _isPortalView = _backTo === 'ReconCustomerPortal';
+        window.g_reconDetailBackTo = null; // 用后清除
+
+        const portalActionBar = (_isPortalView && recon.status === '已发送对账单') ? `
+            <div style="display:flex;gap:12px;margin-top:24px;padding:16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+                <button onclick="customerConfirmRecon('${recon.id}')" style="flex:1;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;">✅ 确认对账单</button>
+                <button onclick="openRejectModal('${recon.id}')" style="flex:1;padding:12px;background:#fff;color:#dc2626;border:2px solid #dc2626;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;">❌ 打回对账单</button>
+            </div>
+            <!-- 打回弹窗 -->
+            <div id="reject-recon-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1001;">
+                <div style="position:absolute;top:25%;left:50%;transform:translateX(-50%);width:480px;background:#fff;padding:24px;border-radius:10px;">
+                    <h3 style="margin-top:0;color:#dc2626;">❌ 打回对账单</h3>
+                    <textarea id="reject-reason-input" placeholder="请填写打回原因..." style="width:100%;height:100px;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                    <div style="text-align:right;margin-top:14px;">
+                        <input type="hidden" id="reject-recon-id">
+                        <button onclick="closeRejectModal()" style="padding:8px 16px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:8px;">取消</button>
+                        <button onclick="submitCustomerReject()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">确认打回</button>
+                    </div>
+                </div>
+            </div>` : '';
+
         contentHTML += `
             <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-primary" style="background-color: #95a5a6;" onclick="loadContent('ReconCustomer')"> < 返回列表</button>
+                    <button class="btn-primary" style="background-color: #95a5a6;" onclick="loadContent('${_backTo}')"> &lt; 返回列表</button>
                     <h2>对账单详情：<span style="color:#2980b9;">${recon.id}</span></h2>
                 </div>
                 <div style="text-align:right;">
@@ -4705,6 +4783,7 @@ function loadContent(moduleCode, element = null) {
                     ${emptyRow}
                 </tbody>
             </table>
+            ${portalActionBar}
         `;
     }
 
@@ -6504,143 +6583,215 @@ function loadContent(moduleCode, element = null) {
     // 应收核销 (ARWriteOff)
     // =========================================================================
     else if (moduleCode === "ARWriteOff") {
-        // ── 数据来源：以 ARStatements（应收账款台账）为主表 ──────────────────
-        const arList        = JSON.parse(sessionStorage.getItem('ARStatements')    || '[]');
-        const rcvList       = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
-        const outputInvoices= JSON.parse(sessionStorage.getItem('OutputInvoices')  || '[]');
-        const woList        = JSON.parse(sessionStorage.getItem('WriteOffRecords')  || '[]');
-        const arWoList      = woList.filter(w => w.type === 'AR');
+        const arList         = JSON.parse(sessionStorage.getItem('ARStatements')    || '[]');
+        const allWaybills    = JSON.parse(sessionStorage.getItem('BizWaybills')     || '[]');
 
         const _woFmt = (n) => {
-            const v = parseFloat((n || '0').toString().replace(/,/g, ''));
-            return isNaN(v) ? '0.00' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const v = parseFloat((n||'0').toString().replace(/,/g,''));
+            return isNaN(v)?'0.00':v.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
         };
 
-        // 未结清的应收账款（包括从未核销 + 部分核销）
-        const pendingAR = arList.filter(ar => {
-            const unv = parseFloat((ar.unverified || ar.amount || '0').toString().replace(/,/g, ''));
-            return unv > 0;
+        // 整单核销：将对账单及关联运单全部标记已核销
+        // 核销完成回调：更新 ARStatements + 关联运单状态（供 writeoff.js 调用）
+        window._onARWriteOffSuccess = function(arId) {
+            const wb = JSON.parse(sessionStorage.getItem('BizWaybills')||'[]');
+            const now = new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+            wb.forEach(w=>{ if(w.reconId===arId){ w.writeOffStatus='已核销'; w.writeOffTime=now; } });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(wb));
+        };
+
+        // 查看运单明细弹窗
+        window.openARWODetail = function(arId) {
+            const wb = JSON.parse(sessionStorage.getItem('BizWaybills')||'[]');
+            const rows = wb.filter(w=>w.reconId===arId);
+            const modal = document.getElementById('arwo-detail-modal');
+            document.getElementById('arwo-detail-title').textContent = arId;
+            const tbody = document.getElementById('arwo-detail-tbody');
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px;">暂无运单数据</td></tr>';
+            } else {
+                tbody.innerHTML = rows.map((w,i)=>{
+                    const isWO = w.writeOffStatus==='已核销';
+                    const badge = isWO
+                        ? '<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>'
+                        : '<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>';
+                    return '<tr><td>'+(i+1)+'</td><td style="font-family:monospace;font-size:12px;">'+(w.id||w.waybillNo||'-')+'</td><td>'+(w.shipper||w.shipperName||'-')+'</td><td>'+(w.route||'-')+'</td><td style="text-align:right;font-weight:bold;">¥'+_woFmt(w.totalAmount||w.amount||0)+'</td><td>'+badge+'</td></tr>';
+                }).join('');
+            }
+            modal.style.display='flex';
+        };
+        window.closeARWODetail = function() {
+            document.getElementById('arwo-detail-modal').style.display='none';
+        };
+
+        // 只显示对账单级别（RC开头），按 fromSettlement 或 settledWaybills 过滤
+        const settledReconIds = new Set(allWaybills.filter(w=>w.settlementStatus==='已结算').map(w=>w.reconId).filter(Boolean));
+        // 去重：同一 reconId 取最新（fromSettlement优先）
+        const reconMap = {};
+        arList.forEach(ar => {
+            const id = ar.id || '';
+            if (!id.startsWith('RC')) return; // 只保留对账单级别
+            if (!reconMap[id] || ar.fromSettlement) reconMap[id] = ar;
         });
+        const settledAR = Object.values(reconMap).filter(ar =>
+            settledReconIds.has(ar.id) || ar.fromSettlement === true
+        );
 
-        const pendingRows = pendingAR.length === 0
-            ? `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">
-                    暂无待核销应收账款。<br>
-                    <span style="font-size:12px;">请先在【运单挂帐】中完成挂帐操作，挂帐后的运单将在此显示。</span>
-               </td></tr>`
-            : pendingAR.map(ar => {
-                const arId     = ar.id || '';
-                const client   = ar.client || '';
-                const total    = parseFloat((ar.amount    || '0').toString().replace(/,/g, '')) || 0;
-                const verified = parseFloat((ar.verified  || '0').toString().replace(/,/g, '')) || 0;
-                const unverif  = parseFloat((ar.unverified|| '0').toString().replace(/,/g, '')) || 0;
+        // 金额自动修正：若 ARStatements 中 amount=0，从关联运单重算并回写
+        {
+            let needSave = false;
+            const arStoreList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+            settledAR.forEach(ar => {
+                const storedAmt = parseFloat((ar.amount||'0').toString().replace(/,/g,''));
+                if (storedAmt === 0) {
+                    const relWb = allWaybills.filter(w => w.reconId === ar.id);
+                    const calcAmt = relWb.reduce((s,w) => s + parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0), 0);
+                    if (calcAmt > 0) {
+                        ar.amount    = calcAmt.toFixed(2);
+                        const _doneStatus = ar.status === '已核销' || ar.status === '已结算';
+                ar.unverified= _doneStatus ? '0.00' : calcAmt.toFixed(2);
+                        // 同步回写原始列表
+                        const orig = arStoreList.find(x => x.id === ar.id);
+                        if (orig) { orig.amount = ar.amount; orig.unverified = ar.unverified; needSave = true; }
+                    }
+                }
+            });
+            if (needSave) sessionStorage.setItem('ARStatements', JSON.stringify(arStoreList));
+        }
 
-                // 查找关联发票（通过 waybillIds 或 remark 匹配）
-                const relInv = outputInvoices.find(inv =>
-                    (Array.isArray(inv.waybillIds) && inv.waybillIds.includes(arId)) ||
-                    inv.remark === arId ||
-                    (inv.client === client && inv.status !== '已核销')
-                );
-                const invBadge = relInv
-                    ? (relInv.status === '已核销'
-                        ? `<span style="color:#27ae60;font-size:11px;">✔ 已开票已核销</span>`
-                        : `<span style="color:#2980b9;font-size:11px;">📄 已开票 ${relInv.no}</span>`)
-                    : `<span style="color:#e67e22;font-size:11px;">未开票</span>`;
+        // 分页
+        if (!window._arWoPage)     window._arWoPage = 1;
+        if (!window._arWoPageSize) window._arWoPageSize = 10;
+        window.arWoSetPage     = function(p){ window._arWoPage=p; loadContent('ARWriteOff'); };
+        window.arWoSetPageSize = function(s){ window._arWoPageSize=Number(s)||10; window._arWoPage=1; loadContent('ARWriteOff'); };
 
-                // 查找关联收款单（通过 details.waybillNo 或 customer 匹配）
+        const total   = settledAR.length;
+        const pages   = Math.max(1, Math.ceil(total / window._arWoPageSize));
+        const curPage = Math.min(window._arWoPage, pages);
+        const pageData= settledAR.slice((curPage-1)*window._arWoPageSize, curPage*window._arWoPageSize);
+
+        const totalUnver = settledAR.reduce((s,ar) => {
+            const isWO = ar.status === '已核销' || ar.status === '已结算';
+            return s + (isWO ? 0 : parseFloat((ar.unverified||ar.amount||'0').toString().replace(/,/g,'')||0));
+        }, 0);
+        const doneCount  = settledAR.filter(ar=>ar.status==='已核销'||ar.status==='已结算').length;
+
+        const rcvList        = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
+        const outputInvoices = JSON.parse(sessionStorage.getItem('OutputInvoices')  || '[]');
+
+        const tableRows = pageData.length===0
+            ? `<tr><td colspan="10" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【运单结算】中完成结算，结算后账款自动进入此列表。</td></tr>`
+            : pageData.map(ar=>{
+                const relWb      = allWaybills.filter(w => w.reconId === ar.id);
+                const relWbCount = relWb.length;
+                // 以运单实际金额为准，避免 ARStatements 存储错误
+                const wbTotal  = relWb.reduce((s,w)=>s+parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0),0);
+                const storedAmt= parseFloat((ar.amount||'0').toString().replace(/,/g,''))||0;
+                const amt      = storedAmt > 0 ? storedAmt : wbTotal;
+                const isWO     = ar.status === '已核销' || ar.status === '已结算';
+                const ver      = isWO ? amt : parseFloat((ar.verified||'0').toString().replace(/,/g,''))||0;
+                const unv      = isWO ? 0  : Math.max(amt - ver, 0);
+
+                // 查找关联收款单和发票（传给弹窗）
                 const relRcv = rcvList.find(r =>
                     r.status === '已审核' &&
-                    (r.customer === client ||
-                     (Array.isArray(r.details) && r.details.some(d => d.waybillNo === arId)))
+                    (r.customer === ar.client || (Array.isArray(r.details) && r.details.some(d => d.waybillNo === ar.id)))
                 );
+                const relInv = outputInvoices.find(inv =>
+                    (Array.isArray(inv.waybillIds) && inv.waybillIds.includes(ar.id)) ||
+                    (inv.client === ar.client && inv.status !== '已核销')
+                );
+                const rcvIdEnc = relRcv ? encodeURIComponent(relRcv.id) : '';
+                const invNoEnc = relInv ? encodeURIComponent(relInv.no||'') : '';
+
+                const invBadge = relInv
+                    ? `<span style="color:#2980b9;font-size:11px;">📄 已开票</span>`
+                    : `<span style="color:#e67e22;font-size:11px;">未开票</span>`;
                 const rcvBadge = relRcv
                     ? `<span style="color:#27ae60;font-size:11px;">💰 ${relRcv.id}</span>`
                     : `<span style="color:#aaa;font-size:11px;">无收款单</span>`;
 
-                const statusBadge = unverif <= 0
-                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已结清</span>`
-                    : verified > 0
+                const statusBadge = isWO
+                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>`
+                    : (ver > 0
                         ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
-                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
-
-                // 将关联信息编码传入弹窗
-                const rcvIdEnc  = relRcv  ? encodeURIComponent(relRcv.id)  : '';
-                const invNoEnc  = relInv  ? encodeURIComponent(relInv.no)  : '';
-
+                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`);
+                const actionBtn = isWO
+                    ? `<span style="color:#27ae60;font-size:12px;">✓ 已完成</span>`
+                    : `<button onclick="window.openARWriteOffModal('${ar.id}','${ar.client}','${unv.toFixed(2)}','${rcvIdEnc}','${invNoEnc}')" style="padding:3px 10px;background:#2980b9;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>`;
                 return `<tr>
-                    <td style="font-family:monospace;color:#2c3e50;font-size:12px;">${arId}</td>
-                    <td>${client}</td>
-                    <td style="color:#2980b9;font-size:12px;">${ar.period || '-'}</td>
-                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(total)}</td>
-                    <td style="text-align:right;color:#27ae60;">¥${_woFmt(verified)}</td>
-                    <td style="text-align:right;color:#e74c3c;font-weight:bold;">¥${_woFmt(unverif)}</td>
-                    <td>${invBadge}&nbsp;&nbsp;${rcvBadge}</td>
+                    <td><a href="javascript:void(0)" onclick="openARWODetail('${ar.id}')" style="color:#2980b9;font-weight:bold;font-family:monospace;text-decoration:underline;font-size:12px;">${ar.id}</a></td>
+                    <td>${ar.client||'-'}</td>
+                    <td style="color:#2980b9;font-size:12px;">${ar.period||'-'}</td>
+                    <td style="text-align:center;color:#666;font-size:12px;">${relWbCount}单</td>
+                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(amt)}</td>
+                    <td style="text-align:right;color:#27ae60;">¥${_woFmt(ver)}</td>
+                    <td style="text-align:right;color:#e74c3c;font-weight:bold;">¥${_woFmt(unv)}</td>
+                    <td style="font-size:11px;">${invBadge} ${rcvBadge}</td>
                     <td>${statusBadge}</td>
-                    <td>
-                        <button onclick="window.openARWriteOffModal('${arId}','${client}','${unverif.toFixed(2)}','${rcvIdEnc}','${invNoEnc}')"
-                            style="padding:3px 10px;background:#2980b9;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>
-                    </td>
+                    <td>${actionBtn}</td>
                 </tr>`;
             }).join('');
 
-        const woRows = arWoList.length === 0
-            ? `<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;">暂无核销记录。</td></tr>`
-            : arWoList.map(w => {
-                const pathBadge = w.invoicePath === 'A'
-                    ? `<span style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先核销后补票</span>`
-                    : `<span style="background:#8e44ad;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先开票后核销</span>`;
-                const invBadge = w.invoiceStatus === '已关联'
-                    ? `<span style="color:#27ae60;">✔ ${w.invoiceNo}</span>`
-                    : `<span style="color:#e67e22;">⏳ 待补票
-                        <button onclick="window.openLinkInvoiceModal('${w.id}','AR')"
-                            style="padding:1px 6px;background:#e67e22;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-left:4px;">关联发票</button>
-                    </span>`;
-                return `<tr>
-                    <td style="font-family:monospace;font-size:12px;color:#2c3e50;">${w.id}</td>
-                    <td style="font-family:monospace;font-size:11px;">${w.billId}</td>
-                    <td style="font-size:11px;color:#7f8c8d;">${w.rcvId || '-'}</td>
-                    <td>${w.counterparty}</td>
-                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(w.writeOffAmount)}</td>
-                    <td>${w.date}</td>
-                    <td>${pathBadge}</td>
-                    <td>${invBadge}</td>
-                    <td style="font-family:monospace;font-size:11px;color:#7f8c8d;">${w.voucherId || '-'}</td>
-                </tr>`;
-            }).join('');
-
-        const totalAR    = pendingAR.reduce((s, ar) => s + parseFloat((ar.amount    || '0').toString().replace(/,/g, '')), 0);
-        const totalUnver = pendingAR.reduce((s, ar) => s + parseFloat((ar.unverified|| '0').toString().replace(/,/g, '')), 0);
+        // 分页组件（始终渲染）
+        const btns = [];
+        btns.push(`<button onclick="arWoSetPage(${Math.max(1,curPage-1)})" ${curPage===1?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:4px;background:${curPage===1?'#f5f5f5':'#fff'};color:${curPage===1?'#ccc':'#333'};cursor:${curPage===1?'default':'pointer'};margin:0 2px;">‹ 上一页</button>`);
+        for(let i=1;i<=pages;i++){
+            btns.push(`<button onclick="arWoSetPage(${i})" style="padding:4px 10px;border:1px solid ${i===curPage?'#2980b9':'#ddd'};border-radius:4px;background:${i===curPage?'#2980b9':'#fff'};color:${i===curPage?'#fff':'#333'};cursor:pointer;margin:0 2px;">${i}</button>`);
+        }
+        btns.push(`<button onclick="arWoSetPage(${Math.min(pages,curPage+1)})" ${curPage===pages?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:4px;background:${curPage===pages?'#f5f5f5':'#fff'};color:${curPage===pages?'#ccc':'#333'};cursor:${curPage===pages?'default':'pointer'};margin:0 2px;">下一页 ›</button>`);
+        const pagerHtml = `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:10px 0;border-top:1px solid #f0f0f0;">
+            <span style="font-size:12px;color:#999;">共 ${total} 条记录，第 ${curPage}/${pages} 页</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+                ${btns.join('')}
+                <select onchange="arWoSetPageSize(this.value)" style="margin-left:10px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+                    ${[10,20,50].map(n=>`<option value="${n}" ${n===window._arWoPageSize?'selected':''}>${n}条/页</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
 
         contentHTML += `
             <div style="padding:10px 0 14px 0;">
                 <h2 style="margin:0 0 4px 0;color:#2c3e50;">应收核销</h2>
-                <p style="color:#7f8c8d;margin:0;">以应收账款台账为基础，将收款单、发票与应收账款进行核销匹配。支持先核销后补票、先开票后核销两种路径。</p>
+                <p style="color:#7f8c8d;margin:0;">以应收账款台账为基础（来源：运单结算），将收款情况与应收账款进行核销匹配。</p>
             </div>
-
             <div style="background:#eaf4ff;border:1px solid #bee3f8;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;gap:30px;flex-wrap:wrap;">
-                <div><span style="color:#7f8c8d;font-size:12px;">应收账款笔数</span><br><strong style="font-size:20px;color:#2c3e50;">${arList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已结算应收账款</span><br><strong style="font-size:20px;color:#2c3e50;">${settledAR.length}</strong></div>
                 <div><span style="color:#7f8c8d;font-size:12px;">待核销余额</span><br><strong style="font-size:20px;color:#e74c3c;">¥${_woFmt(totalUnver)}</strong></div>
-                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${arWoList.length}</strong></div>
-                <div><span style="color:#7f8c8d;font-size:12px;">待补票笔数</span><br><strong style="font-size:20px;color:#e67e22;">${arWoList.filter(w=>w.invoiceStatus==='待补票').length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${doneCount}</strong></div>
             </div>
-
             <h3 style="color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:6px;margin-bottom:12px;">
                 应收账款台账
-                <span style="font-size:12px;font-weight:normal;color:#7f8c8d;margin-left:8px;">来源：运单挂帐 / 运单结算</span>
+                <span style="font-size:12px;font-weight:normal;color:#7f8c8d;margin-left:8px;">来源：运单结算 / 已结算账款 · 点击对账单号查看运单明细</span>
             </h3>
-            <table class="data-table" style="margin-bottom:24px;">
-                <thead><tr>
-                    <th>运单/账款号</th><th>客户</th><th>账期</th><th>应收金额</th><th>已核销</th><th>未核销余额</th><th>发票/收款状态</th><th>核销状态</th><th>操作</th>
-                </tr></thead>
-                <tbody>${pendingRows}</tbody>
-            </table>
-
-            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">核销记录</h3>
             <table class="data-table">
                 <thead><tr>
-                    <th>核销单号</th><th>应收账款号</th><th>关联收款单</th><th>客户</th><th>核销金额</th><th>核销日期</th><th>核销路径</th><th>发票状态</th><th>凭证号</th>
+                    <th>对账单号</th><th>客户</th><th>账期</th><th>运单数</th><th>应收金额</th><th>已核销</th><th>未核销余额</th><th>发票/收款状态</th><th>核销状态</th><th>操作</th>
                 </tr></thead>
-                <tbody>${woRows}</tbody>
+                <tbody>${tableRows}</tbody>
             </table>
+            ${pagerHtml}
+
+            <!-- 运单明细弹窗 -->
+            <div id="arwo-detail-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+                <div style="background:#fff;border-radius:10px;padding:24px;width:90%;max-width:800px;max-height:80vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 style="margin:0;font-size:15px;">对账单运单明细：<span id="arwo-detail-title" style="color:#2980b9;"></span></h3>
+                        <button onclick="closeARWODetail()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">×</button>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                            <th style="padding:8px;text-align:left;">序号</th>
+                            <th style="padding:8px;text-align:left;">运单号</th>
+                            <th style="padding:8px;text-align:left;">发货方</th>
+                            <th style="padding:8px;text-align:left;">路线</th>
+                            <th style="padding:8px;text-align:right;">金额</th>
+                            <th style="padding:8px;text-align:left;">核销状态</th>
+                        </tr></thead>
+                        <tbody id="arwo-detail-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         `;
     }
 
@@ -6981,96 +7132,96 @@ function loadContent(moduleCode, element = null) {
     // =========================================================================
     else if (moduleCode === "APWriteOff") {
         const payList = JSON.parse(sessionStorage.getItem('PaymentVouchers') || '[]');
-        const woList = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
-        const inputInvoices = JSON.parse(sessionStorage.getItem('InputInvoices') || '[]');
-        const apWoList = woList.filter(w => w.type === 'AP');
-
-        const pendingList = payList.filter(r => r.status === '已审核');
+        const settledList = payList.filter(r => r.status === '已审核');
 
         const _woFmt = (n) => {
-            const v = parseFloat(n);
-            return isNaN(v) ? '0.00' : v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const v = parseFloat((n||'0').toString().replace(/,/g,''));
+            return isNaN(v)?'0.00':v.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
         };
 
-        const pendingRows = pendingList.length === 0
-            ? `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">暂无待核销付款单。请先在【付款单】中录入并审核付款记录。</td></tr>`
-            : pendingList.map(r => {
-                const woRecords = apWoList.filter(w => w.billId === r.id);
-                const woAmount = woRecords.reduce((s, w) => s + parseFloat(w.writeOffAmount || 0), 0);
-                const remaining = Math.max(parseFloat(r.totalAmount) - woAmount, 0);
-                const woStatusBadge = remaining <= 0
-                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已全额核销</span>`
-                    : woAmount > 0
-                        ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
-                        : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
-                const canWriteOff = remaining > 0;
+        window.markAPWriteOff = function(pvId) {
+            if (!confirm('确认将付款单【'+pvId+'】标记为已核销？')) return;
+            let list = JSON.parse(sessionStorage.getItem('PaymentVouchers')||'[]');
+            const pv = list.find(x=>x.id===pvId);
+            if (!pv) return;
+            pv.writeOffStatus = '已核销';
+            pv.writeOffTime   = new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+            sessionStorage.setItem('PaymentVouchers',JSON.stringify(list));
+            if(typeof addAuditLog==='function') addAuditLog({time:pv.writeOffTime,user:'管理员',module:'应付核销',action:'核销',detail:'付款单 '+pvId+' 标记为已核销，金额 '+pv.totalAmount});
+            loadContent('APWriteOff');
+        };
+
+        if (!window._apWoPage)     window._apWoPage = 1;
+        if (!window._apWoPageSize) window._apWoPageSize = 10;
+        window.apWoSetPage     = function(p){ window._apWoPage=p; loadContent('APWriteOff'); };
+        window.apWoSetPageSize = function(s){ window._apWoPageSize=Number(s)||10; window._apWoPage=1; loadContent('APWriteOff'); };
+
+        const total   = settledList.length;
+        const pages   = Math.max(1, Math.ceil(total/window._apWoPageSize));
+        const curPage = Math.min(window._apWoPage, pages);
+        const pageData= settledList.slice((curPage-1)*window._apWoPageSize, curPage*window._apWoPageSize);
+
+        const doneCount  = settledList.filter(r=>r.writeOffStatus==='已核销').length;
+        const totalUnver = settledList.filter(r=>r.writeOffStatus!=='已核销').reduce((s,r)=>s+parseFloat(r.totalAmount||0),0);
+
+        const tableRows = pageData.length===0
+            ? `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【干线批次结算】或【短驳批次结算】中完成结算并审核通过。</td></tr>`
+            : pageData.map(r=>{
+                const isWO = r.writeOffStatus==='已核销';
+                const badge = isWO
+                    ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>`
+                    : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`;
+                const btn = isWO
+                    ? `<span style="color:#27ae60;font-size:12px;">✓ 已完成</span>`
+                    : `<button onclick="markAPWriteOff('${r.id}')" style="padding:3px 10px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>`;
                 return `<tr>
-                    <td style="font-family:monospace;color:#2c3e50;">${r.id}</td>
-                    <td>${r.vendor}</td>
+                    <td style="font-family:monospace;color:#2c3e50;font-size:12px;">${r.id}</td>
+                    <td>${r.vendor||'-'}</td>
+                    <td style="color:#666;font-size:12px;">${r.period||r.createTime||'-'}</td>
                     <td style="text-align:right;font-weight:bold;">¥${_woFmt(r.totalAmount)}</td>
-                    <td style="text-align:right;color:#27ae60;">¥${_woFmt(woAmount)}</td>
-                    <td style="text-align:right;color:#e74c3c;">¥${_woFmt(remaining)}</td>
-                    <td>${woStatusBadge}</td>
-                    <td>
-                        ${canWriteOff
-                            ? `<button onclick="window.openWriteOffModal('AP','${r.id}','${r.vendor}','${remaining.toFixed(2)}')"
-                                style="padding:3px 10px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">核销</button>`
-                            : `<span style="color:#aaa;font-size:12px;">已完成</span>`}
-                    </td>
+                    <td style="text-align:right;color:#e74c3c;">${isWO?'<span style="color:#27ae60;">¥0.00</span>':'¥'+_woFmt(r.totalAmount)}</td>
+                    <td>${badge}</td>
+                    <td>${btn}</td>
                 </tr>`;
             }).join('');
 
-        const woRows = apWoList.length === 0
-            ? `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">暂无核销记录。</td></tr>`
-            : apWoList.map(w => {
-                const pathBadge = w.invoicePath === 'A'
-                    ? `<span style="background:#e67e22;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先核销后取票</span>`
-                    : `<span style="background:#8e44ad;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;">先取票后核销</span>`;
-                const invBadge = w.invoiceStatus === '已关联'
-                    ? `<span style="color:#27ae60;">✔ ${w.invoiceNo}</span>`
-                    : `<span style="color:#e67e22;">⏳ 待取票
-                        <button onclick="window.openLinkInvoiceModal('${w.id}','AP')"
-                            style="padding:1px 6px;background:#e67e22;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-left:4px;">关联</button>
-                    </span>`;
-                return `<tr>
-                    <td style="font-family:monospace;color:#2c3e50;">${w.id}</td>
-                    <td>${w.billId}</td>
-                    <td>${w.counterparty}</td>
-                    <td style="text-align:right;font-weight:bold;">¥${_woFmt(w.writeOffAmount)}</td>
-                    <td>${w.date}</td>
-                    <td>${pathBadge}</td>
-                    <td>${invBadge}</td>
-                    <td style="font-family:monospace;font-size:11px;color:#7f8c8d;">${w.voucherId || '-'}</td>
-                </tr>`;
-            }).join('');
+        const btns = [];
+        btns.push(`<button onclick="apWoSetPage(${Math.max(1,curPage-1)})" ${curPage===1?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:4px;background:${curPage===1?'#f5f5f5':'#fff'};color:${curPage===1?'#ccc':'#333'};cursor:${curPage===1?'default':'pointer'};margin:0 2px;">‹ 上一页</button>`);
+        for(let i=1;i<=pages;i++){
+            btns.push(`<button onclick="apWoSetPage(${i})" style="padding:4px 10px;border:1px solid ${i===curPage?'#27ae60':'#ddd'};border-radius:4px;background:${i===curPage?'#27ae60':'#fff'};color:${i===curPage?'#fff':'#333'};cursor:pointer;margin:0 2px;">${i}</button>`);
+        }
+        btns.push(`<button onclick="apWoSetPage(${Math.min(pages,curPage+1)})" ${curPage===pages?'disabled':''} style="padding:4px 10px;border:1px solid #ddd;border-radius:4px;background:${curPage===pages?'#f5f5f5':'#fff'};color:${curPage===pages?'#ccc':'#333'};cursor:${curPage===pages?'default':'pointer'};margin:0 2px;">下一页 ›</button>`);
+        const pagerHtml = `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:10px 0;border-top:1px solid #f0f0f0;">
+            <span style="font-size:12px;color:#999;">共 ${total} 条记录，第 ${curPage}/${pages} 页</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+                ${btns.join('')}
+                <select onchange="apWoSetPageSize(this.value)" style="margin-left:10px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+                    ${[10,20,50].map(n=>`<option value="${n}" ${n===window._apWoPageSize?'selected':''}>${n}条/页</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
 
         contentHTML += `
-            <div style="padding:10px 0 18px 0;">
+            <div style="padding:10px 0 14px 0;">
                 <h2 style="margin:0 0 4px 0;color:#2c3e50;">应付核销</h2>
-                <p style="color:#7f8c8d;margin:0;">将已审核的付款单与应付账款、发票进行核销匹配。支持先核销后取票、先取票后核销两种路径。</p>
+                <p style="color:#7f8c8d;margin:0;">以已审核的付款单为基础（来源：批次结算），将应付账款进行核销匹配。</p>
             </div>
-
             <div style="background:#eafff4;border:1px solid #b7e4c7;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;gap:30px;">
-                <div><span style="color:#7f8c8d;font-size:12px;">付款单总数</span><br><strong style="font-size:20px;color:#2c3e50;">${payList.filter(r=>r.status==='已审核').length}</strong></div>
-                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${apWoList.length}</strong></div>
-                <div><span style="color:#7f8c8d;font-size:12px;">待取票笔数</span><br><strong style="font-size:20px;color:#e67e22;">${apWoList.filter(w=>w.invoiceStatus==='待补票').length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">付款单总数</span><br><strong style="font-size:20px;color:#2c3e50;">${settledList.length}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">待核销余额</span><br><strong style="font-size:20px;color:#e74c3c;">¥${_woFmt(totalUnver)}</strong></div>
+                <div><span style="color:#7f8c8d;font-size:12px;">已核销笔数</span><br><strong style="font-size:20px;color:#27ae60;">${doneCount}</strong></div>
             </div>
-
-            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">待核销付款单</h3>
-            <table class="data-table" style="margin-bottom:24px;">
-                <thead><tr>
-                    <th>付款单号</th><th>付款对象</th><th>付款金额</th><th>已核销</th><th>未核销</th><th>核销状态</th><th>操作</th>
-                </tr></thead>
-                <tbody>${pendingRows}</tbody>
-            </table>
-
-            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">核销记录</h3>
+            <h3 style="color:#2c3e50;border-bottom:2px solid #27ae60;padding-bottom:6px;margin-bottom:12px;">
+                应付账款台账
+                <span style="font-size:12px;font-weight:normal;color:#7f8c8d;margin-left:8px;">来源：批次结算审核通过</span>
+            </h3>
             <table class="data-table">
                 <thead><tr>
-                    <th>核销单号</th><th>来源付款单</th><th>付款对象</th><th>核销金额</th><th>核销日期</th><th>核销路径</th><th>发票状态</th><th>凭证号</th>
+                    <th>付款单号</th><th>付款对象</th><th>账期</th><th>付款金额</th><th>未核销余额</th><th>核销状态</th><th>操作</th>
                 </tr></thead>
-                <tbody>${woRows}</tbody>
+                <tbody>${tableRows}</tbody>
             </table>
+            ${pagerHtml}
         `;
     }
 
@@ -10296,417 +10447,10 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 43. 结转损益 (PeriodEndProfit) - [专业重设计版]
+    // 43. 期末处理中心 (PeriodEndCenter)
     // =========================================================================
-    else if (moduleCode === "PeriodEndProfit") {
-        const today = new Date();
-        const endYear = today.getFullYear();
-        const endMonth = today.getMonth() + 1;
-        const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
-        const periods = buildAllPeriods();
-        const closingHistory = JSON.parse(sessionStorage.getItem("PeriodEndClosingHistory") || "[]");
-        const historyMap = {};
-        closingHistory.forEach(h => { if (h.period) historyMap[h.period] = h; });
-
-        const fmtA = v => (v === null || v === undefined || isNaN(+v)) ? "-" : Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const normL = v => Array.isArray(v) ? v.filter(Boolean) : (v && v !== "-" ? [v] : []);
-        const vLnk = id => `<a href="javascript:void(0)" onclick="openVoucherDetail('${id}')" style="color:#1677ff;font-size:12px;">${id}</a>`;
-
-        const periodData = periods.map(p => {
-            const rec = historyMap[p.periodStr];
-            const legacyT = sessionStorage.getItem(`${p.key}-ProfitTransferred`) === "true";
-            const isTransferred = rec ? rec.status === "done" : legacyT;
-            const isClosed = sessionStorage.getItem(`${p.key}-MonthClosed`) === "true";
-            const pv = allVouchers.filter(v => v.date && v.date.startsWith(p.periodStr));
-            const profitAmt = rec && rec.amounts ? rec.amounts.profit
-                : (sessionStorage.getItem(`${p.key}-ProfitAmount`) ? parseFloat(sessionStorage.getItem(`${p.key}-ProfitAmount`)) : null);
-            return { ...p, rec, isTransferred, isClosed, hasData: pv.length > 0, voucherCount: pv.length, profitAmt };
-        });
-
-        const totalTransferred = periodData.filter(p => p.isTransferred).length;
-        const pendingTransfer = periodData.filter(p => p.hasData && !p.isTransferred).length;
-        const totalProfit = closingHistory.reduce((s, h) => s + ((h.amounts && h.amounts.profit) || 0), 0);
-        const defaultIdx = periodData.length - 1;
-        const defaultPeriod = periodData[defaultIdx] || periodData[0];
-
-        const tabsHtml = periodData.map((p, idx) => {
-            let dotBg = "#d9d9d9", tabLabel = "无数据";
-            if (p.isClosed) { dotBg = "#8c8c8c"; tabLabel = "已结账"; }
-            else if (p.isTransferred) { dotBg = "#52c41a"; tabLabel = "已结转"; }
-            else if (p.hasData) { dotBg = "#fa8c16"; tabLabel = "待结转"; }
-            const isActive = idx === defaultIdx;
-            return `<div onclick="window.selectProfitPeriod(this,'${p.key}')" data-key="${p.key}"
-                style="display:flex;flex-direction:column;align-items:center;padding:10px 16px;cursor:pointer;
-                border-bottom:3px solid ${isActive ? "#1677ff" : "transparent"};background:${isActive ? "#f0f5ff" : "transparent"};
-                min-width:70px;user-select:none;transition:all 0.2s;gap:3px;">
-                <span style="font-size:14px;font-weight:${isActive ? "600" : "400"};color:${isActive ? "#1677ff" : "#595959"};">${p.periodNo}月</span>
-                <span style="width:8px;height:8px;border-radius:50%;background:${dotBg};display:block;"></span>
-                <span style="font-size:11px;color:${dotBg};">${tabLabel}</span>
-            </div>`;
-        }).join("");
-
-        const buildDetailHtml = (p) => {
-            if (!p) return "";
-            const vouchers = p.rec && p.rec.vouchers ? p.rec.vouchers : { tax: [], income: [], cost: [] };
-            const taxList = normL(vouchers.tax).map(vLnk).join(" ") || (p.isTransferred ? "（无需计提）" : "-");
-            const incList = normL(vouchers.income).map(vLnk).join(" ") || "-";
-            const costList = normL(vouchers.cost).map(vLnk).join(" ") || "-";
-            let banner = "";
-            if (p.isClosed) banner = `<div style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#8c8c8c;font-size:13px;">🔒 此期间已月末结账，数据已锁定，不可修改。</div>`;
-            else if (p.isTransferred) banner = `<div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#389e0d;font-size:13px;font-weight:500;">✅ 结转已完成。损益净额：<strong style="font-size:16px;color:#52c41a;">${fmtA(p.profitAmt)}</strong></div>`;
-            else if (p.hasData) banner = `<div style="background:#fff7e6;border:1px solid #ffd591;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#d48806;font-size:13px;font-weight:500;">⚠️ 本期共 ${p.voucherCount} 张凭证，尚未执行损益结转。</div>`;
-            else banner = `<div style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#8c8c8c;font-size:13px;">ℹ️ 本期暂无已记账凭证，无需执行结转。</div>`;
-
-            const stepHtml = (num, title, desc, vouStr, done, na) => {
-                const numBg = na ? "#f5f5f5" : done ? "#f6ffed" : "#fff7e6";
-                const numColor = na ? "#bfbfbf" : done ? "#52c41a" : "#fa8c16";
-                const numBorder = na ? "#d9d9d9" : done ? "#b7eb8f" : "#ffd591";
-                const badge = na ? `<span style="padding:2px 10px;border-radius:10px;background:#f5f5f5;color:#bfbfbf;font-size:12px;border:1px solid #d9d9d9;">不适用</span>`
-                    : done ? `<span style="padding:2px 10px;border-radius:10px;background:#f6ffed;color:#52c41a;font-size:12px;border:1px solid #b7eb8f;">✓ 已完成</span>`
-                    : `<span style="padding:2px 10px;border-radius:10px;background:#fff7e6;color:#fa8c16;font-size:12px;border:1px solid #ffd591;">待执行</span>`;
-                return `<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #f5f5f5;">
-                    <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;background:${numBg};color:${numColor};border:1.5px solid ${numBorder};">${done ? "✓" : num}</div>
-                    <div style="flex:1;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
-                            <span style="font-size:14px;font-weight:500;color:${na ? "#bfbfbf" : "#1a1a1a"};">${title}</span>${badge}
-                        </div>
-                        <div style="font-size:12px;color:#8c8c8c;margin-bottom:${done ? "6px" : "0"};">${desc}</div>
-                        ${done ? `<div style="font-size:12px;color:#8c8c8c;">结转凭证：${vouStr}</div>` : ""}
-                    </div>
-                </div>`;
-            };
-
-            const steps = [
-                stepHtml("①", "计提税金及附加", "基于应交增值税（2221）贷方余额，按规则计提城建税、教育费附加等", taxList, p.isTransferred, !p.hasData),
-                stepHtml("②", "结转本期收入", "将收入类科目（5001/6001/6002等）余额结转至本年利润（4103）", incList, p.isTransferred, !p.hasData),
-                stepHtml("③", "结转成本费用", "将成本费用类科目（6401/6403/6601等）余额结转至本年利润（4103）", costList, p.isTransferred, !p.hasData)
-            ].join("");
-
-            const actionBtn = p.isClosed
-                ? `<span style="color:#bfbfbf;font-size:13px;padding:6px 0;">期间已锁定，不可操作</span>`
-                : p.isTransferred
-                ? `<button style="padding:7px 20px;border:1px solid #ffa39e;border-radius:4px;background:#fff;color:#f5222d;cursor:pointer;font-size:13px;" onclick="reversePeriodEndClosing('${p.label}')">冲回结转</button>`
-                : p.hasData
-                ? `<button style="padding:8px 28px;border:none;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer;font-size:14px;font-weight:500;" onclick="requestPeriodEndClosing('${p.label}')">▶ 一键结转</button>`
-                : `<span style="color:#bfbfbf;font-size:13px;">本期无数据，无需结转</span>`;
-
-            return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                    <span style="font-size:16px;font-weight:600;color:#1a1a1a;">${p.label}</span>
-                    <span style="font-size:13px;color:#8c8c8c;padding:2px 10px;background:#f5f5f5;border-radius:10px;">凭证 ${p.voucherCount} 张</span>
-                    ${p.rec ? `<span style="font-size:12px;color:#8c8c8c;">${p.rec.time}</span>` : ""}
-                </div>
-                <div>${actionBtn}</div>
-            </div>${banner}<div>${steps}</div>`;
-        };
-
-        // Store period data for tab switching (accessible via onclick)
-        window._pepPeriods = periodData.map(p => ({
-            key: p.key, label: p.label, periodStr: p.periodStr, periodNo: p.periodNo,
-            isTransferred: p.isTransferred, isClosed: p.isClosed, hasData: p.hasData,
-            voucherCount: p.voucherCount, profitAmt: p.profitAmt, rec: p.rec || null
-        }));
-        window._pepFmtA = v => (v === null || v === undefined || isNaN(+v)) ? "-" : Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        window._pepNormL = v => Array.isArray(v) ? v.filter(Boolean) : (v && v !== "-" ? [v] : []);
-        window._pepVLnk = id => `<a href="javascript:void(0)" onclick="openVoucherDetail('${id}')" style="color:#1677ff;font-size:12px;">${id}</a>`;
-
-        window.selectProfitPeriod = function(el, key) {
-            const _pd = window._pepPeriods || [];
-            const _fa = window._pepFmtA;
-            const _nl = window._pepNormL;
-            const _vl = window._pepVLnk;
-            // Update tab highlight
-            const tabs = el.parentElement.children;
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].style.borderBottomColor = "transparent"; tabs[i].style.background = "transparent";
-                const s = tabs[i].querySelector("span"); if (s) { s.style.color = "#595959"; s.style.fontWeight = "400"; }
-            }
-            el.style.borderBottomColor = "#1677ff"; el.style.background = "#f0f5ff";
-            const ms = el.querySelector("span"); if (ms) { ms.style.color = "#1677ff"; ms.style.fontWeight = "600"; }
-            const p = _pd.find(x => x.key === key); if (!p) return;
-            const panel = document.getElementById("pep-detail-panel"); if (!panel) return;
-            const vouchers = (p.rec && p.rec.vouchers) ? p.rec.vouchers : { tax: [], income: [], cost: [] };
-            const taxStr = _nl(vouchers.tax).map(_vl).join(" ") || (p.isTransferred ? "（无需计提）" : "-");
-            const incStr = _nl(vouchers.income).map(_vl).join(" ") || "-";
-            const costStr = _nl(vouchers.cost).map(_vl).join(" ") || "-";
-            let banner = "";
-            if (p.isClosed) banner = '<div style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#8c8c8c;font-size:13px;">🔒 此期间已月末结账，数据已锁定。</div>';
-            else if (p.isTransferred) banner = '<div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#389e0d;font-size:13px;font-weight:500;">✅ 结转已完成。损益净额：<strong style="font-size:16px;color:#52c41a;">' + _fa(p.profitAmt) + '</strong></div>';
-            else if (p.hasData) banner = '<div style="background:#fff7e6;border:1px solid #ffd591;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#d48806;font-size:13px;font-weight:500;">⚠️ 本期共 ' + p.voucherCount + ' 张凭证，尚未执行损益结转。</div>';
-            else banner = '<div style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:6px;padding:10px 16px;margin-bottom:16px;color:#8c8c8c;font-size:13px;">ℹ️ 本期暂无已记账凭证，无需执行结转。</div>';
-            function stepHtml(num, title, desc, vouStr, done, na) {
-                const nb = na ? "#f5f5f5" : (done ? "#f6ffed" : "#fff7e6");
-                const nc = na ? "#bfbfbf" : (done ? "#52c41a" : "#fa8c16");
-                const nbr = na ? "#d9d9d9" : (done ? "#b7eb8f" : "#ffd591");
-                const badge = na ? '<span style="padding:2px 10px;border-radius:10px;background:#f5f5f5;color:#bfbfbf;font-size:12px;border:1px solid #d9d9d9;">不适用</span>'
-                    : done ? '<span style="padding:2px 10px;border-radius:10px;background:#f6ffed;color:#52c41a;font-size:12px;border:1px solid #b7eb8f;">✓ 已完成</span>'
-                    : '<span style="padding:2px 10px;border-radius:10px;background:#fff7e6;color:#fa8c16;font-size:12px;border:1px solid #ffd591;">待执行</span>';
-                return '<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #f5f5f5;">'
-                    + '<div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;background:' + nb + ';color:' + nc + ';border:1.5px solid ' + nbr + ';">' + (done ? "✓" : num) + '</div>'
-                    + '<div style="flex:1;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;"><span style="font-size:14px;font-weight:500;color:' + (na ? "#bfbfbf" : "#1a1a1a") + ';">' + title + '</span>' + badge + '</div>'
-                    + '<div style="font-size:12px;color:#8c8c8c;margin-bottom:' + (done ? "6px" : "0") + ';">' + desc + '</div>'
-                    + (done ? '<div style="font-size:12px;color:#8c8c8c;">结转凭证：' + vouStr + '</div>' : '')
-                    + '</div></div>';
-            }
-            const stepsHtml = [
-                stepHtml("①", "计提税金及附加", "基于应交增值税（2221）贷方余额，按规则计提城建税、教育费附加等", taxStr, p.isTransferred, !p.hasData),
-                stepHtml("②", "结转本期收入", "将收入类科目余额（5001/6001等）结转至本年利润（4103）", incStr, p.isTransferred, !p.hasData),
-                stepHtml("③", "结转成本费用", "将成本费用类科目余额（6401/6403/6601等）结转至本年利润（4103）", costStr, p.isTransferred, !p.hasData)
-            ].join("");
-            const actionBtn = p.isClosed ? '<span style="color:#bfbfbf;font-size:13px;">期间已锁定</span>'
-                : p.isTransferred ? '<button style="padding:7px 20px;border:1px solid #ffa39e;border-radius:4px;background:#fff;color:#f5222d;cursor:pointer;font-size:13px;" onclick="reversePeriodEndClosing(\'' + p.label + '\')">冲回结转</button>'
-                : p.hasData ? '<button style="padding:8px 28px;border:none;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer;font-size:14px;font-weight:500;" onclick="requestPeriodEndClosing(\'' + p.label + '\')">▶ 一键结转</button>'
-                : '<span style="color:#bfbfbf;font-size:13px;">暂无数据</span>';
-            panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">'
-                + '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><span style="font-size:16px;font-weight:600;color:#1a1a1a;">' + p.label + '</span>'
-                + '<span style="font-size:13px;color:#8c8c8c;padding:2px 10px;background:#f5f5f5;border-radius:10px;">凭证 ' + p.voucherCount + ' 张</span>'
-                + (p.rec ? '<span style="font-size:12px;color:#8c8c8c;">' + p.rec.time + '</span>' : '')
-                + '</div><div>' + actionBtn + '</div></div>' + banner + '<div>' + stepsHtml + '</div>';
-        };
-
-        const historyRows = [...closingHistory].sort((a, b) => b.period.localeCompare(a.period)).map(h => {
-            const vList = [...normL(h.vouchers && h.vouchers.tax), ...normL(h.vouchers && h.vouchers.income), ...normL(h.vouchers && h.vouchers.cost)];
-            const profit = h.amounts ? h.amounts.profit : null;
-            return `<tr style="border-bottom:1px solid #f5f5f5;">
-                <td style="padding:10px 14px;font-weight:500;color:#1a1a1a;">${h.periodLabel || h.period}</td>
-                <td style="padding:10px 14px;text-align:right;color:#595959;">${h.amounts ? fmtA(h.amounts.income) : "-"}</td>
-                <td style="padding:10px 14px;text-align:right;color:#595959;">${h.amounts ? fmtA(h.amounts.cost) : "-"}</td>
-                <td style="padding:10px 14px;text-align:right;font-weight:600;color:${profit >= 0 ? "#52c41a" : "#f5222d"};">${fmtA(profit)}</td>
-                <td style="padding:10px 14px;font-size:12px;">${vList.map(vLnk).join(" ") || "-"}</td>
-                <td style="padding:10px 14px;font-size:12px;color:#8c8c8c;">${h.time || "-"}</td>
-            </tr>`;
-        }).join("");
-
-        contentHTML += `
-<div style="display:flex;flex-direction:column;gap:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <!-- 页头 -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-    <div>
-      <div style="font-size:20px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">结转损益</div>
-      <div style="font-size:13px;color:#8c8c8c;">按会计期间执行损益结转，系统自动完成三步结转并生成待审凭证。</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="loadContent('PeriodEndProfit')" style="padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;color:#595959;font-size:13px;">↻ 刷新</button>
-      <button onclick="loadContent('AccountingStandardSetting')" style="padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;color:#595959;font-size:13px;">模板配置</button>
-    </div>
-  </div>
-  <!-- 统计卡片 -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #1677ff;">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">当前核算月份</div>
-      <div style="font-size:18px;font-weight:600;color:#1677ff;">${endYear}年${endMonth}月</div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #52c41a;">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">已结转期间</div>
-      <div style="font-size:26px;font-weight:700;color:#52c41a;">${totalTransferred}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid ${pendingTransfer > 0 ? "#fa8c16" : "#52c41a"};">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">待结转期间</div>
-      <div style="font-size:26px;font-weight:700;color:${pendingTransfer > 0 ? "#fa8c16" : "#52c41a"};">${pendingTransfer}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid ${totalProfit >= 0 ? "#1677ff" : "#f5222d"};">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">累计损益净额</div>
-      <div style="font-size:16px;font-weight:600;color:${totalProfit >= 0 ? "#1677ff" : "#f5222d"};">${closingHistory.length > 0 ? fmtA(totalProfit) : "-"}</div>
-    </div>
-  </div>
-  <!-- 期间选项卡 + 详情 -->
-  <div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden;">
-    <div style="padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:14px;font-weight:500;color:#1a1a1a;">期间结转明细</span>
-      <span style="font-size:12px;color:#bfbfbf;">点击月份切换</span>
-    </div>
-    <div style="display:flex;overflow-x:auto;border-bottom:1px solid #f0f0f0;padding:0 8px;">${tabsHtml}</div>
-    <div id="pep-detail-panel" style="padding:20px 24px;">${buildDetailHtml(defaultPeriod)}</div>
-  </div>
-  <!-- 历史记录 -->
-  ${closingHistory.length > 0 ? `
-  <div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden;">
-    <div style="padding:14px 20px;border-bottom:1px solid #f0f0f0;"><span style="font-size:14px;font-weight:500;color:#1a1a1a;">结转历史记录</span></div>
-    <table style="width:100%;border-collapse:collapse;">
-      <thead style="background:#fafafa;">
-        <tr>
-          <th style="padding:10px 14px;text-align:left;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">期间</th>
-          <th style="padding:10px 14px;text-align:right;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">收入净额</th>
-          <th style="padding:10px 14px;text-align:right;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">成本净额</th>
-          <th style="padding:10px 14px;text-align:right;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">损益净额</th>
-          <th style="padding:10px 14px;text-align:left;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">结转凭证</th>
-          <th style="padding:10px 14px;text-align:left;font-size:13px;color:#595959;font-weight:500;border-bottom:1px solid #f0f0f0;">操作时间</th>
-        </tr>
-      </thead>
-      <tbody>${historyRows}</tbody>
-    </table>
-  </div>` : ""}
-</div>`;
-    }
-
-    // =========================================================================
-    // 44. 月末结账 (PeriodEndClose) - [专业重设计版]
-    // =========================================================================
-    else if (moduleCode === "PeriodEndClose") {
-        const today = new Date();
-        const endYear = today.getFullYear();
-        const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
-        const periods = buildAllPeriods();
-
-        const closingHistory = JSON.parse(sessionStorage.getItem("PeriodEndClosingHistory") || "[]");
-        const historyMap = {};
-        closingHistory.forEach(h => { if (h.period) historyMap[h.period] = h; });
-
-        // Compute per-period data
-        const periodData = periods.map(p => {
-            const rec = historyMap[p.periodStr];
-            const legacyTransferred = sessionStorage.getItem(`${p.key}-ProfitTransferred`) === "true";
-            const isTransferred = rec ? rec.status === "done" : legacyTransferred;
-            const isClosed = sessionStorage.getItem(`${p.key}-MonthClosed`) === "true";
-            const periodVouchers = allVouchers.filter(v => v.date && v.date.startsWith(p.periodStr));
-            const hasData = periodVouchers.length > 0;
-            const closeTime = sessionStorage.getItem(`${p.key}-MonthClosedTime`) || null;
-            return { ...p, isTransferred, isClosed, hasData, voucherCount: periodVouchers.length, closeTime };
-        });
-
-        // Stats
-        const closedCount = periodData.filter(p => p.isClosed).length;
-        const inProgressCount = periodData.filter(p => !p.isClosed && p.hasData).length;
-        const pendingTransferCount = periodData.filter(p => !p.isClosed && p.hasData && !p.isTransferred).length;
-        const transferredCount = periodData.filter(p => p.isTransferred).length;
-
-        // Default period: latest with data, else last in list
-        let defaultIdx = periodData.length - 1;
-        for (let i = periodData.length - 1; i >= 0; i--) {
-            if (periodData[i].hasData) { defaultIdx = i; break; }
-        }
-        const defaultPeriod = periodData[defaultIdx] || periodData[0];
-
-        // Month tabs
-        const tabsHtml = periodData.map((p, idx) => {
-            let dotBg = "#d9d9d9", tabLabel = "无数据";
-            if (p.isClosed) { dotBg = "#8c8c8c"; tabLabel = "已结账"; }
-            else if (p.hasData && p.isTransferred) { dotBg = "#52c41a"; tabLabel = "可结账"; }
-            else if (p.hasData) { dotBg = "#fa8c16"; tabLabel = "待结转"; }
-            const isActive = idx === defaultIdx;
-            return `<div onclick="window.switchClosingPeriodTab(this,'${p.key}','${p.label}')" data-key="${p.key}"
-                style="display:flex;flex-direction:column;align-items:center;padding:10px 16px;cursor:pointer;
-                border-bottom:3px solid ${isActive ? "#1677ff" : "transparent"};background:${isActive ? "#f0f5ff" : "transparent"};
-                min-width:72px;user-select:none;transition:all 0.2s;gap:3px;">
-                <span style="font-size:14px;font-weight:${isActive ? "600" : "400"};color:${isActive ? "#1677ff" : "#595959"};">${p.periodNo}月</span>
-                <span style="width:8px;height:8px;border-radius:50%;background:${dotBg};display:block;flex-shrink:0;"></span>
-                <span style="font-size:11px;color:${dotBg};">${tabLabel}</span>
-            </div>`;
-        }).join("");
-
-        // Year-end close
-        const yearClosed = sessionStorage.getItem(`${endYear}-YearClosed`) === "true";
-        let allMonthsClosed = true, closedMonthCount = 0;
-        for (let mo = 1; mo <= 12; mo++) {
-            if (sessionStorage.getItem(`${endYear}-${mo}-MonthClosed`) === "true") closedMonthCount++;
-            else allMonthsClosed = false;
-        }
-        let yearEndHtml;
-        if (yearClosed) {
-            yearEndHtml = `<div style="background:#fdf3e7;border:1px solid #fa8c16;border-radius:8px;padding:20px;text-align:center;"><h3 style="color:#fa8c16;margin:0 0 6px;">🔒 ${endYear} 年度已完成年末封账</h3><p style="color:#666;margin:0;">本年度数据已永久锁定，不可再进行凭证录入或期间反结账。</p></div>`;
-        } else if (allMonthsClosed) {
-            yearEndHtml = `<div style="background:#fff8e1;border:1px solid #f39c12;border-radius:8px;padding:20px;"><div style="font-size:15px;font-weight:600;color:#e67e22;margin-bottom:8px;">年末封账</div><p style="color:#555;margin-bottom:12px;">${endYear} 年全部 12 个会计期间已完成月末结账，可执行年末封账。</p><p style="color:#999;font-size:13px;margin-bottom:14px;">年末封账将永久锁定本年所有期间，此操作<strong>不可撤销</strong>。</p><button class="btn-primary" style="background:#e67e22;" onclick="executeYearEndClose(${endYear})">执行年末封账</button></div>`;
-        } else {
-            yearEndHtml = `<div style="background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:16px;"><div style="font-size:14px;font-weight:500;color:#8c8c8c;margin-bottom:6px;">年末封账</div><p style="color:#bfbfbf;margin:0;">${endYear} 年度已完成 <strong style="color:#595959;">${closedMonthCount} / 12</strong> 个月结账，全部月份完成后方可执行年末封账。</p></div>`;
-        }
-
-        // Store period data & define tab-switch handler before innerHTML is set
-        window._mecPeriods = periodData.map(p => ({
-            key: p.key, label: p.label, periodNo: p.periodNo,
-            isClosed: p.isClosed, isTransferred: p.isTransferred,
-            hasData: p.hasData, voucherCount: p.voucherCount
-        }));
-        window._closingOpKey = defaultPeriod ? defaultPeriod.key : null;
-
-        window.switchClosingPeriodTab = function(el, key, label) {
-            const tabs = el.parentElement.children;
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].style.borderBottomColor = "transparent";
-                tabs[i].style.background = "transparent";
-                const sp = tabs[i].querySelector("span");
-                if (sp) { sp.style.color = "#595959"; sp.style.fontWeight = "400"; }
-            }
-            el.style.borderBottomColor = "#1677ff";
-            el.style.background = "#f0f5ff";
-            const mySp = el.querySelector("span");
-            if (mySp) { mySp.style.color = "#1677ff"; mySp.style.fontWeight = "600"; }
-            if (typeof window.selectClosingPeriod === "function") {
-                window.selectClosingPeriod(key, label);
-            }
-        };
-
-        contentHTML += `
-<div style="display:flex;flex-direction:column;gap:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <!-- 页头 -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-    <div>
-      <div style="font-size:20px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">月末结账</div>
-      <div style="font-size:13px;color:#8c8c8c;">执行期末结账，锁定当期数据。结账前需完成损益结转并通过所有系统检查项。</div>
-    </div>
-    <button onclick="loadContent('PeriodEndClose')" style="padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;color:#595959;font-size:13px;">↻ 刷新</button>
-  </div>
-  <!-- 统计卡片 -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #52c41a;">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">已结账期间</div>
-      <div style="font-size:26px;font-weight:700;color:#52c41a;">${closedCount}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #1677ff;">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">结账进行中</div>
-      <div style="font-size:26px;font-weight:700;color:#1677ff;">${inProgressCount}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid ${pendingTransferCount > 0 ? "#fa8c16" : "#52c41a"};">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">待结转损益</div>
-      <div style="font-size:26px;font-weight:700;color:${pendingTransferCount > 0 ? "#fa8c16" : "#52c41a"};">${pendingTransferCount}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-    <div style="background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #722ed1;">
-      <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px;">损益已结转</div>
-      <div style="font-size:26px;font-weight:700;color:#722ed1;">${transferredCount}<span style="font-size:14px;color:#8c8c8c;font-weight:400;"> 期</span></div>
-    </div>
-  </div>
-  <!-- 主内容卡片 -->
-  <div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden;">
-    <!-- 月份选项卡 -->
-    <div style="padding:14px 20px 0;border-bottom:1px solid #f0f0f0;">
-      <div style="font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:12px;">选择结账期间 <span style="font-size:12px;color:#bfbfbf;font-weight:400;">— 点击月份标签切换</span></div>
-      <div style="display:flex;overflow-x:auto;gap:0;">${tabsHtml}</div>
-    </div>
-    <!-- 状态栏 -->
-    <div style="padding:14px 24px;background:#fafafa;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <span style="font-size:15px;font-weight:600;color:#1a1a1a;">当前期间：<span id="closing-op-label" style="color:#1677ff;">${defaultPeriod ? defaultPeriod.label : "—"}</span></span>
-        <span id="mec-check-summary" style="font-size:13px;color:#8c8c8c;padding:3px 10px;background:#f0f0f0;border-radius:10px;">正在加载检查项…</span>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button onclick="refreshClosingCheck(window._closingOpKey)" style="padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;color:#595959;font-size:13px;">🔄 刷新检查</button>
-        <button id="btnExecuteClose" onclick="executeMonthEndClose(window._closingOpKey)" disabled
-          style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:not-allowed;background:#d9d9d9;color:#fff;">执行月末结账</button>
-        <button id="btnExecuteReOpen" onclick="executeReOpen(window._closingOpKey)"
-          style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#f5222d;color:#fff;display:none;">⏪ 反结账</button>
-      </div>
-    </div>
-    <!-- 结账前检查项（常显） -->
-    <div id="closing-op-panel" style="padding:20px 24px;">
-      <div style="font-size:13px;font-weight:500;color:#595959;margin-bottom:12px;">结账前检查项</div>
-      <table class="data-table" style="margin:0;">
-        <thead>
-          <tr>
-            <th>检查项</th>
-            <th style="width:100px;text-align:center;">状态</th>
-            <th>提示信息</th>
-            <th style="width:120px;">操作</th>
-          </tr>
-        </thead>
-        <tbody id="checkListBody">
-          <tr><td colspan="4" style="text-align:center;color:#bfbfbf;padding:32px 0;">← 点击上方月份标签，系统将自动执行结账前检查</td></tr>
-        </tbody>
-      </table>
-      <p style="font-size:12px;color:#bfbfbf;margin-top:10px;">* 所有检查项通过后，"执行月末结账"按钮将自动解锁。反结账操作将记录高危审计日志。</p>
-    </div>
-  </div>
-  <!-- 年末封账 -->
-  <div>${yearEndHtml}</div>
-</div>`;
+    else if (moduleCode === "PeriodEndCenter") {
+        contentHTML += `<iframe src="final_processing1.html" style="width:100%;height:calc(100vh - 120px);border:none;" allowfullscreen></iframe>`;
     }
 
     // =========================================================================
@@ -14808,9 +14552,6 @@ function loadContent(moduleCode, element = null) {
             }
         }, 0);
     }
-
-    // Post-init: PeriodEndProfit — selectProfitPeriod is already defined; no DOM-dependent init needed
-
 
     // ============================================================
     //  以下是新增的"全流程联动控制台"逻辑

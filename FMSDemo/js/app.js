@@ -1376,6 +1376,266 @@
             window.settleFromRecon(reconId, client, amount);
         };
 
+        // =====================================================================
+        // 客户对账数字化确认 — 新增函数
+        // =====================================================================
+
+        /** 业务员：发送对账单给客户 */
+        window.sendReconToCustomer = function(reconId) {
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const r = recons.find(x => x.id === reconId);
+            if (!r) return alert('未找到对账单');
+            r.status = '已发送对账单';
+            r.sentTime = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: r.sentTime, user: '业务员', module: '客户对账', action: '发送对账单', detail: `对账单 ${reconId} 已发送给客户，等待客户确认。` });
+            }
+            alert(`✅ 对账单【${reconId}】已发送！\n客户可在【客户对账-客户】页面查看并确认。`);
+            loadContent('ReconCustomer');
+        };
+
+        /** 客户：确认对账单 */
+        window.customerConfirmRecon = function(reconId) {
+            if (!confirm(`确认该对账单【${reconId}】金额无误？`)) return;
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const r = recons.find(x => x.id === reconId);
+            if (!r) return;
+            r.status = '客户已确认';
+            r.customerConfirmTime = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+
+            // 联动更新运单状态
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            waybills.forEach(w => { if (w.reconId === reconId) w.status = '已对账'; });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+            // 生成应收账款
+            let arList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+            if (!arList.some(ar => ar.id === reconId)) {
+                arList.unshift({ id: r.id, client: r.client, period: r.period, amount: r.amount, verified: '0.00', unverified: r.amount, status: '未核销' });
+                sessionStorage.setItem('ARStatements', JSON.stringify(arList));
+            }
+
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: r.customerConfirmTime, user: r.client, module: '客户对账', action: '客户确认', detail: `客户 ${r.client} 确认对账单 ${reconId}，金额 ${r.amount}。` });
+            }
+            alert(`✅ 确认成功！\n对账单【${reconId}】已确认，业务员可在【客户对账-业务员】页面发起结算。`);
+            loadContent('ReconCustomerPortal');
+        };
+
+        /** 客户：打开打回弹窗 */
+        window.openRejectModal = function(reconId) {
+            const modal = document.getElementById('reject-recon-modal');
+            if (!modal) return;
+            document.getElementById('reject-recon-id').value = reconId;
+            document.getElementById('reject-reason-input').value = '';
+            modal.style.display = 'block';
+        };
+
+        window.closeRejectModal = function() {
+            const modal = document.getElementById('reject-recon-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        /** 客户：提交打回 */
+        window.submitCustomerReject = function() {
+            const reconId = document.getElementById('reject-recon-id').value;
+            const reason = document.getElementById('reject-reason-input').value.trim();
+            if (!reason) return alert('请填写打回原因。');
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const r = recons.find(x => x.id === reconId);
+            if (!r) return;
+            r.status = '客户打回';
+            r.customerRejectReason = reason;
+            r.customerRejectTime = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+            // 释放运单状态为已挂帐
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            waybills.forEach(w => { if (w.reconId === reconId) w.status = '已挂帐'; });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: r.customerRejectTime, user: r.client, module: '客户对账', action: '客户打回', detail: `客户打回对账单 ${reconId}，原因：${reason}` });
+            }
+            window.closeRejectModal();
+            alert(`❌ 已打回！\n业务员将收到通知，在【客户对账-业务员】页面重新生成对账单。`);
+            loadContent('ReconCustomerPortal');
+        };
+
+        /** 业务员：打开重新生成对账单弹窗 */
+        window.regenReconFromReject = function(reconId) {
+            const modal = document.getElementById('regen-recon-modal');
+            if (!modal) return;
+            document.getElementById('regen-recon-id').value = reconId;
+
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const r = recons.find(x => x.id === reconId);
+            const reasonBar = document.getElementById('regen-reject-reason-bar');
+            if (reasonBar && r) reasonBar.innerHTML = `💬 客户打回原因：<strong>${r.customerRejectReason || "未填写"}</strong>`;
+
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            // 原始关联运单（无论状态）+ 同客户的已挂帐运单
+            const rClient = r ? (r.client || r.clientName || '') : '';
+            const candidates = waybills.filter(w => {
+                if (w.reconId === reconId) return true; // 原始运单，始终可选
+                if (w.status !== '已挂帐') return false;
+                const wClient = w.clientName || w.customerName || w.client || '';
+                return !rClient || wClient === rClient || wClient.includes(rClient) || rClient.includes(wClient);
+            });
+
+            const listEl = document.getElementById('regen-waybill-list');
+            if (listEl) {
+                listEl.innerHTML = candidates.length === 0
+                    ? '<p style="padding:16px;color:#999;text-align:center;">无可选运单</p>'
+                    : `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#f9fafb;"><th style="padding:8px;">选择</th><th style="padding:8px;text-align:left;">运单号</th><th style="padding:8px;text-align:left;">路线</th><th style="padding:8px;text-align:right;">金额</th></tr></thead>
+                        <tbody>${candidates.map(w => `
+                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                <td style="padding:8px;text-align:center;"><input type="checkbox" class="regen-wb-chk" value="${w.id || w.waybillNo}" ${w.reconId === reconId ? 'checked' : ''}></td>
+                                <td style="padding:8px;">${w.id || w.waybillNo || '-'}</td>
+                                <td style="padding:8px;">${w.route || '-'}</td>
+                                <td style="padding:8px;text-align:right;">${w.totalAmount || w.amount || '-'}</td>
+                            </tr>`).join('')}
+                        </tbody></table>`;
+            }
+            modal.style.display = 'block';
+        };
+
+        window.closeRegenModal = function() {
+            const modal = document.getElementById('regen-recon-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        /** 业务员：删除打回的对账单，释放运单回已挂帐 */
+        window.deleteRejectedRecon = function(reconId) {
+            if (!confirm('确认删除该对账单并释放关联运单回"已挂帐"状态？')) return;
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const idx = recons.findIndex(x => x.id === reconId);
+            if (idx === -1) return;
+            recons.splice(idx, 1);
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            waybills.forEach(w => {
+                if (w.reconId === reconId) { w.status = '已挂帐'; w.reconId = ''; }
+            });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '业务员', module: '客户对账', action: '删除对账单', detail: `已删除打回对账单 ${reconId} 并释放运单。` });
+            }
+            loadContent('ReconCustomer');
+        };
+
+        /** 客户视角：跳转到对账单详情页 */
+        window.viewReconDetailFromPortal = function(reconId) {
+            const recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const recon = recons.find(r => r.id === reconId) || { id: reconId, client: '-', amount: '0', period: '-', status: '-' };
+            window.g_currentRecon = recon;
+            window.g_reconDetailBackTo = 'ReconCustomerPortal';
+            loadContent('ReconDetail');
+        };
+
+        /** 客户对账详情弹窗（客户视角，保留兼容） */
+        window.openReconDetailModal = function(reconId) {
+            const modal = document.getElementById('recon-detail-modal');
+            if (!modal) return;
+            const recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const r = recons.find(x => x.id === reconId);
+            if (!r) return;
+            const allWaybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            const details = allWaybills.filter(w => w.reconId === reconId);
+            const detailRows = details.map(d => `
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                    <td style="padding:7px 8px;white-space:nowrap;">${d.id || d.waybillNo || '-'}</td>
+                    <td style="padding:7px 8px;">${d.shipper || d.shipperName || '-'}</td>
+                    <td style="padding:7px 8px;">${d.receiver || d.receiverName || '-'}</td>
+                    <td style="padding:7px 8px;">${d.route || (d.pickupSite && d.finishSite ? d.pickupSite+'→'+d.finishSite : '-')}</td>
+                    <td style="padding:7px 8px;text-align:center;">${d.pieces || d.qty || '-'}</td>
+                    <td style="padding:7px 8px;text-align:center;">${d.weight != null ? d.weight : '-'}</td>
+                    <td style="padding:7px 8px;text-align:center;">${d.volume != null ? d.volume : '-'}</td>
+                    <td style="padding:7px 8px;white-space:nowrap;">${d.pickupAt || d.pickupTime || '-'}</td>
+                    <td style="padding:7px 8px;white-space:nowrap;">${d.finishAt || d.deliveryTime || '-'}</td>
+                    <td style="padding:7px 8px;white-space:nowrap;">${d.driver || '-'}${d.plate ? ' / '+d.plate : ''}</td>
+                    <td style="padding:7px 8px;text-align:right;font-weight:600;">¥${d.totalAmount || d.amount || '-'}</td>
+                    <td style="padding:7px 8px;font-size:12px;color:#666;">${d.remark || '-'}</td>
+                </tr>`).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;color:#999;">暂无运单明细</td></tr>';
+
+            document.getElementById('recon-detail-title').textContent = reconId;
+            document.getElementById('recon-detail-client').textContent = r.client + ' · ' + r.period + ' · ' + (r.waybillCount || details.length) + '单';
+            document.getElementById('recon-detail-amount').textContent = '¥' + r.amount;
+            document.getElementById('recon-detail-tbody').innerHTML = detailRows;
+            const actionEl = document.getElementById('recon-detail-actions');
+            if (r.status === '已发送对账单') {
+                actionEl.innerHTML = `
+                    <button onclick="customerConfirmRecon('${r.id}');document.getElementById('recon-detail-modal').style.display='none';" style="flex:1;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">✅ 确认对账单</button>
+                    <button onclick="openRejectModal('${r.id}');document.getElementById('recon-detail-modal').style.display='none';" style="flex:1;padding:10px;background:#fff;color:#dc2626;border:1.5px solid #dc2626;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">❌ 打回对账单</button>`;
+            } else {
+                actionEl.innerHTML = '';
+            }
+            modal.style.display = 'block';
+        };
+        window.closeReconDetailModal = function() {
+            const modal = document.getElementById('recon-detail-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        /** 业务员：确认重新生成对账单 */
+        window.submitRegenRecon = function() {
+            const reconId = document.getElementById('regen-recon-id').value;
+            const checks = document.querySelectorAll('.regen-wb-chk:checked');
+            const selectedIds = Array.from(checks).map(c => c.value);
+            if (selectedIds.length === 0) return alert('请至少选择一张运单。');
+
+            let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+            const old = recons.find(x => x.id === reconId);
+            if (!old) return;
+
+            // 生成新对账单 ID
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const newId = 'RC' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + '001';
+
+            let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+            let totalAmt = 0;
+            waybills.forEach(w => {
+                const wid = w.id || w.waybillNo;
+                if (selectedIds.includes(wid)) {
+                    w.status = '已对账待确认';
+                    w.reconId = newId;
+                    totalAmt += parseFloat(String(w.totalAmount || w.amount || '0').replace(/,/g, '')) || 0;
+                } else if (w.reconId === reconId) {
+                    w.status = '已挂帐';
+                    w.reconId = '';
+                }
+            });
+            sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+
+            const newRecon = {
+                id: newId,
+                client: old.client,
+                clientName: old.clientName || old.client,
+                period: old.period,
+                amount: totalAmt.toFixed(2),
+                waybillCount: selectedIds.length,
+                status: '待客户确认',
+                createdAt: now.toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+                regenFrom: reconId
+            };
+
+            // 旧对账单标记为已作废
+            old.status = '已作废（重新生成）';
+            recons.push(newRecon);
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+
+            window.closeRegenModal();
+            if (typeof addAuditLog === 'function') {
+                addAuditLog({ time: newRecon.createdAt, user: '业务员', module: '客户对账', action: '重新生成对账单', detail: `基于打回对账单 ${reconId} 重新生成 ${newId}，包含 ${selectedIds.length} 票运单。` });
+            }
+            alert(`✅ 新对账单【${newId}】已生成！\n包含 ${selectedIds.length} 票运单，请点击"发送对账单"发送给客户确认。`);
+            loadContent('ReconCustomer');
+        };
+
 
 
         /** * 辅助：数字转中文大写金额 

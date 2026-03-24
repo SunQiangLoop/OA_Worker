@@ -48,7 +48,8 @@
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">对账管理</div>
             <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('ReconCustomer', this)">客户对账</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomer', this)">客户对账-业务员</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomerPortal', this)">客户对账-客户</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconSite', this)">网点对账</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconCarrier', this)">承运商对账</div>
                 <div class="sub-menu-item" onclick="loadContent('ReconDriver', this)">司机对账</div>
@@ -111,14 +112,7 @@
                 <div class="sub-menu-item" onclick="loadContent('VoucherEntryReview', this)">凭证录入</div>
                 <div class="sub-menu-item" onclick="loadContent('FinanceVoucherAudit', this)">凭证审核中心</div>
             </div>
-            <div class="sub-menu">
-            </div>
-
-            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">期末处理</div>
-            <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('PeriodEndProfit', this)">结转损益</div>
-                <div class="sub-menu-item" onclick="loadContent('PeriodEndClose', this)">月末结账</div>
-            </div>
+            <div class="menu-item" onclick="loadContent('PeriodEndCenter', this)">期末处理</div>
             <div class="menu-group-title">数据报表</div>
                         <div class="menu-item collapsed" onclick="toggleSubMenu(this)">财务报表</div>
                         <div class="sub-menu">

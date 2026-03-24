@@ -1647,6 +1647,24 @@ window.arSettleWaybillsBatch = function () {
         voucherTip = '\n凭证生成异常：' + e.message;
     }
 
+    // 写入 ARStatements（供应收核销使用，标记 fromSettlement）
+    {
+        const period = today.slice(0, 7);
+        let arList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+        // 按 reconId 分组写入（同一对账单合并），或逐票写入
+        const reconGroups = {};
+        toSettle.forEach(w => {
+            const key = w.reconId || w.id;
+            if (!reconGroups[key]) reconGroups[key] = { id: key, client: w.client || w.customerName || '', amount: 0, period };
+            reconGroups[key].amount += toNumber(w.totalAmount || w.freightAmount || w.amount || 0);
+        });
+        Object.values(reconGroups).forEach(g => {
+            if (!arList.some(ar => ar.id === g.id)) {
+                arList.unshift({ id: g.id, client: g.client, period: g.period, amount: g.amount.toFixed(2), verified: '0.00', unverified: g.amount.toFixed(2), status: '未核销', fromSettlement: true });
+            }
+        });
+        sessionStorage.setItem('ARStatements', JSON.stringify(arList));
+    }
     if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应收管理', action: '结算', detail: '运单结算，共 ' + toSettle.length + ' 票，合计：¥' + totalStr });
     alert(`✅ 结算完成！\n已结算 ${toSettle.length} 票运单，合计：¥${totalStr}${voucherTip}\n\n下一步：录入收款单 → 前往应收核销完成核销（自动生成收款凭证）。`);
     loadContent('ARCollectionVerify');
