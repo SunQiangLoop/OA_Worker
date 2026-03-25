@@ -71,6 +71,10 @@ function getModuleName(code) {
         EngineTemplate: "引擎模板",
         EngineMapping: "科目映射",
         ARAgeAnalysis: "账龄分析",
+        PeriodEndCenter: "期末处理中心",
+        AutoTransferTax: "自动计提税金",
+        ClosingWizardProfit: "结转损益向导",
+        ClosingWizardClose: "期末结账向导",
     };
     return names[code] || "未知模块";
 }
@@ -10450,7 +10454,10 @@ function loadContent(moduleCode, element = null) {
     // 43. 期末处理中心 (PeriodEndCenter)
     // =========================================================================
     else if (moduleCode === "PeriodEndCenter") {
-        contentHTML += `<iframe src="final_processing1.html" style="width:100%;height:calc(100vh - 120px);border:none;" allowfullscreen></iframe>`;
+        if (window.VM_MODULES && typeof window.VM_MODULES['PeriodEndCenter'] === 'function') {
+            window.VM_MODULES['PeriodEndCenter'](contentArea, contentHTML, moduleCode);
+            return;
+        }
     }
 
     // =========================================================================
