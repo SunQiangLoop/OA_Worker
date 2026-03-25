@@ -10476,40 +10476,63 @@ function loadContent(moduleCode, element = null) {
         const defaultPeriod = new Date().toISOString().slice(0, 7);
 
         contentHTML += `
-            <div style="background:white; padding:15px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+            <style>
+                .tb-toolbar { background:#fff; padding:16px 20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+                .tb-toolbar label { font-size:14px; color:#555; white-space:nowrap; }
+                .tb-toolbar select, .tb-toolbar input { padding:9px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; }
+                .tb-balance-badge { padding:8px 18px; border-radius:20px; font-size:14px; font-weight:700; white-space:nowrap; }
+                .tb-balance-ok   { background:#dcfce7; color:#15803d; border:1px solid #86efac; }
+                .tb-balance-fail { background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
+                .tb-balance-info { background:#eff6ff; color:#1d4ed8; border:1px solid #93c5fd; }
+
+                .tb-wrap { background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden; }
+                .tb-table { width:100%; border-collapse:collapse; font-size:14px; }
+                .tb-table th { background:#f1f5f9; color:#374151; font-weight:700; padding:13px 16px; border-bottom:2px solid #e2e8f0; text-align:center; white-space:nowrap; }
+                .tb-table td { padding:12px 16px; border-bottom:1px solid #f1f5f9; color:#374151; font-size:14px; }
+                .tb-table tbody tr:hover { background:#f8fafc; }
+                .tb-table tfoot tr { background:#f8fafc; font-weight:700; border-top:2px solid #e2e8f0; }
+                .tb-col-code { width:110px; text-align:left !important; font-family:monospace; }
+                .tb-col-name { min-width:160px; text-align:left !important; }
+                .tb-num { text-align:right !important; min-width:120px; font-variant-numeric:tabular-nums; }
+                .tb-num-debit  { color:#1d4ed8; }
+                .tb-num-credit { color:#9f1239; }
+                .tb-group-header { background:#e8f0fe; }
+            </style>
+
+            <div class="tb-toolbar">
                 <label>账簿</label>
-                <select style="padding:8px 10px; border:1px solid #ccc; border-radius:4px; min-width:200px;">
+                <select style="min-width:160px;">
                     <option value="">综合账簿</option>
                     ${books.map(b => `<option value="${b.id}">${b.name}</option>`).join("")}
                 </select>
                 <label>期间</label>
-                <select id="trial-filter-period" style="padding:8px 10px; border:1px solid #ccc; border-radius:4px; min-width:140px;">
+                <select id="trial-filter-period" style="min-width:130px;">
                     <option value="">全部</option>
                     ${periodOptions}
                 </select>
                 <label>币别</label>
-                <input type="text" value="综合本位币" readonly style="padding:8px 10px; border:1px solid #ccc; border-radius:4px; min-width:160px; background:#f7f9fa;">
-                <input id="trial-balance-result" type="text" value="试算结果平衡" readonly style="padding:8px 10px; border:1px solid #ccc; border-radius:4px; min-width:200px; background:#f7f9fa;">
-                <button class="btn-primary" onclick="filterTrialBalance()">查询</button>
+                <input type="text" value="综合本位币" readonly style="min-width:120px; background:#f7f9fa;">
+                <button class="btn-primary" style="padding:9px 22px; font-size:14px;" onclick="filterTrialBalance()">查询</button>
+                <div id="trial-balance-result" class="tb-balance-badge tb-balance-info">等待查询…</div>
             </div>
 
-            <div class="trial-balance-wrap">
-                <table class="data-table trial-balance-table">
+            <div class="tb-wrap">
+                <table class="tb-table">
                     <thead>
-                        <tr style="background:#f5f6f8;">
-                            <th rowspan="2" class="trial-col-code">科目编码</th>
-                            <th rowspan="2" class="trial-col-name">科目名称</th>
-                            <th colspan="2" class="trial-group">期初余额</th>
-                            <th colspan="2" class="trial-group">本期发生</th>
-                            <th colspan="2" class="trial-group">期末余额</th>
+                        <tr>
+                            <th rowspan="2" class="tb-col-code">科目编码</th>
+                            <th rowspan="2" class="tb-col-name">科目名称</th>
+                            <th colspan="2" class="tb-group-header">期初余额</th>
+                            <th colspan="2" class="tb-group-header">本期发生额</th>
+                            <th colspan="2" class="tb-group-header">期末余额</th>
                         </tr>
-                        <tr style="background:#f5f6f8;">
-                            <th class="trial-num">借方</th>
-                            <th class="trial-num">贷方</th>
-                            <th class="trial-num">借方</th>
-                            <th class="trial-num">贷方</th>
-                            <th class="trial-num">借方</th>
-                            <th class="trial-num">贷方</th>
+                        <tr>
+                            <th class="tb-num">借方</th>
+                            <th class="tb-num">贷方</th>
+                            <th class="tb-num">借方</th>
+                            <th class="tb-num">贷方</th>
+                            <th class="tb-num">借方</th>
+                            <th class="tb-num">贷方</th>
                         </tr>
                     </thead>
                     <tbody id="trial-balance-body"></tbody>
@@ -10523,8 +10546,9 @@ function loadContent(moduleCode, element = null) {
             if (periodSelect && periodSelect.querySelector(`option[value="${defaultPeriod}"]`)) {
                 periodSelect.value = defaultPeriod;
             }
-            if (typeof window.renderTrialBalance === "function") {
-                window.renderTrialBalance({ period: periodSelect ? periodSelect.value : "" });
+            // 自动执行一次查询，初始化显示并更新平衡状态
+            if (typeof window.filterTrialBalance === "function") {
+                window.filterTrialBalance();
             }
         }, 100);
     }
@@ -15482,72 +15506,87 @@ function loadContent(moduleCode, element = null) {
         const subjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
         const vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
         const period = filters.period || "";
-        // 包含待审核，让用户自己录入的凭证也能在试算平衡表中看到
         const activeStatuses = ["待审核", "已审核", "已记账", "已过账"];
-        const openingList = getOpeningBalanceStore();
-        const openingMap = buildOpeningBalanceMap(openingList);
 
-        const voucherList = period
-            ? vouchers.filter(v => v.date && v.date.startsWith(period) && activeStatuses.includes(v.status))
-            : vouchers.filter(v => activeStatuses.includes(v.status));
-
-        // 从凭证行中提取辅助函数：取纯数字科目编码
+        // 辅助：从凭证行中提取纯数字科目编码
         const extractCode = (raw) => {
             const m = (raw || "").match(/^\d+/);
             return m ? m[0] : (raw || "").split(" ")[0];
         };
-
-        // 先统计本期发生额
-        const sums = {};
-        voucherList.forEach(v => {
-            (v.lines || []).forEach(line => {
-                const code = extractCode(line.accountCode || line.account || "");
-                if (!code) return;
-                if (!sums[code]) sums[code] = { debit: 0, credit: 0, name: "" };
-                sums[code].debit += parseFloat(line.debit) || 0;
-                sums[code].credit += parseFloat(line.credit) || 0;
-                // 记录科目名称（取非空的）
-                if (!sums[code].name) {
-                    const raw = (line.account || "").trim();
-                    const namePart = raw.replace(/^\d+\s*/, "").trim();
-                    if (namePart) sums[code].name = namePart;
-                }
+        // 辅助：从凭证行中提取科目名称
+        const extractName = (line) => {
+            const raw = (line.account || "").trim();
+            return raw.replace(/^\d+\s*/, "").trim();
+        };
+        // 辅助：汇总某批凭证中每个科目的借/贷合计
+        const buildSums = (vList) => {
+            const m = {};
+            vList.forEach(v => {
+                (v.lines || []).forEach(line => {
+                    const code = extractCode(line.accountCode || line.account || "");
+                    if (!code) return;
+                    if (!m[code]) m[code] = { debit: 0, credit: 0, name: "" };
+                    m[code].debit  += parseFloat(line.debit)  || 0;
+                    m[code].credit += parseFloat(line.credit) || 0;
+                    if (!m[code].name) {
+                        const n = extractName(line);
+                        if (n) m[code].name = n;
+                    }
+                });
             });
+            return m;
+        };
+
+        // ── 本期凭证（只含选中期间） ──
+        const currentVouchers = period
+            ? vouchers.filter(v => v.date && v.date.slice(0,7) === period && activeStatuses.includes(v.status))
+            : vouchers.filter(v => activeStatuses.includes(v.status));
+
+        // ── 期初凭证（严格早于选中期间的所有凭证，动态计算开账余额，不依赖静态 OpeningBalances）
+        const priorVouchers = period
+            ? vouchers.filter(v => v.date && v.date.slice(0,7) < period && activeStatuses.includes(v.status))
+            : []; // 全部期间时无需期初
+
+        const sums       = buildSums(currentVouchers);
+        const priorSums  = buildSums(priorVouchers);
+
+        // ── 也从期初凭证补充科目名称 ──
+        Object.keys(priorSums).forEach(code => {
+            if (sums[code] && !sums[code].name && priorSums[code].name)
+                sums[code].name = priorSums[code].name;
         });
 
-        // 构建科目列表：优先用 AcctSubjects，其次用期初余额，最后从凭证数据动态发现
-        let baseSubjects = subjects.length
-            ? subjects
-            : openingList.map(item => ({
-                code: normalizeSubjectCode(item.code),
-                name: item.name || `科目 ${normalizeSubjectCode(item.code)}`
-            }));
+        // ── 构建科目列表：先用 AcctSubjects，再用凭证中出现的所有科目 ──
+        const allCodes = new Set([
+            ...subjects.map(s => s.code),
+            ...Object.keys(sums),
+            ...Object.keys(priorSums)
+        ]);
+        const nameCache = {};
+        subjects.forEach(s => { nameCache[s.code] = s.name; });
+        Object.keys(sums).forEach(c   => { if (!nameCache[c] && sums[c].name)      nameCache[c] = sums[c].name; });
+        Object.keys(priorSums).forEach(c => { if (!nameCache[c] && priorSums[c].name) nameCache[c] = priorSums[c].name; });
 
-        // 将凭证中出现但尚未在 baseSubjects 里的科目补充进来
-        const existingCodes = new Set(baseSubjects.map(s => s.code));
-        Object.keys(sums).sort().forEach(code => {
-            if (!existingCodes.has(code)) {
-                baseSubjects.push({ code, name: sums[code].name || code });
-            }
-        });
-        // 按科目编码排序
-        baseSubjects.sort((a, b) => a.code.localeCompare(b.code));
+        const sortedCodes = Array.from(allCodes).sort();
 
-        const rows = baseSubjects.map(subject => {
-            const total = sums[subject.code] || { debit: 0, credit: 0 };
-            const opening = openingMap[subject.code];
-            const openingBalance = opening ? Math.abs(opening.balance) : 0;
-            const openingDebit = opening && opening.direction === "借" ? openingBalance : 0;
-            const openingCredit = opening && opening.direction === "贷" ? openingBalance : 0;
-            const periodDebit = total.debit;
+        const rows = sortedCodes.map(code => {
+            // ── 期初余额 = 期初凭证的借贷净额 ──
+            const pr = priorSums[code] || { debit: 0, credit: 0 };
+            const priorNet = pr.debit - pr.credit; // 正=借方余额，负=贷方余额
+            const openingDebit  = priorNet > 0 ? priorNet : 0;
+            const openingCredit = priorNet < 0 ? Math.abs(priorNet) : 0;
+
+            const total = sums[code] || { debit: 0, credit: 0 };
+            const periodDebit  = total.debit;
             const periodCredit = total.credit;
+            const name = nameCache[code] || code;
             const net = (openingDebit - openingCredit) + (periodDebit - periodCredit);
             // net > 0 → 借方余额；net < 0 → 贷方余额
             const endingDebit = net > 0 ? net : 0;
             const endingCredit = net < 0 ? Math.abs(net) : 0;
             return {
-                code: subject.code,
-                name: subject.name,
+                code,
+                name,
                 openingDebit,
                 openingCredit,
                 periodDebit,
@@ -15583,39 +15622,69 @@ function loadContent(moduleCode, element = null) {
 
     window.renderTrialBalance = function (filters = {}) {
         const body = document.getElementById("trial-balance-body");
-        const result = document.getElementById("trial-balance-result");
+        const badge = document.getElementById("trial-balance-result");
         if (!body) return;
+
+        const fmt2 = (n) => (n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const data = window.getTrialBalanceData(filters);
+
         body.innerHTML = data.rows.map(item => `
             <tr>
-                <td class="trial-col-code">${item.code}</td>
-                <td class="trial-col-name">${item.name}</td>
-                <td class="trial-num">${item.openingDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="trial-num">${item.openingCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="trial-num">${item.periodDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="trial-num">${item.periodCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="trial-num">${item.endingDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="trial-num">${item.endingCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td class="tb-col-code">${item.code}</td>
+                <td class="tb-col-name">${item.name}</td>
+                <td class="tb-num tb-num-debit">${item.openingDebit ? fmt2(item.openingDebit) : ""}</td>
+                <td class="tb-num tb-num-credit">${item.openingCredit ? fmt2(item.openingCredit) : ""}</td>
+                <td class="tb-num tb-num-debit">${item.periodDebit ? fmt2(item.periodDebit) : ""}</td>
+                <td class="tb-num tb-num-credit">${item.periodCredit ? fmt2(item.periodCredit) : ""}</td>
+                <td class="tb-num tb-num-debit">${item.endingDebit ? fmt2(item.endingDebit) : ""}</td>
+                <td class="tb-num tb-num-credit">${item.endingCredit ? fmt2(item.endingCredit) : ""}</td>
             </tr>
-        `).join("");
+        `).join("") || '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af;">无数据</td></tr>';
 
-        const balanceOk = Math.abs(data.totals.endingDebit - data.totals.endingCredit) < 0.01;
-        if (result) {
-            result.value = balanceOk ? "试算结果平衡" : "试算结果不平衡";
+        const t = data.totals;
+        // 计算三组的借贷差额
+        const diffOpening = Math.abs(t.openingDebit - t.openingCredit);
+        const diffPeriod  = Math.abs(t.periodDebit  - t.periodCredit);
+        const diffEnding  = Math.abs(t.endingDebit  - t.endingCredit);
+        const allBalanced = diffOpening < 0.01 && diffPeriod < 0.01 && diffEnding < 0.01;
+
+        // 更新状态徽章
+        if (badge) {
+            if (allBalanced) {
+                badge.className = "tb-balance-badge tb-balance-ok";
+                badge.textContent = "✓ 试算平衡";
+            } else {
+                badge.className = "tb-balance-badge tb-balance-fail";
+                const parts = [];
+                if (diffOpening >= 0.01) parts.push(`期初差额 ${fmt2(diffOpening)}`);
+                if (diffPeriod  >= 0.01) parts.push(`本期差额 ${fmt2(diffPeriod)}`);
+                if (diffEnding  >= 0.01) parts.push(`期末差额 ${fmt2(diffEnding)}`);
+                badge.textContent = "✗ 不平衡：" + parts.join("；");
+            }
         }
 
         const footer = document.getElementById("trial-balance-foot");
         if (footer) {
             footer.innerHTML = `
-                <tr style="font-weight:bold; background:#fafafa;">
-                    <td colspan="2" style="text-align:center;">合计</td>
-                    <td class="trial-num">${data.totals.openingDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td class="trial-num">${data.totals.openingCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td class="trial-num">${data.totals.periodDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td class="trial-num">${data.totals.periodCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td class="trial-num">${data.totals.endingDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td class="trial-num">${data.totals.endingCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <tr>
+                    <td colspan="2" style="text-align:center; font-weight:700; padding:13px 16px;">合计</td>
+                    <td class="tb-num tb-num-debit">${fmt2(t.openingDebit)}</td>
+                    <td class="tb-num tb-num-credit">${fmt2(t.openingCredit)}</td>
+                    <td class="tb-num tb-num-debit">${fmt2(t.periodDebit)}</td>
+                    <td class="tb-num tb-num-credit">${fmt2(t.periodCredit)}</td>
+                    <td class="tb-num tb-num-debit">${fmt2(t.endingDebit)}</td>
+                    <td class="tb-num tb-num-credit">${fmt2(t.endingCredit)}</td>
                 </tr>
+                ${!allBalanced ? `
+                <tr style="background:#fef2f2;">
+                    <td colspan="2" style="text-align:center; color:#b91c1c; font-weight:700; padding:10px 16px;">差额</td>
+                    <td class="tb-num" style="color:${diffOpening>=0.01?'#b91c1c':'#9ca3af'}">${fmt2(t.openingDebit - t.openingCredit)}</td>
+                    <td class="tb-num"></td>
+                    <td class="tb-num" style="color:${diffPeriod>=0.01?'#b91c1c':'#9ca3af'}">${fmt2(t.periodDebit - t.periodCredit)}</td>
+                    <td class="tb-num"></td>
+                    <td class="tb-num" style="color:${diffEnding>=0.01?'#b91c1c':'#9ca3af'}">${fmt2(t.endingDebit - t.endingCredit)}</td>
+                    <td class="tb-num"></td>
+                </tr>` : ""}
             `;
         }
     };
