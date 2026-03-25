@@ -566,15 +566,15 @@ function initDefaults() {
           status: '启用', lastPeriod: '2026-01',
           summary: '计提本期城建税、教育费附加、地方教育附加',
           entries: [
-            { dir: '借', code: '6403', name: '营业税金及附加', method: '本期余额', ratio: 100 },
+            { dir: '借', code: '6403', name: '税金及附加', method: '本期余额', ratio: 100 },
             { dir: '贷', code: '222102', name: '应交城建税', method: '本期余额', ratio: 7 },
             { dir: '贷', code: '222103', name: '应交教育费附加', method: '本期余额', ratio: 3 },
             { dir: '贷', code: '222104', name: '应交地方教育附加', method: '本期余额', ratio: 2 }
           ],
           lines: [
-            { lineName:'城市维护建设税', baseCode:'222101', dataDir:'贷方净额', ratio:7,  debitCode:'6403', debitName:'营业税金及附加', creditCode:'222102', creditName:'应交城建税', aux:'部门/项目' },
-            { lineName:'教育附加',       baseCode:'222101', dataDir:'贷方净额', ratio:3,  debitCode:'6403', debitName:'营业税金及附加', creditCode:'222103', creditName:'应交教育费附加', aux:'部门/项目' },
-            { lineName:'地方教育附加',   baseCode:'222101', dataDir:'贷方净额', ratio:2,  debitCode:'6403', debitName:'营业税金及附加', creditCode:'222104', creditName:'应交地方教育附加', aux:'部门/项目' }
+            { lineName:'城市维护建设税', baseCode:'222101', dataDir:'贷方净额', ratio:7,  debitCode:'6403', debitName:'税金及附加', creditCode:'222102', creditName:'应交城建税', aux:'部门/项目' },
+            { lineName:'教育附加',       baseCode:'222101', dataDir:'贷方净额', ratio:3,  debitCode:'6403', debitName:'税金及附加', creditCode:'222103', creditName:'应交教育费附加', aux:'部门/项目' },
+            { lineName:'地方教育附加',   baseCode:'222101', dataDir:'贷方净额', ratio:2,  debitCode:'6403', debitName:'税金及附加', creditCode:'222104', creditName:'应交地方教育附加', aux:'部门/项目' }
           ]
         },
         {

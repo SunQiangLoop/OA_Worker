@@ -960,27 +960,30 @@ function doProfit() {
           } else if (netProfit < 0) {
             lines.push({ accountCode: '4103', accountName: '本年利润', summary: '结转损益', debit: parseFloat((-netProfit).toFixed(2)), credit: 0 });
           }
-          vouchers.push({ id: vId, date: dateStr, period: currentPeriod, summary: '结转损益', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines });
+          const vObj = { id: vId, date: dateStr, period: currentPeriod, summary: '结转损益', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines, sourceType: 'ProfitLossClosing' };
+          vouchers.unshift(vObj);
           generated.push(vId);
         } else {
           // ── 两张凭证：收入类 + 费用类 ──
           const incomeItems = plData.filter(r => r.type === 'income');
           const expenseItems = plData.filter(r => r.type === 'expense');
 
-          if (incomeItems.length > 0) {
-            const vId1 = nextVoucherNo('转');
-            const lines1 = incomeItems.map(r => ({ accountCode: r.code, accountName: r.name, summary: '结转收入', debit: parseFloat(r.amount.toFixed(2)), credit: 0 }));
-            lines1.push({ accountCode: '4103', accountName: '本年利润', summary: '结转收入', debit: 0, credit: parseFloat(totalIncome.toFixed(2)) });
-            vouchers.push({ id: vId1, date: dateStr, period: currentPeriod, summary: '结转损益—收入类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines1 });
-            generated.push(vId1);
-          }
-
           if (expenseItems.length > 0) {
             const vId2 = nextVoucherNo('转');
             const lines2 = [{ accountCode: '4103', accountName: '本年利润', summary: '结转费用', debit: parseFloat(totalExpense.toFixed(2)), credit: 0 }];
             expenseItems.forEach(r => lines2.push({ accountCode: r.code, accountName: r.name, summary: '结转费用', debit: 0, credit: parseFloat(r.amount.toFixed(2)) }));
-            vouchers.push({ id: vId2, date: dateStr, period: currentPeriod, summary: '结转损益—费用类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines2 });
+            const vObj2 = { id: vId2, date: dateStr, period: currentPeriod, summary: '结转损益—费用类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines2, sourceType: 'ProfitLossClosing' };
+            vouchers.unshift(vObj2);
             generated.push(vId2);
+          }
+
+          if (incomeItems.length > 0) {
+            const vId1 = nextVoucherNo('转');
+            const lines1 = incomeItems.map(r => ({ accountCode: r.code, accountName: r.name, summary: '结转收入', debit: parseFloat(r.amount.toFixed(2)), credit: 0 }));
+            lines1.push({ accountCode: '4103', accountName: '本年利润', summary: '结转收入', debit: 0, credit: parseFloat(totalIncome.toFixed(2)) });
+            const vObj1 = { id: vId1, date: dateStr, period: currentPeriod, summary: '结转损益—收入类', status: '待审核', user: '结转损益(系统)', createdAt: new Date().toLocaleString('zh-CN'), lines: lines1, sourceType: 'ProfitLossClosing' };
+            vouchers.unshift(vObj1);
+            generated.push(vId1);
           }
         }
 
@@ -999,7 +1002,7 @@ function doProfit() {
         steps[currentPeriod].profit = true;
         lsSet('QM_StepsDone', steps);
 
-        showToast(`✅ 结转完成，生成凭证 ${generated.join('、')}，本期净利润 ${fmt(netProfit)}`, 'success');
+        showToast(`✅ 结转完成！凭证 ${generated.join('、')} 已生成。请前往【凭证审核中心】进行统一审核记账。`, 'success');
         updateStepsNav();
         renderProfit();
       }, 500);

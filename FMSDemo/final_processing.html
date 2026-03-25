@@ -127,7 +127,7 @@ tr:last-child td { border-bottom:none; }
     </div>
   </div>
 
-  <!-- 生成凭证预览 -->
+  <!-- 自动转账操作区 -->
   <div class="card">
     <div class="card-head">
       <div class="card-head-left">
@@ -157,21 +157,6 @@ tr:last-child td { border-bottom:none; }
       </div>
     </div>
   </div>
-
-  <!-- 已生成凭证记录 -->
-  <div class="card" id="historyCard" style="display:none;">
-    <div class="card-head">
-      <h3>✅ 已生成凭证</h3>
-    </div>
-    <div class="card-body">
-      <table>
-        <thead>
-          <tr><th>凭证号</th><th>日期</th><th>摘要</th><th class="right">金额</th><th>状态</th></tr>
-        </thead>
-        <tbody id="historyTbody"></tbody>
-      </table>
-    </div>
-  </div>
 </div>
 
 <div class="bottom-bar">
@@ -193,21 +178,53 @@ document.getElementById('periodBadge').textContent = period;
 
 let vatBase=0, tax1=0, tax2=0, tax3=0, totalTax=0;
 
+// ── 读取会计科目名称 ──────────────────────────────────────
+function getSubjectMap() {
+    const subjects = JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]');
+    const map = {};
+    subjects.forEach(item => {
+        const code = (item.code || '').toString().trim();
+        if (code) map[code] = item.name || '';
+    });
+    return map;
+}
+function getSubjectName(code, map) {
+    return (map && map[code]) ? map[code] : '';
+}
+
+// ── 读取计提税金规则（优先从 TaxAccrualRules，否则用默认） ──
+function loadTaxRules() {
+    const std = localStorage.getItem('AccountingStandard') || 'enterprise';
+    const defaultDebitCode = std === 'enterprise' ? '6403' : '5403';
+    const defaultRules = [
+        { taxName: '城市维护建设税', debitCode: defaultDebitCode, creditCode: '222102', rate: 7 },
+        { taxName: '教育附加',       debitCode: defaultDebitCode, creditCode: '222103', rate: 3 },
+        { taxName: '地方教育附加',   debitCode: defaultDebitCode, creditCode: '222104', rate: 2 }
+    ];
+    try {
+        const raw = localStorage.getItem('TaxAccrualRules') || sessionStorage.getItem('TaxAccrualRules') || '[]';
+        const stored = JSON.parse(raw);
+        if (Array.isArray(stored) && stored.length > 0) return stored;
+    } catch(e) {}
+    return defaultRules;
+}
+
 // ── 读取本期凭证，计算增值税余额 ──────────────────────────
 function loadData() {
   const vouchers = ssGet('ManualVouchers') || [];
-  // 取已记账/已审核凭证，同时兼容 v.date 和 v.period 两种字段
+  // 取已记账/已审核/待审核凭证，以便在计提时包含未审核数据
   const periodVouchers = vouchers.filter(v =>
-    (v.status === '已记账' || v.status === '已审核') &&
+    (v.status === '已记账' || v.status === '已审核' || v.status === '待审核') &&
     ((v.date||'').startsWith(period) || v.period === period)
   );
 
   let credit222101 = 0, debit222101 = 0;
   periodVouchers.forEach(v => {
     (v.lines||[]).forEach(l => {
-      const code = (l.accountCode||l.account||'').split(' ')[0];
-      // 兼容会计引擎格式 '2221'（split结果）和手动录入格式 '222101'
-      if (code === '2221' || code === '222101') {
+      const code = (l.accountCode||l.account||'').toString().trim().split(/[\s\u3000]/)[0];
+      // 匹配应交增值税及所有子科目（2221、222101、22210101~22210199 等）
+      // 排除其他税种科目（222102城建税、222103教育附加、222104地方教育附加等）
+      if (code === '2221' || code.startsWith('222101')) {
         const c = parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
         const d = parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
         credit222101 += c;
@@ -230,16 +247,16 @@ function loadData() {
   const hint = document.getElementById('vatHint');
   if (vouchers.length === 0) {
     hint.className = 'alert alert-warning';
-    hint.textContent = '⚠️ 未找到凭证数据，请确认已在主系统录入并记账。';
+    hint.textContent = '⚠️ 未找到凭证数据，请确认已在主系统录入凭证。';
   } else if (periodVouchers.length === 0) {
     hint.className = 'alert alert-warning';
-    hint.textContent = `⚠️ 本期（${period}）暂无已记账凭证。共找到 ${vouchers.length} 条凭证（其他期间）。`;
+    hint.textContent = `⚠️ 本期（${period}）暂无可用凭证。共找到 ${vouchers.length} 条凭证（其他期间）。`;
   } else if (vatBase === 0) {
     hint.className = 'alert alert-warning';
-    hint.textContent = `本期（${period}）已找到 ${periodVouchers.length} 条记账凭证，但应交增值税（2221/222101）余额为 0，无需计提。`;
+    hint.textContent = `本期（${period}）已找到 ${periodVouchers.length} 条凭证，但应交增值税（2221/222101）余额为 0，无需计提。`;
   } else {
     hint.className = 'alert alert-info';
-    hint.textContent = `本期（${period}）共找到 ${periodVouchers.length} 条已记账凭证，222101 贷方净额 ¥${fmt(vatBase)}，应计提税金合计 ¥${fmt(totalTax)}。`;
+    hint.textContent = `本期（${period}）共找到 ${periodVouchers.length} 条凭证（含待审核），应交增值税（2221/222101*）贷方净额 ¥${fmt(vatBase)}，应计提税金合计 ¥${fmt(totalTax)}。`;
   }
 
   renderPreview();
@@ -254,14 +271,34 @@ function renderPreview() {
     document.getElementById('execHint').textContent = '无需操作';
     return;
   }
-  const lines = [
-    { summary:'计提城市维护建设税', code:'6403', name:'营业税金及附加', debit:fmt(tax1), credit:'' },
-    { summary:'计提教育费附加',     code:'6403', name:'营业税金及附加', debit:fmt(tax2), credit:'' },
-    { summary:'计提地方教育附加',   code:'6403', name:'营业税金及附加', debit:fmt(tax3), credit:'' },
-    { summary:'计提城市维护建设税', code:'222102', name:'应交城市维护建设税', debit:'', credit:fmt(tax1) },
-    { summary:'计提教育费附加',     code:'222103', name:'应交教育费附加',     debit:'', credit:fmt(tax2) },
-    { summary:'计提地方教育附加',   code:'222104', name:'应交地方教育附加',   debit:'', credit:fmt(tax3) },
-  ];
+  const subjectMap = getSubjectMap();
+  const taxRules = loadTaxRules();
+  // 计算每条规则的金额
+  const amounts = [tax1, tax2, tax3];
+
+  // 借方合并：相同借方科目只显示一行
+  const debitMerge = {};
+  const creditLines = [];
+  taxRules.forEach((rule, i) => {
+    const amt = amounts[i] || 0;
+    if (amt <= 0) return;
+    const dc = (rule.debitCode || '6403').toString().trim();
+    debitMerge[dc] = (debitMerge[dc] || 0) + amt;
+    const cc = (rule.creditCode || '').toString().trim();
+    const ccName = getSubjectName(cc, subjectMap) || rule.taxName || '';
+    const summary = `计提${rule.taxName || '税金'}`;
+    creditLines.push({ summary, code: cc, name: ccName, debit: '', credit: fmt(amt) });
+  });
+
+  const lines = [];
+  // 先输出借方合并行（一借）
+  Object.entries(debitMerge).forEach(([dc, amt]) => {
+    const dcName = getSubjectName(dc, subjectMap);
+    lines.push({ summary: '计提税金及附加', code: dc, name: dcName, debit: fmt(amt), credit: '' });
+  });
+  // 再输出贷方明细行（多贷）
+  creditLines.forEach(l => lines.push(l));
+
   tbody.innerHTML = lines.map(l => `<tr>
     <td>${l.summary}</td>
     <td class="mono">${l.code}</td>
@@ -279,30 +316,46 @@ function checkDone() {
   const isDone = !!(doneMap[period] && doneMap[period]['autoTransfer']);
   document.getElementById('doneAlert').style.display = isDone ? '' : 'none';
   if (isDone) {
-    document.getElementById('execBtn').textContent = '已完成（重新执行）';
-    loadHistory();
+    document.getElementById('execBtn').textContent = '已生成凭证（重新执行）';
   }
-}
-
-function loadHistory() {
-  const vouchers = ssGet('ManualVouchers') || [];
-  const hist = vouchers.filter(v => v.sourceType === 'AutoTransfer' && (v.date||'').startsWith(period));
-  const card = document.getElementById('historyCard');
-  if (hist.length === 0) { card.style.display='none'; return; }
-  card.style.display = '';
-  document.getElementById('historyTbody').innerHTML = hist.map(v => `<tr>
-    <td class="mono" style="color:#3b82f6;">${v.id}</td>
-    <td>${v.date}</td>
-    <td>${v.summary}</td>
-    <td class="right">¥${fmt(parseFloat(v.amount||0))}</td>
-    <td><span class="badge badge-green">${v.status}</span></td>
-  </tr>`).join('');
 }
 
 // ── 执行自动转账 ──────────────────────────────────────────
 function executeAutoTransfer() {
   if (vatBase === 0) { toast('增值税余额为 0，无需计提',''); return; }
-  if (!confirm(`确认生成本期（${period}）计提税金凭证？\n\n• 借方：营业税金及附加 ¥${fmt(totalTax)}\n• 贷方：城建税 ¥${fmt(tax1)} / 教育附加 ¥${fmt(tax2)} / 地方教育附加 ¥${fmt(tax3)}`)) return;
+  const subjectMap = getSubjectMap();
+  const taxRules = loadTaxRules();
+  const amounts = [tax1, tax2, tax3];
+  // 借方合并
+  const debitMerge = {};
+  const creditVoucherLines = [];
+  taxRules.forEach((rule, i) => {
+    const amt = amounts[i] || 0;
+    if (amt <= 0) return;
+    const dc = (rule.debitCode || '6403').toString().trim();
+    debitMerge[dc] = (debitMerge[dc] || 0) + amt;
+    const cc = (rule.creditCode || '').toString().trim();
+    const ccName = getSubjectName(cc, subjectMap) || rule.taxName || '';
+    creditVoucherLines.push({
+      summary: `计提${rule.taxName || '税金'}`,
+      accountCode: cc,
+      account: ccName ? `${cc} ${ccName}` : cc,
+      debit: '', credit: amt.toFixed(2)
+    });
+  });
+  const debitVoucherLines = Object.entries(debitMerge).map(([dc, amt]) => {
+    const dcName = getSubjectName(dc, subjectMap);
+    return {
+      summary: '计提税金及附加',
+      accountCode: dc,
+      account: dcName ? `${dc} ${dcName}` : dc,
+      debit: amt.toFixed(2), credit: ''
+    };
+  });
+  const debitNameStr = Object.entries(debitMerge).map(([dc]) => {
+    const n = getSubjectName(dc, subjectMap); return n || dc;
+  }).join('/');
+  if (!confirm(`确认生成本期（${period}）计提税金凭证？\n\n• 借方：${debitNameStr} ¥${fmt(totalTax)}\n• 贷方：城建税 ¥${fmt(tax1)} / 教育附加 ¥${fmt(tax2)} / 地方教育附加 ¥${fmt(tax3)}`)) return;
 
   const vouchers = ssGet('ManualVouchers') || [];
   // 生成凭证号
@@ -315,19 +368,13 @@ function executeAutoTransfer() {
   const newVoucher = {
     id: newId,
     date: period + '-' + today.slice(8,10),
-    amount: fmt(totalTax),
+    period: period,
+    amount: totalTax.toFixed(2),
     summary: `${period} 期末计提税金及附加`,
     user: '期末转账(系统)',
     status: '待审核',
     sourceType: 'AutoTransfer',
-    lines: [
-      { summary:'计提城市维护建设税', accountCode:'6403', account:'6403 营业税金及附加', debit:fmt(tax1), credit:'' },
-      { summary:'计提教育费附加',     accountCode:'6403', account:'6403 营业税金及附加', debit:fmt(tax2), credit:'' },
-      { summary:'计提地方教育附加',   accountCode:'6403', account:'6403 营业税金及附加', debit:fmt(tax3), credit:'' },
-      { summary:'计提城市维护建设税', accountCode:'222102', account:'222102 应交城市维护建设税', debit:'', credit:fmt(tax1) },
-      { summary:'计提教育费附加',     accountCode:'222103', account:'222103 应交教育费附加',     debit:'', credit:fmt(tax2) },
-      { summary:'计提地方教育附加',   accountCode:'222104', account:'222104 应交地方教育附加',   debit:'', credit:fmt(tax3) },
-    ]
+    lines: [...debitVoucherLines, ...creditVoucherLines]
   };
   vouchers.unshift(newVoucher);
   ssSave('ManualVouchers', vouchers);
@@ -338,10 +385,10 @@ function executeAutoTransfer() {
   doneMap[period]['autoTransfer'] = true;
   lsSet('QM_StepsDone', doneMap);
 
-  toast(`✅ 凭证 ${newId} 已生成，待审核`, 'ok');
+  toast(`✅ 凭证 ${newId} 已生成，请前往【凭证审核中心】处理`, 'ok');
+  document.getElementById('doneAlert').innerHTML = `✅ 本期计提税金凭证已生成并存入凭证库，可在左侧菜单的<b>【凭证审核中心】</b>中进行统一审核记账。`;
   document.getElementById('doneAlert').style.display = '';
-  document.getElementById('execBtn').textContent = '已完成（重新执行）';
-  loadHistory();
+  document.getElementById('execBtn').textContent = '已生成凭证（重新执行）';
 }
 
 // ── 初始化 ───────────────────────────────────────────────
