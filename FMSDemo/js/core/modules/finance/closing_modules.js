@@ -91,7 +91,12 @@
     // 2. 自动转账 - 修复方案丢失问题
     // =========================================================================
     window.VM_MODULES['AutoTransferTax'] = function(contentArea) {
-        const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
+        // 始终以本机当前年月为准，避免 QM_CurrentPeriod 停留在历史期间导致余额读取为0
+        const nowPeriod = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+        const storedPeriod = lsGet('QM_CurrentPeriod');
+        // 若存储值比当前月更旧或缺失，则更新为当前月
+        const period = (storedPeriod && storedPeriod >= nowPeriod) ? storedPeriod : nowPeriod;
+        if (period !== storedPeriod) lsSet('QM_CurrentPeriod', period);
         // 如果读不到数据，则初始化默认方案；同时迁移旧版方案（debitName 缺少科目代码）
         let schemes = lsGet('QM_AdvancedSchemes');
         if (!schemes || schemes.length === 0) {
@@ -110,28 +115,44 @@
         }
         const editingId = lsGet('QM_At_EditingId') || null;
 
-        function getBal(baseCode) {
+        function getBal(baseCode, filterPeriod) {
             const allV = fetchAllVouchers();
-            let d = 0, c = 0;
             const prefix = baseCode.toString().replace(/\D/g, '');
             if (!prefix) return { net: 0 };
-            allV.forEach(v => {
-                const vP = v.period || (v.date||'').substring(0,7);
-                if (vP !== period) return;
-                if (!['已记账', '已过账', '已审核', '待审核'].includes(v.status)) return;
-                (v.lines||[]).forEach(l => {
-                    const raw = (l.accountCode || l.account || '').toString().trim().split(/[\s\u3000]/)[0];
-                    const lCode = raw.replace(/\D/g, '');
-                    if (!lCode) return;
-                    // 双向匹配：lCode是prefix的子科目 或 lCode是prefix的父科目（≥4位防过宽）
-                    const isMatch = lCode.startsWith(prefix) || (lCode.length >= 4 && prefix.startsWith(lCode));
-                    if (isMatch) {
-                        d += parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
-                        c += parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
-                    }
+
+            const validStatuses = ['已记账', '已过账', '已审核', '待审核'];
+
+            function calcNet(vList) {
+                let d = 0, c = 0;
+                vList.forEach(v => {
+                    if (!validStatuses.includes(v.status)) return;
+                    (v.lines||[]).forEach(l => {
+                        const raw = (l.accountCode || l.account || '').toString().trim().split(/[\s\u3000]/)[0];
+                        const lCode = raw.replace(/\D/g, '');
+                        if (!lCode) return;
+                        // 双向匹配：子科目 或 父科目（≥4位防过宽）
+                        const isMatch = lCode.startsWith(prefix) || (lCode.length >= 4 && prefix.startsWith(lCode));
+                        if (isMatch) {
+                            d += parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
+                            c += parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
+                        }
+                    });
                 });
+                return Math.max(c - d, 0);
+            }
+
+            // 先按期间过滤
+            const targetPeriod = filterPeriod || period;
+            const periodV = allV.filter(v => {
+                const vP = (v.period || (v.date||'').substring(0,7) || '').substring(0,7);
+                return vP === targetPeriod;
             });
-            return { net: Math.max(c - d, 0) };
+            const netWithPeriod = calcNet(periodV);
+            if (netWithPeriod > 0) return { net: netWithPeriod };
+
+            // 回退：不限期间（防止期间标记不一致导致永远找不到）
+            const netAll = calcNet(allV);
+            return { net: netAll };
         }
 
         // 从 "222102 应交城市维护建设税" 中提取科目代码（首段纯数字）
@@ -150,7 +171,10 @@
             .at-table td { padding:12px; border-bottom:1px solid #ebeef5; font-size:13px; color:#606266; }
         </style>
         <div class="at-main">
-            <div style="margin-bottom:15px;"><button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#409eff; cursor:pointer; font-weight:700;">← 返回工作台</button></div>
+            <div style="margin-bottom:15px; display:flex; align-items:center; gap:16px;">
+                <button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#409eff; cursor:pointer; font-weight:700;">← 返回工作台</button>
+                <span style="background:#e6f1fc; color:#3182ce; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:700;">当前期间: ${period}</span>
+            </div>
             <div style="margin-bottom:20px;">
                 <button class="btn-at" style="background:#409eff; color:#fff;" onclick="window.atAddScheme()">+ 新增方案</button>
                 <button class="btn-at" style="background:#67c23a; color:#fff;" onclick="window.atRunBatch()">▶ 执行方案</button>
@@ -337,21 +361,318 @@
     };
 
     // =========================================================================
-    // 3. 结账向导
+    // 3. 结转损益向导 (ClosingWizardProfit)
     // =========================================================================
-    window.VM_MODULES['ClosingWizardProfit'] = function(contentArea) { renderClosingStep(contentArea, 'profit'); };
-    window.VM_MODULES['ClosingWizardClose'] = function(contentArea) { renderClosingStep(contentArea, 'close'); };
-
-    function renderClosingStep(contentArea, step) {
+    window.VM_MODULES['ClosingWizardProfit'] = function(contentArea) {
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
-        const status = lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
-        const isDone = (step === 'profit' ? status.profitDone : status.closed);
-        contentArea.innerHTML = `<div style="padding:40px; text-align:center;"><div style="background:#fff; border-radius:16px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,0.05); max-width:600px; margin:0 auto;"><div style="font-size:60px; margin-bottom:20px;">${step==='profit'?'⚖️':'🔒'}</div><h2 style="font-size:24px; margin-bottom:15px;">${step==='profit'?'结转本期损益':'期末总结账'}</h2><p style="color:#718096; margin-bottom:30px;">目标期间: ${period}</p>${isDone ? '<div style="color:#48bb78; font-weight:700;">✅ 已完成</div>' : `<button style="background:#3182ce; color:#fff; border:none; padding:12px 40px; border-radius:10px; font-weight:700; cursor:pointer;" onclick="window.doFinal('${step}')">开始执行</button>`}<div style="margin-top:20px;"><button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#3182ce; cursor:pointer;">← 返回工作台</button></div></div></div>`;
-        window.doFinal = (s) => {
-            if(!confirm('确定？')) return;
-            const cur = lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
-            if(s === 'profit') cur.profitDone = true; else cur.closed = true;
-            lsSet('QM_ClosingStatus', cur); alert('✅ 成功'); loadContent(s==='profit'?'ClosingWizardProfit':'ClosingWizardClose');
+
+        // 获取会计准则，决定"本年利润"科目代码
+        const std = (localStorage.getItem('AccountingStandard') || 'enterprise');
+        const profitCode = std === 'enterprise' ? '4103' : '3103';
+
+        // 默认模板：收入科目 & 成本费用科目
+        function getDefaultTpl() {
+            return {
+                income: [{ id: 'i1', ledger: '', codes: '5001,6001,6002,6051,6101,6111,6301,6302', targetCode: profitCode, word: '转' }],
+                cost:   [{ id: 'c1', ledger: '', codes: '6401,6402,6403,6601,6602,6603,6701,6711,6801', targetCode: profitCode, word: '转' }]
+            };
+        }
+        let tpl = lsGet('QM_ProfitTpl') || getDefaultTpl();
+        if (!tpl.income) tpl.income = getDefaultTpl().income;
+        if (!tpl.cost)   tpl.cost   = getDefaultTpl().cost;
+
+        // 从 sessionStorage 读取科目名称，找不到时从已有凭证行中反查
+        function getSubjectName(code) {
+            const codeStr = code.toString().trim();
+            try {
+                const subjects = JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]');
+                const found = subjects.find(s => (s.code||'').toString().trim() === codeStr);
+                if (found && found.name) return found.name;
+            } catch(e) {}
+            // 兜底：从已有凭证行的 account 字段中反查名称
+            try {
+                for (const v of fetchAllVouchers()) {
+                    for (const l of (v.lines || [])) {
+                        const lc = (l.accountCode || '').toString().trim();
+                        if (lc === codeStr) {
+                            const parts = (l.account || '').toString().trim().split(/\s+/);
+                            if (parts.length >= 2) return parts.slice(1).join(' ');
+                        }
+                    }
+                }
+            } catch(e) {}
+            return '';
+        }
+
+        // 计算某科目本期净余额（debit方向或credit方向）
+        function getPeriodBalance(code) {
+            const allV = fetchAllVouchers();
+            let d = 0, c = 0;
+            const prefix = code.toString().trim().replace(/\D/g, '');
+            allV.forEach(v => {
+                const vP = v.period || (v.date||'').substring(0,7);
+                if (vP !== period) return;
+                if (!['已记账','已过账','已审核','待审核'].includes(v.status)) return;
+                (v.lines||[]).forEach(l => {
+                    const raw = (l.accountCode||l.account||'').toString().trim().split(/[\s\u3000]/)[0].replace(/\D/g,'');
+                    if (!raw) return;
+                    if (raw.startsWith(prefix) || (raw.length >= 4 && prefix.startsWith(raw))) {
+                        d += parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
+                        c += parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
+                    }
+                });
+            });
+            return { debit: d, credit: c, netCredit: c - d, netDebit: d - c };
+        }
+
+        // 渲染模板行
+        function renderRows(arr, type) {
+            if (!arr.length) return `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:12px;">暂无配置，点击"+ 新增"添加</td></tr>`;
+            return arr.map((r, i) => `
+            <tr data-id="${r.id}" data-type="${type}">
+                <td style="text-align:center;">${i+1}</td>
+                <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','ledger',this.value)">
+                    <option value="">-请选择-</option>
+                    <option value="总账" ${r.ledger==='总账'?'selected':''}>总账</option>
+                </select></td>
+                <td><input class="cw-inp" style="width:100%;" value="${r.codes}" onchange="window.cwUpdateField('${type}','${r.id}','codes',this.value)" placeholder="如: 6001,6002,6301"></td>
+                <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','targetCode',this.value)">
+                    <option value="">-请选择-</option>
+                    <option value="4103" ${r.targetCode==='4103'?'selected':''}>4103 本年利润</option>
+                    <option value="3103" ${r.targetCode==='3103'?'selected':''}>3103 本年利润</option>
+                </select></td>
+                <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','word',this.value)">
+                    <option value="转" ${r.word==='转'?'selected':''}>转</option>
+                    <option value="记" ${r.word==='记'?'selected':''}>记</option>
+                </select></td>
+                <td><button onclick="window.cwDelRow('${type}','${r.id}')" style="color:#ef4444;background:none;border:none;cursor:pointer;font-weight:700;">删除</button></td>
+            </tr>`).join('');
+        }
+
+        contentArea.innerHTML = `
+        <style>
+            .cw-wrap { padding:24px; background:#f8fafc; min-height:100%; font-family:sans-serif; }
+            .cw-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:20px; overflow:hidden; }
+            .cw-card-head { padding:14px 20px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center; background:#f9fafb; }
+            .cw-card-head h3 { font-size:14px; font-weight:700; color:#111827; }
+            .cw-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .cw-table th { padding:10px 12px; text-align:left; background:#f9fafb; color:#6b7280; font-weight:600; border-bottom:1px solid #e5e7eb; white-space:nowrap; }
+            .cw-table td { padding:10px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+            .cw-table tr:last-child td { border-bottom:none; }
+            .cw-inp { border:1px solid #d1d5db; border-radius:5px; padding:6px 8px; font-size:13px; }
+            .cw-sel { border:1px solid #d1d5db; border-radius:5px; padding:6px 8px; font-size:13px; }
+            .cw-btn { padding:7px 16px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; border:none; }
+        </style>
+        <div class="cw-wrap">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <button onclick="loadContent('PeriodEndCenter')" style="background:none;border:none;color:#3b82f6;cursor:pointer;font-size:13px;">← 返回工作台</button>
+                    <span style="font-size:18px; font-weight:800; color:#111827; margin-left:12px;">结转损益配置</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;">期间: ${period}</span>
+                    <button class="cw-btn" style="background:#2563eb;color:#fff;" onclick="window.cwExecute()">▶ 执行损益结转</button>
+                </div>
+            </div>
+
+            <!-- 结转收入 -->
+            <div class="cw-card">
+                <div class="cw-card-head">
+                    <h3>② 结转收入</h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="cw-btn" style="background:#fff;border:1px solid #d1d5db;" onclick="window.cwSave()">保存</button>
+                        <button class="cw-btn" style="background:#2563eb;color:#fff;" onclick="window.cwAddRow('income')">+ 新增</button>
+                    </div>
+                </div>
+                <table class="cw-table">
+                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>收入科目范围</th><th style="width:160px;">转入科目</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
+                    <tbody id="cw-income-body">${renderRows(tpl.income, 'income')}</tbody>
+                </table>
+            </div>
+
+            <!-- 结转成本费用 -->
+            <div class="cw-card">
+                <div class="cw-card-head">
+                    <h3>③ 结转成本费用</h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="cw-btn" style="background:#fff;border:1px solid #d1d5db;" onclick="window.cwSave()">保存</button>
+                        <button class="cw-btn" style="background:#2563eb;color:#fff;" onclick="window.cwAddRow('cost')">+ 新增</button>
+                    </div>
+                </div>
+                <table class="cw-table">
+                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>成本费用科目范围</th><th style="width:160px;">转入科目</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
+                    <tbody id="cw-cost-body">${renderRows(tpl.cost, 'cost')}</tbody>
+                </table>
+            </div>
+
+            <!-- 执行预览区 -->
+            <div class="cw-card" id="cw-preview-card" style="display:none;">
+                <div class="cw-card-head"><h3>④ 待生成凭证预览</h3></div>
+                <div id="cw-preview-body" style="padding:16px;"></div>
+            </div>
+        </div>`;
+
+        // ── 更新字段 ──
+        window.cwUpdateField = function(type, id, field, val) {
+            const arr = type === 'income' ? tpl.income : tpl.cost;
+            const row = arr.find(r => r.id === id);
+            if (row) row[field] = val;
         };
-    }
+
+        // ── 新增行 ──
+        window.cwAddRow = function(type) {
+            const newId = (type==='income'?'i':'c') + Date.now();
+            const arr = type === 'income' ? tpl.income : tpl.cost;
+            arr.push({ id: newId, ledger: '', codes: '', targetCode: profitCode, word: '转' });
+            lsSet('QM_ProfitTpl', tpl);
+            loadContent('ClosingWizardProfit');
+        };
+
+        // ── 删除行 ──
+        window.cwDelRow = function(type, id) {
+            if (type === 'income') tpl.income = tpl.income.filter(r => r.id !== id);
+            else tpl.cost = tpl.cost.filter(r => r.id !== id);
+            lsSet('QM_ProfitTpl', tpl);
+            loadContent('ClosingWizardProfit');
+        };
+
+        // ── 保存模板 ──
+        window.cwSave = function() {
+            lsSet('QM_ProfitTpl', tpl);
+            alert('✅ 模板已保存');
+        };
+
+        // ── 执行损益结转 ──
+        window.cwExecute = function() {
+            lsSet('QM_ProfitTpl', tpl);
+            const allVouchers = fetchAllVouchers();
+            const maxSeq = Math.max(0, ...allVouchers.filter(v => (v.id||'').startsWith('转-')).map(v => parseInt((v.id||'').split('-')[1])||0));
+            let nextSeq = maxSeq;
+            const newVouchers = [];
+            const previewLines = [];
+
+            // ── 处理收入结转（借：收入科目，贷：本年利润）──
+            tpl.income.forEach(row => {
+                if (!row.codes || !row.targetCode) return;
+                const codes = row.codes.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
+                const entryLines = [];
+                let total = 0;
+                codes.forEach(code => {
+                    const bal = getPeriodBalance(code);
+                    const amt = Math.round(bal.netCredit * 100) / 100;
+                    if (amt <= 0) return;
+                    const name = getSubjectName(code);
+                    entryLines.push({ summary: `结转${name||code}`, accountCode: code, account: name ? `${code} ${name}` : code, debit: amt.toFixed(2), credit: '' });
+                    previewLines.push({ summary: `结转${name||code}`, code, name, debit: amt.toFixed(2), credit: '' });
+                    total += amt;
+                });
+                if (entryLines.length > 0) {
+                    const tName = getSubjectName(row.targetCode);
+                    entryLines.push({ summary: '结转本期收入', accountCode: row.targetCode, account: tName ? `${row.targetCode} ${tName}` : row.targetCode, debit: '', credit: total.toFixed(2) });
+                    previewLines.push({ summary: '结转本期收入', code: row.targetCode, name: tName, debit: '', credit: total.toFixed(2) });
+                    nextSeq++;
+                    newVouchers.push({ id: `转-${String(nextSeq).padStart(4,'0')}`, date: `${period}-28`, period, amount: total.toFixed(2), summary: '结转本期收入', user: '期末结转(系统)', status: '待审核', lines: entryLines });
+                }
+            });
+
+            // ── 处理成本费用结转（借：本年利润，贷：成本费用科目）──
+            tpl.cost.forEach(row => {
+                if (!row.codes || !row.targetCode) return;
+                const codes = row.codes.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
+                const entryLines = [];
+                let total = 0;
+                codes.forEach(code => {
+                    const bal = getPeriodBalance(code);
+                    const amt = Math.round(bal.netDebit * 100) / 100;
+                    if (amt <= 0) return;
+                    const name = getSubjectName(code);
+                    entryLines.push({ summary: `结转${name||code}`, accountCode: code, account: name ? `${code} ${name}` : code, debit: '', credit: amt.toFixed(2) });
+                    previewLines.push({ summary: `结转${name||code}`, code, name, debit: '', credit: amt.toFixed(2) });
+                    total += amt;
+                });
+                if (entryLines.length > 0) {
+                    const tName = getSubjectName(row.targetCode);
+                    entryLines.unshift({ summary: '结转本期成本费用', accountCode: row.targetCode, account: tName ? `${row.targetCode} ${tName}` : row.targetCode, debit: total.toFixed(2), credit: '' });
+                    previewLines.unshift({ summary: '结转本期成本费用', code: row.targetCode, name: tName, debit: total.toFixed(2), credit: '' });
+                    nextSeq++;
+                    newVouchers.push({ id: `转-${String(nextSeq).padStart(4,'0')}`, date: `${period}-28`, period, amount: total.toFixed(2), summary: '结转本期成本费用', user: '期末结转(系统)', status: '待审核', lines: entryLines });
+                }
+            });
+
+            if (newVouchers.length === 0) {
+                // 显示预览区说明没有余额
+                document.getElementById('cw-preview-card').style.display = '';
+                document.getElementById('cw-preview-body').innerHTML = `<div style="color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:12px;">⚠️ 本期（${period}）各科目余额均为 0，未生成凭证。请确认凭证已录入并记账。</div>`;
+                return;
+            }
+
+            // 显示预览
+            document.getElementById('cw-preview-card').style.display = '';
+            document.getElementById('cw-preview-body').innerHTML = `
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#f9fafb;"><th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb;">摘要</th><th style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">科目</th><th style="padding:8px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">借方</th><th style="padding:8px 12px;text-align:right;border-bottom:1px solid #e5e7eb;">贷方</th></tr></thead>
+                    <tbody>${previewLines.map(l=>`<tr><td style="padding:8px 12px;">${l.summary}</td><td style="padding:8px 12px;font-family:monospace;">${l.code} ${l.name||''}</td><td style="padding:8px 12px;text-align:right;color:${l.debit?'#1d4ed8':'#9ca3af'};">${l.debit?'¥'+l.debit:'-'}</td><td style="padding:8px 12px;text-align:right;color:${l.credit?'#dc2626':'#9ca3af'};">${l.credit?'¥'+l.credit:'-'}</td></tr>`).join('')}</tbody>
+                </table>
+                <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:12px; align-items:center;">
+                    <span style="font-size:12px;color:#6b7280;">共 ${newVouchers.length} 张凭证</span>
+                    <button class="cw-btn" style="background:#059669;color:#fff;" onclick="window.cwConfirmExecute()">确认生成凭证</button>
+                </div>`;
+
+            // 暂存待确认的凭证
+            window._cwPendingVouchers = newVouchers;
+        };
+
+        // ── 确认写入凭证 ──
+        window.cwConfirmExecute = function() {
+            const pending = window._cwPendingVouchers || [];
+            if (!pending.length) return;
+            const allVouchers = fetchAllVouchers();
+            // 先删除本期已有的结转凭证（防止重复）
+            const filtered = allVouchers.filter(v => !(v.period === period && v.user === '期末结转(系统)' && ['结转本期收入','结转本期成本费用'].includes(v.summary)));
+            const merged = [...pending, ...filtered];
+            if (typeof window.saveManualVouchers === 'function') {
+                window.saveManualVouchers(merged);
+            } else {
+                sessionStorage.setItem('ManualVouchers', JSON.stringify(merged));
+            }
+            const steps = lsGet('QM_StepsDone') || {};
+            if (!steps[period]) steps[period] = {};
+            steps[period].profit = true;
+            lsSet('QM_StepsDone', steps);
+            window._cwPendingVouchers = null;
+            alert(`✅ 已生成 ${pending.length} 张结转凭证，请前往凭证审核中心处理。`);
+            loadContent('ClosingWizardProfit');
+        };
+    };
+
+    // =========================================================================
+    // 4. 期末结账向导 (ClosingWizardClose)
+    // =========================================================================
+    window.VM_MODULES['ClosingWizardClose'] = function(contentArea) {
+        const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
+        const status = lsGet('QM_ClosingStatus') || { closed: false };
+        const isDone = !!status.closed;
+        contentArea.innerHTML = `
+        <div style="padding:40px; text-align:center;">
+            <div style="background:#fff; border-radius:16px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,0.05); max-width:600px; margin:0 auto;">
+                <div style="font-size:60px; margin-bottom:20px;">🔒</div>
+                <h2 style="font-size:24px; margin-bottom:15px;">期末总结账</h2>
+                <p style="color:#718096; margin-bottom:30px;">目标期间: ${period}</p>
+                ${isDone
+                    ? '<div style="color:#48bb78;font-weight:700;font-size:16px;">✅ 已完成结账</div>'
+                    : `<button style="background:#3182ce;color:#fff;border:none;padding:12px 40px;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px;" onclick="window.doCloseMonth()">执行结账</button>`}
+                <div style="margin-top:20px;">
+                    <button onclick="loadContent('PeriodEndCenter')" style="background:none;border:none;color:#3182ce;cursor:pointer;">← 返回工作台</button>
+                </div>
+            </div>
+        </div>`;
+        window.doCloseMonth = function() {
+            if (!confirm(`确认对【${period}】执行结账？结账后本期将锁定。`)) return;
+            const cur = lsGet('QM_ClosingStatus') || {};
+            cur.closed = true;
+            lsSet('QM_ClosingStatus', cur);
+            alert('✅ 结账成功');
+            loadContent('ClosingWizardClose');
+        };
+    };
 })();

@@ -10533,62 +10533,45 @@ function loadContent(moduleCode, element = null) {
     // 45. 资产负债表 (ReportBalanceSheet) - [清空版：纯净数据]
     // =========================================================================
     else if (moduleCode === "ReportBalanceSheet") {
-        // 1. 获取本年利润 (这是让报表平衡的关键！)
-        // 利润表算出的"净利润"，最终会变成资产负债表里的"权益"
-        const profitResult =
-            typeof calculateRealProfit === "function"
-                ? calculateRealProfit()
-                : { profit: 0 };
-        const currentProfit = profitResult.profit;
+        // 遍历凭证，累加余额
+        // 纳入所有状态（待审核/已审核/已记账），让报表实时反映凭证数据
+        const vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+        const bsStatuses = ["待审核", "已审核", "已记账", "已过账"];
 
-        // 2. 初始化报表结构
-        // 我们把期初余额全部设为 0，只保留科目壳子，这样数据才干净
-        let subjectBalances = {
-            1001: 0,
-            1002: 0,
-            1122: 0,
-            1601: 0, // 资产类
-            2202: 0,
-            2203: 0,
-            2221: 0, // 负债类
-            4001: 0,
-            4103: 0, // 权益类
-        };
-
-        // 3. 遍历凭证，累加发生额 (只算已生效的)
-        const vouchers = JSON.parse(
-            sessionStorage.getItem("ManualVouchers") || "[]"
-        );
+        const subjectBalances = {};
+        // 同时计算损益净额，用于自动填充"本年利润"（当没有结转凭证时）
+        let plNet = 0; // 正值 = 利润，负值 = 亏损
 
         vouchers.forEach((v) => {
-            if (v.status === "已审核" || v.status === "已记账") {
-                if (v.lines) {
-                    v.lines.forEach((line) => {
-                        const code = line.account.split(" ")[0]; // 取科目代码
-                        const debit = parseFloat(line.debit) || 0;
-                        const credit = parseFloat(line.credit) || 0;
+            if (!bsStatuses.includes(v.status)) return;
+            (v.lines || []).forEach((line) => {
+                const rawCode = (line.accountCode || line.account || "").trim();
+                const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
+                if (!code) return;
+                const debit = parseFloat(line.debit) || 0;
+                const credit = parseFloat(line.credit) || 0;
+                if (subjectBalances[code] === undefined) subjectBalances[code] = 0;
 
-                        // 动态初始化：如果凭证里用了新科目，自动加进来，初始为0
-                        if (subjectBalances[code] === undefined) subjectBalances[code] = 0;
-
-                        // ★★★ 核心计算公式 ★★★
-                        // 资产 (1开头)：借加贷减
-                        if (code.startsWith("1")) {
-                            subjectBalances[code] += debit - credit;
-                        }
-                        // 负债 (2开头) & 权益 (4开头)：贷加借减
-                        else if (code.startsWith("2") || code.startsWith("4")) {
-                            subjectBalances[code] += credit - debit;
-                        }
-                        // 损益类 (6开头) 不在这里直接算，而是通过下面的 currentProfit 汇总进来
-                    });
+                if (code.startsWith("1")) {
+                    // 资产类：借增贷减
+                    subjectBalances[code] += debit - credit;
+                } else if (code.startsWith("2") || code.startsWith("3") || code.startsWith("4")) {
+                    // 负债 & 权益类（3=小企业准则权益，4=企业准则权益）：贷增借减
+                    subjectBalances[code] += credit - debit;
+                } else if (code.startsWith("5") || code.startsWith("6")) {
+                    // 损益类：收入贡献利润(贷-借)，费用减少利润(借-贷)
+                    // 收入科目：5001/5002/5051/5101/5301/6001/6002/6011/6051/6111/6301...
+                    const isIncome = /^(50|51|52|53|60[0-9](?!401|402|403)|61|62|63)/.test(code);
+                    const isExpense = /^(54|55|56|58|64|65|66|67|68|69)/.test(code);
+                    if (isIncome) plNet += credit - debit;
+                    else if (isExpense) plNet += -(debit - credit);
                 }
-            }
+            });
         });
 
-        // 4. 注入本年利润 (这一步是平账的核心)
-        // 把利润表算出来的钱，塞进 "4103 本年利润"
-        subjectBalances["4103"] = (subjectBalances["4103"] || 0) + currentProfit;
+        // 将损益净额注入"本年利润(4103)"
+        // 若已有结转凭证（4103有余额），则 plNet 接近0，不会重复计入
+        subjectBalances["4103"] = (subjectBalances["4103"] || 0) + plNet;
 
         // 5. 分类与渲染（支持模板联动）
         let assets = { total: 0, items: [] };
@@ -10670,12 +10653,12 @@ function loadContent(moduleCode, element = null) {
             { name: "负债合计", type: "非流动负债", codesA: "", opA: "+", codesB: "", opB: "+" },
 
             { name: "所有者权益（或股东权益）：", type: "所有者权益", codesA: "", opA: "+", codesB: "", opB: "+" },
-            { name: "实收资本（或股本）", type: "所有者权益", codesA: "4001", opA: "+", codesB: "", opB: "+" },
-            { name: "资本公积", type: "所有者权益", codesA: "4002", opA: "+", codesB: "", opB: "+" },
+            { name: "实收资本（或股本）", type: "所有者权益", codesA: "3001,4001", opA: "+", codesB: "", opB: "+" },
+            { name: "资本公积", type: "所有者权益", codesA: "3002,4002", opA: "+", codesB: "", opB: "+" },
             { name: "减：库存股", type: "所有者权益", codesA: "", opA: "-", codesB: "", opB: "+" },
             { name: "盈余公积", type: "所有者权益", codesA: "4101", opA: "+", codesB: "", opB: "+" },
             { name: "一般风险准备", type: "所有者权益", codesA: "", opA: "+", codesB: "", opB: "+" },
-            { name: "未分配利润", type: "所有者权益", codesA: "4103,4104", opA: "+", codesB: "", opB: "+" },
+            { name: "未分配利润", type: "所有者权益", codesA: "3103,3104,4103,4104", opA: "+", codesB: "", opB: "+" },
             { name: "归属于母公司所有者权益合计", type: "所有者权益", codesA: "", opA: "+", codesB: "", opB: "+" },
             { name: "少数股东权益", type: "所有者权益", codesA: "", opA: "+", codesB: "", opB: "+" },
             { name: "所有者权益合计", type: "所有者权益", codesA: "", opA: "+", codesB: "", opB: "+" },
@@ -10868,57 +10851,43 @@ function loadContent(moduleCode, element = null) {
             sessionStorage.getItem("ManualVouchers") || "[]"
         );
 
+        // 包含待审核凭证；但排除期末结转系统凭证（它们会把收入/费用归零，导致利润表显示0）
+        const isStatuses = ["待审核", "已审核", "已记账", "已过账"];
+        const isClosingV = (v) => (v.user || "").includes("期末结转") || (v.summary || "").includes("期末结转");
         vouchers.forEach((v) => {
-            if (v.status === "已审核" || v.status === "已记账" || v.status === "已过账") {
-                if (v.lines) {
-                    v.lines.forEach((line) => {
-                        const account = line.account ? line.account.trim() : "";
-                        const code = account.split(" ")[0];
-                        const val = parseFloat(line.debit) || 0;
-                        const valCredit = parseFloat(line.credit) || 0;
+            if (!isStatuses.includes(v.status)) return;
+            if (isClosingV(v)) return; // 跳过结转凭证
+            (v.lines || []).forEach((line) => {
+                const rawCode = (line.accountCode || line.account || "").trim();
+                const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
+                const val = parseFloat(line.debit) || 0;
+                const valCredit = parseFloat(line.credit) || 0;
 
-                        // 收入：小企业准则(50xx/51xx/53xx) + 企业准则(60xx/61xx/63xx) + 关键字
-                        if (
-                            code.startsWith("500") || code.startsWith("505") ||
-                            code.startsWith("510") || code.startsWith("530") ||
-                            code.startsWith("60") || code.startsWith("61") || code.startsWith("63") ||
-                            account.includes("收入")
-                        ) {
-                            data.income += valCredit;
-                        }
-                        // 成本：小企业准则(54xx) + 企业准则(6401/6402) + 关键字
-                        else if (
-                            code.startsWith("540") ||
-                            code.startsWith("6401") || code.startsWith("6402") ||
-                            account.includes("成本")
-                        ) {
-                            data.cost += val;
-                        }
-                        // 税金附加：小企业准则(5403) + 企业准则(6403)
-                        else if (code.startsWith("5403") || code.startsWith("6403") || account.includes("税金")) {
-                            data.tax += val;
-                        }
-                        // 销售费用：小企业准则(5601) + 企业准则(6601)
-                        else if (code.startsWith("5601") || code.startsWith("6601") || account.includes("销售费用")) {
-                            data.saleExp += val;
-                        }
-                        // 管理费用：小企业准则(5602) + 企业准则(6602)
-                        else if (
-                            code.startsWith("5602") || code.startsWith("6602") ||
-                            account.includes("管理费") || account.includes("办公") || account.includes("工资")
-                        ) {
-                            data.adminExp += val;
-                        }
-                        // 财务费用：小企业准则(5603) + 企业准则(6603)
-                        else if (
-                            code.startsWith("5603") || code.startsWith("6603") ||
-                            account.includes("财务费") || account.includes("利息")
-                        ) {
-                            data.finExp += val;
-                        }
-                    });
+                // 收入：小企业准则(5001/5051/5101/5301) + 企业准则(6001/6011/6051/6111/6301)
+                if (/^(5001|5002|5051|5101|5301|6001|6002|6011|6051|6111|6301)/.test(code)) {
+                    data.income += valCredit - val; // 贷方净额
                 }
-            }
+                // 成本：小企业准则(5401/5402) + 企业准则(6401/6402)
+                else if (/^(5401|5402|6401|6402)/.test(code)) {
+                    data.cost += val - valCredit;
+                }
+                // 税金附加：5403 / 6403
+                else if (code.startsWith("5403") || code.startsWith("6403")) {
+                    data.tax += val - valCredit;
+                }
+                // 销售费用：5601 / 6601
+                else if (code.startsWith("5601") || code.startsWith("6601")) {
+                    data.saleExp += val - valCredit;
+                }
+                // 管理费用：5602 / 6602
+                else if (code.startsWith("5602") || code.startsWith("6602")) {
+                    data.adminExp += val - valCredit;
+                }
+                // 财务费用：5603 / 6603
+                else if (code.startsWith("5603") || code.startsWith("6603")) {
+                    data.finExp += val - valCredit;
+                }
+            });
         });
 
         // 计算利润
@@ -10944,21 +10913,22 @@ function loadContent(moduleCode, element = null) {
             .map(item => item.trim())
             .filter(Boolean);
         const matchCode = (code, codes) => codes.some(prefix => code.startsWith(prefix));
+        const isStatuses2 = ["待审核", "已审核", "已记账", "已过账"];
         const calcTemplateAmount = (codes, op) => {
-            if (!codes.length) return 0;
+            if (!codes.length) return null; // null 表示小计行，后续计算
             let total = 0;
             vouchers.forEach((v) => {
-                if (v.status === "已审核" || v.status === "已记账" || v.status === "已过账") {
-                    if (!v.lines) return;
-                    v.lines.forEach((line) => {
-                        const account = line.account ? line.account.trim() : "";
-                        const code = account.split(" ")[0];
-                        if (!code || !matchCode(code, codes)) return;
-                        const debit = parseFloat(line.debit) || 0;
-                        const credit = parseFloat(line.credit) || 0;
-                        total += op === "-" ? (debit - credit) : (credit - debit);
-                    });
-                }
+                if (!isStatuses2.includes(v.status)) return;
+                if (isClosingV(v)) return; // 排除期末结转凭证
+                if (!v.lines) return;
+                v.lines.forEach((line) => {
+                    const rawCode = (line.accountCode || line.account || "").trim();
+                    const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
+                    if (!code || !matchCode(code, codes)) return;
+                    const debit = parseFloat(line.debit) || 0;
+                    const credit = parseFloat(line.credit) || 0;
+                    total += op === "-" ? (debit - credit) : (credit - debit);
+                });
             });
             return total;
         };
@@ -11007,17 +10977,37 @@ function loadContent(moduleCode, element = null) {
             { name: "四、净利润（净亏损以\"-\"号填列）",                         codes: "",                         op: "+" },
         ];
 
-        const rows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : defaultIncomeRows).map((item) => {
+        // 先计算每行金额，null 表示空科目行（小计或无映射的明细）
+        const rawRows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : defaultIncomeRows).map((item) => {
             const codes = parseCodes(item.codes);
-            const amount = codes.length ? calcTemplateAmount(codes, item.op || "+") : 0;
-            return { label: item.name || item.label || "", amount };
+            const amount = calcTemplateAmount(codes, item.op || "+"); // codes空时返回null
+            return { label: item.name || item.label || "", amount, op: item.op || "+" };
+        });
+
+        // 小计行自动从上方明细行汇算
+        let runningTotal = 0;
+        const rows = rawRows.map((row) => {
+            if (row.amount !== null) {
+                // 有科目映射的明细行：按符号累加到运行小计
+                const sign = row.op === "-" ? -1 : 1;
+                runningTotal += sign * row.amount;
+                return { label: row.label, amount: row.amount };
+            }
+            // 空科目行：若是汇总行则显示当前累计值，否则留空
+            const lbl = row.label;
+            if (lbl.includes("营业利润") || lbl.includes("利润总额") || lbl.includes("净利润")) {
+                return { label: lbl, amount: runningTotal, isSubtotal: true };
+            }
+            return { label: lbl, amount: null }; // null → 渲染为空单元格
         });
 
         const bodyRows = rows.map((row, idx) => {
             const lineNo = idx + 1;
-            const amount = row.amount === "" ? "" : fmt(row.amount || 0);
-            const ytd = row.amount === "" ? "" : amount;
-            const firstMonth = row.amount === "" ? "" : amount;
+            // null → 空单元格；0 也显示出来（明细行有映射才显示）
+            const displayVal = row.amount !== null ? fmt(row.amount) : "";
+            const amount = displayVal;
+            const ytd = displayVal;
+            const firstMonth = displayVal;
             return `
                 <tr>
                     <td class="is-row-no">${lineNo}</td>
@@ -11148,24 +11138,45 @@ function loadContent(moduleCode, element = null) {
 
                     if (isDebit) {
                         totalIn += amount;
-                        if (otherCode.startsWith("60") || otherCode.startsWith("1122"))
+                        // 收入科目对方（收到货款/劳务款）：企业准则60xx，小企业准则50xx，应收账款回款1122
+                        if (otherCode.startsWith("60") || otherCode.startsWith("50") ||
+                            otherCode.startsWith("51") || otherCode.startsWith("53") ||
+                            otherCode.startsWith("1122") || otherCode.startsWith("2203"))
                             item = "销售商品、提供劳务收到的现金";
                         else if (otherCode.startsWith("20") || otherCode.startsWith("25")) {
                             type = "筹资活动";
                             item = "取得借款收到的现金";
+                        } else if (otherCode.startsWith("40") || otherCode.startsWith("30")) {
+                            type = "筹资活动";
+                            item = "吸收投资收到的现金";
+                        } else if (otherCode.startsWith("15") || otherCode.startsWith("16")) {
+                            type = "投资活动";
+                            item = "处置固定资产、无形资产和其他长期资产收回的现金净额";
                         }
                     } else {
                         totalOut += amount;
-                        if (otherCode.startsWith("64") || otherCode.startsWith("2202"))
+                        // 付款给供应商：应付账款2202，存货1403/1405，采购成本6401/5401
+                        if (otherCode.startsWith("2202") || otherCode.startsWith("6401") ||
+                            otherCode.startsWith("6402") || otherCode.startsWith("5401") ||
+                            otherCode.startsWith("1403") || otherCode.startsWith("1405"))
                             item = "购买商品、接受劳务支付的现金";
-                        else if (
-                            otherCode.startsWith("6602") &&
-                            otherLine.account.includes("工资")
-                        )
+                        // 税费支付：2221应交税费
+                        else if (otherCode.startsWith("2221") || otherCode.startsWith("6403") || otherCode.startsWith("5403"))
+                            item = "支付的各项税费";
+                        // 职工薪酬：2211应付职工薪酬，或6602/5602管理费用
+                        else if (otherCode.startsWith("2211") ||
+                            ((otherCode.startsWith("6602") || otherCode.startsWith("5602")) &&
+                             (otherLine.account.includes("工资") || otherLine.account.includes("薪酬"))))
                             item = "支付给职工以及为职工支付的现金";
-                        else if (otherCode.startsWith("16")) {
+                        // 购建固定资产/无形资产：16xx/17xx
+                        else if (otherCode.startsWith("16") || otherCode.startsWith("17")) {
                             type = "投资活动";
-                            item = "购建固定资产支付的现金";
+                            item = "购建固定资产、无形资产和其他长期资产支付的现金";
+                        }
+                        // 还借款：2001/2501
+                        else if (otherCode.startsWith("2001") || otherCode.startsWith("2501")) {
+                            type = "筹资活动";
+                            item = "偿还债务支付的现金";
                         }
                     }
 
@@ -11227,18 +11238,39 @@ function loadContent(moduleCode, element = null) {
                 "六、期末现金及现金等价物余额"
             ];
 
+        // 按活动分类汇总
+        const actTotals = {
+            "经营活动": { in: 0, out: 0 },
+            "投资活动": { in: 0, out: 0 },
+            "筹资活动": { in: 0, out: 0 }
+        };
         const cashflowMap = {};
         cashFlows.forEach(item => {
             if (!item.item) return;
-            const sign = item.direction.includes("+") ? 1 : -1;
+            const isIn = item.direction.includes("+");
+            const sign = isIn ? 1 : -1;
             cashflowMap[item.item] = (cashflowMap[item.item] || 0) + item.amount * sign;
+            // 按活动分类
+            const act = actTotals[item.type] || actTotals["经营活动"];
+            if (isIn) act.in += item.amount;
+            else act.out += item.amount;
         });
 
         const resolveCashflowValue = (label) => {
             if (cashflowMap[label] !== undefined) return cashflowMap[label];
-            if (label.includes("流入小计")) return totalIn;
-            if (label.includes("流出小计")) return totalOut;
-            if (label.includes("净额")) return totalIn - totalOut;
+            // 活动分类小计（精确匹配，不用通配）
+            if (label === "经营活动现金流入小计") return actTotals["经营活动"].in || 0;
+            if (label === "经营活动现金流出小计") return actTotals["经营活动"].out || 0;
+            if (label === "经营活动产生的现金流量净额") return actTotals["经营活动"].in - actTotals["经营活动"].out;
+            if (label === "投资活动现金流入小计") return actTotals["投资活动"].in || 0;
+            if (label === "投资活动现金流出小计") return actTotals["投资活动"].out || 0;
+            if (label === "投资活动产生的现金流量净额") return actTotals["投资活动"].in - actTotals["投资活动"].out;
+            if (label === "筹资活动现金流入小计") return actTotals["筹资活动"].in || 0;
+            if (label === "筹资活动现金流出小计") return actTotals["筹资活动"].out || 0;
+            if (label === "筹资活动产生的现金流量净额") return actTotals["筹资活动"].in - actTotals["筹资活动"].out;
+            // 全局汇总（最后两行）
+            if (label.includes("净增加额")) return totalIn - totalOut;
+            if (label === "六、期末现金及现金等价物余额") return totalIn - totalOut;
             return "";
         };
 
@@ -11322,8 +11354,8 @@ function loadContent(moduleCode, element = null) {
                                 <td colspan="2">合计</td>
                                 <td></td>
                                 <td></td>
-                                <td class="cf-num">${(totalIn - totalOut).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                                <td class="cf-num">${(totalIn - totalOut).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                                <td class="cf-num">${(actTotals["经营活动"].in - actTotals["经营活动"].out).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                                <td class="cf-num">${(actTotals["经营活动"].in - actTotals["经营活动"].out).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -15450,32 +15482,56 @@ function loadContent(moduleCode, element = null) {
         const subjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
         const vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
         const period = filters.period || "";
-        const activeStatuses = ["已审核", "已记账", "已过账"];
+        // 包含待审核，让用户自己录入的凭证也能在试算平衡表中看到
+        const activeStatuses = ["待审核", "已审核", "已记账", "已过账"];
         const openingList = getOpeningBalanceStore();
         const openingMap = buildOpeningBalanceMap(openingList);
-        const baseSubjects = subjects.length
+
+        const voucherList = period
+            ? vouchers.filter(v => v.date && v.date.startsWith(period) && activeStatuses.includes(v.status))
+            : vouchers.filter(v => activeStatuses.includes(v.status));
+
+        // 从凭证行中提取辅助函数：取纯数字科目编码
+        const extractCode = (raw) => {
+            const m = (raw || "").match(/^\d+/);
+            return m ? m[0] : (raw || "").split(" ")[0];
+        };
+
+        // 先统计本期发生额
+        const sums = {};
+        voucherList.forEach(v => {
+            (v.lines || []).forEach(line => {
+                const code = extractCode(line.accountCode || line.account || "");
+                if (!code) return;
+                if (!sums[code]) sums[code] = { debit: 0, credit: 0, name: "" };
+                sums[code].debit += parseFloat(line.debit) || 0;
+                sums[code].credit += parseFloat(line.credit) || 0;
+                // 记录科目名称（取非空的）
+                if (!sums[code].name) {
+                    const raw = (line.account || "").trim();
+                    const namePart = raw.replace(/^\d+\s*/, "").trim();
+                    if (namePart) sums[code].name = namePart;
+                }
+            });
+        });
+
+        // 构建科目列表：优先用 AcctSubjects，其次用期初余额，最后从凭证数据动态发现
+        let baseSubjects = subjects.length
             ? subjects
             : openingList.map(item => ({
                 code: normalizeSubjectCode(item.code),
                 name: item.name || `科目 ${normalizeSubjectCode(item.code)}`
             }));
 
-        const voucherList = period
-            ? vouchers.filter(v => v.date && v.date.startsWith(period) && activeStatuses.includes(v.status))
-            : vouchers.filter(v => activeStatuses.includes(v.status));
-
-        const sums = {};
-        voucherList.forEach(v => {
-            (v.lines || []).forEach(line => {
-                const raw = line.account || "";
-                const codeMatch = raw.match(/^\d+/);
-                const code = codeMatch ? codeMatch[0] : raw.split(" ")[0];
-                if (!code) return;
-                if (!sums[code]) sums[code] = { debit: 0, credit: 0 };
-                sums[code].debit += parseFloat(line.debit) || 0;
-                sums[code].credit += parseFloat(line.credit) || 0;
-            });
+        // 将凭证中出现但尚未在 baseSubjects 里的科目补充进来
+        const existingCodes = new Set(baseSubjects.map(s => s.code));
+        Object.keys(sums).sort().forEach(code => {
+            if (!existingCodes.has(code)) {
+                baseSubjects.push({ code, name: sums[code].name || code });
+            }
         });
+        // 按科目编码排序
+        baseSubjects.sort((a, b) => a.code.localeCompare(b.code));
 
         const rows = baseSubjects.map(subject => {
             const total = sums[subject.code] || { debit: 0, credit: 0 };
@@ -15486,6 +15542,7 @@ function loadContent(moduleCode, element = null) {
             const periodDebit = total.debit;
             const periodCredit = total.credit;
             const net = (openingDebit - openingCredit) + (periodDebit - periodCredit);
+            // net > 0 → 借方余额；net < 0 → 贷方余额
             const endingDebit = net > 0 ? net : 0;
             const endingCredit = net < 0 ? Math.abs(net) : 0;
             return {
@@ -15499,8 +15556,12 @@ function loadContent(moduleCode, element = null) {
                 endingCredit
             };
         });
+        // 过滤掉没有任何数据的行（避免空行污染报表）
+        const activeRows = rows.filter(r =>
+            r.openingDebit || r.openingCredit || r.periodDebit || r.periodCredit || r.endingDebit || r.endingCredit
+        );
 
-        const totals = rows.reduce((acc, row) => {
+        const totals = activeRows.reduce((acc, row) => {
             acc.openingDebit += row.openingDebit;
             acc.openingCredit += row.openingCredit;
             acc.periodDebit += row.periodDebit;
@@ -15517,7 +15578,7 @@ function loadContent(moduleCode, element = null) {
             endingCredit: 0
         });
 
-        return { rows, totals };
+        return { rows: activeRows, totals };
     };
 
     window.renderTrialBalance = function (filters = {}) {
