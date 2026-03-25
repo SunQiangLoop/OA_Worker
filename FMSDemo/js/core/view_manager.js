@@ -10451,11 +10451,12 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 43. 期末处理中心 (PeriodEndCenter)
+    // 43. 期末处理中心模块组 (解决 file:// 协议安全限制)
     // =========================================================================
-    else if (moduleCode === "PeriodEndCenter") {
-        if (window.VM_MODULES && typeof window.VM_MODULES['PeriodEndCenter'] === 'function') {
-            window.VM_MODULES['PeriodEndCenter'](contentArea, contentHTML, moduleCode);
+    const closingModules = ["PeriodEndCenter", "AutoTransferTax", "ClosingWizardProfit", "ClosingWizardClose"];
+    if (closingModules.includes(moduleCode)) {
+        if (window.VM_MODULES && typeof window.VM_MODULES[moduleCode] === 'function') {
+            window.VM_MODULES[moduleCode](contentArea, contentHTML, moduleCode);
             return;
         }
     }

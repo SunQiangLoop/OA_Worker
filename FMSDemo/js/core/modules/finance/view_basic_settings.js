@@ -1108,108 +1108,6 @@ window.VM_MODULES['AccountingStandardSetting'] = function(contentArea, contentHT
                     <div class="summary-template-note">提示：凭证录入的摘要输入框支持下拉提示。</div>
                 </div>
 
-                <!-- ============ 4. 期末结转凭证模板设置 ============ -->
-                <div class="report-template-panel closing-template-panel">
-                    <div class="report-template-header">
-                        <div>
-                            <div class="report-template-title">期末结转凭证模板设置</div>
-                            <div class="report-template-tip">配置税金、收入、成本费用三类模板，结转时按优先级自动生成凭证。</div>
-                        </div>
-                        <div class="report-template-actions">
-                        </div>
-                    </div>
-
-                    <!-- ① 计提税金及附加 -->
-                    <div class="closing-tbl-section tax-accrual-panel">
-                        <div class="closing-tbl-header">
-                            <span class="closing-tbl-title">① 计提税金及附加设置</span>
-                            <div style="display:flex;gap:8px;">
-                                <button class="btn-primary btn-ghost" onclick="saveTaxAccrualRules()">保存</button>
-                                <button class="btn-primary template-row-btn" onclick="addTaxAccrualRuleRow()">+ 新增</button>
-                            </div>
-                        </div>
-                        <div style="margin-bottom:8px; padding:8px 12px; background:#f0f7ff; border-left:3px solid #3498db; border-radius:0 4px 4px 0; font-size:12px; color:#555; line-height:1.7;">
-                            <strong style="color:#2c3e50;">取数方向说明：</strong>
-                            <span style="margin-left:8px;">📌 <strong>贷方发生额</strong>：销项全额（含已抵扣进项）&nbsp;&nbsp;|&nbsp;&nbsp; 📌 <strong>贷方净额</strong>：销项 − 进项（已抵扣后的净值）</span>
-                        </div>
-                        <div class="closing-tbl-wrap">
-                            <table class="tax-rule-table">
-                                <thead>
-                                    <tr>
-                                        <th>税种名称</th>
-                                        <th>计算基数科目</th>
-                                        <th>取数方向 <span onclick="toggleTaxDirTip()" title="点击查看说明" style="cursor:pointer; color:#e74c3c; font-size:15px; font-weight:700; vertical-align:middle;">❓</span></th>
-                                        <th>计提比例(%)</th>
-                                        <th>借方科目</th>
-                                        <th>贷方科目</th>
-                                        <th>辅助核算项</th>
-                                        <th style="width:70px;">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tax-accrual-body">
-                                    ${taxAccrualRowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- ② 结转收入（表格形式） -->
-                    <div class="closing-tbl-section">
-                        <div class="closing-tbl-header">
-                            <span class="closing-tbl-title">② 结转收入</span>
-                            <div style="display:flex;gap:8px;">
-                                <button class="btn-primary btn-ghost" onclick="saveClosingTemplateSettings()">保存</button>
-                                <button class="btn-primary template-row-btn" onclick="addClosingTemplate('income')">+ 新增</button>
-                            </div>
-                        </div>
-                        <div class="closing-tbl-wrap">
-                            <table class="closing-tbl">
-                                <thead>
-                                    <tr>
-                                        <th style="width:40px;">序号</th>
-                                        <th style="width:130px;">账套</th>
-                                        <th>收入科目范围</th>
-                                        <th style="width:150px;">转入科目</th>
-                                        <th style="width:70px;">凭证字</th>
-                                        <th style="width:60px;">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="closing-template-income">
-                                    ${closingIncomeTemplates.map((t, i) => buildClosingRow(t, "income", i)).join("")}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- ③ 结转成本费用（表格形式） -->
-                    <div class="closing-tbl-section">
-                        <div class="closing-tbl-header">
-                            <span class="closing-tbl-title">③ 结转成本费用</span>
-                            <div style="display:flex;gap:8px;">
-                                <button class="btn-primary btn-ghost" onclick="saveClosingTemplateSettings()">保存</button>
-                                <button class="btn-primary template-row-btn" onclick="addClosingTemplate('cost')">+ 新增</button>
-                            </div>
-                        </div>
-                        <div class="closing-tbl-wrap">
-                            <table class="closing-tbl">
-                                <thead>
-                                    <tr>
-                                        <th style="width:40px;">序号</th>
-                                        <th style="width:130px;">账套</th>
-                                        <th>成本费用科目范围</th>
-                                        <th style="width:150px;">转入科目</th>
-                                        <th style="width:70px;">凭证字</th>
-                                        <th style="width:60px;">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="closing-template-cost">
-                                    ${closingCostTemplates.map((t, i) => buildClosingRow(t, "cost", i)).join("")}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div><!-- end closing-template-panel -->
-
             </div><!-- end acct-standard-panel -->
 
             <!-- ============ 5. 利润表设置 ============ -->
@@ -1494,14 +1392,10 @@ window.VM_MODULES['AccountingStandardSetting'] = function(contentArea, contentHT
             }
             const acsmModal = document.getElementById('acsmSummaryModal');
             if (acsmModal) { acsmModal.addEventListener('click', function(e) { if (e.target === this) window.acsmCloseSummaryModal(); }); }
-            window.saveClosingTemplateSettings = function() {
-                alert("✅ 期末结转凭证模板设置已保存。");
-            };
             if (typeof window.updateSubjectCodeInputs === "function") {
                 window.updateSubjectCodeInputs(subjectSetting.levels, subjectSetting.lengths);
             }
         }, 0);
 
     contentArea.innerHTML = contentHTML;
-    setTimeout(function() { if (typeof window.refreshTaxAccrualPreview === "function") { const panel = document.querySelector(".tax-accrual-panel"); if (panel && !panel.dataset.bound) { panel.dataset.bound = "1"; panel.addEventListener("change", () => window.refreshTaxAccrualPreview()); panel.addEventListener("input", () => window.refreshTaxAccrualPreview()); } window.refreshTaxAccrualPreview(); } }, 0);
 };

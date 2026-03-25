@@ -1,18 +1,47 @@
 /**
- * 期末处理模块组 (Period End Processing Modules)
- * 包含：期末中心、自动转账、结账向导
- * 解决 file:// 协议下的跨域安全限制
+ * 期末处理模块组 (Period End Processing Modules) - 终极修复版
  */
 
 (function() {
     if (!window.VM_MODULES) window.VM_MODULES = {};
 
     // ── 工具函数 ──────────────────────────────────────────────────
-    const lsGet = (k) => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):null; } catch(e){return null;} };
-    const lsSet = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); return true; } catch(e){return false;} };
-    const ssGet = (k) => { try { const v=sessionStorage.getItem(k); return v?JSON.parse(v):null; } catch(e){return null;} };
-    const ssSet = (k,v) => { try { sessionStorage.setItem(k,JSON.stringify(v)); return true; } catch(e){return false;} };
-    const fmt = (n) => (Math.round(n*100)/100).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){return null;} };
+    const lsSet = (k,v) => { localStorage.setItem(k, JSON.stringify(v)); };
+    const fmt = (n) => (parseFloat(n) || 0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    // 默认方案数据 (防止页面显示为空)
+    function getFactoryDefaultSchemes() {
+        return [
+            { 
+                id: 's-1', name: '计提税金及附加', ledger: '总账', word: '转', status: '启用', lastPeriod: '-', 
+                summary: '计提本期城建税、教育费附加、地方教育附加',
+                lines: [
+                    { digest: '城市维护建设税', baseCode: '2221', ratio: 7, debitName: '6403 税金及附加', creditName: '222102 应交城市维护建设税', aux: '项目' },
+                    { digest: '教育附加',       baseCode: '2221', ratio: 3, debitName: '6403 税金及附加', creditName: '222103 应交教育费附加', aux: '项目' },
+                    { digest: '地方教育附加',   baseCode: '2221', ratio: 2, debitName: '6403 税金及附加', creditName: '222104 应交地方教育附加', aux: '项目' }
+                ]
+            },
+            {
+                id: 's-2', name: '管理费用期末结转', ledger: '管理账', word: '转', status: '禁用', lastPeriod: '-',
+                summary: '管理费用月末结转',
+                lines: [
+                    { digest: '结转管理费用', baseCode: '6602', ratio: 100, debitName: '本年利润', creditName: '管理费用', aux: '' }
+                ]
+            }
+        ];
+    }
+
+    // 核心数据抓取：解决 file:// 协议隔离
+    function fetchAllVouchers() {
+        let list = [];
+        try {
+            if (typeof window.getManualVouchers === 'function') list = window.getManualVouchers();
+            else if (window.parent && typeof window.parent.getManualVouchers === 'function') list = window.parent.getManualVouchers();
+            else list = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+        } catch(e) { console.error("数据读取失败:", e); }
+        return Array.isArray(list) ? list : [];
+    }
 
     function getStepDone(period, key) {
         const doneMap = lsGet('QM_StepsDone') || {};
@@ -20,232 +49,295 @@
     }
 
     // =========================================================================
-    // 1. 期末处理中心 (原 final_processing1.html)
+    // 1. 期末处理中心
     // =========================================================================
     window.VM_MODULES['PeriodEndCenter'] = function(contentArea) {
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
-        
         const STEPS = [
-            { key: 'autoTransfer', label: '自动转账', icon: '🔄', desc: '自动执行计提税金方案，生成记账凭证', url: 'AutoTransferTax' },
-            { key: 'amort',        label: '凭证摊销', icon: '📉', desc: '按摊销计划生成本期摊销凭证',             url: '#' },
-            { key: 'accrue',       label: '凭证预提', icon: '📋', desc: '执行预提方案，计提本期应预提费用',       url: '#' },
-            { key: 'adjust',       label: '账务调整', icon: '🔀', desc: '期末往来对冲、科目重分类、坏账计提',     url: '#' },
-            { key: 'profit',       label: '结转损益', icon: '秤', desc: '将损益科目余额结转至本年利润科目',       url: 'ClosingWizardProfit' },
-            { key: 'close',        label: '总账结账', icon: '🔒', desc: '完成最终结账，锁定本期账务数据',         url: 'ClosingWizardClose' },
+            { key: 'autoTransfer', label: '自动转账', icon: '🔄', desc: '自定义计提/转账方案，批量生成凭证', url: 'AutoTransferTax' },
+            { key: 'amort',        label: '凭证摊销', icon: '📉', desc: '根据预摊销计划，自动生成本期摊销凭证', url: '#' },
+            { key: 'accrue',       label: '凭证预提', icon: '📋', desc: '执行月度预提方案，计提本期各项费用', url: '#' },
+            { key: 'adjust',       label: '账务调整', icon: '🔀', desc: '期末往来对冲、重分类、坏账准备计提', url: '#' },
+            { key: 'profit',       label: '结转损益', icon: '⚖️', desc: '将损益科目余额结转至本年利润科目', url: 'ClosingWizardProfit' },
+            { key: 'close',        label: '总账结账', icon: '🔒', desc: '完成最终结账，锁定本期账务数据', url: 'ClosingWizardClose' },
         ];
-
         let currentIdx = STEPS.findIndex(s => !getStepDone(period, s.key));
         if (currentIdx === -1) currentIdx = STEPS.length;
 
-        const html = `
-        <style>
-            .pe-main { padding: 20px; max-width: 1200px; margin: 0 auto; font-family: sans-serif; }
-            .pe-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; border: 1px solid #f3f4f6; }
-            .pe-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-            .pe-title::before { content: ''; width: 4px; height: 18px; background: #3b82f6; border-radius: 2px; }
-            .pe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-            .pe-step-card { border: 1.5px solid #f3f4f6; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; }
-            .pe-step-card:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-            .pe-step-card.done { border-color: #a7f3d0; background: #f0fdf4; }
-            .pe-step-icon { font-size: 32px; margin-bottom: 12px; display: block; }
-            .pe-step-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-            .pe-step-desc { font-size: 13px; color: #6b7280; line-height: 1.5; margin-bottom: 16px; }
-            .pe-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-            .pe-status.done { background: #d1fae5; color: #065f46; }
-            .pe-status.ready { background: #dbeafe; color: #1d4ed8; }
-            .pe-status.pending { background: #f3f4f6; color: #9ca3af; }
-            .pe-btn { background: #3b82f6; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-            .pe-step-bar { display: flex; align-items: center; margin-bottom: 30px; padding: 0 20px; }
-            .pe-bar-item { flex: 1; text-align: center; position: relative; }
-            .pe-bar-circle { width: 32px; height: 32px; border-radius: 50%; background: #e5e7eb; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: #9ca3af; margin-bottom: 8px; position: relative; z-index: 2; border: 3px solid #fff; }
-            .pe-bar-circle.done { background: #34d399; color: #fff; }
-            .pe-bar-circle.active { background: #3b82f6; color: #fff; }
-            .pe-bar-line { position: absolute; top: 16px; left: 50%; width: 100%; height: 2px; background: #e5e7eb; z-index: 1; }
-            .pe-bar-item:last-child .pe-bar-line { display: none; }
-            .pe-bar-line.done { background: #34d399; }
-        </style>
-        <div class="pe-main">
-            <div class="pe-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <div class="pe-title" style="margin-bottom:0">期末处理流程进度 (${period})</div>
-                    <div style="background:#eff6ff; color:#1d4ed8; padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600;">当前期间: ${period}</div>
-                </div>
-                <div class="pe-step-bar">
-                    ${STEPS.map((s, i) => `
-                        <div class="pe-bar-item">
-                            <div class="pe-bar-line ${getStepDone(period, s.key) ? 'done' : ''}"></div>
-                            <div class="pe-bar-circle ${getStepDone(period, s.key) ? 'done' : (i === currentIdx ? 'active' : '')}">${getStepDone(period, s.key) ? '✓' : i+1}</div>
-                            <div style="font-size:12px; color:${i === currentIdx ? '#3b82f6' : '#6b7280'}">${s.label}</div>
-                        </div>
-                    `).join('')}
-                </div>
+        contentArea.innerHTML = `
+        <div style="padding:30px; max-width:1200px; margin:0 auto; font-family:sans-serif;">
+            <div style="background:#fff; border-radius:12px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:30px; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-size:20px; font-weight:800; border-left:5px solid #3182ce; padding-left:15px;">期末结账工作台</h2>
+                <span style="background:#3182ce; color:#fff; padding:5px 15px; border-radius:20px; font-size:13px; font-weight:700;">期间: ${period}</span>
             </div>
-
-            <div class="pe-grid">
-                ${STEPS.map((step, idx) => {
-                    const isDone = getStepDone(period, step.key);
-                    const isReady = idx === currentIdx;
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px;">
+                ${STEPS.map((s, i) => {
+                    const isDone = getStepDone(period, s.key);
                     return `
-                        <div class="pe-step-card ${isDone ? 'done' : ''}" onclick="loadContent('${step.url}')">
-                            <span class="pe-step-icon">${step.icon}</span>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <div class="pe-step-name">${step.label}</div>
-                                <span class="pe-status ${isDone ? 'done' : (isReady ? 'ready' : 'pending')}">${isDone ? '已完成' : (isReady ? '进行中' : '待处理')}</span>
-                            </div>
-                            <div class="pe-step-desc">${step.desc}</div>
-                            <div style="text-align:right">
-                                <button class="pe-btn" style="${isDone ? 'background:#059669' : ''}">${isDone ? '查看' : '进入'} →</button>
-                            </div>
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;" onclick="loadContent('${s.url}')">
+                        <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
+                        <h3 style="font-size:17px; margin-bottom:10px;">${s.label}</h3>
+                        <p style="font-size:13px; color:#718096; line-height:1.5;">${s.desc}</p>
+                        <div style="margin-top:20px; text-align:right;">
+                            <button style="background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">${isDone?'查看':'进入'} →</button>
                         </div>
-                    `;
+                    </div>`;
                 }).join('')}
             </div>
-        </div>
-        `;
-        contentArea.innerHTML = html;
+        </div>`;
     };
 
     // =========================================================================
-    // 2. 自动转账 - 计提税金 (原 final_processing.html)
+    // 2. 自动转账 - 修复方案丢失问题
     // =========================================================================
     window.VM_MODULES['AutoTransferTax'] = function(contentArea) {
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
-        const vouchers = window.getManualVouchers ? window.getManualVouchers() : (ssGet('ManualVouchers') || []);
-        
-        // 计算逻辑
-        const periodVouchers = vouchers.filter(v =>
-            (v.status === '已记账' || v.status === '已过账' || v.status === '已审核' || v.status === '待审核') &&
-            ((v.date||'').startsWith(period) || v.period === period)
-        );
-
-        let credit222101 = 0, debit222101 = 0;
-        periodVouchers.forEach(v => {
-            (v.lines||[]).forEach(l => {
-                const fullAccount = (l.accountCode || l.account || '').toString().trim();
-                const code = fullAccount.split(' ')[0].replace(/\./g, '');
-                if (code === '222101' || (code === '2221' && !fullAccount.includes('城建') && !fullAccount.includes('教育'))) {
-                    credit222101 += parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
-                    debit222101  += parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
-                }
+        // 如果读不到数据，则初始化默认方案；同时迁移旧版方案（debitName 缺少科目代码）
+        let schemes = lsGet('QM_AdvancedSchemes');
+        if (!schemes || schemes.length === 0) {
+            schemes = getFactoryDefaultSchemes();
+            lsSet('QM_AdvancedSchemes', schemes);
+        } else {
+            // 迁移：旧版 debitName 没有科目代码，补充 6403
+            let migrated = false;
+            schemes.forEach(s => {
+                (s.lines || []).forEach(l => {
+                    if (l.debitName === '税金及附加') { l.debitName = '6403 税金及附加'; migrated = true; }
+                    if (l.baseCode === '222101') { l.baseCode = '2221'; migrated = true; }
+                });
             });
-        });
-        const vatBase = Math.max(credit222101 - debit222101, 0);
-        const tax1 = Math.round(vatBase * 0.07 * 100) / 100;
-        const tax2 = Math.round(vatBase * 0.03 * 100) / 100;
-        const tax3 = Math.round(vatBase * 0.02 * 100) / 100;
-        const totalTax = tax1 + tax2 + tax3;
+            if (migrated) lsSet('QM_AdvancedSchemes', schemes);
+        }
+        const editingId = lsGet('QM_At_EditingId') || null;
 
-        const isDone = getStepDone(period, 'autoTransfer');
+        function getBal(baseCode) {
+            const allV = fetchAllVouchers();
+            let d = 0, c = 0;
+            const prefix = baseCode.toString().replace(/\D/g, '');
+            if (!prefix) return { net: 0 };
+            allV.forEach(v => {
+                const vP = v.period || (v.date||'').substring(0,7);
+                if (vP !== period) return;
+                if (!['已记账', '已过账', '已审核', '待审核'].includes(v.status)) return;
+                (v.lines||[]).forEach(l => {
+                    const raw = (l.accountCode || l.account || '').toString().trim().split(/[\s\u3000]/)[0];
+                    const lCode = raw.replace(/\D/g, '');
+                    if (!lCode) return;
+                    // 双向匹配：lCode是prefix的子科目 或 lCode是prefix的父科目（≥4位防过宽）
+                    const isMatch = lCode.startsWith(prefix) || (lCode.length >= 4 && prefix.startsWith(lCode));
+                    if (isMatch) {
+                        d += parseFloat((l.debit||'0').toString().replace(/,/g,'')) || 0;
+                        c += parseFloat((l.credit||'0').toString().replace(/,/g,'')) || 0;
+                    }
+                });
+            });
+            return { net: Math.max(c - d, 0) };
+        }
 
-        const html = `
+        // 从 "222102 应交城市维护建设税" 中提取科目代码（首段纯数字）
+        function extractAcctCode(nameStr) {
+            const first = (nameStr || '').toString().trim().split(/\s+/)[0];
+            return /^\d+$/.test(first) ? first : '';
+        }
+
+        contentArea.innerHTML = `
         <style>
-            .at-main { padding: 20px; max-width: 900px; margin: 0 auto; }
-            .at-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
-            .at-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-            .at-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-            .at-info-box { background: #f9fafb; border: 1px solid #eee; padding: 15px; border-radius: 8px; }
-            .at-val { font-size: 20px; font-weight: 700; margin-top: 5px; }
-            .at-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
-            .at-table th { background: #f9fafb; padding: 10px; text-align: left; border-bottom: 2px solid #eee; }
-            .at-table td { padding: 10px; border-bottom: 1px solid #f3f4f6; }
-            .at-btn { background: #3b82f6; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-            .at-btn:disabled { background: #ccc; cursor: not-allowed; }
-            .at-alert { padding: 12px 16px; border-radius: 8px; background: #f0fdf4; color: #065f46; border: 1px solid #a7f3d0; margin-bottom: 20px; display: ${isDone ? 'block' : 'none'}; }
+            .at-main { padding:24px; background:#f8fafc; min-height:100%; font-family:sans-serif; }
+            .btn-at { padding:8px 16px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; border:1px solid #dcdfe6; background:#fff; margin-right:8px; }
+            .at-input { border:1px solid #dcdfe6; border-radius:4px; padding:6px 10px; font-size:13px; }
+            .at-table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+            .at-table th { background:#f5f7fa; padding:12px; text-align:left; color:#909399; font-size:13px; border-bottom:1px solid #ebeef5; }
+            .at-table td { padding:12px; border-bottom:1px solid #ebeef5; font-size:13px; color:#606266; }
         </style>
         <div class="at-main">
-            <div style="margin-bottom:20px"><button onclick="loadContent('PeriodEndCenter')" style="cursor:pointer; background:none; border:none; color:#3b82f6">← 返回期末处理</button></div>
-            <div class="at-header">
-                <div>
-                    <h2 style="font-size:20px; margin-bottom:5px">🔄 自动转账 — 计提税金及附加</h2>
-                    <div style="font-size:13px; color:#6b7280">根据本期增值税余额，自动计提城建税、教育费附加等</div>
-                </div>
-                <div style="background:#eff6ff; color:#1d4ed8; padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600;">期间: ${period}</div>
+            <div style="margin-bottom:15px;"><button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#409eff; cursor:pointer; font-weight:700;">← 返回工作台</button></div>
+            <div style="margin-bottom:20px;">
+                <button class="btn-at" style="background:#409eff; color:#fff;" onclick="window.atAddScheme()">+ 新增方案</button>
+                <button class="btn-at" style="background:#67c23a; color:#fff;" onclick="window.atRunBatch()">▶ 执行方案</button>
+                <button class="btn-at" onclick="window.atToggleStatus()">禁/启用</button>
+                <button class="btn-at" style="color:#f56c6c;" onclick="window.atDelSelected()">删除</button>
             </div>
+            <table class="at-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;"><input type="checkbox" id="at-master-cb" onclick="window.atCheckAll(this.checked)"></th>
+                        <th>方案名称</th><th style="width:100px;">账簿</th><th style="width:80px;">凭证字</th><th style="width:80px;">状态</th><th style="width:120px;">上次执行</th><th style="width:100px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${schemes.map(s => {
+                        const active = editingId === s.id;
+                        return `
+                        <tr>
+                            <td><input type="checkbox" class="at-cb" data-id="${s.id}"></td>
+                            <td style="color:#409eff; font-weight:700; cursor:pointer;" onclick="window.atEdit('${s.id}')">${s.name} ${active?'▲':'▼'}</td>
+                            <td>${s.ledger || '总账'}</td><td>${s.word || '转'}</td>
+                            <td><span style="color:${s.status==='启用'?'#67c23a':'#f56c6c'}">${s.status || '启用'}</span></td>
+                            <td>${s.lastPeriod || '-'}</td>
+                            <td><a href="javascript:;" onclick="window.atEdit('${s.id}')" style="color:#409eff;">编辑</a></td>
+                        </tr>
+                        ${active ? `
+                        <tr>
+                            <td colspan="7" style="background:#f0f7ff; padding:25px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <div style="font-weight:800; color:#409eff; border-left:3px solid #409eff; padding-left:12px;">方案配置 — ${s.name}</div>
+                                    <div style="display:flex; gap:10px;">
+                                        <button class="btn-at" onclick="window.atAddLine()">+ 添加分录</button>
+                                        <button class="btn-at" onclick="window.atEdit(null)">取消</button>
+                                        <button class="btn-at" style="background:#409eff; color:#fff; border:none;" onclick="window.atSave('${s.id}')">💾 保存配置</button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:35px; margin-bottom:20px; align-items:center;">
+                                    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:13px; color:#606266;">名称:</span><input class="at-input" id="cfg-name" value="${s.name}" style="width:160px;"></div>
+                                    <div style="display:flex; align-items:center; gap:8px; flex:1;"><span style="font-size:13px; color:#606266;">摘要:</span><input class="at-input" id="cfg-sum" value="${s.summary || ''}" style="width:100%; max-width:400px;"></div>
+                                    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:13px; color:#606266;">账簿:</span><select class="at-input" id="cfg-led"><option value="总账" ${s.ledger==='总账'?'selected':''}>总账</option><option value="税务账" ${s.ledger==='税务账'?'selected':''}>税务账</option></select></div>
+                                    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:13px; color:#606266;">字:</span><select class="at-input" id="cfg-word"><option value="转">转</option><option value="记">记</option></select></div>
+                                </div>
+                                <table class="at-table" style="box-shadow:none; border:1px solid #d9ecff;">
+                                    <thead><tr style="background:#e6f1fc;"><th>摘要名称</th><th style="width:180px;">计算基数科目</th><th style="width:80px;">比例(%)</th><th style="width:180px;">借方科目</th><th style="width:180px;">贷方科目</th><th>辅助项</th><th style="width:40px;"></th></tr></thead>
+                                    <tbody id="cfg-body">
+                                        ${(s.lines||[]).map(l => {
+                                            const bal = getBal(l.baseCode);
+                                            return `
+                                            <tr>
+                                                <td><input class="at-input" style="width:100%;" name="l-digest" value="${l.digest}"></td>
+                                                <td><input class="at-input" style="width:100%;" name="l-base" value="${l.baseCode}" title="当前余额: ¥${fmt(bal.net)}"></td>
+                                                <td><input class="at-input" style="width:100%;" name="l-ratio" type="number" value="${l.ratio}"></td>
+                                                <td><input class="at-input" style="width:100%;" name="l-debit" value="${l.debitName || ''}"></td>
+                                                <td><input class="at-input" style="width:100%;" name="l-credit" value="${l.creditName || ''}"></td>
+                                                <td><input class="at-input" style="width:100%;" name="l-aux" value="${l.aux||''}"></td>
+                                                <td><button onclick="this.closest('tr').remove()" style="color:#f56c6c; border:none; background:none; cursor:pointer;">×</button></td>
+                                            </tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>` : ''}
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>`;
 
-            <div class="at-alert">✅ 本期计提税金凭证已生成，可在凭证审核中心查看。</div>
+        // ── 交互函数 ──
+        window.atEdit = (id) => { lsSet('QM_At_EditingId', id); loadContent('AutoTransferTax'); };
+        window.atCheckAll = (c) => document.querySelectorAll('.at-cb').forEach(x => x.checked = c);
+        
+        window.atAddScheme = () => {
+            const list = lsGet('QM_AdvancedSchemes') || [];
+            const newS = { id: 's-'+Date.now(), name:'新方案', status:'启用', ledger:'总账', word:'转', lines:[] };
+            list.push(newS); lsSet('QM_AdvancedSchemes', list); window.atEdit(newS.id);
+        };
 
-            <div class="at-card">
-                <h3 style="font-size:15px; margin-bottom:15px">📊 本期增值税基础数据</h3>
-                <div class="at-info-grid">
-                    <div class="at-info-box">
-                        <div style="font-size:11px; color:#9ca3af">应交增值税余额</div>
-                        <div class="at-val">¥${fmt(vatBase)}</div>
-                    </div>
-                    <div class="at-info-box">
-                        <div style="font-size:11px; color:#9ca3af">城建税(7%)</div>
-                        <div class="at-val" style="color:#dc2626">¥${fmt(tax1)}</div>
-                    </div>
-                    <div class="at-info-box">
-                        <div style="font-size:11px; color:#9ca3af">教育附加(3%)</div>
-                        <div class="at-val" style="color:#dc2626">¥${fmt(tax2)}</div>
-                    </div>
-                    <div class="at-info-box">
-                        <div style="font-size:11px; color:#9ca3af">地方教育附加(2%)</div>
-                        <div class="at-val" style="color:#dc2626">¥${fmt(tax3)}</div>
-                    </div>
-                </div>
-            </div>
+        window.atSave = (id) => {
+            const list = lsGet('QM_AdvancedSchemes') || [];
+            const s = list.find(x => x.id === id);
+            if(!s) return;
+            s.name = document.getElementById('cfg-name').value;
+            s.summary = document.getElementById('cfg-sum').value;
+            s.ledger = document.getElementById('cfg-led').value;
+            s.word = document.getElementById('cfg-word').value;
+            const rows = document.querySelectorAll('#cfg-body tr');
+            s.lines = Array.from(rows).map(r => ({
+                digest: r.querySelector('[name="l-digest"]').value,
+                baseCode: r.querySelector('[name="l-base"]').value,
+                ratio: parseFloat(r.querySelector('[name="l-ratio"]').value) || 0,
+                debitName: r.querySelector('[name="l-debit"]').value,
+                creditName: r.querySelector('[name="l-credit"]').value,
+                aux: r.querySelector('[name="l-aux"]').value
+            }));
+            lsSet('QM_AdvancedSchemes', list); alert('✅ 保存成功'); window.atEdit(null);
+        };
 
-            <div class="at-card">
-                <h3 style="font-size:15px; margin-bottom:10px">📋 待生成凭证明细</h3>
-                <table class="at-table">
-                    <thead><tr><th>摘要</th><th>科目</th><th>借方</th><th>贷方</th></tr></thead>
-                    <tbody>
-                        <tr><td>计提城建税/教育附加</td><td>税金及附加</td><td>¥${fmt(totalTax)}</td><td></td></tr>
-                        <tr><td>计提城市维护建设税</td><td>222102 应交城建税</td><td></td><td>¥${fmt(tax1)}</td></tr>
-                        <tr><td>计提教育费附加</td><td>222103 应交教育费附加</td><td></td><td>¥${fmt(tax2)}</td></tr>
-                        <tr><td>计提地方教育附加</td><td>222104 应交地方教育附加</td><td></td><td>¥${fmt(tax3)}</td></tr>
-                    </tbody>
-                </table>
-                <div style="text-align:right">
-                    <button class="at-btn" id="execAtBtn" ${isDone || vatBase === 0 ? 'disabled' : ''} onclick="window.doAutoTransferAction()">执行并生成凭证</button>
-                </div>
-            </div>
-        </div>
-        `;
-        contentArea.innerHTML = html;
+        window.atRunBatch = () => {
+            const ids = Array.from(document.querySelectorAll('.at-cb:checked')).map(cb => cb.dataset.id);
+            if(!ids.length) return alert('请先勾选方案');
+            const list = lsGet('QM_AdvancedSchemes') || [];
+            const currentVouchers = fetchAllVouchers();
+            let count = 0;
 
-        // 挂载执行逻辑到全局，方便 onclick 调用
-        window.doAutoTransferAction = function() {
-            if (!confirm(`确认生成本期计提税金凭证？总额: ¥${fmt(totalTax)}`)) return;
-            
-            const currentVouchers = window.getManualVouchers ? window.getManualVouchers() : (ssGet('ManualVouchers') || []);
-            const existing = currentVouchers.filter(v => v.id && v.id.startsWith('转-'));
-            let maxSeq = 0;
-            existing.forEach(v => { const n=parseInt((v.id||'').split('-')[1]||'0'); if(n>maxSeq) maxSeq=n; });
-            const newId = '转-' + String(maxSeq+1).padStart(4,'0');
-            
-            const taxCode = currentVouchers.some(v => (v.lines||[]).some(l => (l.accountCode||'').startsWith('5403'))) ? '5403' : '6403';
-            
-            const newV = {
-                id: newId, date: period + '-28', period: period, amount: totalTax.toFixed(2),
-                summary: `${period} 期末计提税金及附加`, user: '系统自动转账', status: '待审核',
-                type: '转账凭证', voucherType: '转账凭证', sourceType: 'AutoTransfer',
-                lines: [
-                    { summary: '计提税金及附加', accountCode: taxCode, account: taxCode + ' 税金及附加', debit: totalTax.toFixed(2), credit: '' },
-                    { summary: '计提城建税', accountCode: '222102', account: '222102 应交城建税', debit: '', credit: tax1.toFixed(2) },
-                    { summary: '计提教育费附加', accountCode: '222103', account: '222103 应交教育费附加', debit: '', credit: tax2.toFixed(2) },
-                    { summary: '计提地方教育附加', accountCode: '222104', account: '222104 应交地方教育附加', debit: '', credit: tax3.toFixed(2) }
-                ]
-            };
-            
-            currentVouchers.unshift(newV);
-            if (window.saveManualVouchers) window.saveManualVouchers(currentVouchers);
-            else ssSet('ManualVouchers', currentVouchers);
+            ids.forEach(id => {
+                const s = list.find(x => x.id === id);
+                if(!s || s.status === '禁用') return;
+                // 借方合并：相同科目代码只生成一行（一借多贷）
+                const debitMerge = new Map(); // accountCode → { name, total }
+                const creditLines = [];
+                let total = 0;
+                s.lines.forEach(l => {
+                    const bal = getBal(l.baseCode);
+                    const amt = Math.round(bal.net * (l.ratio / 100) * 100) / 100;
+                    if(amt <= 0) return;
+                    total += amt;
+                    // 借方
+                    const dCode = extractAcctCode(l.debitName);
+                    const dKey = dCode || ('__' + l.debitName);
+                    if(!debitMerge.has(dKey)) debitMerge.set(dKey, { code: dCode, name: l.debitName, total: 0 });
+                    debitMerge.get(dKey).total += amt;
+                    // 贷方
+                    const cCode = extractAcctCode(l.creditName);
+                    const cDisplay = cCode ? l.creditName : l.creditName; // 保留原始名称
+                    creditLines.push({
+                        summary: l.digest,
+                        accountCode: cCode,
+                        account: l.creditName,
+                        debit: '', credit: amt.toFixed(2)
+                    });
+                });
+                if(total <= 0) return;
+                const vLines = [];
+                debitMerge.forEach(v => {
+                    vLines.push({ summary: '计提税金及附加', accountCode: v.code, account: v.name, debit: v.total.toFixed(2), credit: '' });
+                });
+                creditLines.forEach(l => vLines.push(l));
 
-            // 标记完成
-            const doneMap = lsGet('QM_StepsDone') || {};
-            if (!doneMap[period]) doneMap[period] = {};
-            doneMap[period]['autoTransfer'] = true;
-            lsSet('QM_StepsDone', doneMap);
+                const max = Math.max(0, ...currentVouchers.filter(v => v.id?.startsWith('转-')).map(v => parseInt(v.id.split('-')[1]) || 0));
+                const newId = '转-' + String(max + 1).padStart(4, '0');
+                currentVouchers.unshift({
+                    id: newId, date: period + '-28', period: period, amount: total.toFixed(2),
+                    summary: s.summary || s.name, user: '系统自动转账', status: '待审核', lines: vLines
+                });
+                s.lastPeriod = period; count++;
+            });
 
-            alert(`✅ 凭证 ${newId} 已生成！`);
-            loadContent('AutoTransferTax');
+            if(count > 0) {
+                // 优先用工具函数写入，确保主页面 sessionStorage 同步
+                if (typeof window.saveManualVouchers === 'function') {
+                    window.saveManualVouchers(currentVouchers);
+                } else {
+                    sessionStorage.setItem("ManualVouchers", JSON.stringify(currentVouchers));
+                }
+                lsSet('QM_AdvancedSchemes', list);
+                const steps = lsGet('QM_StepsDone') || {};
+                if (!steps[period]) steps[period] = {};
+                steps[period].autoTransfer = true; lsSet('QM_StepsDone', steps);
+                alert(`🎉 成功生成 ${count} 笔凭证！`); loadContent('AutoTransferTax');
+            } else alert('⚠️ 选中方案余额为 0，未生成凭证。');
+        };
+
+        window.atToggleStatus = () => {
+            const ids = Array.from(document.querySelectorAll('.at-cb:checked')).map(cb => cb.dataset.id);
+            if(!ids.length) return alert('请勾选');
+            const list = lsGet('QM_AdvancedSchemes') || [];
+            list.forEach(s => { if(ids.includes(s.id)) s.status = (s.status==='启用'?'禁用':'启用'); });
+            lsSet('QM_AdvancedSchemes', list); loadContent('AutoTransferTax');
+        };
+
+        window.atDelSelected = () => {
+            const ids = Array.from(document.querySelectorAll('.at-cb:checked')).map(cb => cb.dataset.id);
+            if(!ids.length || !confirm('确定删除？')) return;
+            const list = (lsGet('QM_AdvancedSchemes') || []).filter(s => !ids.includes(s.id));
+            lsSet('QM_AdvancedSchemes', list); loadContent('AutoTransferTax');
+        };
+
+        window.atAddLine = () => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><input class="at-input" style="width:100%;" name="l-digest"></td><td><input class="at-input" style="width:100%;" name="l-base" value="222101"></td><td><input class="at-input" style="width:100%;" name="l-ratio" value="100"></td><td><input class="at-input" style="width:100%;" name="l-debit"></td><td><input class="at-input" style="width:100%;" name="l-credit"></td><td><input class="at-input" style="width:100%;" name="l-aux"></td><td><button onclick="this.closest('tr').remove()" style="color:#f56c6c; border:none; background:none; cursor:pointer;">×</button></td>`;
+            document.getElementById('cfg-body').appendChild(tr);
         };
     };
 
     // =========================================================================
-    // 3. 结账向导 (原 final_processing2.html)
+    // 3. 结账向导
     // =========================================================================
     window.VM_MODULES['ClosingWizardProfit'] = function(contentArea) { renderClosingStep(contentArea, 'profit'); };
     window.VM_MODULES['ClosingWizardClose'] = function(contentArea) { renderClosingStep(contentArea, 'close'); };
@@ -254,58 +346,12 @@
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
         const status = lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
         const isDone = (step === 'profit' ? status.profitDone : status.closed);
-
-        const html = `
-        <style>
-            .cw-main { padding: 20px; max-width: 800px; margin: 0 auto; }
-            .cw-card { background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center; }
-            .cw-icon { font-size: 60px; margin-bottom: 20px; display: block; }
-            .cw-title { font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-            .cw-desc { font-size: 15px; color: #6b7280; line-height: 1.6; margin-bottom: 30px; }
-            .cw-btn { background: #3b82f6; color: #fff; border: none; padding: 12px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
-            .cw-btn.done { background: #059669; }
-        </style>
-        <div class="cw-main">
-            <div style="margin-bottom:20px"><button onclick="loadContent('PeriodEndCenter')" style="cursor:pointer; background:none; border:none; color:#3b82f6">← 返回期末处理</button></div>
-            <div class="cw-card">
-                <span class="cw-icon">${step === 'profit' ? '⚖️' : '🔒'}</span>
-                <h2 class="cw-title">${step === 'profit' ? '结转本期损益' : '期末总账结账'}</h2>
-                <div class="cw-desc">
-                    ${step === 'profit' 
-                        ? `将本期所有收入、费用科目余额结转至“本年利润”科目。结转后损益类科目余额将清零。<br>目标期间: <b>${period}</b>`
-                        : `完成本期最终结账，系统将锁定该期间所有账务数据，不可再修改凭证。同时将余额结转至下期。<br>目标期间: <b>${period}</b>`}
-                </div>
-                ${isDone 
-                    ? `<div style="color:#059669; font-weight:700; margin-bottom:20px">✅ 该步骤已完成</div>`
-                    : `<button class="cw-btn" onclick="window.doClosingAction('${step}')">开始执行</button>`
-                }
-                ${isDone && step === 'profit' ? `<button class="cw-btn" onclick="loadContent('ClosingWizardClose')">下一步: 最终结账 →</button>` : ''}
-            </div>
-        </div>
-        `;
-        contentArea.innerHTML = html;
-
-        window.doClosingAction = function(s) {
-            if (!confirm(`确认要执行 ${s === 'profit' ? '结转损益' : '最终结账'} 吗？`)) return;
-            
-            const curStatus = lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
-            if (s === 'profit') {
-                curStatus.profitDone = true;
-                // 模拟生成结转凭证逻辑...
-                alert('✅ 损益结转成功，已生成结转凭证。');
-            } else {
-                curStatus.closed = true;
-                // 联动修改主系统期间状态
-                try {
-                    const periods = JSON.parse(sessionStorage.getItem('FinanceAccountPeriods') || '[]');
-                    periods.forEach(p => { if(p.period === period) p.status = '已关闭'; });
-                    sessionStorage.setItem('FinanceAccountPeriods', JSON.stringify(periods));
-                } catch(e){}
-                alert(`🎉 ${period} 会计期间已成功结账并锁定！`);
-            }
-            lsSet('QM_ClosingStatus', curStatus);
-            loadContent(s === 'profit' ? 'ClosingWizardProfit' : 'ClosingWizardClose');
+        contentArea.innerHTML = `<div style="padding:40px; text-align:center;"><div style="background:#fff; border-radius:16px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,0.05); max-width:600px; margin:0 auto;"><div style="font-size:60px; margin-bottom:20px;">${step==='profit'?'⚖️':'🔒'}</div><h2 style="font-size:24px; margin-bottom:15px;">${step==='profit'?'结转本期损益':'期末总结账'}</h2><p style="color:#718096; margin-bottom:30px;">目标期间: ${period}</p>${isDone ? '<div style="color:#48bb78; font-weight:700;">✅ 已完成</div>' : `<button style="background:#3182ce; color:#fff; border:none; padding:12px 40px; border-radius:10px; font-weight:700; cursor:pointer;" onclick="window.doFinal('${step}')">开始执行</button>`}<div style="margin-top:20px;"><button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#3182ce; cursor:pointer;">← 返回工作台</button></div></div></div>`;
+        window.doFinal = (s) => {
+            if(!confirm('确定？')) return;
+            const cur = lsGet('QM_ClosingStatus') || { profitDone: false, closed: false };
+            if(s === 'profit') cur.profitDone = true; else cur.closed = true;
+            lsSet('QM_ClosingStatus', cur); alert('✅ 成功'); loadContent(s==='profit'?'ClosingWizardProfit':'ClosingWizardClose');
         };
-    };
-
+    }
 })();
