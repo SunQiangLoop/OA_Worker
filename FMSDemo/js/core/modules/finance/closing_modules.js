@@ -52,7 +52,33 @@
     // 1. 期末处理中心
     // =========================================================================
     window.VM_MODULES['PeriodEndCenter'] = function(contentArea) {
-        const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
+        // 构建可用期间列表（从凭证最早年份到当前月）
+        function buildPeriodOptions() {
+            const vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+            const now = new Date();
+            const curYM = now.toISOString().slice(0, 7); // "YYYY-MM"
+            let minYear = now.getFullYear();
+            vouchers.forEach(v => {
+                const d = v.date || v.period || '';
+                const y = parseInt(d.slice(0, 4));
+                if (y > 2000 && y < minYear) minYear = y;
+            });
+            const periods = [];
+            for (let y = minYear; y <= now.getFullYear(); y++) {
+                const maxM = (y === now.getFullYear()) ? now.getMonth() + 1 : 12;
+                for (let m = 1; m <= maxM; m++) {
+                    periods.push(`${y}-${String(m).padStart(2, '0')}`);
+                }
+            }
+            return periods;
+        }
+
+        const periods = buildPeriodOptions();
+        const defaultPeriod = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0, 7);
+        // 若存储值不在列表里，补进去
+        if (!periods.includes(defaultPeriod)) periods.push(defaultPeriod);
+        let period = defaultPeriod;
+
         const STEPS = [
             { key: 'autoTransfer', label: '自动转账', icon: '🔄', desc: '自定义计提/转账方案，批量生成凭证', url: 'AutoTransferTax' },
             { key: 'amort',        label: '凭证摊销', icon: '📉', desc: '根据预摊销计划，自动生成本期摊销凭证', url: '#' },
@@ -61,30 +87,48 @@
             { key: 'profit',       label: '结转损益', icon: '⚖️', desc: '将损益科目余额结转至本年利润科目', url: 'ClosingWizardProfit' },
             { key: 'close',        label: '总账结账', icon: '🔒', desc: '完成最终结账，锁定本期账务数据', url: 'ClosingWizardClose' },
         ];
-        let currentIdx = STEPS.findIndex(s => !getStepDone(period, s.key));
-        if (currentIdx === -1) currentIdx = STEPS.length;
+
+        function renderCards(p) {
+            return STEPS.map(s => {
+                const isDone = getStepDone(p, s.key);
+                return `
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;" onclick="loadContent('${s.url}')">
+                    <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
+                    <h3 style="font-size:17px; margin-bottom:10px;">${s.label}</h3>
+                    <p style="font-size:13px; color:#718096; line-height:1.5;">${s.desc}</p>
+                    <div style="margin-top:20px; text-align:right;">
+                        <button style="background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">${isDone?'查看':'进入'} →</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        const periodOpts = periods.map(p =>
+            `<option value="${p}" ${p === period ? 'selected' : ''}>${p}</option>`
+        ).join('');
 
         contentArea.innerHTML = `
         <div style="padding:30px; max-width:1200px; margin:0 auto; font-family:sans-serif;">
             <div style="background:#fff; border-radius:12px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:30px; display:flex; justify-content:space-between; align-items:center;">
                 <h2 style="font-size:20px; font-weight:800; border-left:5px solid #3182ce; padding-left:15px;">期末结账工作台</h2>
-                <span style="background:#3182ce; color:#fff; padding:5px 15px; border-radius:20px; font-size:13px; font-weight:700;">期间: ${period}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:13px; color:#718096;">会计期间：</span>
+                    <select id="pec-period-sel" onchange="window.pecChangePeriod(this.value)"
+                        style="background:#3182ce; color:#fff; padding:5px 12px; border-radius:20px; font-size:13px; font-weight:700; border:none; cursor:pointer; appearance:none; -webkit-appearance:none;">
+                        ${periodOpts}
+                    </select>
+                </div>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px;">
-                ${STEPS.map((s, i) => {
-                    const isDone = getStepDone(period, s.key);
-                    return `
-                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;" onclick="loadContent('${s.url}')">
-                        <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
-                        <h3 style="font-size:17px; margin-bottom:10px;">${s.label}</h3>
-                        <p style="font-size:13px; color:#718096; line-height:1.5;">${s.desc}</p>
-                        <div style="margin-top:20px; text-align:right;">
-                            <button style="background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">${isDone?'查看':'进入'} →</button>
-                        </div>
-                    </div>`;
-                }).join('')}
+            <div id="pec-cards" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px;">
+                ${renderCards(period)}
             </div>
         </div>`;
+
+        window.pecChangePeriod = function(val) {
+            lsSet('QM_CurrentPeriod', val);
+            const cards = document.getElementById('pec-cards');
+            if (cards) cards.innerHTML = renderCards(val);
+        };
     };
 
     // =========================================================================
@@ -97,6 +141,13 @@
         // 若存储值比当前月更旧或缺失，则更新为当前月
         const period = (storedPeriod && storedPeriod >= nowPeriod) ? storedPeriod : nowPeriod;
         if (period !== storedPeriod) lsSet('QM_CurrentPeriod', period);
+
+        // ── 封帐状态检查 ──
+        const atPeriodKey = period.replace(/-0?(\d+)$/, (_, m) => '-' + parseInt(m));
+        const atMonthClosed = sessionStorage.getItem(atPeriodKey + '-MonthClosed') === 'true';
+        const atSteps = lsGet('QM_StepsDone') || {};
+        const atAlreadyDone = !!(atSteps[period] && atSteps[period].autoTransfer);
+
         // 如果读不到数据，则初始化默认方案；同时迁移旧版方案（debitName 缺少科目代码）
         let schemes = lsGet('QM_AdvancedSchemes');
         if (!schemes || schemes.length === 0) {
@@ -175,9 +226,18 @@
                 <button onclick="loadContent('PeriodEndCenter')" style="background:none; border:none; color:#409eff; cursor:pointer; font-weight:700;">← 返回工作台</button>
                 <span style="background:#e6f1fc; color:#3182ce; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:700;">当前期间: ${period}</span>
             </div>
+            ${atMonthClosed ? `
+            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">🔒</span>
+                <span style="color:#b91c1c;font-weight:700;">本期已封帐，禁止执行计提操作。如需重新计提，请先在【期末处理 → 总账结账】中执行反结账。</span>
+            </div>` : atAlreadyDone ? `
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+                <span style="color:#92400e;font-weight:700;">✅ 本期已完成自动转账计提。如凭证有误需重做，请点击重新计提（将删除本期系统自动转账凭证）。</span>
+                <button class="btn-at" style="background:#f59e0b;color:#fff;border:none;white-space:nowrap;" onclick="window.atReRun()">🔄 重新计提</button>
+            </div>` : ''}
             <div style="margin-bottom:20px;">
                 <button class="btn-at" style="background:#409eff; color:#fff;" onclick="window.atAddScheme()">+ 新增方案</button>
-                <button class="btn-at" style="background:#67c23a; color:#fff;" onclick="window.atRunBatch()">▶ 执行方案</button>
+                <button class="btn-at" style="background:#67c23a; color:#fff; ${atMonthClosed?'opacity:.4;cursor:not-allowed;':''}" onclick="${atMonthClosed?'alert(\'本期已封帐，请先反结账\')':'window.atRunBatch()'}">▶ 执行方案</button>
                 <button class="btn-at" onclick="window.atToggleStatus()">禁/启用</button>
                 <button class="btn-at" style="color:#f56c6c;" onclick="window.atDelSelected()">删除</button>
             </div>
@@ -338,6 +398,24 @@
             } else alert('⚠️ 选中方案余额为 0，未生成凭证。');
         };
 
+        // ── 重新计提：删除本期系统自动转账凭证，清除步骤标记，刷新页面 ──
+        window.atReRun = () => {
+            if (!confirm('重新计提将删除本期由【系统自动转账】生成的所有凭证，然后刷新页面，请重新勾选方案执行。确认继续？')) return;
+            let vouchers = fetchAllVouchers();
+            vouchers = vouchers.filter(v => {
+                const isAutoTax = (v.user || '').includes('系统自动转账');
+                const inPeriod = (v.period || (v.date||'').substring(0,7)) === period;
+                return !(isAutoTax && inPeriod);
+            });
+            sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));
+            const steps = lsGet('QM_StepsDone') || {};
+            if (steps[period]) { delete steps[period].autoTransfer; }
+            lsSet('QM_StepsDone', steps);
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '自动转账', action: '重新计提', detail: `期间 ${period} 重新计提，旧凭证已删除` });
+            alert('✅ 已删除本期自动转账凭证，请重新勾选方案执行。');
+            loadContent('AutoTransferTax');
+        };
+
         window.atToggleStatus = () => {
             const ids = Array.from(document.querySelectorAll('.at-cb:checked')).map(cb => cb.dataset.id);
             if(!ids.length) return alert('请勾选');
@@ -365,6 +443,12 @@
     // =========================================================================
     window.VM_MODULES['ClosingWizardProfit'] = function(contentArea) {
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
+
+        // ── 封帐 & 已结转 状态检查 ──
+        const cwPeriodKey = period.replace(/-0?(\d+)$/, (_, m) => '-' + parseInt(m));
+        const cwMonthClosed = sessionStorage.getItem(cwPeriodKey + '-MonthClosed') === 'true';
+        const cwSteps = lsGet('QM_StepsDone') || {};
+        const cwAlreadyDone = !!(cwSteps[period] && cwSteps[period].profit);
 
         // 获取会计准则，决定"本年利润"科目代码
         const std = (localStorage.getItem('AccountingStandard') || 'enterprise');
@@ -471,7 +555,13 @@
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;">期间: ${period}</span>
-                    <button class="cw-btn" style="background:#2563eb;color:#fff;" onclick="window.cwExecute()">▶ 执行损益结转</button>
+                    ${cwMonthClosed
+                        ? `<span style="background:#fee2e2;color:#b91c1c;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:700;">🔒 已封帐 · 请先反结账</span>`
+                        : cwAlreadyDone
+                            ? `<span style="color:#16a34a;font-size:12px;font-weight:700;margin-right:4px;">✓ 已结转</span>
+                               <button class="cw-btn" style="background:#f59e0b;color:#fff;" onclick="window.cwReExecute()">🔄 重新结转</button>`
+                            : `<button class="cw-btn" style="background:#2563eb;color:#fff;" onclick="window.cwExecute()">▶ 执行损益结转</button>`
+                    }
                 </div>
             </div>
 
@@ -540,6 +630,31 @@
         window.cwSave = function() {
             lsSet('QM_ProfitTpl', tpl);
             alert('✅ 模板已保存');
+        };
+
+        // ── 重新结转：删除本期期末结转凭证，清除历史记录和标记，重新执行 ──
+        window.cwReExecute = function() {
+            if (!confirm('重新结转将删除本期【期末结转】凭证并清除结转记录，然后重新执行。确认继续？')) return;
+            // 1. 删除本期期末结转凭证
+            let vouchers = fetchAllVouchers();
+            vouchers = vouchers.filter(v => {
+                const isClosing = (v.user||'').includes('期末结转') || (v.summary||'').includes('期末结转');
+                const inPeriod = (v.period||(v.date||'').substring(0,7)) === period || (v.date||'').startsWith(period);
+                return !(isClosing && inPeriod);
+            });
+            sessionStorage.setItem('ManualVouchers', JSON.stringify(vouchers));
+            // 2. 清除 PeriodEndClosingHistory 中本期记录
+            const hist = JSON.parse(sessionStorage.getItem('PeriodEndClosingHistory')||'[]');
+            sessionStorage.setItem('PeriodEndClosingHistory', JSON.stringify(hist.filter(h => h.period !== period)));
+            // 3. 清除封帐相关标志
+            sessionStorage.setItem(cwPeriodKey + '-ProfitTransferred', 'false');
+            // 4. 清除步骤标记
+            const steps = lsGet('QM_StepsDone') || {};
+            if (steps[period]) { delete steps[period].profit; }
+            lsSet('QM_StepsDone', steps);
+            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '结转损益', action: '重新结转', detail: `期间 ${period} 重新结转，旧凭证已删除` });
+            // 5. 重新执行
+            window.cwExecute();
         };
 
         // ── 执行损益结转 ──
@@ -650,29 +765,62 @@
     // =========================================================================
     window.VM_MODULES['ClosingWizardClose'] = function(contentArea) {
         const period = lsGet('QM_CurrentPeriod') || new Date().toISOString().slice(0,7);
-        const status = lsGet('QM_ClosingStatus') || { closed: false };
-        const isDone = !!status.closed;
+        // 期间key：2026-03 → 2026-3（MonthClosed 用无补零格式）
+        const periodKey = period.replace(/-0?(\d+)$/, (_, m) => '-' + parseInt(m));
+        const isDone = sessionStorage.getItem(periodKey + '-MonthClosed') === 'true';
+
         contentArea.innerHTML = `
         <div style="padding:40px; text-align:center;">
             <div style="background:#fff; border-radius:16px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,0.05); max-width:600px; margin:0 auto;">
                 <div style="font-size:60px; margin-bottom:20px;">🔒</div>
                 <h2 style="font-size:24px; margin-bottom:15px;">期末总结账</h2>
                 <p style="color:#718096; margin-bottom:30px;">目标期间: ${period}</p>
-                ${isDone
-                    ? '<div style="color:#48bb78;font-weight:700;font-size:16px;">✅ 已完成结账</div>'
-                    : `<button style="background:#3182ce;color:#fff;border:none;padding:12px 40px;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px;" onclick="window.doCloseMonth()">执行结账</button>`}
+                ${isDone ? `
+                    <div style="color:#48bb78;font-weight:700;font-size:16px;margin-bottom:20px;">✅ 已完成结账</div>
+                    <button onclick="window.doReOpen()" style="background:#e53e3e;color:#fff;border:none;padding:10px 32px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">🔓 反结账</button>
+                ` : `
+                    <button onclick="window.doCloseMonth()" style="background:#3182ce;color:#fff;border:none;padding:12px 40px;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px;">执行结账</button>
+                `}
                 <div style="margin-top:20px;">
                     <button onclick="loadContent('PeriodEndCenter')" style="background:none;border:none;color:#3182ce;cursor:pointer;">← 返回工作台</button>
                 </div>
             </div>
         </div>`;
+
         window.doCloseMonth = function() {
             if (!confirm(`确认对【${period}】执行结账？结账后本期将锁定。`)) return;
+            // 同时写入 MonthClosed 和 QM_ClosingStatus，保持双向兼容
+            sessionStorage.setItem(periodKey + '-MonthClosed', 'true');
+            sessionStorage.setItem(periodKey + '-MonthClosedTime', new Date().toLocaleString());
             const cur = lsGet('QM_ClosingStatus') || {};
             cur.closed = true;
             lsSet('QM_ClosingStatus', cur);
-            alert('✅ 结账成功');
+            // 更新步骤状态
+            const steps = lsGet('QM_StepsDone') || {};
+            if (!steps[period]) steps[period] = {};
+            steps[period].close = true;
+            lsSet('QM_StepsDone', steps);
+            alert('✅ 结账成功，本期已锁定。');
             loadContent('ClosingWizardClose');
+        };
+
+        window.doReOpen = function() {
+            if (typeof executeReOpen === 'function') {
+                executeReOpen(periodKey);
+            } else {
+                if (!confirm(`确认对【${period}】执行反结账？解锁后可重新修改凭证。`)) return;
+                sessionStorage.setItem(periodKey + '-MonthClosed', 'false');
+                sessionStorage.removeItem(periodKey + '-MonthClosedTime');
+                // 清除结账步骤状态
+                const steps = lsGet('QM_StepsDone') || {};
+                if (steps[period]) delete steps[period].close;
+                lsSet('QM_StepsDone', steps);
+                const cur = lsGet('QM_ClosingStatus') || {};
+                cur.closed = false;
+                lsSet('QM_ClosingStatus', cur);
+                alert(`✅ ${period} 已反结账，期间已解锁。`);
+                loadContent('ClosingWizardClose');
+            }
         };
     };
 })();

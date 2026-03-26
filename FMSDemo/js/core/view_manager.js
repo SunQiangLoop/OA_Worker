@@ -216,6 +216,8 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "6111", name: "投资收益",           type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "股息、利息等投资所得" },
         { code: "6301", name: "营业外收入",         type: "损益", direction: "贷", aux: "无",         status: "启用", remark: "非经营性收入" },
         { code: "6401", name: "主营业务成本",       type: "损益", direction: "借", aux: "项目/线路",  status: "启用", remark: "对应主营收入的成本" },
+            { code: "640101", name: "运输成本-干线运费",       type: "损益", direction: "借", aux: "项目/线路",  status: "启用", remark: "对应主营收入的成本" },
+            { code: "640102", name: "运输成本-短驳运费",       type: "损益", direction: "借", aux: "项目/线路",  status: "启用", remark: "对应主营收入的成本" },
         { code: "6402", name: "其他业务成本",       type: "损益", direction: "借", aux: "无",         status: "启用", remark: "其他业务对应成本" },
         { code: "6403", name: "税金及附加",     type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
         { code: "6601", name: "销售费用",           type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
@@ -1110,21 +1112,21 @@ function loadContent(moduleCode, element = null) {
 
         // ── 1. 默认数据 ──
         const tbDefaultBatches = [
-            { id:"APC260302001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-02 13:25:12", planDepartAt:"2026-03-02 13:24:51", actualDepartAt:"2026-03-02 13:25:33", arriveAt:"2026-03-02 15:42:18", plate:"皖CF8473", trailerPlate:"皖CF8473挂", driver:"张强",   phone:"15898705567", pieces:52,  weight:1280.5, volume:42.8, remark:"",         loadSite:"专线A", loadOperator:"强",   departSite:"专线A", departOperator:"强",   arriveSite:"专线B", arriveOperator:"强"  },
-            { id:"APC260302002", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线B->专线A", loadAt:"2026-03-02 09:10:05", planDepartAt:"2026-03-02 09:00:00", actualDepartAt:"2026-03-02 09:12:33", arriveAt:"2026-03-02 11:35:14", plate:"苏E66782", trailerPlate:"",         driver:"李明",   phone:"13812345678", pieces:38,  weight:960.0,  volume:32.0, remark:"",         loadSite:"专线B", loadOperator:"王华", departSite:"专线B", departOperator:"王华", arriveSite:"专线A", arriveOperator:"赵磊"},
-            { id:"APC260302003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-02 14:30:00", planDepartAt:"2026-03-02 15:00:00", actualDepartAt:"2026-03-02 15:08:22", arriveAt:"2026-03-02 18:55:40", plate:"皖M45678", trailerPlate:"",         driver:"王辉",   phone:"18912345670", pieces:70,  weight:2100.0, volume:68.5, remark:"含易碎品", loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线C", arriveOperator:"陈磊"},
-            { id:"APC260302004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-02 16:00:00", planDepartAt:"2026-03-02 16:30:00", actualDepartAt:"2026-03-02 16:35:10", arriveAt:"",                   plate:"浙A78901", trailerPlate:"浙A78901挂", driver:"陈波",   phone:"15612345671", pieces:45,  weight:1350.0, volume:45.0, remark:"",         loadSite:"专线C", loadOperator:"李华", departSite:"专线C", departOperator:"李华", arriveSite:"",    arriveOperator:""    },
-            { id:"APC260302005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线B", loadAt:"2026-03-02 08:15:30", planDepartAt:"2026-03-02 08:30:00", actualDepartAt:"2026-03-02 08:32:45", arriveAt:"2026-03-02 10:18:22", plate:"皖CF1234", trailerPlate:"",         driver:"刘刚",   phone:"13712345672", pieces:88,  weight:3200.0, volume:95.0, remark:"加急件",   loadSite:"专线A", loadOperator:"张亮", departSite:"专线A", departOperator:"张亮", arriveSite:"专线B", arriveOperator:"李勇"},
-            { id:"APC260303001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-03 07:50:00", planDepartAt:"2026-03-03 08:00:00", actualDepartAt:"2026-03-03 08:05:33", arriveAt:"2026-03-03 10:22:45", plate:"苏K98765", trailerPlate:"",         driver:"赵明",   phone:"18512345673", pieces:62,  weight:1850.0, volume:56.5, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"刘磊"},
-            { id:"APC260303002", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线C", loadAt:"2026-03-03 10:30:00", planDepartAt:"2026-03-03 11:00:00", actualDepartAt:"2026-03-03 11:02:18", arriveAt:"2026-03-03 14:35:00", plate:"皖A23456", trailerPlate:"皖A23456挂", driver:"孙强",   phone:"15712345674", pieces:95,  weight:2850.0, volume:88.0, remark:"",         loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"李磊"},
-            { id:"APC260303003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-03 13:00:00", planDepartAt:"2026-03-03 14:00:00", actualDepartAt:"2026-03-03 14:10:05", arriveAt:"2026-03-03 17:45:22", plate:"浙B34567", trailerPlate:"",         driver:"周杰",   phone:"13912345675", pieces:33,  weight:890.0,  volume:28.5, remark:"含冷链",   loadSite:"专线C", loadOperator:"陈磊", departSite:"专线C", departOperator:"陈磊", arriveSite:"专线A", arriveOperator:""    },
-            { id:"APC260303004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-03 15:20:00", planDepartAt:"2026-03-03 16:00:00", actualDepartAt:"2026-03-03 16:05:48", arriveAt:"",                   plate:"皖B45678", trailerPlate:"皖B45678挂", driver:"吴磊",   phone:"18112345676", pieces:120, weight:3600.0, volume:110.0,remark:"",         loadSite:"专线A", loadOperator:"王磊", departSite:"专线A", departOperator:"王磊", arriveSite:"",    arriveOperator:""    },
-            { id:"APC260303005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线B->专线A", loadAt:"2026-03-03 09:00:00", planDepartAt:"2026-03-03 09:30:00", actualDepartAt:"2026-03-03 09:28:15", arriveAt:"2026-03-03 11:55:30", plate:"苏D56789", trailerPlate:"",         driver:"郑伟",   phone:"15212345677", pieces:41,  weight:1150.0, volume:38.5, remark:"",         loadSite:"专线B", loadOperator:"强",   departSite:"专线B", departOperator:"强",   arriveSite:"专线A", arriveOperator:"强"  },
-            { id:"APC260304001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-04 08:00:00", planDepartAt:"2026-03-04 08:30:00", actualDepartAt:"2026-03-04 08:33:22", arriveAt:"2026-03-04 10:45:18", plate:"皖C67890", trailerPlate:"",         driver:"何军",   phone:"13612345678", pieces:78,  weight:2340.0, volume:72.5, remark:"",         loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线B", arriveOperator:"张磊"},
-            { id:"APC260304002", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-04 11:15:00", planDepartAt:"2026-03-04 12:00:00", actualDepartAt:"2026-03-04 11:58:40", arriveAt:"2026-03-04 14:22:10", plate:"苏F78901", trailerPlate:"苏F78901挂", driver:"林勇",   phone:"18612345679", pieces:55,  weight:1650.0, volume:52.0, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"李磊"},
-            { id:"APC260304003", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-04 13:30:00", planDepartAt:"2026-03-04 14:00:00", actualDepartAt:"2026-03-04 14:02:55", arriveAt:"2026-03-04 17:38:22", plate:"皖D89012", trailerPlate:"",         driver:"罗凤",   phone:"15912345680", pieces:66,  weight:1980.0, volume:62.0, remark:"指定时效", loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"陈磊"},
-            { id:"APC260304004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-04 15:00:00", planDepartAt:"2026-03-04 16:00:00", actualDepartAt:"2026-03-04 16:08:30", arriveAt:"",                   plate:"浙C90123", trailerPlate:"浙C90123挂", driver:"韩涛",   phone:"13712345681", pieces:48,  weight:1440.0, volume:48.0, remark:"",         loadSite:"专线C", loadOperator:"李磊", departSite:"专线C", departOperator:"李磊", arriveSite:"",    arriveOperator:""    },
-            { id:"APC260304005", batchStatus:"已卸车",  accrualStatus:"已挂帐", route:"专线A->专线B", loadAt:"2026-03-04 07:30:00", planDepartAt:"2026-03-04 08:00:00", actualDepartAt:"2026-03-04 07:58:12", arriveAt:"2026-03-04 10:15:45", plate:"皖E01234", trailerPlate:"",         driver:"冯磊",   phone:"18812345682", pieces:102, weight:3060.0, volume:92.0, remark:"",         loadSite:"专线A", loadOperator:"王强", departSite:"专线A", departOperator:"王强", arriveSite:"专线B", arriveOperator:"刘磊"},
+            { id:"APC260302001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-02 13:25:12", planDepartAt:"2026-03-02 13:24:51", actualDepartAt:"2026-03-02 13:25:33", arriveAt:"2026-03-02 15:42:18", plate:"皖CF8473", trailerPlate:"皖CF8473挂", driver:"张强",   phone:"15898705567", pieces:52,  weight:1280.5, volume:42.8, remark:"",         loadSite:"专线A", loadOperator:"强",   departSite:"专线A", departOperator:"强",   arriveSite:"专线B", arriveOperator:"强",   settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260302002", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-02 09:10:05", planDepartAt:"2026-03-02 09:00:00", actualDepartAt:"2026-03-02 09:12:33", arriveAt:"2026-03-02 11:35:14", plate:"苏E66782", trailerPlate:"",         driver:"李明",   phone:"13812345678", pieces:38,  weight:960.0,  volume:32.0, remark:"",         loadSite:"专线B", loadOperator:"王华", departSite:"专线B", departOperator:"王华", arriveSite:"专线A", arriveOperator:"赵磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260302003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-02 14:30:00", planDepartAt:"2026-03-02 15:00:00", actualDepartAt:"2026-03-02 15:08:22", arriveAt:"2026-03-02 18:55:40", plate:"皖M45678", trailerPlate:"",         driver:"王辉",   phone:"18912345670", pieces:70,  weight:2100.0, volume:68.5, remark:"含易碎品", loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线C", arriveOperator:"陈磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260302004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-02 16:00:00", planDepartAt:"2026-03-02 16:30:00", actualDepartAt:"2026-03-02 16:35:10", arriveAt:"",                   plate:"浙A78901", trailerPlate:"浙A78901挂", driver:"陈波",   phone:"15612345671", pieces:45,  weight:1350.0, volume:45.0, remark:"",         loadSite:"专线C", loadOperator:"李华", departSite:"专线C", departOperator:"李华", arriveSite:"",    arriveOperator:"",   settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260302005", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-02 08:15:30", planDepartAt:"2026-03-02 08:30:00", actualDepartAt:"2026-03-02 08:32:45", arriveAt:"2026-03-02 10:18:22", plate:"皖CF1234", trailerPlate:"",         driver:"刘刚",   phone:"13712345672", pieces:88,  weight:3200.0, volume:95.0, remark:"加急件",   loadSite:"专线A", loadOperator:"张亮", departSite:"专线A", departOperator:"张亮", arriveSite:"专线B", arriveOperator:"李勇", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260303001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-03 07:50:00", planDepartAt:"2026-03-03 08:00:00", actualDepartAt:"2026-03-03 08:05:33", arriveAt:"2026-03-03 10:22:45", plate:"苏K98765", trailerPlate:"",         driver:"赵明",   phone:"18512345673", pieces:62,  weight:1850.0, volume:56.5, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"刘磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260303002", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-03 10:30:00", planDepartAt:"2026-03-03 11:00:00", actualDepartAt:"2026-03-03 11:02:18", arriveAt:"2026-03-03 14:35:00", plate:"皖A23456", trailerPlate:"皖A23456挂", driver:"孙强",   phone:"15712345674", pieces:95,  weight:2850.0, volume:88.0, remark:"",         loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"李磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260303003", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-03 13:00:00", planDepartAt:"2026-03-03 14:00:00", actualDepartAt:"2026-03-03 14:10:05", arriveAt:"2026-03-03 17:45:22", plate:"浙B34567", trailerPlate:"",         driver:"周杰",   phone:"13912345675", pieces:33,  weight:890.0,  volume:28.5, remark:"含冷链",   loadSite:"专线C", loadOperator:"陈磊", departSite:"专线C", departOperator:"陈磊", arriveSite:"专线A", arriveOperator:"",   settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260303004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-03 15:20:00", planDepartAt:"2026-03-03 16:00:00", actualDepartAt:"2026-03-03 16:05:48", arriveAt:"",                   plate:"皖B45678", trailerPlate:"皖B45678挂", driver:"吴磊",   phone:"18112345676", pieces:120, weight:3600.0, volume:110.0,remark:"",         loadSite:"专线A", loadOperator:"王磊", departSite:"专线A", departOperator:"王磊", arriveSite:"",    arriveOperator:"",   settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260303005", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-03 09:00:00", planDepartAt:"2026-03-03 09:30:00", actualDepartAt:"2026-03-03 09:28:15", arriveAt:"2026-03-03 11:55:30", plate:"苏D56789", trailerPlate:"",         driver:"郑伟",   phone:"15212345677", pieces:41,  weight:1150.0, volume:38.5, remark:"",         loadSite:"专线B", loadOperator:"强",   departSite:"专线B", departOperator:"强",   arriveSite:"专线A", arriveOperator:"强",  settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260304001", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-04 08:00:00", planDepartAt:"2026-03-04 08:30:00", actualDepartAt:"2026-03-04 08:33:22", arriveAt:"2026-03-04 10:45:18", plate:"皖C67890", trailerPlate:"",         driver:"何军",   phone:"13612345678", pieces:78,  weight:2340.0, volume:72.5, remark:"",         loadSite:"专线A", loadOperator:"刘强", departSite:"专线A", departOperator:"刘强", arriveSite:"专线B", arriveOperator:"张磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260304002", batchStatus:"已到达",  accrualStatus:"未挂帐", route:"专线B->专线A", loadAt:"2026-03-04 11:15:00", planDepartAt:"2026-03-04 12:00:00", actualDepartAt:"2026-03-04 11:58:40", arriveAt:"2026-03-04 14:22:10", plate:"苏F78901", trailerPlate:"苏F78901挂", driver:"林勇",   phone:"18612345679", pieces:55,  weight:1650.0, volume:52.0, remark:"",         loadSite:"专线B", loadOperator:"王强", departSite:"专线B", departOperator:"王强", arriveSite:"专线A", arriveOperator:"李磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260304003", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线C", loadAt:"2026-03-04 13:30:00", planDepartAt:"2026-03-04 14:00:00", actualDepartAt:"2026-03-04 14:02:55", arriveAt:"2026-03-04 17:38:22", plate:"皖D89012", trailerPlate:"",         driver:"罗凤",   phone:"15912345680", pieces:66,  weight:1980.0, volume:62.0, remark:"指定时效", loadSite:"专线A", loadOperator:"张强", departSite:"专线A", departOperator:"张强", arriveSite:"专线C", arriveOperator:"陈磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260304004", batchStatus:"已发车",  accrualStatus:"未挂帐", route:"专线C->专线A", loadAt:"2026-03-04 15:00:00", planDepartAt:"2026-03-04 16:00:00", actualDepartAt:"2026-03-04 16:08:30", arriveAt:"",                   plate:"浙C90123", trailerPlate:"浙C90123挂", driver:"韩涛",   phone:"13712345681", pieces:48,  weight:1440.0, volume:48.0, remark:"",         loadSite:"专线C", loadOperator:"李磊", departSite:"专线C", departOperator:"李磊", arriveSite:"",    arriveOperator:"",   settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
+            { id:"APC260304005", batchStatus:"已卸车",  accrualStatus:"未挂帐", route:"专线A->专线B", loadAt:"2026-03-04 07:30:00", planDepartAt:"2026-03-04 08:00:00", actualDepartAt:"2026-03-04 07:58:12", arriveAt:"2026-03-04 10:15:45", plate:"皖E01234", trailerPlate:"",         driver:"冯磊",   phone:"18812345682", pieces:102, weight:3060.0, volume:92.0, remark:"",         loadSite:"专线A", loadOperator:"王强", departSite:"专线A", departOperator:"王强", arriveSite:"专线B", arriveOperator:"刘磊", settlementStatus:"未结算", paymentStatus:"未付款", freight:0},
         ];
 
         let tbBatches = JSON.parse(sessionStorage.getItem("BizTrunkBatches"));
@@ -1532,18 +1534,18 @@ function loadContent(moduleCode, element = null) {
         // =====================================================================
         if (shTab === "delivery") {
             const shdDef = [
-                {id:"SH260302001",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"南京联畅物流有限公司",  deliveryAt:"2026-03-02 09:00:00",finishAt:"2026-03-02 11:30:00",deliveryMethod:"自驾送货",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:18, weight:450.0, volume:15.0,deliveryFee:120.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"专线B",finishOperator:"王华", remark:""},
-                {id:"SH260302002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"朱树伟/18905693469/合肥诚才物流有限公司",  deliveryAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:00:00",deliveryMethod:"外包配送",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:25, weight:680.5, volume:22.0,deliveryFee:180.00,unitDeliveryFee:7.20, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"专线A",finishOperator:"刘强",remark:""},
-                {id:"SH260302003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"余风华/13337717906/镇江天地沃华物流有限公司",      deliveryAt:"2026-03-02 14:00:00",finishAt:"2026-03-02 16:30:00",deliveryMethod:"上门派送",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:12, weight:320.0, volume:10.5,deliveryFee:85.00, unitDeliveryFee:7.08, deliverySite:"专线B",deliveryOperator:"陈磊",finishSite:"专线B",finishOperator:"赵华", remark:"需冷链"},
-                {id:"SH260302004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"焦大海/18018079866/南京浦鹏物流有限公司",  deliveryAt:"2026-03-02 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:30, weight:900.0, volume:30.0,deliveryFee:200.00,unitDeliveryFee:6.67, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"",    finishOperator:"",    remark:""},
-                {id:"SH260302005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"董长于/15212085999/天长市乐运物流有限公司",        deliveryAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 11:00:00",deliveryMethod:"外包配送",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:42, weight:1200.5,volume:40.0,deliveryFee:280.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"王强",finishSite:"专线B",finishOperator:"刘磊",remark:""},
-                {id:"SH260303001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 11:00:00",deliveryMethod:"自驾送货",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:8,  weight:220.0, volume:7.5, deliveryFee:60.00, unitDeliveryFee:7.50, deliverySite:"专线A",deliveryOperator:"李华",finishSite:"专线A",finishOperator:"张磊",remark:""},
-                {id:"SH260303002",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"黄光辉/15016793637/怀化飞鸿物流有限公司",          deliveryAt:"2026-03-03 10:00:00",finishAt:"2026-03-03 13:30:00",deliveryMethod:"上门派送",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:55, weight:1500.0,volume:52.0,deliveryFee:350.00,unitDeliveryFee:6.36, deliverySite:"专线B",deliveryOperator:"陈强",finishSite:"专线B",finishOperator:"王磊",remark:""},
-                {id:"SH260303003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"翠娟/18013266866/昆山江南达物流有限公司",        deliveryAt:"2026-03-03 13:00:00",finishAt:"2026-03-03 15:20:00",deliveryMethod:"外包配送",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:20, weight:580.0, volume:18.0,deliveryFee:140.00,unitDeliveryFee:7.00, deliverySite:"专线A",deliveryOperator:"刘磊",finishSite:"专线A",finishOperator:"赵强",remark:""},
-                {id:"SH260303004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"江西连淳物流",          deliveryAt:"2026-03-03 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"赣C45678",driver:"吴磊", phone:"18112345676",pieces:15, weight:420.0, volume:14.0,deliveryFee:100.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"",    finishOperator:"",    remark:""},
-                {id:"SH260303005",accrualStatus:"已挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:30:00",deliveryMethod:"外包配送",plate:"皖F56789",driver:"郑伟", phone:"15212345677",pieces:38, weight:1050.0,volume:35.5,deliveryFee:240.00,unitDeliveryFee:6.32, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"专线A",finishOperator:"王磊",remark:""},
-                {id:"SH260304001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"广东东安物流",          deliveryAt:"2026-03-04 09:30:00",finishAt:"2026-03-04 12:00:00",deliveryMethod:"上门派送",plate:"粤G67890",driver:"何军", phone:"13612345678",pieces:22, weight:620.0, volume:20.5,deliveryFee:150.00,unitDeliveryFee:6.82, deliverySite:"专线B",deliveryOperator:"刘强",finishSite:"专线B",finishOperator:"李华", remark:""},
-                {id:"SH260304002",accrualStatus:"未挂帐",deliveryStatus:"待送货", customerName:"浙江圆通供应链",        deliveryAt:"2026-03-04 14:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"浙H78901",driver:"林勇", phone:"18612345679",pieces:35, weight:980.0, volume:32.0,deliveryFee:210.00,unitDeliveryFee:6.00, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"",    finishOperator:"",    remark:"加急"},
+                {id:"SH260302001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"南京联畅物流有限公司",  deliveryAt:"2026-03-02 09:00:00",finishAt:"2026-03-02 11:30:00",deliveryMethod:"自驾送货",plate:"皖CF8473",driver:"张强", phone:"15898705567",pieces:18, weight:450.0, volume:15.0,deliveryFee:120.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"专线B",finishOperator:"王华", remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260302002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"朱树伟/18905693469/合肥诚才物流有限公司",  deliveryAt:"2026-03-02 10:30:00",finishAt:"2026-03-02 13:00:00",deliveryMethod:"外包配送",plate:"皖A12345",driver:"李明", phone:"13812345678",pieces:25, weight:680.5, volume:22.0,deliveryFee:180.00,unitDeliveryFee:7.20, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"专线A",finishOperator:"刘强",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260302003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"余风华/13337717906/镇江天地沃华物流有限公司",      deliveryAt:"2026-03-02 14:00:00",finishAt:"2026-03-02 16:30:00",deliveryMethod:"上门派送",plate:"苏E66782",driver:"王辉", phone:"18912345670",pieces:12, weight:320.0, volume:10.5,deliveryFee:85.00, unitDeliveryFee:7.08, deliverySite:"专线B",deliveryOperator:"陈磊",finishSite:"专线B",finishOperator:"赵华", remark:"需冷链", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260302004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"焦大海/18018079866/南京浦鹏物流有限公司",  deliveryAt:"2026-03-02 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"皖B45678",driver:"陈波", phone:"15612345671",pieces:30, weight:900.0, volume:30.0,deliveryFee:200.00,unitDeliveryFee:6.67, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"",    finishOperator:"",    remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260302005",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"董长于/15212085999/天长市乐运物流有限公司",        deliveryAt:"2026-03-02 08:30:00",finishAt:"2026-03-02 11:00:00",deliveryMethod:"外包配送",plate:"皖C67890",driver:"刘刚", phone:"13712345672",pieces:42, weight:1200.5,volume:40.0,deliveryFee:280.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"王强",finishSite:"专线B",finishOperator:"刘磊",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260303001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 09:00:00",finishAt:"2026-03-03 11:00:00",deliveryMethod:"自驾送货",plate:"皖D89012",driver:"赵明", phone:"18512345673",pieces:8,  weight:220.0, volume:7.5, deliveryFee:60.00, unitDeliveryFee:7.50, deliverySite:"专线A",deliveryOperator:"李华",finishSite:"专线A",finishOperator:"张磊",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260303002",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"黄光辉/15016793637/怀化飞鸿物流有限公司",          deliveryAt:"2026-03-03 10:00:00",finishAt:"2026-03-03 13:30:00",deliveryMethod:"上门派送",plate:"湘E23456",driver:"孙强", phone:"15712345674",pieces:55, weight:1500.0,volume:52.0,deliveryFee:350.00,unitDeliveryFee:6.36, deliverySite:"专线B",deliveryOperator:"陈强",finishSite:"专线B",finishOperator:"王磊",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260303003",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"翠娟/18013266866/昆山江南达物流有限公司",        deliveryAt:"2026-03-03 13:00:00",finishAt:"2026-03-03 15:20:00",deliveryMethod:"外包配送",plate:"苏K98765",driver:"周杰", phone:"13912345675",pieces:20, weight:580.0, volume:18.0,deliveryFee:140.00,unitDeliveryFee:7.00, deliverySite:"专线A",deliveryOperator:"刘磊",finishSite:"专线A",finishOperator:"赵强",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260303004",accrualStatus:"未挂帐",deliveryStatus:"送货中", customerName:"江西连淳物流",          deliveryAt:"2026-03-03 15:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"赣C45678",driver:"吴磊", phone:"18112345676",pieces:15, weight:420.0, volume:14.0,deliveryFee:100.00,unitDeliveryFee:6.67, deliverySite:"专线B",deliveryOperator:"李磊",finishSite:"",    finishOperator:"",    remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260303005",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"安徽滁行物流有限公司",  deliveryAt:"2026-03-03 08:00:00",finishAt:"2026-03-03 10:30:00",deliveryMethod:"外包配送",plate:"皖F56789",driver:"郑伟", phone:"15212345677",pieces:38, weight:1050.0,volume:35.5,deliveryFee:240.00,unitDeliveryFee:6.32, deliverySite:"专线A",deliveryOperator:"张强",finishSite:"专线A",finishOperator:"王磊",remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260304001",accrualStatus:"未挂帐",deliveryStatus:"已签收",customerName:"广东东安物流",          deliveryAt:"2026-03-04 09:30:00",finishAt:"2026-03-04 12:00:00",deliveryMethod:"上门派送",plate:"粤G67890",driver:"何军", phone:"13612345678",pieces:22, weight:620.0, volume:20.5,deliveryFee:150.00,unitDeliveryFee:6.82, deliverySite:"专线B",deliveryOperator:"刘强",finishSite:"专线B",finishOperator:"李华", remark:"", settlementStatus:"未结算", paymentStatus:"未付款"},
+                {id:"SH260304002",accrualStatus:"未挂帐",deliveryStatus:"待送货", customerName:"浙江圆通供应链",        deliveryAt:"2026-03-04 14:00:00",finishAt:"",                   deliveryMethod:"自驾送货",plate:"浙H78901",driver:"林勇", phone:"18612345679",pieces:35, weight:980.0, volume:32.0,deliveryFee:210.00,unitDeliveryFee:6.00, deliverySite:"专线A",deliveryOperator:"王磊",finishSite:"",    finishOperator:"",    remark:"加急", settlementStatus:"未结算", paymentStatus:"未付款"},
             ];
             let shdData = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery"));
             if (!shdData || !shdData.length) { shdData = shdDef; sessionStorage.setItem("BizShortHaulDelivery", JSON.stringify(shdData)); }
@@ -4962,708 +4964,323 @@ function loadContent(moduleCode, element = null) {
     // AP-1. 干线批次结算 (APTrunkBatchSettlement)
     // =========================================================================
     else if (moduleCode === "APTrunkBatchSettlement") {
-        function _apesc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+        function _apEsc(v) { return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+        function _apFmt(n) { const v=parseFloat(n||0); return isNaN(v)?"0.00":v.toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-        // --- Tab 定义 ---
-        const apTabs = ['发车汇总','到车汇总','现付运输费','现付油卡费','到付运输费','回付运输费','司机定金','挂车使用费','发站装车费','发站其他费','整车保险费','到站卸车费','到站其他费','整车信息费','发站整车落货费','到站整车落货费'];
-        const apActiveTab = window._apTrunkTab || '发车汇总';
-
-        // --- 列定义 ---
-        const apCols = [
-            { key: "site",               label: "网点",            w: 110, siteFilter: true },
-            { key: "batchNo",            label: "发车批次",        w: 180, batchFilter: true },
-            { key: "route",              label: "车辆线路",        w: 140, fkey: "route" },
-            { key: "createTime",         label: "创建时间",        w: 160, dateFilter: "create" },
-            { key: "departTime",         label: "发车时间",        w: 160, dateFilter: "depart" },
-            { key: "plateNo",            label: "车牌号",          w: 110, fkey: "plateNo" },
-            { key: "driver",             label: "主驾司机",        w: 100, fkey: "driver" },
-            { key: "cashFreight",        label: "现付运输费",      w: 110, align: "right" },
-            { key: "cashFreightUnpaid",  label: "未结现付运输费",  w: 130, align: "right" },
-            { key: "cashFuelCard",       label: "现付油卡费",      w: 110, align: "right" },
-            { key: "cashFuelCardUnpaid", label: "未结现付油卡费",  w: 130, align: "right" },
-            { key: "returnFreight",      label: "回付运输费",      w: 110, align: "right" },
-            { key: "returnFreightUnpaid",label: "未结回付运输费",  w: 130, align: "right" },
-            { key: "trailerFee",         label: "挂车使用费",      w: 110, align: "right" },
-            { key: "trailerFeeUnpaid",   label: "未结挂车使用费",  w: 130, align: "right" },
-            { key: "depStationFee",      label: "发站其他费",      w: 110, align: "right" },
-            { key: "depStationFeeUnpaid",label: "未结发站其他费",  w: 130, align: "right" },
-            { key: "depLoadFee",         label: "发站装车费",      w: 110, align: "right" },
-            { key: "depLoadFeeUnpaid",   label: "未结发站装车费",  w: 130, align: "right" },
-            { key: "insurance",          label: "整车保险费",      w: 110, align: "right" },
-            { key: "insuranceUnpaid",    label: "未结整车保险费",  w: 130, align: "right" },
-            { key: "infoFee",            label: "整车信息费",      w: 110, align: "right" },
-            { key: "infoFeeUnpaid",      label: "未结整车信息费",  w: 130, align: "right" },
-            { key: "arrFreightUnpaid",   label: "未结到付运输费",  w: 130, align: "right" },
-            { key: "cashFreightAbnUnpaid",label:"未结现付运输费异动",w:145,align: "right" },
-            { key: "trailerPlate",       label: "挂车牌号",        w: 110, fkey: "trailerPlate" },
-            { key: "arriveTime",         label: "到达时间",        w: 160, dateFilter: "arrive" },
-            { key: "latestSite",         label: "最新操作网点",    w: 130, fkey: "latestSite" },
-            { key: "batchStatus",        label: "批次状态",        w: 100, statusFilter: "status" },
-            { key: "driverPhone",        label: "主驾电话",        w: 120, fkey: "driverPhone" },
-            { key: "remark",             label: "备注",            w: 140, fkey: "remark" },
-            { key: "batchTag",           label: "批次标识",        w: 100, statusFilter: "tag" },
-        ];
-
-        // --- 生成数据（仅首次） ---
-        let apData = JSON.parse(sessionStorage.getItem('APTrunkBatches') || 'null');
-        if (!apData) {
-            const sites = ['上海总部','北京分公司','广州分公司','深圳分公司','成都分公司'];
-            const routes = ['沪京线','沪广线','京广线','广深线','成渝线','沪汉线'];
-            const drivers = [['张伟','138-0001-0001'],['李强','139-0002-0002'],['王磊','137-0003-0003'],['刘洋','136-0004-0004'],['陈龙','135-0005-0005']];
-            const plates = ['沪A12345','京B23456','粤C34567','粤D45678','川E56789'];
-            const trailers = ['沪A挂001','京B挂002','粤C挂003','','粤D挂004'];
-            const statuses = ['已发车','已到达','待结算'];
-            const tags = ['正常','加急','特殊'];
-            apData = [];
-            for (let i = 1; i <= 80; i++) {
-                const di = drivers[i % drivers.length];
-                const d = String((i % 28) + 1).padStart(2,'0');
-                const hh = String(8 + (i % 10)).padStart(2,'0');
-                const mm = String((i * 7) % 60).padStart(2,'0');
-                const createDt = `2026-01-${d} ${hh}:${mm}`;
-                const departDt = `2026-01-${d} ${String(10 + (i % 8)).padStart(2,'0')}:${String((i * 11) % 60).padStart(2,'0')}`;
-                const arriveDt = i % 5 !== 0 ? `2026-01-${String(Math.min(28, Number(d) + 1 + (i % 3))).padStart(2,'0')} ${String(8 + (i % 6)).padStart(2,'0')}:${String((i * 13) % 60).padStart(2,'0')}` : '';
-                const cf = i % 4 === 0 ? 0 : Math.round((500 + (i * 37.3) % 3000) * 10) / 10;
-                const cfc = i % 5 === 0 ? 0 : Math.round((100 + (i * 19.1) % 800) * 10) / 10;
-                const rf = i % 3 === 0 ? 0 : Math.round((200 + (i * 23.7) % 1500) * 10) / 10;
-                const tf = i % 6 === 0 ? 0 : Math.round((50 + (i * 11.3) % 400) * 10) / 10;
-                const dsf = i % 7 === 0 ? 0 : Math.round((30 + (i * 7.9) % 300) * 10) / 10;
-                const dlf = i % 4 === 0 ? 0 : Math.round((80 + (i * 13.1) % 500) * 10) / 10;
-                const ins = i % 5 === 0 ? 0 : Math.round((100 + (i * 17.3) % 600) * 10) / 10;
-                const inf = i % 8 === 0 ? 0 : Math.round((50 + (i * 9.7) % 300) * 10) / 10;
-                const af = i % 3 === 0 ? 0 : Math.round((300 + (i * 29.1) % 2000) * 10) / 10;
-                apData.push({
-                    id: `AP202601${String(i).padStart(4,'0')}`,
-                    site: sites[i % sites.length],
-                    batchNo: `AP202601${String(i).padStart(4,'0')}`,
-                    route: routes[i % routes.length],
-                    createTime: createDt,
-                    departTime: departDt,
-                    plateNo: plates[i % plates.length],
-                    driver: di[0],
-                    cashFreight: cf,
-                    cashFreightUnpaid: cf > 0 ? Math.round(cf * (i % 3 === 1 ? 0 : 0.5) * 10) / 10 : 0,
-                    cashFuelCard: cfc,
-                    cashFuelCardUnpaid: cfc > 0 ? Math.round(cfc * (i % 2 === 0 ? 0 : 1) * 10) / 10 : 0,
-                    returnFreight: rf,
-                    returnFreightUnpaid: rf > 0 ? Math.round(rf * (i % 4 === 0 ? 0 : 0.5) * 10) / 10 : 0,
-                    trailerFee: tf,
-                    trailerFeeUnpaid: tf,
-                    depStationFee: dsf,
-                    depStationFeeUnpaid: dsf > 0 ? Math.round(dsf * (i % 2 === 0 ? 0.5 : 1) * 10) / 10 : 0,
-                    depLoadFee: dlf,
-                    depLoadFeeUnpaid: dlf > 0 ? Math.round(dlf * (i % 3 === 0 ? 0 : 0.5) * 10) / 10 : 0,
-                    insurance: ins,
-                    insuranceUnpaid: ins,
-                    infoFee: inf,
-                    infoFeeUnpaid: inf > 0 ? Math.round(inf * (i % 2 === 0 ? 0 : 1) * 10) / 10 : 0,
-                    arrFreightUnpaid: af,
-                    cashFreightAbnUnpaid: i % 9 === 0 ? Math.round((i * 7.3) % 200 * 10) / 10 : 0,
-                    trailerPlate: trailers[i % trailers.length],
-                    arriveTime: arriveDt,
-                    latestSite: sites[(i + 1) % sites.length],
-                    batchStatus: statuses[i % statuses.length],
-                    driverPhone: di[1],
-                    remark: i % 6 === 0 ? '需特殊处理' : '',
-                    batchTag: tags[i % tags.length],
-                });
-            }
-            sessionStorage.setItem('APTrunkBatches', JSON.stringify(apData));
-        }
-
-        // --- 筛选状态 ---
-        const today = new Date();
-        const d28 = new Date(today); d28.setDate(today.getDate() - 28);
-        const fmt = d => d.toISOString().slice(0, 10);
-        const apF = {
-            batchNos:     window._apF_batchNos    ?? '',
-            site:         window._apF_site         ?? '',
-            createFrom:   window._apF_createFrom   ?? fmt(d28),
-            createTo:     window._apF_createTo     ?? fmt(today),
-            departFrom:   window._apF_departFrom   ?? '',
-            departTo:     window._apF_departTo     ?? '',
-            arriveFrom:   window._apF_arriveFrom   ?? '',
-            arriveTo:     window._apF_arriveTo     ?? '',
-            plateNo:      window._apF_plateNo      ?? '',
-            driver:       window._apF_driver       ?? '',
-            route:        window._apF_route        ?? '',
-            status:       window._apF_status       ?? '',
-            tag:          window._apF_tag          ?? '',
-            trailerPlate: window._apF_trailerPlate ?? '',
-            latestSite:   window._apF_latestSite   ?? '',
-            driverPhone:  window._apF_driverPhone  ?? '',
-            remark:       window._apF_remark       ?? '',
-        };
-
-        // --- 筛选逻辑 ---
-        const apFiltered = apData.filter(r => {
-            if (apF.batchNos) {
-                const nos = apF.batchNos.split(/[,+\s\n]+/).map(s=>s.trim()).filter(Boolean);
-                if (nos.length && !nos.some(n => r.batchNo.toLowerCase().includes(n.toLowerCase()))) return false;
-            }
-            if (apF.site && r.site !== apF.site) return false;
-            if (apF.route && !r.route.toLowerCase().includes(apF.route.toLowerCase())) return false;
-            if (apF.plateNo && !r.plateNo.toLowerCase().includes(apF.plateNo.toLowerCase())) return false;
-            if (apF.driver && !r.driver.toLowerCase().includes(apF.driver.toLowerCase())) return false;
-            if (apF.status && r.batchStatus !== apF.status) return false;
-            if (apF.tag && r.batchTag !== apF.tag) return false;
-            if (apF.trailerPlate && !r.trailerPlate.toLowerCase().includes(apF.trailerPlate.toLowerCase())) return false;
-            if (apF.latestSite && !r.latestSite.toLowerCase().includes(apF.latestSite.toLowerCase())) return false;
-            if (apF.driverPhone && !r.driverPhone.toLowerCase().includes(apF.driverPhone.toLowerCase())) return false;
-            if (apF.remark && !r.remark.toLowerCase().includes(apF.remark.toLowerCase())) return false;
-            const ct = r.createTime ? r.createTime.slice(0,10) : '';
-            if (apF.createFrom && ct < apF.createFrom) return false;
-            if (apF.createTo && ct > apF.createTo) return false;
-            const dt = r.departTime ? r.departTime.slice(0,10) : '';
-            if (apF.departFrom && dt < apF.departFrom) return false;
-            if (apF.departTo && dt > apF.departTo) return false;
-            const at = r.arriveTime ? r.arriveTime.slice(0,10) : '';
-            if (apF.arriveFrom && at < apF.arriveFrom) return false;
-            if (apF.arriveTo && at > apF.arriveTo) return false;
-            return true;
+        // 读取干线批次数据，只显示已挂帐且未结算的
+        let apTBatches = JSON.parse(sessionStorage.getItem("BizTrunkBatches") || "[]");
+        // 补全旧数据缺失字段
+        apTBatches.forEach(b => {
+            if (!b.settlementStatus) b.settlementStatus = "未结算";
+            if (!b.paymentStatus)    b.paymentStatus    = "未付款";
+            if (b.freight === undefined) b.freight = 0;
         });
 
-        // --- 分页 ---
-        const apPage = window._apBatchPage || 1;
-        const apPageSize = window._apBatchPageSize || 20;
-        const apTotal = apFiltered.length;
-        const apPageCount = Math.max(1, Math.ceil(apTotal / apPageSize));
-        const apPageData = apFiltered.slice((apPage-1)*apPageSize, apPage*apPageSize);
+        const apTab = window._apTrunkSettleTab || "pending"; // pending | settled
+        if (!window.apTrunkSettleTabSwitch) {
+            window.apTrunkSettleTabSwitch = function(t) { window._apTrunkSettleTab=t; loadContent("APTrunkBatchSettlement"); };
+        }
 
-        // --- 合计 ---
-        const apSumKeys = ['cashFreight','cashFreightUnpaid','cashFuelCard','cashFuelCardUnpaid','returnFreight','returnFreightUnpaid','trailerFee','trailerFeeUnpaid','depStationFee','depStationFeeUnpaid','depLoadFee','depLoadFeeUnpaid','insurance','insuranceUnpaid','infoFee','infoFeeUnpaid','arrFreightUnpaid','cashFreightAbnUnpaid'];
-        const apSums = {};
-        apSumKeys.forEach(k => { apSums[k] = 0; });
-        apFiltered.forEach(r => { apSumKeys.forEach(k => { apSums[k] += Number(r[k]) || 0; }); });
+        // 筛选
+        const pendingBatches  = apTBatches.filter(b => b.accrualStatus==="已挂帐" && b.settlementStatus!=="已结算");
+        const settledBatches  = apTBatches.filter(b => b.settlementStatus==="已结算");
 
-        // --- 状态颜色 ---
-        const apStatusColor = s => ({'已发车':'color:#1890ff','已到达':'color:#52c41a','待结算':'color:#faad14'}[s]||'');
+        // 确认结算
+        window.apTrunkDoSettle = function() {
+            const checked = Array.from(document.querySelectorAll(".apt-chk:checked"));
+            if (!checked.length) return alert("请先勾选需要结算的批次。");
+            let list = JSON.parse(sessionStorage.getItem("BizTrunkBatches") || "[]");
+            let count = 0;
+            const now = new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-");
+            const voucherList = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+            const std = typeof getAccountingStandardState==="function" ? getAccountingStandardState() : "小企业会计准则 2013";
+            // 生成凭证字号
+            const re = /^转-(\d+)$/;
+            let maxSeq = 0;
+            voucherList.forEach(v => { const m=(v.id||"").match(re); if(m) maxSeq=Math.max(maxSeq,parseInt(m[1],10)); });
 
-        // --- 空状态 ---
-        const apEmptyState = `<tr><td colspan="${apCols.length+1}" style="padding:80px 0;text-align:center;">
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.25;display:block;margin:0 auto 12px;">
-                <rect x="10" y="10" width="60" height="60" rx="8" stroke="#b0c4d8" stroke-width="3" fill="#eaf3fb"/>
-                <circle cx="40" cy="36" r="13" stroke="#b0c4d8" stroke-width="3" fill="none"/>
-                <line x1="49" y1="47" x2="62" y2="60" stroke="#b0c4d8" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="56" cy="24" r="8" fill="#fff" stroke="#b0c4d8" stroke-width="2"/>
-                <text x="52" y="28" font-size="10" fill="#b0c4d8" font-family="Arial">?</text>
-            </svg>
-            <div style="color:#b0c4d8;font-size:14px;margin-bottom:4px;">没有对应的数据</div>
-            <div style="color:#c8d8e8;font-size:12px;">请检查查询筛选条件后重新进行数据查询</div>
-        </td></tr>`;
+            checked.forEach(cb => {
+                const id = cb.value;
+                const batch = list.find(b => b.id===id);
+                if (!batch) return;
+                const freightInput = document.getElementById("apt_freight_"+id);
+                const freight = parseFloat(freightInput ? freightInput.value : batch.freight) || 0;
+                if (freight <= 0) { alert("批次【"+id+"】运费金额不能为0，请填写运费。"); return; }
 
-        // --- 数据行 ---
-        const apRows = apPageData.map(r => `<tr>
-            <td><input type="checkbox" class="ap-check" value="${_apesc(r.id)}"></td>
-            ${apCols.map(col => {
-                let v = r[col.key];
-                let style = col.align === 'right' ? 'text-align:right;' : '';
-                if (col.key === 'batchStatus') style += apStatusColor(v);
-                if (apSumKeys.includes(col.key)) v = v > 0 ? Number(v).toFixed(2) : '';
-                return `<td style="${style}">${_apesc(v ?? '')}</td>`;
-            }).join('')}
-        </tr>`).join('');
-
-        // --- 筛选行 ---
-        const apAllSites = [...new Set(apData.map(r=>r.site))];
-        const apFilterRow = apCols.map(col => {
-            if (col.siteFilter) return `<td class="sticky-left-1"><select class="wb-filter-select" id="ap_f_site" onchange="apBatchApplyFilters()">
-                <option value=""></option>${apAllSites.map(s=>`<option value="${_apesc(s)}" ${apF.site===s?'selected':''}>${_apesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.batchFilter) return `<td class="sticky-left-2"><input class="wb-filter-input wb-filter-input--batch" id="ap_f_batch" placeholder="支持批量搜索" value="${_apesc(apF.batchNos)}" onchange="apBatchApplyFilters()"></td>`;
-            if (col.dateFilter === 'create') return `<td><div style="display:flex;gap:2px;align-items:center;">
-                <input type="date" class="wb-filter-input" id="ap_f_createFrom" value="${_apesc(apF.createFrom)}" onchange="apBatchApplyFilters()" style="width:108px;">
-                <span style="color:#bbb;">~</span>
-                <input type="date" class="wb-filter-input" id="ap_f_createTo" value="${_apesc(apF.createTo)}" onchange="apBatchApplyFilters()" style="width:108px;">
-            </div></td>`;
-            if (col.dateFilter === 'depart') return `<td><div style="display:flex;gap:2px;align-items:center;">
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_departFrom" value="${_apesc(apF.departFrom)}" onchange="apBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
-                <span style="color:#bbb;">~</span>
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_departTo" value="${_apesc(apF.departTo)}" onchange="apBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
-            </div></td>`;
-            if (col.dateFilter === 'arrive') return `<td><div style="display:flex;gap:2px;align-items:center;">
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_arriveFrom" value="${_apesc(apF.arriveFrom)}" onchange="apBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
-                <span style="color:#bbb;">~</span>
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="ap_f_arriveTo" value="${_apesc(apF.arriveTo)}" onchange="apBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
-            </div></td>`;
-            if (col.statusFilter === 'status') return `<td><select class="wb-filter-select" id="ap_f_status" onchange="apBatchApplyFilters()">
-                <option value=""></option>${['已发车','已到达','待结算'].map(s=>`<option value="${_apesc(s)}" ${apF.status===s?'selected':''}>${_apesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.statusFilter === 'tag') return `<td><select class="wb-filter-select" id="ap_f_tag" onchange="apBatchApplyFilters()">
-                <option value=""></option>${['正常','加急','特殊'].map(s=>`<option value="${_apesc(s)}" ${apF.tag===s?'selected':''}>${_apesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.fkey) return `<td><input class="wb-filter-input" id="ap_f_${col.fkey}" value="${_apesc(apF[col.fkey]||'')}" onchange="apBatchApplyFilters()"></td>`;
-            return `<td></td>`;
-        }).join('');
-
-        // --- 合计行 ---
-        const apTotalRow = `<tr class="wb-foot wb-foot--total">
-            <td></td>
-            ${apCols.map(col => {
-                if (col.key === 'site') return `<td style="font-weight:600;">合计</td>`;
-                if (apSumKeys.includes(col.key)) return `<td style="text-align:right;font-weight:600;">${apSums[col.key] > 0 ? apSums[col.key].toFixed(2) : ''}</td>`;
-                return `<td></td>`;
-            }).join('')}
-        </tr>`;
-
-        // --- 注册窗口函数 ---
-        window.apBatchApplyFilters = function() {
-            const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-            window._apF_batchNos    = g('ap_f_batch');
-            window._apF_site        = g('ap_f_site');
-            window._apF_createFrom  = g('ap_f_createFrom');
-            window._apF_createTo    = g('ap_f_createTo');
-            window._apF_departFrom  = g('ap_f_departFrom');
-            window._apF_departTo    = g('ap_f_departTo');
-            window._apF_arriveFrom  = g('ap_f_arriveFrom');
-            window._apF_arriveTo    = g('ap_f_arriveTo');
-            window._apF_plateNo     = g('ap_f_plateNo');
-            window._apF_driver      = g('ap_f_driver');
-            window._apF_route       = g('ap_f_route');
-            window._apF_status      = g('ap_f_status');
-            window._apF_tag         = g('ap_f_tag');
-            window._apF_trailerPlate= g('ap_f_trailerPlate');
-            window._apF_latestSite  = g('ap_f_latestSite');
-            window._apF_driverPhone = g('ap_f_driverPhone');
-            window._apF_remark      = g('ap_f_remark');
-            window._apBatchPage = 1;
-            loadContent('APTrunkBatchSettlement');
-        };
-        window.apBatchSetPage = function(p) { window._apBatchPage = p; loadContent('APTrunkBatchSettlement'); };
-        window.apBatchSetPageSize = function(s) { window._apBatchPageSize = parseInt(s); window._apBatchPage = 1; loadContent('APTrunkBatchSettlement'); };
-        window.apBatchSetTab = function(t) { window._apTrunkTab = t; loadContent('APTrunkBatchSettlement'); };
-        window.toggleAll_ap = function(src) { document.querySelectorAll('.ap-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
-        window.apBatchSettle = function() {
-            const checked = Array.from(document.querySelectorAll('.ap-check:checked'));
-            if (!checked.length) return alert('请先勾选需要结算的批次。');
-            const ids = checked.map(cb => cb.value);
-            let list = JSON.parse(sessionStorage.getItem('APTrunkBatches') || '[]');
-            ids.forEach(id => {
-                const item = list.find(i => i.id === id);
-                if (item) {
-                    item.cashFreightUnpaid = 0; item.cashFuelCardUnpaid = 0;
-                    item.returnFreightUnpaid = 0; item.trailerFeeUnpaid = 0;
-                    item.depStationFeeUnpaid = 0; item.depLoadFeeUnpaid = 0;
-                    item.insuranceUnpaid = 0; item.infoFeeUnpaid = 0;
-                    item.arrFreightUnpaid = 0; item.cashFreightAbnUnpaid = 0;
-                    item.batchStatus = '已到达';
-                }
+                maxSeq++;
+                const vid = "转-" + String(maxSeq).padStart(4,"0");
+                const voucher = {
+                    id: vid,
+                    date: now.slice(0,10),
+                    summary: "干线批次结算-" + id + "(" + (batch.driver||"") + ")",
+                    type: "转账凭证",
+                    status: "待审核",
+                    user: "管理员",
+                    lines: [
+                        { accountCode:"640101", account:"640101 运输成本-干线运费", digest:"干线运费-"+id, debit: freight, credit: 0, aux: batch.driver||"" },
+                        { accountCode:"2202",   account:"2202 应付账款",           digest:"应付司机-"+(batch.driver||""), debit: 0, credit: freight, aux: batch.driver||"" }
+                    ]
+                };
+                voucherList.push(voucher);
+                batch.settlementStatus = "已结算";
+                batch.freight = freight;
+                batch.settlementVoucherId = vid;
+                batch.settlementTime = now;
+                count++;
             });
-            sessionStorage.setItem('APTrunkBatches', JSON.stringify(list));
-            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应付管理', action: '结算', detail: '干线批次结算，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
-            alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
-            loadContent('APTrunkBatchSettlement');
+            if (!count) return;
+            sessionStorage.setItem("ManualVouchers", JSON.stringify(voucherList));
+            sessionStorage.setItem("BizTrunkBatches", JSON.stringify(list));
+            if (typeof addAuditLog==="function") addAuditLog({time:now,user:"管理员",module:"干线批次结算",action:"确认结算",detail:"结算 "+count+" 个干线批次，生成转账凭证"});
+            alert("✅ 结算完成！共结算 "+count+" 个批次，转账凭证已生成（待审核）。");
+            loadContent("APTrunkBatchSettlement");
         };
 
-        // --- 预构建所有HTML片段（避免 contentHTML+= 里嵌套太深）---
+        window.apTrunkToggleAll = function(src) { document.querySelectorAll(".apt-chk").forEach(cb=>cb.checked=src.checked); };
 
-        // Tab 栏
-        var apTabsHtml = '<div style="display:flex;gap:0;border-bottom:2px solid #e8edf2;overflow-x:auto;background:#f7fafc;padding:0 12px;flex-shrink:0;">';
-        for (var _ti = 0; _ti < apTabs.length; _ti++) {
-            var _t = apTabs[_ti];
-            var _tActive = (_t === apActiveTab) ? 'border-bottom:2px solid #1890ff;color:#1890ff;font-weight:600;background:#fff;' : '';
-            apTabsHtml += '<div style="padding:9px 14px;font-size:13px;color:#5a7a99;cursor:pointer;white-space:nowrap;margin-bottom:-2px;user-select:none;' + _tActive + '" onclick="apBatchSetTab(\'' + _apesc(_t) + '\')">' + _apesc(_t) + '</div>';
-        }
-        apTabsHtml += '<div style="padding:9px 10px;color:#8aa0b8;cursor:pointer;">&#9660;</div></div>';
+        const pendingRows = pendingBatches.length === 0
+            ? `<tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa;">暂无待结算批次。请先在【干线批次挂帐】完成挂帐操作。</td></tr>`
+            : pendingBatches.map(b => `<tr>
+                <td><input type="checkbox" class="apt-chk" value="${_apEsc(b.id)}"></td>
+                <td style="font-family:monospace;font-size:12px;color:#e67e22;">${_apEsc(b.id)}</td>
+                <td>${_apEsc(b.route||"")}</td>
+                <td><strong>${_apEsc(b.driver||"")}</strong><br><span style="font-size:11px;color:#aaa;">${_apEsc(b.phone||"")}</span></td>
+                <td style="text-align:right;">${b.pieces||0}</td>
+                <td style="text-align:right;">${b.weight||0}</td>
+                <td style="text-align:right;">${b.volume||0}</td>
+                <td>${_apEsc(b.actualDepartAt||b.loadAt||"")}</td>
+                <td><input type="number" id="apt_freight_${_apEsc(b.id)}" value="${b.freight||0}" min="0" step="0.01"
+                    style="width:100px;padding:4px 6px;border:1px solid #e67e22;border-radius:4px;text-align:right;font-size:13px;" placeholder="运费金额"></td>
+            </tr>`).join("");
 
-        // 查询栏网点选项
-        var apSiteOptions = '<option value=""></option>';
-        for (var _si = 0; _si < apAllSites.length; _si++) {
-            var _s = apAllSites[_si];
-            apSiteOptions += '<option value="' + _apesc(_s) + '"' + (apF.site === _s ? ' selected' : '') + '>' + _apesc(_s) + '</option>';
-        }
+        const settledRows = settledBatches.length === 0
+            ? `<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa;">暂无已结算批次。</td></tr>`
+            : settledBatches.map(b => `<tr>
+                <td style="font-family:monospace;font-size:12px;color:#27ae60;">${_apEsc(b.id)}</td>
+                <td>${_apEsc(b.route||"")}</td>
+                <td>${_apEsc(b.driver||"")}</td>
+                <td style="text-align:right;">¥${_apFmt(b.freight)}</td>
+                <td style="text-align:center;"><span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已结算</span></td>
+                <td style="color:#2980b9;font-size:12px;">${_apEsc(b.settlementVoucherId||"—")}</td>
+                <td style="color:#999;font-size:12px;">${b.paymentStatus==="已付款"?'<span style="color:#27ae60;">已付款</span>':'<span style="color:#e74c3c;">待付款</span>'}</td>
+                <td style="font-size:12px;color:#aaa;">${_apEsc(b.settlementTime||"")}</td>
+            </tr>`).join("");
 
-        // 表头
-        var apTheadHtml = '<th style="width:40px;min-width:40px;"><input type="checkbox" onchange="toggleAll_ap(this)"></th>';
-        for (var _ci = 0; _ci < apCols.length; _ci++) {
-            var _col = apCols[_ci];
-            var _cls = _col.siteFilter ? 'sticky-left-1' : (_col.batchFilter ? 'sticky-left-2' : '');
-            var _align = _col.align === 'right' ? 'text-align:right;' : '';
-            apTheadHtml += '<th style="width:' + _col.w + 'px;min-width:' + _col.w + 'px;' + _align + '" class="' + _cls + '">' + _apesc(_col.label) + '</th>';
-        }
-
-        // 分页按钮
-        var apPrevDisabled = apPage <= 1 ? ' disabled' : '';
-        var apNextDisabled = apPage >= apPageCount ? ' disabled' : '';
-        var apPagerHtml = '<div class="wb-pager">'
-            + '<button class="wb-pager__btn"' + apPrevDisabled + ' onclick="apBatchSetPage(1)">|&lt;</button>'
-            + '<button class="wb-pager__btn"' + apPrevDisabled + ' onclick="apBatchSetPage(' + Math.max(1,apPage-1) + ')">&lt;</button>'
-            + '<span class="wb-pager__text">第</span>'
-            + '<span class="wb-pager__page">' + apPage + '</span>'
-            + '<span class="wb-pager__text">页/共' + apPageCount + '页</span>'
-            + '<button class="wb-pager__btn"' + apNextDisabled + ' onclick="apBatchSetPage(' + Math.min(apPageCount,apPage+1) + ')">&gt;</button>'
-            + '<button class="wb-pager__btn"' + apNextDisabled + ' onclick="apBatchSetPage(' + apPageCount + ')">&gt;|</button>'
-            + '<select class="wb-pager__size" onchange="apBatchSetPageSize(this.value)">'
-            + '<option value="20"' + (apPageSize===20?' selected':'') + '>0-19</option>'
-            + '<option value="50"' + (apPageSize===50?' selected':'') + '>0-49</option>'
-            + '</select></div>'
-            + '<span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>';
-
-        // --- HTML ---
-        contentHTML += apTabsHtml;
-        contentHTML += '<div class="wb-querybar">'
-            + '<div class="wb-q-item" style="flex:1;max-width:380px;">'
-            + '<div class="wb-q-label" style="white-space:nowrap;">发车批次</div>'
-            + '<input id="ap_q_batch" class="wb-q-control" style="flex:1;min-width:180px;" placeholder="支持批量搜索，多个单号用逗号/加号/回车/空格 分隔" value="' + _apesc(apF.batchNos) + '">'
-            + '<span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>'
-            + '</div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">网点</div>'
-            + '<select id="ap_q_site" class="wb-q-control" style="width:120px;">' + apSiteOptions + '</select></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">创建时间</div>'
-            + '<input type="date" id="ap_q_createFrom" class="wb-q-control" value="' + _apesc(apF.createFrom) + '" style="width:128px;">'
-            + '<span style="color:#bbb;margin:0 2px;">~</span>'
-            + '<input type="date" id="ap_q_createTo" class="wb-q-control" value="' + _apesc(apF.createTo) + '" style="width:128px;"></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">发车时间</div>'
-            + '<input type="date" id="ap_q_departFrom" class="wb-q-control" value="' + _apesc(apF.departFrom) + '" style="width:128px;">'
-            + '<span style="color:#bbb;margin:0 2px;">~</span>'
-            + '<input type="date" id="ap_q_departTo" class="wb-q-control" value="' + _apesc(apF.departTo) + '" style="width:128px;"></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">车牌号</div>'
-            + '<input id="ap_q_plate" class="wb-q-control" value="' + _apesc(apF.plateNo) + '" style="width:100px;"></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">主驾司机</div>'
-            + '<input id="ap_q_driver" class="wb-q-control" value="' + _apesc(apF.driver) + '" style="width:90px;"></div>'
-            + '<button class="wb-btn wb-btn--primary" onclick="window._apF_batchNos=document.getElementById(\'ap_q_batch\').value.trim();window._apF_site=document.getElementById(\'ap_q_site\').value;window._apF_createFrom=document.getElementById(\'ap_q_createFrom\').value;window._apF_createTo=document.getElementById(\'ap_q_createTo\').value;window._apF_departFrom=document.getElementById(\'ap_q_departFrom\').value;window._apF_departTo=document.getElementById(\'ap_q_departTo\').value;window._apF_plateNo=document.getElementById(\'ap_q_plate\').value.trim();window._apF_driver=document.getElementById(\'ap_q_driver\').value.trim();window._apBatchPage=1;loadContent(\'APTrunkBatchSettlement\');">&#128269; 查询</button>'
-            + '</div>';
-        contentHTML += '<div class="wb-toolbar">'
-            + '<div style="display:flex;gap:6px;">'
-            + '<button class="wb-btn wb-btn--primary" onclick="apBatchSettle()">&#128196; 结算</button>'
-            + '</div>'
-            + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
-            + '<button class="wb-btn" onclick="alert(\'导出功能开发中\')">&#8593; 导出</button>'
-            + '<button class="wb-btn" onclick="window.print()">&#128424; 打印</button>'
-            + apPagerHtml
-            + '</div></div>';
-        contentHTML += '<div class="settlement-waybill-table" style="--sticky-left-1:40px;--sticky-left-2:150px;">'
-            + '<table><thead>'
-            + '<tr class="sticky-header">' + apTheadHtml + '</tr>'
-            + '<tr class="sticky-filter"><td class="wb-funnel"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2h14l-5 6v5l-4-2V8z" fill="none" stroke="#8aa0b8" stroke-width="1.5"/></svg></td>'
-            + apFilterRow + '</tr>'
-            + '</thead>'
-            + '<tbody>' + (apRows || apEmptyState) + '</tbody>'
-            + '<tfoot>' + apTotalRow + '</tfoot>'
-            + '</table></div>';
+        contentHTML = `
+        <style>
+            .apt-tab-bar{display:flex;border-bottom:2px solid #edf1f5;margin-bottom:18px;}
+            .apt-tab{padding:10px 24px;cursor:pointer;font-size:13px;color:#7f8c8d;border-bottom:3px solid transparent;margin-bottom:-2px;}
+            .apt-tab.active{color:#e67e22;border-bottom-color:#e67e22;font-weight:600;}
+        </style>
+        <div style="padding:10px 0 14px 0;">
+            <h2 style="margin:0 0 4px 0;color:#2c3e50;">干线批次结算</h2>
+            <p style="color:#7f8c8d;margin:0;">对已挂帐的干线批次进行运费确认，生成应付账款凭证（借：640101 运输成本-干线运费 / 贷：2202 应付账款）。</p>
+        </div>
+        <div class="apt-tab-bar">
+            <div class="apt-tab ${apTab==="pending"?"active":""}" onclick="apTrunkSettleTabSwitch('pending')">待结算 <span style="background:#e67e22;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${pendingBatches.length}</span></div>
+            <div class="apt-tab ${apTab==="settled"?"active":""}" onclick="apTrunkSettleTabSwitch('settled')">已结算 <span style="background:#27ae60;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${settledBatches.length}</span></div>
+        </div>
+        ${apTab==="pending" ? `
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;">
+            <button onclick="apTrunkDoSettle()" style="padding:8px 20px;background:#e67e22;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">✓ 确认结算（生成转账凭证）</button>
+            <span style="font-size:12px;color:#7f8c8d;">请在运费列填写金额后勾选批次，点击确认结算</span>
+        </div>
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:auto;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">
+                <thead><tr style="background:#f8fafb;">
+                    <th style="padding:10px 12px;"><input type="checkbox" onchange="apTrunkToggleAll(this)"></th>
+                    <th style="padding:10px 12px;">批次号</th>
+                    <th style="padding:10px 12px;">线路</th>
+                    <th style="padding:10px 12px;">司机</th>
+                    <th style="padding:10px 12px;text-align:right;">件数</th>
+                    <th style="padding:10px 12px;text-align:right;">重量(KG)</th>
+                    <th style="padding:10px 12px;text-align:right;">体积(m³)</th>
+                    <th style="padding:10px 12px;">发车时间</th>
+                    <th style="padding:10px 12px;">运费金额 *</th>
+                </tr></thead>
+                <tbody>${pendingRows}</tbody>
+            </table>
+        </div>
+        ` : `
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:auto;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">
+                <thead><tr style="background:#f8fafb;">
+                    <th style="padding:10px 12px;">批次号</th>
+                    <th style="padding:10px 12px;">线路</th>
+                    <th style="padding:10px 12px;">司机</th>
+                    <th style="padding:10px 12px;text-align:right;">运费</th>
+                    <th style="padding:10px 12px;text-align:center;">结算状态</th>
+                    <th style="padding:10px 12px;">关联凭证</th>
+                    <th style="padding:10px 12px;">付款状态</th>
+                    <th style="padding:10px 12px;">结算时间</th>
+                </tr></thead>
+                <tbody>${settledRows}</tbody>
+            </table>
+        </div>
+        `}
+        `;
     }
 
     // =========================================================================
     // AP-2. 短途批次结算 (APShortBatchSettlement)
     // =========================================================================
     else if (moduleCode === "APShortBatchSettlement") {
-        function _sbesc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+        function _sbEsc(v) { return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+        function _sbFmt(n) { const v=parseFloat(n||0); return isNaN(v)?"0.00":v.toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-        // --- Tab 定义 ---
-        const sbTabs = ['送货费','短驳费','提货费','司机定金','提货费异动','送货费异动'];
-        const sbActiveTab = window._sbShortTab || '送货费';
-
-        // --- 列定义 ---
-        const sbCols = [
-            { key: "site",             label: "网点",         w: 100, siteFilter: true },
-            { key: "batchNo",          label: "送货批次",     w: 160, batchFilter: true },
-            { key: "deliveryFee",      label: "送货费",       w: 100, align: "right", tipIcon: true },
-            { key: "settleStatus",     label: "送货费结算状态", w: 120, statusFilter: "status" },
-            { key: "settledFee",       label: "已结送货费",   w: 110, align: "right" },
-            { key: "unsettledFee",     label: "未结送货费",   w: 110, align: "right" },
-            { key: "finishTime",       label: "送货完成时间", w: 155, dateFilter: "finish" },
-            { key: "driverPhone",      label: "主驾电话",     w: 120, fkey: "driverPhone" },
-            { key: "deliveryPieces",   label: "送货件数",     w: 90,  align: "right" },
-            { key: "deliveryWeight",   label: "送货重量",     w: 90,  align: "right" },
-            { key: "deliveryVolume",   label: "送货体积",     w: 90,  align: "right" },
-            { key: "deliveryOrders",   label: "送货运单数",   w: 95,  align: "right" },
-            { key: "pieces",           label: "件数",         w: 80,  align: "right" },
-            { key: "totalWeight",      label: "总重量",       w: 80,  align: "right" },
-            { key: "totalVolume",      label: "总体积",       w: 80,  align: "right" },
-            { key: "remark",           label: "备注",         w: 130, fkey: "remark" },
-            { key: "batchTag",         label: "批次标识",     w: 100, statusFilter: "tag" },
-        ];
-
-        // --- 生成数据（仅首次） ---
-        let sbData = JSON.parse(sessionStorage.getItem('APShortBatches') || 'null');
-        if (!sbData) {
-            const sbSites = ['上海总部','北京分公司','广州分公司','深圳分公司','成都分公司'];
-            const sbDrivers = [['张伟','138-0001-0001'],['李强','139-0002-0002'],['王磊','137-0003-0003'],['刘洋','136-0004-0004'],['陈龙','135-0005-0005']];
-            const sbPlates  = ['沪A12345','京B23456','粤C34567','粤D45678','川E56789'];
-            const sbStatuses = ['未结算','已结算','部分结算'];
-            const sbTags    = ['正常','加急','特殊'];
-            sbData = [];
-            for (let i = 1; i <= 60; i++) {
-                const di = sbDrivers[i % sbDrivers.length];
-                const d  = String((i % 28) + 1).padStart(2,'0');
-                const hh = String(8 + (i % 10)).padStart(2,'0');
-                const mm = String((i * 7) % 60).padStart(2,'0');
-                const finishDt = `2026-01-${d} ${hh}:${mm}`;
-                const fee      = Math.round((80 + (i * 31.7) % 800) * 10) / 10;
-                const settled  = i % 3 === 0 ? fee : (i % 3 === 1 ? 0 : Math.round(fee * 0.5 * 10) / 10);
-                const unsettled = Math.round((fee - settled) * 10) / 10;
-                const pieces   = 5 + (i * 3) % 50;
-                const weight   = Math.round((50 + (i * 17.3) % 500) * 10) / 10;
-                const volume   = Math.round((0.3 + (i * 0.13) % 5) * 100) / 100;
-                const orders   = 1 + (i % 8);
-                sbData.push({
-                    id:              `SB202601${String(i).padStart(4,'0')}`,
-                    site:            sbSites[i % sbSites.length],
-                    batchNo:         `SB202601${String(i).padStart(4,'0')}`,
-                    deliveryFee:     fee,
-                    settleStatus:    sbStatuses[i % sbStatuses.length],
-                    settledFee:      settled,
-                    unsettledFee:    unsettled,
-                    finishTime:      finishDt,
-                    driverPhone:     di[1],
-                    deliveryPieces:  pieces,
-                    deliveryWeight:  weight,
-                    deliveryVolume:  volume,
-                    deliveryOrders:  orders,
-                    pieces:          pieces,
-                    totalWeight:     weight,
-                    totalVolume:     volume,
-                    remark:          i % 7 === 0 ? '需特殊处理' : '',
-                    batchTag:        sbTags[i % sbTags.length],
-                    plateNo:         sbPlates[i % sbPlates.length],
-                    driver:          di[0],
-                });
-            }
-            sessionStorage.setItem('APShortBatches', JSON.stringify(sbData));
-        }
-
-        // --- 筛选状态 ---
-        const sbToday = new Date();
-        const sbD28   = new Date(sbToday); sbD28.setDate(sbToday.getDate() - 28);
-        const sbFmt   = d => d.toISOString().slice(0, 10);
-        const sbF = {
-            batchNos:   window._sbF_batchNos  ?? '',
-            site:       window._sbF_site       ?? '',
-            finishFrom: window._sbF_finishFrom ?? sbFmt(sbD28),
-            finishTo:   window._sbF_finishTo   ?? sbFmt(sbToday),
-            plateNo:    window._sbF_plateNo    ?? '',
-            driver:     window._sbF_driver     ?? '',
-            status:     window._sbF_status     ?? '',
-            tag:        window._sbF_tag        ?? '',
-            driverPhone:window._sbF_driverPhone?? '',
-            remark:     window._sbF_remark     ?? '',
-        };
-
-        // --- 筛选逻辑 ---
-        const sbFiltered = sbData.filter(r => {
-            if (sbF.batchNos) {
-                const nos = sbF.batchNos.split(/[,+\s\n]+/).map(s=>s.trim()).filter(Boolean);
-                if (nos.length && !nos.some(n => r.batchNo.toLowerCase().includes(n.toLowerCase()))) return false;
-            }
-            if (sbF.site && r.site !== sbF.site) return false;
-            if (sbF.plateNo && !r.plateNo.toLowerCase().includes(sbF.plateNo.toLowerCase())) return false;
-            if (sbF.driver && !r.driver.toLowerCase().includes(sbF.driver.toLowerCase())) return false;
-            if (sbF.status && r.settleStatus !== sbF.status) return false;
-            if (sbF.tag && r.batchTag !== sbF.tag) return false;
-            if (sbF.driverPhone && !r.driverPhone.toLowerCase().includes(sbF.driverPhone.toLowerCase())) return false;
-            if (sbF.remark && !r.remark.toLowerCase().includes(sbF.remark.toLowerCase())) return false;
-            const ft = r.finishTime ? r.finishTime.slice(0,10) : '';
-            if (sbF.finishFrom && ft < sbF.finishFrom) return false;
-            if (sbF.finishTo   && ft > sbF.finishTo)   return false;
-            return true;
+        let sbDelivery = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery") || "[]");
+        let sbPickup   = JSON.parse(sessionStorage.getItem("BizShortHaulPickup")   || "[]");
+        // 补全旧数据缺失字段
+        [...sbDelivery, ...sbPickup].forEach(b => {
+            if (!b.settlementStatus) b.settlementStatus = "未结算";
+            if (!b.paymentStatus)    b.paymentStatus    = "未付款";
         });
 
-        // --- 分页 ---
-        const sbPage     = window._sbBatchPage     || 1;
-        const sbPageSize = window._sbBatchPageSize || 20;
-        const sbTotal    = sbFiltered.length;
-        const sbPageCount= Math.max(1, Math.ceil(sbTotal / sbPageSize));
-        const sbPageData = sbFiltered.slice((sbPage-1)*sbPageSize, sbPage*sbPageSize);
+        const sbTab = window._sbSettleTab || "pending";
+        if (!window.sbSettleTabSwitch) {
+            window.sbSettleTabSwitch = function(t) { window._sbSettleTab=t; loadContent("APShortBatchSettlement"); };
+        }
 
-        // --- 合计 ---
-        const sbSumKeys = ['deliveryFee','settledFee','unsettledFee','deliveryPieces','deliveryWeight','deliveryVolume','deliveryOrders','pieces','totalWeight','totalVolume'];
-        const sbSums = {};
-        sbSumKeys.forEach(k => { sbSums[k] = 0; });
-        sbFiltered.forEach(r => { sbSumKeys.forEach(k => { sbSums[k] += Number(r[k]) || 0; }); });
+        // 合并两类短驳批次
+        const allShortBatches = [
+            ...sbDelivery.map(b=>({...b, _type:"送货"})),
+            ...sbPickup.map(b=>({...b,   _type:"提货"}))
+        ];
+        const pendingBatches = allShortBatches.filter(b => b.accrualStatus==="已挂帐" && b.settlementStatus!=="已结算");
+        const settledBatches = allShortBatches.filter(b => b.settlementStatus==="已结算");
 
-        // --- 状态颜色 ---
-        const sbStatusColor = s => ({'未结算':'color:#ff4d4f','已结算':'color:#52c41a','部分结算':'color:#faad14'}[s]||'');
+        window.sbDoSettle = function() {
+            const checked = Array.from(document.querySelectorAll(".sbt-chk:checked"));
+            if (!checked.length) return alert("请先勾选需要结算的批次。");
+            let dList = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery") || "[]");
+            let pList = JSON.parse(sessionStorage.getItem("BizShortHaulPickup")   || "[]");
+            let count = 0;
+            const now = new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-");
+            const voucherList = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+            const re = /^转-(\d+)$/;
+            let maxSeq = 0;
+            voucherList.forEach(v => { const m=(v.id||"").match(re); if(m) maxSeq=Math.max(maxSeq,parseInt(m[1],10)); });
 
-        // --- 空状态 ---
-        const sbEmptyState = `<tr><td colspan="${sbCols.length+1}" style="padding:80px 0;text-align:center;">
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:.25;display:block;margin:0 auto 12px;">
-                <rect x="10" y="10" width="60" height="60" rx="8" stroke="#b0c4d8" stroke-width="3" fill="#eaf3fb"/>
-                <circle cx="40" cy="36" r="13" stroke="#b0c4d8" stroke-width="3" fill="none"/>
-                <line x1="49" y1="47" x2="62" y2="60" stroke="#b0c4d8" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="56" cy="24" r="8" fill="#fff" stroke="#b0c4d8" stroke-width="2"/>
-                <text x="52" y="28" font-size="10" fill="#b0c4d8" font-family="Arial">?</text>
-            </svg>
-            <div style="color:#b0c4d8;font-size:14px;margin-bottom:4px;">没有对应的数据</div>
-            <div style="color:#c8d8e8;font-size:12px;">请检查筛选条件后重新进行数据查询</div>
-        </td></tr>`;
+            checked.forEach(cb => {
+                const [btype, id] = cb.value.split("|");
+                const targetList = btype==="送货" ? dList : pList;
+                const batch = targetList.find(b => b.id===id);
+                if (!batch) return;
+                const feeInput = document.getElementById("sbt_fee_"+id);
+                const fee = parseFloat(feeInput ? feeInput.value : (batch.deliveryFee||batch.pickupFee||0)) || 0;
+                if (fee <= 0) { alert("批次【"+id+"】运费不能为0，请填写金额。"); return; }
 
-        // --- 数据行 ---
-        const sbRows = sbPageData.map(r => `<tr>
-            <td><input type="checkbox" class="sb-check" value="${_sbesc(r.id)}"></td>
-            ${sbCols.map(col => {
-                let v = r[col.key];
-                let style = col.align === 'right' ? 'text-align:right;' : '';
-                if (col.key === 'settleStatus') style += sbStatusColor(v);
-                if (sbSumKeys.includes(col.key) && ['deliveryFee','settledFee','unsettledFee','deliveryWeight','deliveryVolume','totalWeight','totalVolume'].includes(col.key)) {
-                    v = v > 0 ? Number(v).toFixed(2) : '';
-                }
-                let cell = `<td style="${style}">${_sbesc(v ?? '')}`;
-                if (col.tipIcon) cell += ' <span style="color:#b0c4d8;font-size:11px;cursor:help;" title="含短驳、提货等附加费">?</span>';
-                cell += `</td>`;
-                return cell;
-            }).join('')}
-        </tr>`).join('');
-
-        // --- 所有网点选项 ---
-        const sbAllSites = [...new Set(sbData.map(r=>r.site))];
-
-        // --- 筛选行 ---
-        const sbFilterRow = sbCols.map(col => {
-            if (col.siteFilter) return `<td class="sticky-left-1"><select class="wb-filter-select" id="sb_f_site" onchange="sbBatchApplyFilters()">
-                <option value=""></option>${sbAllSites.map(s=>`<option value="${_sbesc(s)}" ${sbF.site===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.batchFilter) return `<td class="sticky-left-2"><input class="wb-filter-input wb-filter-input--batch" id="sb_f_batch" placeholder="支持批量搜索" value="${_sbesc(sbF.batchNos)}" onchange="sbBatchApplyFilters()"></td>`;
-            if (col.dateFilter === 'finish') return `<td><div style="display:flex;gap:2px;align-items:center;">
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="sb_f_finishFrom" value="${_sbesc(sbF.finishFrom)}" onchange="sbBatchApplyFilters()" placeholder="开始日期" style="width:108px;">
-                <span style="color:#bbb;">~</span>
-                <input type="date" class="wb-filter-input wb-filter-input--blank" id="sb_f_finishTo" value="${_sbesc(sbF.finishTo)}" onchange="sbBatchApplyFilters()" placeholder="结束日期" style="width:108px;">
-            </div></td>`;
-            if (col.statusFilter === 'status') return `<td><select class="wb-filter-select" id="sb_f_status" onchange="sbBatchApplyFilters()">
-                <option value=""></option>${['未结算','已结算','部分结算'].map(s=>`<option value="${_sbesc(s)}" ${sbF.status===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.statusFilter === 'tag') return `<td><select class="wb-filter-select" id="sb_f_tag" onchange="sbBatchApplyFilters()">
-                <option value=""></option>${['正常','加急','特殊'].map(s=>`<option value="${_sbesc(s)}" ${sbF.tag===s?'selected':''}>${_sbesc(s)}</option>`).join('')}
-            </select></td>`;
-            if (col.fkey) return `<td><input class="wb-filter-input" id="sb_f_${col.fkey}" value="${_sbesc(sbF[col.fkey]||'')}" onchange="sbBatchApplyFilters()"></td>`;
-            return `<td></td>`;
-        }).join('');
-
-        // --- 合计行 ---
-        const sbTotalRow = `<tr class="wb-foot wb-foot--total">
-            <td></td>
-            ${sbCols.map(col => {
-                if (col.key === 'site') return `<td style="font-weight:600;">合计</td>`;
-                if (sbSumKeys.includes(col.key)) {
-                    const v = sbSums[col.key];
-                    const isDecimal = ['deliveryFee','settledFee','unsettledFee','deliveryWeight','deliveryVolume','totalWeight','totalVolume'].includes(col.key);
-                    return `<td style="text-align:right;font-weight:600;">${v > 0 ? (isDecimal ? v.toFixed(2) : v) : ''}</td>`;
-                }
-                return `<td></td>`;
-            }).join('')}
-        </tr>`;
-
-        // --- 注册窗口函数 ---
-        window.sbBatchApplyFilters = function() {
-            const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-            window._sbF_batchNos   = g('sb_f_batch');
-            window._sbF_site       = g('sb_f_site');
-            window._sbF_finishFrom = g('sb_f_finishFrom');
-            window._sbF_finishTo   = g('sb_f_finishTo');
-            window._sbF_status     = g('sb_f_status');
-            window._sbF_tag        = g('sb_f_tag');
-            window._sbF_driverPhone= g('sb_f_driverPhone');
-            window._sbF_remark     = g('sb_f_remark');
-            window._sbBatchPage = 1;
-            loadContent('APShortBatchSettlement');
-        };
-        window.sbBatchSetPage     = function(p) { window._sbBatchPage = p; loadContent('APShortBatchSettlement'); };
-        window.sbBatchSetPageSize = function(s) { window._sbBatchPageSize = parseInt(s); window._sbBatchPage = 1; loadContent('APShortBatchSettlement'); };
-        window.sbBatchSetTab      = function(t) { window._sbShortTab = t; loadContent('APShortBatchSettlement'); };
-        window.toggleAll_sb       = function(src) { document.querySelectorAll('.sb-check').forEach(cb => { if(!cb.disabled) cb.checked = src.checked; }); };
-        window.sbBatchSettle = function() {
-            const checked = Array.from(document.querySelectorAll('.sb-check:checked'));
-            if (!checked.length) return alert('请先勾选需要结算的批次。');
-            const ids = checked.map(cb => cb.value);
-            let list = JSON.parse(sessionStorage.getItem('APShortBatches') || '[]');
-            ids.forEach(id => {
-                const item = list.find(i => i.id === id);
-                if (item) {
-                    item.settledFee   = item.deliveryFee;
-                    item.unsettledFee = 0;
-                    item.settleStatus = '已结算';
-                }
+                maxSeq++;
+                const vid = "转-" + String(maxSeq).padStart(4,"0");
+                const voucher = {
+                    id: vid,
+                    date: now.slice(0,10),
+                    summary: "短驳批次结算-" + id + "(" + (batch.driver||"") + ")",
+                    type: "转账凭证",
+                    status: "待审核",
+                    user: "管理员",
+                    lines: [
+                        { accountCode:"640102", account:"640102 运输成本-短驳运费", digest:"短驳运费-"+id, debit: fee, credit: 0, aux: batch.driver||"" },
+                        { accountCode:"2202",   account:"2202 应付账款",           digest:"应付司机-"+(batch.driver||""), debit: 0, credit: fee, aux: batch.driver||"" }
+                    ]
+                };
+                voucherList.push(voucher);
+                batch.settlementStatus = "已结算";
+                batch.settlementVoucherId = vid;
+                batch.settlementTime = now;
+                count++;
             });
-            sessionStorage.setItem('APShortBatches', JSON.stringify(list));
-            if (typeof addAuditLog === 'function') addAuditLog({ time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'), user: '管理员', module: '应付管理', action: '结算', detail: '短驳批次结算，共 ' + ids.length + ' 条，批次：' + ids.join('、') });
-            alert(`✅ 结算成功！共 ${checked.length} 条批次已结算，未结金额清零。`);
-            loadContent('APShortBatchSettlement');
+            if (!count) return;
+            sessionStorage.setItem("ManualVouchers", JSON.stringify(voucherList));
+            sessionStorage.setItem("BizShortHaulDelivery", JSON.stringify(dList));
+            sessionStorage.setItem("BizShortHaulPickup", JSON.stringify(pList));
+            if (typeof addAuditLog==="function") addAuditLog({time:now,user:"管理员",module:"短驳批次结算",action:"确认结算",detail:"结算 "+count+" 个短驳批次"});
+            alert("✅ 结算完成！共结算 "+count+" 个批次，转账凭证已生成（待审核）。");
+            loadContent("APShortBatchSettlement");
         };
 
-        // --- Tab 栏 ---
-        var sbTabsHtml = '<div style="display:flex;gap:0;border-bottom:2px solid #e8edf2;overflow-x:auto;background:#f7fafc;padding:0 12px;flex-shrink:0;">';
-        for (var _sti = 0; _sti < sbTabs.length; _sti++) {
-            var _st = sbTabs[_sti];
-            var _stActive = (_st === sbActiveTab) ? 'border-bottom:2px solid #1890ff;color:#1890ff;font-weight:600;background:#fff;' : '';
-            sbTabsHtml += '<div style="padding:9px 14px;font-size:13px;color:#5a7a99;cursor:pointer;white-space:nowrap;margin-bottom:-2px;user-select:none;' + _stActive + '" onclick="sbBatchSetTab(\'' + _sbesc(_st) + '\')">' + _sbesc(_st) + '</div>';
-        }
-        sbTabsHtml += '<div style="padding:9px 10px;color:#8aa0b8;cursor:pointer;">&#9660;</div></div>';
+        window.sbToggleAll = function(src) { document.querySelectorAll(".sbt-chk").forEach(cb=>cb.checked=src.checked); };
 
-        // --- 查询栏网点选项 ---
-        var sbSiteOptions = '<option value=""></option>';
-        for (var _ssi = 0; _ssi < sbAllSites.length; _ssi++) {
-            var _ss = sbAllSites[_ssi];
-            sbSiteOptions += '<option value="' + _sbesc(_ss) + '"' + (sbF.site === _ss ? ' selected' : '') + '>' + _sbesc(_ss) + '</option>';
-        }
+        const pendingRows = pendingBatches.length===0
+            ? `<tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa;">暂无待结算批次。请先在【短驳批次挂帐】完成挂帐操作。</td></tr>`
+            : pendingBatches.map(b => {
+                const defaultFee = b.deliveryFee||b.pickupFee||0;
+                return `<tr>
+                    <td><input type="checkbox" class="sbt-chk" value="${_sbEsc(b._type+"|"+b.id)}"></td>
+                    <td><span style="background:${b._type==="送货"?"#1890ff":"#52c41a"};color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;">${b._type}</span></td>
+                    <td style="font-family:monospace;font-size:12px;color:#e67e22;">${_sbEsc(b.id)}</td>
+                    <td>${_sbEsc(b.customerName||"")}</td>
+                    <td><strong>${_sbEsc(b.driver||"")}</strong></td>
+                    <td style="text-align:right;">${b.pieces||0}</td>
+                    <td style="text-align:right;">¥${_sbFmt(defaultFee)}</td>
+                    <td><input type="number" id="sbt_fee_${_sbEsc(b.id)}" value="${defaultFee}" min="0" step="0.01"
+                        style="width:100px;padding:4px 6px;border:1px solid #27ae60;border-radius:4px;text-align:right;font-size:13px;" placeholder="运费金额"></td>
+                </tr>`;
+            }).join("");
 
-        // --- 表头 ---
-        var sbTheadHtml = '<th style="width:40px;min-width:40px;"><input type="checkbox" onchange="toggleAll_sb(this)"></th>';
-        for (var _sci = 0; _sci < sbCols.length; _sci++) {
-            var _scol = sbCols[_sci];
-            var _scls = _scol.siteFilter ? 'sticky-left-1' : (_scol.batchFilter ? 'sticky-left-2' : '');
-            var _salign = _scol.align === 'right' ? 'text-align:right;' : '';
-            sbTheadHtml += '<th style="width:' + _scol.w + 'px;min-width:' + _scol.w + 'px;' + _salign + '" class="' + _scls + '">'
-                + _sbesc(_scol.label)
-                + (_scol.tipIcon ? ' <span style="color:#b0c4d8;font-size:11px;cursor:help;" title="含短驳、提货等附加费">?</span>' : '')
-                + '</th>';
-        }
+        const settledRows = settledBatches.length===0
+            ? `<tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa;">暂无已结算批次。</td></tr>`
+            : settledBatches.map(b => `<tr>
+                <td><span style="background:${b._type==="送货"?"#1890ff":"#52c41a"};color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;">${b._type}</span></td>
+                <td style="font-family:monospace;font-size:12px;color:#27ae60;">${_sbEsc(b.id)}</td>
+                <td>${_sbEsc(b.customerName||"")}</td>
+                <td>${_sbEsc(b.driver||"")}</td>
+                <td style="text-align:center;"><span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已结算</span></td>
+                <td style="color:#2980b9;font-size:12px;">${_sbEsc(b.settlementVoucherId||"—")}</td>
+                <td style="color:#999;font-size:12px;">${b.paymentStatus==="已付款"?'<span style="color:#27ae60;">已付款</span>':'<span style="color:#e74c3c;">待付款</span>'}</td>
+            </tr>`).join("");
 
-        // --- 分页按钮 ---
-        var sbPrevDisabled = sbPage <= 1 ? ' disabled' : '';
-        var sbNextDisabled = sbPage >= sbPageCount ? ' disabled' : '';
-        var sbPagerHtml = '<div class="wb-pager">'
-            + '<button class="wb-pager__btn"' + sbPrevDisabled + ' onclick="sbBatchSetPage(1)">|&lt;</button>'
-            + '<button class="wb-pager__btn"' + sbPrevDisabled + ' onclick="sbBatchSetPage(' + Math.max(1,sbPage-1) + ')">&lt;</button>'
-            + '<span class="wb-pager__text">第</span>'
-            + '<span class="wb-pager__page">' + sbPage + '</span>'
-            + '<span class="wb-pager__text">页/共' + sbPageCount + '页</span>'
-            + '<button class="wb-pager__btn"' + sbNextDisabled + ' onclick="sbBatchSetPage(' + Math.min(sbPageCount,sbPage+1) + ')">&gt;</button>'
-            + '<button class="wb-pager__btn"' + sbNextDisabled + ' onclick="sbBatchSetPage(' + sbPageCount + ')">&gt;|</button>'
-            + '<select class="wb-pager__size" onchange="sbBatchSetPageSize(this.value)">'
-            + '<option value="20"' + (sbPageSize===20?' selected':'') + '>0-19</option>'
-            + '<option value="50"' + (sbPageSize===50?' selected':'') + '>0-49</option>'
-            + '</select></div>'
-            + '<span style="font-size:16px;color:#bbb;cursor:pointer;padding-left:4px;" title="列显示设置">&#x2699;</span>';
-
-        // --- 组装 HTML ---
-        contentHTML += sbTabsHtml;
-        contentHTML += '<div class="wb-querybar">'
-            + '<div class="wb-q-item" style="flex:1;max-width:380px;">'
-            + '<div class="wb-q-label" style="white-space:nowrap;">送货批次</div>'
-            + '<input id="sb_q_batch" class="wb-q-control" style="flex:1;min-width:180px;" placeholder="支持批量搜索，多个单号用 运号/加号/回车/空格 分隔" value="' + _sbesc(sbF.batchNos) + '">'
-            + '<span style="font-size:11px;color:#bbb;cursor:pointer;margin-left:-22px;padding-right:6px;">&#9998;</span>'
-            + '</div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">网点</div>'
-            + '<select id="sb_q_site" class="wb-q-control" style="width:120px;">' + sbSiteOptions + '</select></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">送货开始时间</div>'
-            + '<input type="date" id="sb_q_finishFrom" class="wb-q-control" value="' + _sbesc(sbF.finishFrom) + '" style="width:128px;">'
-            + '<span style="color:#bbb;margin:0 2px;">~</span>'
-            + '<input type="date" id="sb_q_finishTo" class="wb-q-control" value="' + _sbesc(sbF.finishTo) + '" style="width:128px;">'
-            + '<span style="font-size:13px;color:#aaa;margin-left:4px;cursor:pointer;" title="选择日期">&#128197;</span>'
-            + '</div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">车牌号</div>'
-            + '<input id="sb_q_plate" class="wb-q-control" value="' + _sbesc(sbF.plateNo) + '" style="width:100px;"></div>'
-            + '<div class="wb-q-item"><div class="wb-q-label">主驾司机</div>'
-            + '<input id="sb_q_driver" class="wb-q-control" value="' + _sbesc(sbF.driver) + '" style="width:90px;"></div>'
-            + '<button class="wb-btn wb-btn--primary" onclick="window._sbF_batchNos=document.getElementById(\'sb_q_batch\').value.trim();window._sbF_site=document.getElementById(\'sb_q_site\').value;window._sbF_finishFrom=document.getElementById(\'sb_q_finishFrom\').value;window._sbF_finishTo=document.getElementById(\'sb_q_finishTo\').value;window._sbF_plateNo=document.getElementById(\'sb_q_plate\').value.trim();window._sbF_driver=document.getElementById(\'sb_q_driver\').value.trim();window._sbBatchPage=1;loadContent(\'APShortBatchSettlement\');">&#128269; 查询</button>'
-            + '</div>';
-        contentHTML += '<div class="wb-toolbar">'
-            + '<div style="display:flex;gap:6px;">'
-            + '<button class="wb-btn wb-btn--primary" onclick="sbBatchSettle()">&#128196; 结算</button>'
-            + '</div>'
-            + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto;">'
-            + '<button class="wb-btn" onclick="alert(\'导出功能开发中\')">&#8593; 导出</button>'
-            + '<button class="wb-btn" onclick="window.print()">&#128424; 打印</button>'
-            + sbPagerHtml
-            + '</div></div>';
-        contentHTML += '<div class="settlement-waybill-table" style="--sticky-left-1:40px;--sticky-left-2:200px;">'
-            + '<table><thead>'
-            + '<tr class="sticky-header">' + sbTheadHtml + '</tr>'
-            + '<tr class="sticky-filter"><td class="wb-funnel"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M1 2h14l-5 6v5l-4-2V8z" fill="none" stroke="#8aa0b8" stroke-width="1.5"/></svg>筛选</td>'
-            + sbFilterRow + '</tr>'
-            + '</thead>'
-            + '<tbody>' + (sbRows || sbEmptyState) + '</tbody>'
-            + '<tfoot>' + sbTotalRow + '</tfoot>'
-            + '</table></div>';
+        contentHTML = `
+        <style>
+            .sbt-tab-bar{display:flex;border-bottom:2px solid #edf1f5;margin-bottom:18px;}
+            .sbt-tab{padding:10px 24px;cursor:pointer;font-size:13px;color:#7f8c8d;border-bottom:3px solid transparent;margin-bottom:-2px;}
+            .sbt-tab.active{color:#27ae60;border-bottom-color:#27ae60;font-weight:600;}
+        </style>
+        <div style="padding:10px 0 14px 0;">
+            <h2 style="margin:0 0 4px 0;color:#2c3e50;">短驳批次结算</h2>
+            <p style="color:#7f8c8d;margin:0;">对已挂帐的送货/提货批次进行运费确认，生成应付账款凭证（借：640102 运输成本-短驳运费 / 贷：2202 应付账款）。</p>
+        </div>
+        <div class="sbt-tab-bar">
+            <div class="sbt-tab ${sbTab==="pending"?"active":""}" onclick="sbSettleTabSwitch('pending')">待结算 <span style="background:#27ae60;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${pendingBatches.length}</span></div>
+            <div class="sbt-tab ${sbTab==="settled"?"active":""}" onclick="sbSettleTabSwitch('settled')">已结算 <span style="background:#95a5a6;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${settledBatches.length}</span></div>
+        </div>
+        ${sbTab==="pending" ? `
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;">
+            <button onclick="sbDoSettle()" style="padding:8px 20px;background:#27ae60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">✓ 确认结算（生成转账凭证）</button>
+            <span style="font-size:12px;color:#7f8c8d;">默认运费来自送货费字段，可手动修改后结算</span>
+        </div>
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:auto;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">
+                <thead><tr style="background:#f8fafb;">
+                    <th style="padding:10px 12px;"><input type="checkbox" onchange="sbToggleAll(this)"></th>
+                    <th style="padding:10px 12px;">类型</th>
+                    <th style="padding:10px 12px;">批次号</th>
+                    <th style="padding:10px 12px;">客户</th>
+                    <th style="padding:10px 12px;">司机</th>
+                    <th style="padding:10px 12px;text-align:right;">件数</th>
+                    <th style="padding:10px 12px;text-align:right;">原始费用</th>
+                    <th style="padding:10px 12px;">结算金额 *</th>
+                </tr></thead>
+                <tbody>${pendingRows}</tbody>
+            </table>
+        </div>
+        ` : `
+        <div style="background:#fff;border-radius:8px;border:1px solid #edf1f5;overflow:auto;">
+            <table class="data-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:800px;">
+                <thead><tr style="background:#f8fafb;">
+                    <th style="padding:10px 12px;">类型</th>
+                    <th style="padding:10px 12px;">批次号</th>
+                    <th style="padding:10px 12px;">客户</th>
+                    <th style="padding:10px 12px;">司机</th>
+                    <th style="padding:10px 12px;text-align:center;">结算状态</th>
+                    <th style="padding:10px 12px;">关联凭证</th>
+                    <th style="padding:10px 12px;">付款状态</th>
+                </tr></thead>
+                <tbody>${settledRows}</tbody>
+            </table>
+        </div>
+        `}
+        `;
     }
 
     // =========================================================================
@@ -7011,6 +6628,63 @@ function loadContent(moduleCode, element = null) {
         const pmOpts2 = payMethods2.map(m => `<option value="${m}">${m}</option>`).join('');
         const vtOpts = vendorTypes.map(t => `<option value="${t}">${t}</option>`).join('');
 
+        // 加载该司机的已结算待付款批次
+        window.payLoadBatches = function() {
+            const driver = (document.getElementById("pay-vendor")||{}).value || "";
+            const hint = document.getElementById("pay-batch-hint");
+            const wrap = document.getElementById("pay-detail-wrap");
+            const body = document.getElementById("pay-detail-body");
+            const list = document.getElementById("pay-batch-list");
+            if (!body || !hint || !wrap) return;
+            if (!driver.trim()) {
+                hint.textContent = "请先填写司机姓名";
+                wrap.style.display = "none";
+                if (list) list.innerHTML = "";
+                return;
+            }
+            const tBatches = (JSON.parse(sessionStorage.getItem("BizTrunkBatches")||"[]"))
+                .filter(b => b.driver===driver && b.settlementStatus==="已结算" && b.paymentStatus!=="已付款")
+                .map(b => ({...b, _type:"干线"}));
+            const sBatches = (JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]"))
+                .filter(b => b.driver===driver && b.settlementStatus==="已结算" && b.paymentStatus!=="已付款")
+                .map(b => ({...b, _type:"短驳"}));
+            const all = [...tBatches, ...sBatches];
+            if (!all.length) {
+                hint.textContent = "该司机暂无已结算待付款批次";
+                wrap.style.display = "none";
+                if (list) list.innerHTML = '<span style="color:#aaa;font-size:12px;">无可选批次</span>';
+                return;
+            }
+            hint.textContent = `共 ${all.length} 笔可选`;
+            wrap.style.display = "";
+            if (list) list.innerHTML = "";
+            body.innerHTML = all.map(b => `<tr>
+                <td><input type="checkbox" class="pay-batch-chk" value="${b._type}|${b.id}" onchange="window.payCalcTotal()"></td>
+                <td style="font-family:monospace;font-size:12px;">${b.id}</td>
+                <td><span style="background:${b._type==="干线"?"#e67e22":"#27ae60"};color:#fff;padding:1px 6px;border-radius:8px;font-size:11px;">${b._type}</span></td>
+                <td style="font-size:12px;">${b.route||b.customerName||""}</td>
+                <td style="text-align:right;font-weight:600;">¥${parseFloat(b.freight||b.deliveryFee||0).toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            </tr>`).join("");
+        };
+        window.payToggleAllBatches = function(src) {
+            document.querySelectorAll(".pay-batch-chk").forEach(cb=>cb.checked=src.checked);
+            window.payCalcTotal();
+        };
+        window.payCalcTotal = function() {
+            const checked = Array.from(document.querySelectorAll(".pay-batch-chk:checked"));
+            if (!checked.length) { const t=document.getElementById("pay-total"); if(t) t.value=""; return; }
+            const tBatches = JSON.parse(sessionStorage.getItem("BizTrunkBatches")||"[]");
+            const sBatches = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]");
+            let total = 0;
+            checked.forEach(cb => {
+                const [type, id] = cb.value.split("|");
+                const list = type==="干线" ? tBatches : sBatches;
+                const b = list.find(x=>x.id===id);
+                if (b) total += parseFloat(b.freight||b.deliveryFee||0)||0;
+            });
+            const t=document.getElementById("pay-total"); if(t) t.value=total.toFixed(2);
+        };
+
         contentHTML = `
         <style>
             .pm-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
@@ -7080,8 +6754,8 @@ function loadContent(moduleCode, element = null) {
                         <input type="date" id="pay-date">
                     </div>
                     <div class="pm-form-group">
-                        <label>付款对象 *</label>
-                        <input type="text" id="pay-vendor" placeholder="承运商/司机/供应商名称">
+                        <label>付款对象（司机）*</label>
+                        <input type="text" id="pay-vendor" placeholder="司机姓名" oninput="window.payLoadBatches()">
                     </div>
                     <div class="pm-form-group">
                         <label>对象类型</label>
@@ -7103,17 +6777,18 @@ function loadContent(moduleCode, element = null) {
 
                 <div class="pm-detail-section">
                     <div class="pm-detail-header">
-                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联运单/批次明细</span>
-                        <button onclick="window.addPaymentDetail()"
-                            style="padding:4px 12px;border:1px solid #e67e22;color:#e67e22;background:#fff;border-radius:5px;cursor:pointer;font-size:12px;">+ 添加明细</button>
+                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联批次明细（已结算待付款）</span>
+                        <span id="pay-batch-hint" style="font-size:12px;color:#aaa;">请先填写司机姓名</span>
                     </div>
-                    <table class="pm-detail-table">
+                    <div id="pay-batch-list" style="padding:10px 14px;"></div>
+                    <table class="pm-detail-table" style="display:none;" id="pay-detail-wrap">
                         <thead>
                             <tr>
-                                <th>运单号/批次号</th>
-                                <th>应付金额</th>
-                                <th>本次付款</th>
-                                <th style="text-align:center;">操作</th>
+                                <th style="width:32px;"><input type="checkbox" onchange="window.payToggleAllBatches(this)"></th>
+                                <th>批次号</th>
+                                <th>类型</th>
+                                <th>线路/客户</th>
+                                <th style="text-align:right;">运费</th>
                             </tr>
                         </thead>
                         <tbody id="pay-detail-body"></tbody>
@@ -7144,14 +6819,58 @@ function loadContent(moduleCode, element = null) {
         };
 
         window.markAPWriteOff = function(pvId) {
-            if (!confirm('确认将付款单【'+pvId+'】标记为已核销？')) return;
-            let list = JSON.parse(sessionStorage.getItem('PaymentVouchers')||'[]');
-            const pv = list.find(x=>x.id===pvId);
+            if (!confirm('确认核销付款单【'+pvId+'】？将生成付款凭证并更新批次状态为已付款。')) return;
+            let pvList = JSON.parse(sessionStorage.getItem('PaymentVouchers')||'[]');
+            const pv = pvList.find(x=>x.id===pvId);
             if (!pv) return;
+            const now = new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+
+            // 生成付款凭证
+            const voucherList = JSON.parse(sessionStorage.getItem('ManualVouchers')||'[]');
+            const re = /^付-(\d+)$/;
+            let maxSeq = 0;
+            voucherList.forEach(v => { const m=(v.id||'').match(re); if(m) maxSeq=Math.max(maxSeq,parseInt(m[1],10)); });
+            maxSeq++;
+            const vid = '付-' + String(maxSeq).padStart(4,'0');
+            const totalAmt = parseFloat(pv.totalAmount||0);
+            const payVoucher = {
+                id: vid,
+                date: now.slice(0,10),
+                summary: '付款核销-' + pvId + '(' + (pv.vendor||'') + ')',
+                type: '付款凭证',
+                status: '待审核',
+                user: '管理员',
+                lines: [
+                    { accountCode:'2202', account:'2202 应付账款', digest:'核销应付-'+(pv.vendor||''), debit: totalAmt, credit: 0, aux: pv.vendor||'' },
+                    { accountCode:'1002', account:'1002 银行存款', digest:'支付运费-'+(pv.vendor||''), debit: 0, credit: totalAmt }
+                ]
+            };
+            voucherList.push(payVoucher);
+            sessionStorage.setItem('ManualVouchers', JSON.stringify(voucherList));
+
+            // 更新批次付款状态
+            const details = Array.isArray(pv.details) ? pv.details : [];
+            const tBatches = JSON.parse(sessionStorage.getItem('BizTrunkBatches')||'[]');
+            const sBatches = JSON.parse(sessionStorage.getItem('BizShortHaulDelivery')||'[]');
+            details.forEach(d => {
+                if (!d.batchId) return;
+                if (d.batchType==='干线') {
+                    const b=tBatches.find(x=>x.id===d.batchId); if(b) b.paymentStatus='已付款';
+                } else {
+                    const b=sBatches.find(x=>x.id===d.batchId); if(b) b.paymentStatus='已付款';
+                }
+            });
+            sessionStorage.setItem('BizTrunkBatches', JSON.stringify(tBatches));
+            sessionStorage.setItem('BizShortHaulDelivery', JSON.stringify(sBatches));
+
+            // 更新付款单
             pv.writeOffStatus = '已核销';
-            pv.writeOffTime   = new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
-            sessionStorage.setItem('PaymentVouchers',JSON.stringify(list));
-            if(typeof addAuditLog==='function') addAuditLog({time:pv.writeOffTime,user:'管理员',module:'应付核销',action:'核销',detail:'付款单 '+pvId+' 标记为已核销，金额 '+pv.totalAmount});
+            pv.writeOffTime = now;
+            pv.writeOffVoucherId = vid;
+            sessionStorage.setItem('PaymentVouchers', JSON.stringify(pvList));
+
+            if(typeof addAuditLog==='function') addAuditLog({time:now,user:'管理员',module:'应付核销',action:'核销',detail:'付款单 '+pvId+' 核销，生成付款凭证 '+vid+'，金额 ¥'+totalAmt});
+            alert('✅ 核销完成！付款凭证 '+vid+' 已生成（待审核）。');
             loadContent('APWriteOff');
         };
 
@@ -15537,14 +15256,21 @@ function loadContent(moduleCode, element = null) {
             return m;
         };
 
+        // 提取凭证所属期间（兼容 v.date 和 v.period 两种字段）
+        const getVPeriod = (v) => {
+            if (v.date && v.date.length >= 7) return v.date.slice(0, 7);
+            if (v.period && v.period.length >= 7) return v.period.slice(0, 7);
+            return "";
+        };
+
         // ── 本期凭证（只含选中期间） ──
         const currentVouchers = period
-            ? vouchers.filter(v => v.date && v.date.slice(0,7) === period && activeStatuses.includes(v.status))
+            ? vouchers.filter(v => getVPeriod(v) === period && activeStatuses.includes(v.status))
             : vouchers.filter(v => activeStatuses.includes(v.status));
 
         // ── 期初凭证（严格早于选中期间的所有凭证，动态计算开账余额，不依赖静态 OpeningBalances）
         const priorVouchers = period
-            ? vouchers.filter(v => v.date && v.date.slice(0,7) < period && activeStatuses.includes(v.status))
+            ? vouchers.filter(v => { const vp = getVPeriod(v); return vp && vp < period && activeStatuses.includes(v.status); })
             : []; // 全部期间时无需期初
 
         const sums       = buildSums(currentVouchers);
