@@ -9894,53 +9894,6 @@ function loadContent(moduleCode, element = null) {
             }
         });
 
-        // 6. 生成 HTML 行 (左右对齐)
-        const maxRows = Math.max(
-            assets.items.length,
-            liabilities.items.length + equity.items.length
-        );
-        let rowsHTML = "";
-
-        for (let i = 0; i < maxRows; i++) {
-            const lineNo = i + 1;
-            const lItem = assets.items[i] || { name: "", balance: "" };
-
-            // 右侧：先放负债，再放权益
-            let rItem = { name: "", balance: "" };
-            if (i < liabilities.items.length) {
-                rItem = liabilities.items[i];
-            } else {
-                const eqIndex = i - liabilities.items.length;
-                if (eqIndex < equity.items.length) rItem = equity.items[eqIndex];
-            }
-
-            const lEnd =
-                lItem.balance !== ""
-                    ? lItem.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    : "";
-            const rEnd =
-                rItem.balance !== ""
-                    ? rItem.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    : "";
-            const lLine = lItem.name ? lineNo : "";
-            const rLine = rItem.name ? lineNo : "";
-
-            rowsHTML += `
-                <tr>
-                    <td class="bs-row-no">${lineNo}</td>
-                    <td class="bs-check"><input type="checkbox"></td>
-                    <td class="bs-name">${lItem.name}</td>
-                    <td class="bs-line">${lLine}</td>
-                    <td class="bs-num"></td>
-                    <td class="bs-num">${lEnd}</td>
-                    <td class="bs-name">${rItem.name}</td>
-                    <td class="bs-line">${rLine}</td>
-                    <td class="bs-num"></td>
-                    <td class="bs-num">${rEnd}</td>
-                </tr>
-            `;
-        }
-
         // 7. 自动填充合计/总计行（模板中这些行 codesA 为空，需要手动汇总）
         (function() {
             // 资产合计行
@@ -9971,25 +9924,75 @@ function loadContent(moduleCode, element = null) {
                 else if (r.name === '负债合计') r.balance = liabilities.total;
             });
 
-            // 权益合计行（在 rightTotal 计算前无法获取，但 equity.total 已正确）
-            const eSubNames = new Set(['所有者权益：','归属于母公司所有者权益合计','少数股东权益','所有者权益合计','负债及所有者权益总计']);
+            // 权益合计行
+            const eSubNames = new Set(['所有者权益（或股东权益）：','归属于母公司所有者权益合计','少数股东权益','所有者权益合计','负债及所有者权益总计']);
             const eRealSum = equity.items
                 .filter(r => !eSubNames.has(r.name) && !r.name.endsWith('：'))
                 .reduce((s, r) => s + r.balance, 0);
             equity.items.forEach(r => {
-                if (r.name === '归属于母公司所有者权益合计' || r.name === '所有者权益合计') r.balance = eRealSum;
+                if (r.name === '归属于母公司所有者权益合计' || r.name === '所有者权益合计') {
+                    r.balance = eRealSum;
+                }
             });
+            // 纠正 equity.total，使其反映真实的权益合计，而不仅仅是行累加
+            equity.total = eRealSum;
         })();
 
         // 8. 平衡检查
-        // 资产 = 负债 + 权益 (允许 0.01 的计算误差)
         const rightTotal = liabilities.total + equity.total;
         const isBalanced = Math.abs(assets.total - rightTotal) < 0.01;
 
-        // 负债及所有者权益总计行（需要 rightTotal，所以在计算后填充）
+        // 负债及所有者权益总计行
         equity.items.forEach(r => {
             if (r.name === '负债及所有者权益总计') r.balance = rightTotal;
         });
+
+        // 9. 生成 HTML 行 (左右对齐) - 移动到合计计算之后
+        const maxRows = Math.max(
+            assets.items.length,
+            liabilities.items.length + equity.items.length
+        );
+        let rowsHTML = "";
+
+        for (let i = 0; i < maxRows; i++) {
+            const lineNo = i + 1;
+            const lItem = assets.items[i] || { name: "", balance: "" };
+
+            // 右侧：先放负债，再放权益
+            let rItem = { name: "", balance: "" };
+            if (i < liabilities.items.length) {
+                rItem = liabilities.items[i];
+            } else {
+                const eqIndex = i - liabilities.items.length;
+                if (eqIndex < equity.items.length) rItem = equity.items[eqIndex];
+            }
+
+            const lEnd =
+                (lItem.balance !== "" && lItem.balance !== undefined)
+                    ? lItem.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                    : "";
+            const rEnd =
+                (rItem.balance !== "" && rItem.balance !== undefined)
+                    ? rItem.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })
+                    : "";
+            const lLine = lItem.name ? lineNo : "";
+            const rLine = rItem.name ? lineNo : "";
+
+            rowsHTML += `
+                <tr>
+                    <td class="bs-row-no">${lineNo}</td>
+                    <td class="bs-check"><input type="checkbox"></td>
+                    <td class="bs-name">${lItem.name}</td>
+                    <td class="bs-line">${lLine}</td>
+                    <td class="bs-num"></td>
+                    <td class="bs-num">${lEnd}</td>
+                    <td class="bs-name">${rItem.name}</td>
+                    <td class="bs-line">${rLine}</td>
+                    <td class="bs-num"></td>
+                    <td class="bs-num">${rEnd}</td>
+                </tr>
+            `;
+        }
 
         contentHTML += `
             <div class="balance-sheet-page">
