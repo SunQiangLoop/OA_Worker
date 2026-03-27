@@ -1967,3 +1967,445 @@ window.VM_MODULES['AcctAuxiliary'] = function(contentArea, contentHTML, moduleCo
     contentArea.innerHTML = contentHTML;
 
 };
+
+// =========================================================================
+// 总账 (AcctGeneralLedger)
+// =========================================================================
+window.VM_MODULES['AcctGeneralLedger'] = function(contentArea, contentHTML, moduleCode) {
+    const allSubjects  = JSON.parse(sessionStorage.getItem("AcctSubjects")    || "[]");
+    const allVouchers  = JSON.parse(sessionStorage.getItem("ManualVouchers")  || "[]");
+    const openingList  = JSON.parse(sessionStorage.getItem("OpeningBalances") || "[]");
+    const openingMap   = {};
+    openingList.forEach(s => { openingMap[s.code] = parseFloat(s.balance) || 0; });
+
+    const glPF    = sessionStorage.getItem("GLPeriodFrom") || "";
+    const glPT    = sessionStorage.getItem("GLPeriodTo")   || "";
+    const glCode  = sessionStorage.getItem("GLSubjCode")   || "";
+
+    const subjInfoMap = {};
+    allSubjects.forEach(s => { subjInfoMap[s.code] = s; });
+
+    const normVP = v => {
+        const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
+        if (!raw) return "";
+        const parts = raw.split("-");
+        return (parts.length >= 2 && parts[0].length === 4)
+            ? `${parts[0]}-${parts[1].padStart(2,"0")}` : raw.slice(0,7);
+    };
+
+    const allPeriods = Array.from(new Set(allVouchers.map(v => normVP(v)).filter(Boolean))).sort();
+    const mkPOpts = sel =>
+        `<option value="">-- 全部 --</option>` +
+        allPeriods.map(p => `<option value="${p}" ${sel===p?"selected":""}>${p.replace("-",".")}</option>`).join("");
+    const subjOpts = `<option value="">全部科目</option>` +
+        allSubjects.map(s => `<option value="${s.code}" ${s.code===glCode?"selected":""}>${s.code} ${s.name}</option>`).join("");
+
+    // 筛选凭证
+    const filteredVouchers = allVouchers.filter(v => {
+        const p = normVP(v);
+        if (glPF && p < glPF) return false;
+        if (glPT && p > glPT) return false;
+        const s = v.status || "";
+        return !s || ["已记账","已审核","已提交","待审核"].includes(s);
+    });
+
+    // 活跃期间
+    const activePeriods = allPeriods.filter(p =>
+        (!glPF || p >= glPF) && (!glPT || p <= glPT)
+    );
+
+    // 按科目 → 按期间 汇总借贷
+    const acctPeriodMap = {};
+    filteredVouchers.forEach(v => {
+        const period = normVP(v);
+        if (!v.lines) return;
+        v.lines.forEach(line => {
+            const rawAcct = (line.account || line.subject || (line.accountCode ? String(line.accountCode) : "") || "").trim();
+            const code = rawAcct.split(/\s+/)[0] || rawAcct;
+            if (!code) return;
+            if (glCode && !code.startsWith(glCode)) return;
+            if (!acctPeriodMap[code]) acctPeriodMap[code] = {};
+            if (!acctPeriodMap[code][period]) acctPeriodMap[code][period] = { debit: 0, credit: 0 };
+            acctPeriodMap[code][period].debit  += parseFloat(line.debit  || 0);
+            acctPeriodMap[code][period].credit += parseFloat(line.credit || 0);
+        });
+    });
+
+    const fmt = n => (Math.abs(n)||0).toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const sortedCodes = Object.keys(acctPeriodMap).sort();
+
+    let acctCardsHTML = "";
+    sortedCodes.forEach(code => {
+        const si   = subjInfoMap[code];
+        const name = si ? si.name : code;
+        const dir  = si ? (si.direction === "贷" ? "贷" : "借")
+                        : (["2","3","4"].some(p => code.startsWith(p)) ? "贷" : "借");
+
+        let runBal   = openingMap[code] || 0;
+        let cumDebit = 0, cumCredit = 0;
+        const openDir = runBal === 0 ? "平" : dir;
+
+        let periodRows = `
+            <tr style="background:#fafafa;color:#888;font-size:13px;">
+                <td>-</td><td>期初余额</td>
+                <td></td><td></td><td>${openDir}</td>
+                <td style="text-align:right;">${fmt(runBal)}</td>
+            </tr>`;
+
+        let hasData = false;
+        activePeriods.forEach(period => {
+            const pd = acctPeriodMap[code] && acctPeriodMap[code][period];
+            const pD = pd ? pd.debit  : 0;
+            const pC = pd ? pd.credit : 0;
+            if (!pd && runBal === 0) return;
+
+            hasData   = true;
+            cumDebit  += pD;
+            cumCredit += pC;
+            runBal     = dir === "借" ? runBal + pD - pC : runBal + pC - pD;
+
+            const dirText  = runBal === 0 ? "平" : (runBal > 0 ? dir : (dir === "借" ? "贷" : "借"));
+            const [yr, mo] = period.split("-");
+
+            periodRows += `
+                <tr>
+                    <td style="color:#666;">${yr}年${parseInt(mo)}月</td>
+                    <td>本月合计</td>
+                    <td style="text-align:right;">${pD ? fmt(pD) : "-"}</td>
+                    <td style="text-align:right;">${pC ? fmt(pC) : "-"}</td>
+                    <td>${dirText}</td>
+                    <td style="text-align:right;font-weight:bold;">${fmt(runBal)}</td>
+                </tr>
+                <tr style="background:#f8f9fc;font-size:13px;color:#888;">
+                    <td></td><td>本年累计</td>
+                    <td style="text-align:right;">${fmt(cumDebit)}</td>
+                    <td style="text-align:right;">${fmt(cumCredit)}</td>
+                    <td>${dirText}</td>
+                    <td style="text-align:right;">${fmt(runBal)}</td>
+                </tr>`;
+        });
+
+        if (!hasData && !openingMap[code]) return;
+
+        acctCardsHTML += `
+        <div class="gl-acct-card">
+            <div class="gl-acct-header">
+                <span class="gl-acct-code">${code}</span>
+                <span class="gl-acct-name">${name}</span>
+                <span class="gl-acct-dir">${dir}方科目</span>
+            </div>
+            <table class="gl-tbl">
+                <thead>
+                    <tr>
+                        <th style="width:120px;">期间</th>
+                        <th style="width:90px;">摘要</th>
+                        <th style="text-align:right;width:130px;">借方</th>
+                        <th style="text-align:right;width:130px;">贷方</th>
+                        <th style="width:52px;">方向</th>
+                        <th style="text-align:right;width:140px;">余额</th>
+                    </tr>
+                </thead>
+                <tbody>${periodRows}</tbody>
+            </table>
+        </div>`;
+    });
+
+    if (!acctCardsHTML) {
+        acctCardsHTML = `<div style="text-align:center;padding:60px;color:#999;background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);">暂无符合条件的凭证数据</div>`;
+    }
+
+    const periodLabel = (glPF||glPT)
+        ? `${(glPF||"--").replace("-",".")} - ${(glPT||"--").replace("-",".")}`
+        : "全部期间";
+
+    contentHTML += `
+    <style>
+        .gl-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:0 0 4px;margin-bottom:12px;}
+        .gl-frow{display:flex;align-items:center;padding:10px 16px;gap:10px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;}
+        .gl-frow:last-child{border-bottom:none;}
+        .gl-frow select{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
+        .gl-frow label{font-size:14px;color:#555;min-width:60px;}
+        .gl-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
+        .gl-page-title{font-size:20px;font-weight:bold;text-align:center;padding:0 0 4px;color:#222;margin-bottom:4px;}
+        .gl-page-period{font-size:13px;color:#888;text-align:center;margin-bottom:16px;}
+        .gl-acct-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;margin-bottom:16px;}
+        .gl-acct-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f0f5ff;border-bottom:1px solid #d6e4ff;}
+        .gl-acct-code{font-family:monospace;font-size:15px;font-weight:bold;color:#1890ff;}
+        .gl-acct-name{font-size:15px;font-weight:600;color:#333;}
+        .gl-acct-dir{font-size:12px;color:#888;padding:2px 8px;background:#fff;border:1px solid #d9d9d9;border-radius:10px;}
+        .gl-tbl{width:100%;border-collapse:collapse;font-size:14px;}
+        .gl-tbl th{padding:8px 12px;font-weight:500;color:#555;background:#fafafa;border-bottom:1px solid #e8e8e8;white-space:nowrap;}
+        .gl-tbl td{padding:8px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+        .gl-tbl tbody tr:hover{background:#f9fbff;}
+    </style>
+
+    <div class="gl-fcard">
+        <div class="gl-frow">
+            <label>期间</label>
+            <select id="gl-pf">${mkPOpts(glPF)}</select>
+            <span style="color:#999;">-</span>
+            <select id="gl-pt">${mkPOpts(glPT)}</select>
+        </div>
+        <div class="gl-frow">
+            <label>科目</label>
+            <select id="gl-subj" style="min-width:280px;">${subjOpts}</select>
+        </div>
+        <div class="gl-actions">
+            <button onclick="window.glReset&&window.glReset()"
+                style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
+            <button class="btn-primary" onclick="window.glQuery&&window.glQuery()">查询</button>
+        </div>
+    </div>
+
+    <div class="gl-page-title">总账</div>
+    <div class="gl-page-period">期间：${periodLabel}</div>
+
+    ${acctCardsHTML}
+    `;
+
+    contentArea.innerHTML = contentHTML;
+
+    setTimeout(() => {
+        window.glQuery = function() {
+            sessionStorage.setItem("GLPeriodFrom", document.getElementById("gl-pf").value);
+            sessionStorage.setItem("GLPeriodTo",   document.getElementById("gl-pt").value);
+            sessionStorage.setItem("GLSubjCode",   document.getElementById("gl-subj").value);
+            loadContent("AcctGeneralLedger");
+        };
+        window.glReset = function() {
+            ["GLPeriodFrom","GLPeriodTo","GLSubjCode"].forEach(k => sessionStorage.removeItem(k));
+            loadContent("AcctGeneralLedger");
+        };
+    }, 0);
+};
+
+// =========================================================================
+// 辅助核算表 (AcctAuxLedger)
+// =========================================================================
+window.VM_MODULES['AcctAuxLedger'] = function(contentArea, contentHTML, moduleCode) {
+    const AUX_TYPES = [
+        { key:"dept",     label:"部门",   accounts:["6602","6601","6401","6711"] },
+        { key:"customer", label:"客户",   accounts:["1122","2203","6001"] },
+        { key:"vendor",   label:"供应商", accounts:["2202","1123","6401"] },
+        { key:"employee", label:"职员",   accounts:["1221","2241"] },
+        { key:"project",  label:"项目",   accounts:["6401","6001"] }
+    ];
+    const AUX_DEFAULTS = {
+        dept:     [{code:"001",name:"人事行政"},{code:"002",name:"财务部"},{code:"003",name:"股东/董事会"},
+                   {code:"004",name:"技术部"},{code:"005",name:"数据中心"},{code:"006",name:"滁州运营部"},
+                   {code:"007",name:"滁州销售部"},{code:"008",name:"销售部"},{code:"009",name:"新媒体部"},
+                   {code:"011",name:"总经理"},{code:"012",name:"市场推广部"},{code:"013",name:"中山大区"},
+                   {code:"014",name:"滁州办公室"}],
+        customer: [{code:"C001",name:"客户1"},{code:"C002",name:"客户2"},{code:"C003",name:"客户3"}],
+        vendor:   [{code:"V01",name:"供应商1"},{code:"V02",name:"供应商2"}],
+        employee: [{code:"E01",name:"张三"},{code:"E02",name:"李四"}],
+        project:  [{code:"P01",name:"华南项目"},{code:"P02",name:"华东项目"},
+                   {code:"P03",name:"食品项目"},{code:"P04",name:"地方项目"}]
+    };
+
+    const activeTab = sessionStorage.getItem("AuxLedgerTab") || "dept";
+    const auxPF     = sessionStorage.getItem("AuxLedgerPF")  || "";
+    const auxPT     = sessionStorage.getItem("AuxLedgerPT")  || "";
+
+    const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+    const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects")   || "[]");
+    const openingList = JSON.parse(sessionStorage.getItem("OpeningBalances")|| "[]");
+    const openingMap  = {};
+    openingList.forEach(s => { openingMap[s.code] = parseFloat(s.balance) || 0; });
+
+    const normVP = v => {
+        const raw = ((v.date||v.period||"").toString().trim()).replace(/\//g,"-");
+        if (!raw) return "";
+        const parts = raw.split("-");
+        return (parts.length>=2&&parts[0].length===4) ? `${parts[0]}-${parts[1].padStart(2,"0")}` : raw.slice(0,7);
+    };
+    const allPeriods = Array.from(new Set(allVouchers.map(v=>normVP(v)).filter(Boolean))).sort();
+    const mkPOpts = sel =>
+        `<option value="">-- 全部 --</option>` +
+        allPeriods.map(p=>`<option value="${p}" ${sel===p?"selected":""}>${p.replace("-",".")}</option>`).join("");
+
+    const curType   = AUX_TYPES.find(t => t.key===activeTab) || AUX_TYPES[0];
+    const auxStorage= JSON.parse(sessionStorage.getItem("AuxiliaryItems") || "{}");
+    const items     = (auxStorage[activeTab] || AUX_DEFAULTS[activeTab] || []).filter(i => i.enabled!==false);
+    const subjInfoMap = {};
+    allSubjects.forEach(s=>{ subjInfoMap[s.code]=s; });
+
+    // 核算科目标签
+    const acctLabels = curType.accounts.map(code => {
+        const s = allSubjects.find(s=>s.code===code);
+        return s ? `${code} ${s.name}` : code;
+    }).join("、");
+
+    // 筛选凭证
+    const filteredVouchers = allVouchers.filter(v => {
+        const p = normVP(v);
+        if (auxPF && p < auxPF) return false;
+        if (auxPT && p > auxPT) return false;
+        const s = v.status || "";
+        return !s || ["已记账","已审核","已提交","待审核"].includes(s);
+    });
+
+    // 按核算科目累计借贷（无辅助维度标签，按账户层面汇总，用于展示"总量"参考）
+    let totalDebit = 0, totalCredit = 0;
+    filteredVouchers.forEach(v => {
+        if (!v.lines) return;
+        v.lines.forEach(line => {
+            const rawAcct = (line.account||line.subject||(line.accountCode?String(line.accountCode):"")||"").trim();
+            const code = rawAcct.split(/\s+/)[0] || rawAcct;
+            if (curType.accounts.some(ta => code.startsWith(ta))) {
+                totalDebit  += parseFloat(line.debit  || 0);
+                totalCredit += parseFloat(line.credit || 0);
+            }
+        });
+    });
+
+    const fmt = n => (Math.abs(n)||0).toLocaleString("en-US",{minimumFractionDigits:2});
+
+    // 辅助核算行（因凭证分录无辅助维度，显示"-"，加说明）
+    const tableRows = items.map(item => `
+        <tr>
+            <td style="font-family:monospace;color:#555;">${item.code}</td>
+            <td>${item.name}</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+            <td style="text-align:right;color:#ccc;">-</td>
+        </tr>
+    `).join("");
+
+    // 标签页
+    const tabsHTML = AUX_TYPES.map(t =>
+        `<button class="aux-tab${t.key===activeTab?" on":""}"
+            onclick="sessionStorage.setItem('AuxLedgerTab','${t.key}');loadContent('AcctAuxLedger')">${t.label}</button>`
+    ).join("");
+
+    const periodLabel = (auxPF||auxPT)
+        ? `${(auxPF||"--").replace("-",".")} - ${(auxPT||"--").replace("-",".")}`
+        : "全部期间";
+
+    contentHTML += `
+    <style>
+        .aux-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:0 0 4px;margin-bottom:12px;}
+        .aux-frow{display:flex;align-items:center;padding:10px 16px;gap:10px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;}
+        .aux-frow:last-child{border-bottom:none;}
+        .aux-frow select{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
+        .aux-frow label{font-size:14px;color:#555;min-width:60px;}
+        .aux-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
+        .aux-tabs{display:flex;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;margin-bottom:12px;width:fit-content;}
+        .aux-tab{padding:7px 22px;border:none;font-size:14px;cursor:pointer;background:#fff;color:#555;transition:all .15s;}
+        .aux-tab.on{background:#1890ff;color:#fff;}
+        .aux-tab:not(.on):hover{background:#f5f5f5;}
+        .aux-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;}
+        .aux-card-title{text-align:center;font-size:20px;font-weight:bold;padding:20px 0 4px;color:#222;}
+        .aux-card-period{text-align:center;font-size:13px;color:#888;padding:0 0 14px;}
+        .aux-card-accts{text-align:center;font-size:12px;color:#1890ff;padding:0 0 14px;}
+        .aux-tbl{width:100%;border-collapse:collapse;font-size:14px;}
+        .aux-tbl th{padding:9px 12px;font-weight:500;color:#444;background:#f5f6f8;border-bottom:1px solid #e8e8e8;white-space:nowrap;text-align:center;}
+        .aux-tbl td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+        .aux-tbl tbody tr:hover{background:#f9fbff;}
+        .aux-tbl tfoot tr{background:#f5f6f8;font-weight:bold;}
+        .aux-note{margin:12px 16px;padding:10px 14px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:13px;color:#7c5a00;line-height:1.6;}
+        .aux-stat{display:flex;gap:24px;padding:10px 16px 0;flex-wrap:wrap;}
+        .aux-stat-item{background:#f0f5ff;border-radius:6px;padding:10px 20px;text-align:center;flex:1;}
+        .aux-stat-label{font-size:12px;color:#888;margin-bottom:4px;}
+        .aux-stat-val{font-size:18px;font-weight:bold;color:#1890ff;}
+    </style>
+
+    <div class="aux-tabs">${tabsHTML}</div>
+
+    <div class="aux-fcard">
+        <div class="aux-frow">
+            <label>期间</label>
+            <select id="aux-pf">${mkPOpts(auxPF)}</select>
+            <span style="color:#999;">-</span>
+            <select id="aux-pt">${mkPOpts(auxPT)}</select>
+        </div>
+        <div class="aux-actions">
+            <button onclick="window.auxReset&&window.auxReset()"
+                style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
+            <button class="btn-primary" onclick="window.auxQuery&&window.auxQuery()">查询</button>
+        </div>
+    </div>
+
+    <div class="aux-card">
+        <div class="aux-card-title">辅助核算表</div>
+        <div class="aux-card-period">
+            ${curType.label}核算 &nbsp;|&nbsp; 期间：${periodLabel}
+        </div>
+        <div class="aux-card-accts">核算科目：${acctLabels||"未配置"}</div>
+
+        <div class="aux-stat">
+            <div class="aux-stat-item">
+                <div class="aux-stat-label">核算科目本期借方合计</div>
+                <div class="aux-stat-val">${fmt(totalDebit)}</div>
+            </div>
+            <div class="aux-stat-item">
+                <div class="aux-stat-label">核算科目本期贷方合计</div>
+                <div class="aux-stat-val">${fmt(totalCredit)}</div>
+            </div>
+            <div class="aux-stat-item">
+                <div class="aux-stat-label">${curType.label}数量</div>
+                <div class="aux-stat-val">${items.length}</div>
+            </div>
+        </div>
+
+        <table class="aux-tbl" style="margin-top:12px;">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width:80px;text-align:left;padding-left:16px;">编码</th>
+                    <th rowspan="2" style="text-align:left;">名称</th>
+                    <th colspan="2" style="border-left:1px solid #e0e0e0;">期初余额</th>
+                    <th colspan="2" style="border-left:1px solid #e0e0e0;">本期发生额</th>
+                    <th colspan="2" style="border-left:1px solid #e0e0e0;">期末余额</th>
+                </tr>
+                <tr>
+                    <th style="border-left:1px solid #e0e0e0;width:110px;">借方</th>
+                    <th style="width:110px;">贷方</th>
+                    <th style="border-left:1px solid #e0e0e0;width:110px;">借方</th>
+                    <th style="width:110px;">贷方</th>
+                    <th style="border-left:1px solid #e0e0e0;width:110px;">借方</th>
+                    <th style="width:110px;">贷方</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows || '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">暂无辅助核算项目</td></tr>'}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="text-align:center;padding:9px 12px;">合计</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                    <td style="text-align:right;padding:9px 12px;color:#ccc;">-</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="aux-note">
+            ℹ &nbsp;<strong>如何使用辅助核算表：</strong>
+            在<strong>凭证录入</strong>时，为涉及「${acctLabels}」等科目的每笔分录选择对应的
+            <strong>${curType.label}</strong>维度，系统将自动在本表中按${curType.label}汇总期初余额、本期发生额和期末余额。
+            当前演示凭证数据暂未录入辅助维度信息，故明细列显示为"-"。
+            核算科目本期借贷合计（上方统计卡）已基于现有凭证数据计算。
+        </div>
+    </div>
+    `;
+
+    contentArea.innerHTML = contentHTML;
+
+    setTimeout(() => {
+        window.auxQuery = function() {
+            sessionStorage.setItem("AuxLedgerPF", document.getElementById("aux-pf").value);
+            sessionStorage.setItem("AuxLedgerPT", document.getElementById("aux-pt").value);
+            loadContent("AcctAuxLedger");
+        };
+        window.auxReset = function() {
+            ["AuxLedgerPF","AuxLedgerPT"].forEach(k => sessionStorage.removeItem(k));
+            loadContent("AcctAuxLedger");
+        };
+    }, 0);
+};

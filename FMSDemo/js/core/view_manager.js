@@ -47,6 +47,8 @@ function getModuleName(code) {
         SubjectSummary: "科目汇总表",
         AcctSubjectBalance: "科目余额表",
         AcctSubjectDetail: "科目明细账",
+        AcctGeneralLedger: "总账",
+        AcctAuxLedger: "辅助核算表",
         ReportBalanceSheet: "资产负债表",
         ReportIncomeStatement: "利润损益表",
         ReportCashFlow: "现金流量表",
@@ -2391,76 +2393,10 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // ★★★ [新增模块 2] 科目明细账 (详情页) ★★★
+    // ★★★ [科目明细账] - 已由下方增强版接管，此处不输出任何内容 ★★★
     // =========================================================================
     else if (moduleCode === "AcctSubjectDetail") {
-        // 1. 获取当前要查看的科目 (从 sessionStorage 读取)
-        let currentCode = sessionStorage.getItem('CurrentSubjectCode');
-        let currentName = sessionStorage.getItem('CurrentSubjectName');
-
-        if (!currentCode) {
-            contentHTML += `<p style="color:red">请先从【科目余额表】选择一个科目查看。</p>`;
-        } else {
-            // 2. 筛选该科目的所有分录
-            let vouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-            let ledgerRows = [];
-            let runningBalance = 0; // 滚存余额
-
-            // 按日期排序
-            vouchers.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            vouchers.forEach(v => {
-                if (v.lines) {
-                    v.lines.forEach(line => {
-                        // 兼容 account / accountCode / subject 三种字段名
-                        const lineAcct = (line.accountCode || line.account || line.subject || "").trim();
-                        // 只有包含当前科目的行才显示
-                        if (lineAcct.startsWith(currentCode)) {
-                            let debit = parseFloat(line.debit || 0);
-                            let credit = parseFloat(line.credit || 0);
-                            runningBalance += (debit - credit); // 简单计算余额方向
-
-                            ledgerRows.push(`
-                            <tr>
-                                <td>${v.date}</td>
-                                <td><a href="#">${v.id}</a></td>
-                                <td>${line.digest || line.summary || v.summary || '-'}</td>
-                                <td style="text-align:right; color:#27ae60;">${debit ? debit.toLocaleString() : ''}</td>
-                                <td style="text-align:right; color:#e74c3c;">${credit ? credit.toLocaleString() : ''}</td>
-                                <td style="text-align:right; font-weight:bold;">${runningBalance.toLocaleString()}</td>
-                            </tr>
-                        `);
-                        }
-                    });
-                }
-            });
-
-            contentHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>📖 科目明细账：<span style="color:#3498db;">${currentCode} ${currentName}</span></h2>
-                <button class="btn-primary" onclick="loadContent('AcctSubjectBalance')">⬅ 返回余额表</button>
-            </div>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>日期</th><th>凭证号</th><th>摘要</th>
-                        <th style="text-align:right;">借方金额</th>
-                        <th style="text-align:right;">贷方金额</th>
-                        <th style="text-align:right;">余额</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr style="background:#fafafa; font-weight:bold;">
-                        <td>-</td><td>-</td><td>期初余额</td>
-                        <td></td><td></td>
-                        <td style="text-align:right;">0.00</td>
-                    </tr>
-                    ${ledgerRows.join('') || '<tr><td colspan="6" style="text-align:center">该科目本期无发生额</td></tr>'}
-                </tbody>
-            </table>
-        `;
-        }
+        // 由 view_manager.js 增强版（第二个 AcctSubjectDetail 块）负责渲染，此处留空
     }
 
 
@@ -11581,147 +11517,223 @@ function loadContent(moduleCode, element = null) {
     // 40. 科目明细账 (AcctSubjectDetail) - [修复版：智能识别借贷方向]
     // =========================================================================
     else if (moduleCode === "AcctSubjectDetail") {
-        const targetCode = sessionStorage.getItem("CurrentSubjectCode") || "1002";
-        const targetName =
-            sessionStorage.getItem("CurrentSubjectName") || "银行存款";
-        const vouchers = JSON.parse(
-            sessionStorage.getItem("ManualVouchers") || "[]"
-        );
+        // =========================================================================
+        // ★★★ 科目明细账 - 独立选科目版本 ★★★
+        // =========================================================================
+        const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
+        const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+        const openingList  = JSON.parse(sessionStorage.getItem("OpeningBalances") || "[]");
+        const openingMap   = {};
+        openingList.forEach(s => { openingMap[s.code] = parseFloat(s.balance) || 0; });
 
-        // 1. ★★★ 核心修复：定义科目的"默认方向" ★★★
-        // 资产/成本/费用类 (1xxx, 5xxx, 6xxx) -> 默认 "借"
-        // 负债/权益/收入类 (2xxx, 3xxx, 4xxx) -> 默认 "贷"
-        const firstDigit = targetCode.charAt(0);
-        const defaultDir = ["2", "3", "4", "60"].some((prefix) =>
-            targetCode.startsWith(prefix)
-        )
-            ? "贷"
-            : "借";
+        // 读取当前选中科目（可从余额表跳入，也可自行选择）
+        const savedCode = sessionStorage.getItem("CurrentSubjectCode") || "";
+        const firstSubj = allSubjects.length > 0 ? allSubjects[0] : { code: "", name: "" };
+        const targetCode = savedCode || firstSubj.code;
+        const subjInfo   = allSubjects.find(s => s.code === targetCode);
+        const targetName = (subjInfo && subjInfo.name) || sessionStorage.getItem("CurrentSubjectName") || targetCode;
 
-        // 2. 设置期初余额 (模拟)
-        // 假设：银行存款有期初，应付账款期初为0
-        let currentBalance = targetCode === "1002" ? 800000 : 0;
+        // 期间筛选
+        const normVP = (v) => {
+            const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
+            if (!raw) return "";
+            const parts = raw.split("-");
+            return (parts.length >= 2 && parts[0].length === 4)
+                ? `${parts[0]}-${parts[1].padStart(2,"0")}` : raw.slice(0,7);
+        };
+        const allPeriods = Array.from(new Set(allVouchers.map(v => normVP(v)).filter(Boolean))).sort();
+        const sdPF = sessionStorage.getItem("SDPeriodFrom") || "";
+        const sdPT = sessionStorage.getItem("SDPeriodTo")   || "";
+        const mkPOpts = (sel) =>
+            `<option value="">-- 全部 --</option>` +
+            allPeriods.map(p => `<option value="${p}" ${sel===p?"selected":""}>${p.replace("-",".")}</option>`).join("");
 
-        // 3. 生成"期初余额"行
-        // 如果余额为0，方向显示"平"，否则显示默认方向
-        const startDirText = currentBalance === 0 ? "平" : defaultDir;
+        // 科目下拉
+        const subjOpts = `<option value="">-- 请选择科目 --</option>` +
+            allSubjects.map(s =>
+                `<option value="${s.code}" data-name="${s.name}" ${s.code===targetCode?"selected":""}>${s.code} ${s.name}</option>`
+            ).join("");
 
-        let tableHTML = `
-                    <tr style="background-color:#fdfdfd; color:#999;">
-                        <td>2025-11-01</td>
-                        <td>-</td>
-                        <td>期初余额</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>${startDirText}</td>
-                        <td style="text-align:right;">${currentBalance.toLocaleString(
-            "en-US",
-            { minimumFractionDigits: 2 }
-        )}</td>
-                    </tr>
-                `;
+        // 科目方向
+        const defaultDir = subjInfo
+            ? (subjInfo.direction === "贷" ? "贷" : "借")
+            : (["2","3","4"].some(p => targetCode.startsWith(p)) ? "贷" : "借");
 
-        // 4. 遍历凭证计算
-        const sortedVouchers = [...vouchers].reverse(); // 按时间顺序
+        const fmt = n => (Math.abs(n)||0).toLocaleString("en-US", { minimumFractionDigits: 2 });
 
-        sortedVouchers.forEach((v) => {
-            if (v.status === "已审核" || v.status === "已记账") {
-                if (v.lines) {
-                    v.lines.forEach((line) => {
-                        const lineAcct = (line.accountCode || line.account || line.subject || "").trim();
-                        if (lineAcct.startsWith(targetCode)) {
-                            const debit = parseFloat(line.debit) || 0;
-                            const credit = parseFloat(line.credit) || 0;
+        // 筛选凭证
+        const filteredVouchers = allVouchers.filter(v => {
+            const p = normVP(v);
+            if (sdPF && p < sdPF) return false;
+            if (sdPT && p > sdPT) return false;
+            const s = v.status || "";
+            return !s || ["已记账","已审核","已提交","待审核"].includes(s);
+        }).sort((a, b) => (a.date||"").localeCompare(b.date||""));
 
-                            // ★★★ 核心修复：根据方向计算余额 ★★★
-                            if (defaultDir === "借") {
-                                // 资产类：余额 = 上次余额 + 借 - 贷
-                                currentBalance = currentBalance + debit - credit;
-                            } else {
-                                // 负债类(如应付账款)：余额 = 上次余额 + 贷 - 借
-                                currentBalance = currentBalance + credit - debit;
-                            }
+        // 构建明细行
+        let openBal = openingMap[targetCode] || 0;
+        let runBal = openBal;
+        let totalDebit = 0, totalCredit = 0;
+        let tableRows = "";
 
-                            // 计算当前行的方向文字
-                            let dirText = "平";
-                            if (currentBalance > 0) dirText = defaultDir; // 还是欠钱/有钱
-                            else if (currentBalance < 0)
-                                dirText = defaultDir === "借" ? "贷" : "借"; // 变成反方向了(比如银行透支)
+        if (targetCode) {
+            const startDir = openBal === 0 ? "平" : defaultDir;
+            tableRows += `
+                <tr style="background:#fafafa;color:#888;">
+                    <td>期初</td><td>-</td><td>-</td><td>期初余额</td>
+                    <td></td><td></td><td>${startDir}</td>
+                    <td style="text-align:right;">${fmt(openBal)}</td>
+                </tr>`;
 
-                            tableHTML += `
-                                        <tr>
-                                            <td>${v.date}</td>
-                                            <td><a href="#" onclick="openVoucherDetail(this)" class="val-id" style="color:#3498db;">${v.id
-                                }</a></td>
-                                            <td>${line.summary}</td>
-                                            <td style="text-align:right;">${debit
-                                    ? debit.toLocaleString(
-                                        "en-US",
-                                        { minimumFractionDigits: 2 }
-                                    )
-                                    : ""
-                                }</td>
-                                            <td style="text-align:right;">${credit
-                                    ? credit.toLocaleString(
-                                        "en-US",
-                                        { minimumFractionDigits: 2 }
-                                    )
-                                    : ""
-                                }</td>
-                                            <td>${dirText}</td>
-                                            <td style="text-align:right; font-weight:bold;">${Math.abs(
-                                    currentBalance
-                                ).toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                })}</td>
-                                        </tr>
-                                    `;
-                        }
-                    });
-                }
-            }
-        });
+            filteredVouchers.forEach(v => {
+                if (!v.lines) return;
+                v.lines.forEach(line => {
+                    const rawAcct = (line.account || line.subject || (line.accountCode ? String(line.accountCode) : "") || "").trim();
+                    const lineCode = rawAcct.split(/\s+/)[0] || rawAcct;
+                    if (!lineCode.startsWith(targetCode)) return;
+
+                    const debit  = parseFloat(line.debit)  || 0;
+                    const credit = parseFloat(line.credit) || 0;
+                    totalDebit  += debit;
+                    totalCredit += credit;
+
+                    runBal = defaultDir === "借"
+                        ? runBal + debit - credit
+                        : runBal + credit - debit;
+
+                    let dirText = "平";
+                    if (runBal >  0.005) dirText = defaultDir;
+                    if (runBal < -0.005) dirText = defaultDir === "借" ? "贷" : "借";
+
+                    const period = normVP(v);
+                    tableRows += `
+                        <tr>
+                            <td>${period ? period.replace("-",".") : "-"}</td>
+                            <td>${v.date || "-"}</td>
+                            <td style="color:#1890ff;cursor:pointer;"
+                                onclick="if(window.openVoucherDetailById)window.openVoucherDetailById('${v.id}')">${v.id}</td>
+                            <td>${line.summary || v.summary || "-"}</td>
+                            <td style="text-align:right;">${debit  ? fmt(debit)  : ""}</td>
+                            <td style="text-align:right;">${credit ? fmt(credit) : ""}</td>
+                            <td>${dirText}</td>
+                            <td style="text-align:right;font-weight:bold;">${fmt(runBal)}</td>
+                        </tr>`;
+                });
+            });
+
+            const closeDirText = runBal === 0 ? "平" : (runBal > 0 ? defaultDir : (defaultDir === "借" ? "贷" : "借"));
+            tableRows += `
+                <tr style="background:#f0f5ff;font-weight:bold;">
+                    <td colspan="4" style="text-align:center;">本期合计</td>
+                    <td style="text-align:right;color:#1890ff;">${fmt(totalDebit)}</td>
+                    <td style="text-align:right;color:#1890ff;">${fmt(totalCredit)}</td>
+                    <td>${closeDirText}</td>
+                    <td style="text-align:right;color:#1890ff;">${fmt(runBal)}</td>
+                </tr>`;
+        }
+
+        const periodLabel = (sdPF||sdPT)
+            ? `${(sdPF||"--").replace("-",".")} - ${(sdPT||"--").replace("-",".")}`
+            : "全部期间";
 
         contentHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h2>科目明细账：<span style="color:#2980b9;">${targetCode} ${targetName}</span></h2>
-                        <button class="btn-primary" style="background-color: #95a5a6;" onclick="loadContent('AcctSubjectSummary')"> < 返回汇总表</button>
-                    </div>
-                    
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items:center;">
-                            <input type="date" value="2025-11-01" style="padding:8px; border:1px solid #ccc;">
-                            <span>至</span>
-                            <input type="date" value="2025-11-30" style="padding:8px; border:1px solid #ccc;">
-                            <input type="text" placeholder="摘要关键词" style="padding:8px; border:1px solid #ccc;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
+        <style>
+            .sd-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:0 0 4px;margin-bottom:12px;}
+            .sd-frow{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f0f0;gap:10px;flex-wrap:wrap;}
+            .sd-frow:last-child{border-bottom:none;}
+            .sd-flabel{font-size:14px;color:#555;min-width:60px;white-space:nowrap;}
+            .sd-frow select{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
+            .sd-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
+            .sd-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;}
+            .sd-card-title{text-align:center;font-size:20px;font-weight:bold;padding:20px 0 4px;color:#222;}
+            .sd-card-subj{text-align:center;font-size:14px;color:#1890ff;padding:0 0 4px;font-weight:500;}
+            .sd-card-period{text-align:center;font-size:13px;color:#888;padding:4px 20px 14px;}
+            .sd-tbl{width:100%;border-collapse:collapse;font-size:14px;}
+            .sd-tbl th{padding:9px 12px;font-weight:500;color:#444;background:#f5f6f8;border-bottom:1px solid #e8e8e8;white-space:nowrap;}
+            .sd-tbl td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+            .sd-tbl tbody tr:hover{background:#f9fbff;}
+            .sd-tbl tfoot tr{background:#f0f5ff;font-weight:bold;}
+        </style>
 
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>凭证号</th>
-                                <th style="width:30%;">摘要</th>
-                                <th style="text-align:right;">借方金额</th>
-                                <th style="text-align:right;">贷方金额</th>
-                                <th>方向</th>
-                                <th style="text-align:right;">余额</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableHTML}
-                        </tbody>
-                    </table>
-                    
-                    <div style="margin-top:10px; font-size:12px; color:#7f8c8d;">
-                        * 注：${targetCode} 属于 <strong>${defaultDir}方科目</strong>，${defaultDir === "借"
-                ? "借方表示增加，贷方表示减少"
-                : "贷方表示增加，借方表示减少"
-            }。
-                    </div>
-                `;
+        <div class="sd-fcard">
+            <div class="sd-frow">
+                <span class="sd-flabel">科目</span>
+                <select id="sd-subj" style="min-width:280px;" onchange="window.sdAutoQuery && window.sdAutoQuery()">
+                    ${subjOpts}
+                </select>
+            </div>
+            <div class="sd-frow">
+                <span class="sd-flabel">期间</span>
+                <select id="sd-pf">${mkPOpts(sdPF)}</select>
+                <span style="color:#999;padding:0 4px;">-</span>
+                <select id="sd-pt">${mkPOpts(sdPT)}</select>
+            </div>
+            <div class="sd-actions">
+                <button onclick="window.sdReset && window.sdReset()"
+                    style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
+                <button class="btn-primary" onclick="window.sdQuery && window.sdQuery()">查询</button>
+            </div>
+        </div>
+
+        <div class="sd-card">
+            <div class="sd-card-title">科目明细账</div>
+            ${targetCode ? `<div class="sd-card-subj">${targetCode} ${targetName}</div>` : ""}
+            <div class="sd-card-period">期间：${periodLabel}</div>
+            <table class="sd-tbl">
+                <thead>
+                    <tr>
+                        <th style="width:72px;">期间</th>
+                        <th style="width:100px;">日期</th>
+                        <th style="width:90px;">凭证号</th>
+                        <th>摘要</th>
+                        <th style="text-align:right;width:130px;">借方金额</th>
+                        <th style="text-align:right;width:130px;">贷方金额</th>
+                        <th style="width:52px;">方向</th>
+                        <th style="text-align:right;width:140px;">余额</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${targetCode
+                        ? (tableRows || `<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">该科目本期无发生额</td></tr>`)
+                        : `<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">请在上方选择科目</td></tr>`}
+                </tbody>
+            </table>
+            ${targetCode ? `
+            <div style="padding:10px 14px;font-size:12px;color:#999;">
+                * ${targetCode} 属于<strong>${defaultDir}方科目</strong>，
+                ${defaultDir==="借" ? "借方表示增加，贷方表示减少" : "贷方表示增加，借方表示减少"}。
+            </div>` : ""}
+        </div>
+        `;
+
+        setTimeout(() => {
+            window.sdAutoQuery = function() {
+                const sel = document.getElementById("sd-subj");
+                if (!sel || !sel.value) return;
+                const opt = sel.options[sel.selectedIndex];
+                sessionStorage.setItem("CurrentSubjectCode", sel.value);
+                sessionStorage.setItem("CurrentSubjectName", opt.getAttribute("data-name") || sel.value);
+                sessionStorage.setItem("SDPeriodFrom", document.getElementById("sd-pf").value);
+                sessionStorage.setItem("SDPeriodTo",   document.getElementById("sd-pt").value);
+                loadContent("AcctSubjectDetail");
+            };
+            window.sdQuery = function() {
+                const sel = document.getElementById("sd-subj");
+                if (sel && sel.value) {
+                    const opt = sel.options[sel.selectedIndex];
+                    sessionStorage.setItem("CurrentSubjectCode", sel.value);
+                    sessionStorage.setItem("CurrentSubjectName", opt.getAttribute("data-name") || sel.value);
+                }
+                sessionStorage.setItem("SDPeriodFrom", document.getElementById("sd-pf").value);
+                sessionStorage.setItem("SDPeriodTo",   document.getElementById("sd-pt").value);
+                loadContent("AcctSubjectDetail");
+            };
+            window.sdReset = function() {
+                ["CurrentSubjectCode","CurrentSubjectName","SDPeriodFrom","SDPeriodTo"]
+                    .forEach(k => sessionStorage.removeItem(k));
+                loadContent("AcctSubjectDetail");
+            };
+        }, 0);
     }
 
     // =========================================================================
