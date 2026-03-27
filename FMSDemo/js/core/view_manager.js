@@ -9873,11 +9873,6 @@ function loadContent(moduleCode, element = null) {
             </style>
 
             <div class="tb-toolbar">
-                <label>账簿</label>
-                <select style="min-width:160px;">
-                    <option value="">综合账簿</option>
-                    ${books.map(b => `<option value="${b.id}">${b.name}</option>`).join("")}
-                </select>
                 <label>期间</label>
                 <select id="trial-filter-period" style="min-width:130px;">
                     <option value="">全部</option>
@@ -10189,13 +10184,6 @@ function loadContent(moduleCode, element = null) {
             <div class="balance-sheet-page">
                 <div class="balance-sheet-toolbar">
                     <div class="balance-sheet-field">
-                        <label>账套</label>
-                        <select>
-                            <option>测试账套</option>
-                            <option>正式账套</option>
-                        </select>
-                    </div>
-                    <div class="balance-sheet-field">
                         <label>会计期间</label>
                         <select>
                             <option>${new Date().toISOString().slice(0, 7)}</option>
@@ -10467,13 +10455,6 @@ function loadContent(moduleCode, element = null) {
             <div class="income-sheet-page">
                 <div class="income-sheet-toolbar">
                     <div class="income-sheet-field">
-                        <label>账套</label>
-                        <select>
-                            <option>测试账套</option>
-                            <option>正式账套</option>
-                        </select>
-                    </div>
-                    <div class="income-sheet-field">
                         <label>会计年度</label>
                         <select>
                             <option>${currentYear}</option>
@@ -10737,13 +10718,6 @@ function loadContent(moduleCode, element = null) {
         contentHTML += `
             <div class="cashflow-sheet-page">
                 <div class="cashflow-sheet-toolbar">
-                    <div class="cashflow-sheet-field">
-                        <label>账套</label>
-                        <select>
-                            <option>测试账套</option>
-                            <option>正式账套</option>
-                        </select>
-                    </div>
                     <div class="cashflow-sheet-field">
                         <label>会计期间</label>
                         <select>
@@ -15070,15 +15044,13 @@ function loadContent(moduleCode, element = null) {
     };
 
     window.filterAcctPeriods = function () {
-        const bookId = document.getElementById("period-filter-book")?.value || "";
         const period = document.getElementById("period-filter-period")?.value || "";
         const status = document.getElementById("period-filter-status")?.value || "";
         const rows = document.querySelectorAll("#acct-period-body tr");
         rows.forEach(row => {
-            const matchBook = !bookId || row.dataset.book === bookId;
             const matchPeriod = !period || row.dataset.period === period;
             const matchStatus = !status || row.dataset.status === status;
-            row.style.display = matchBook && matchPeriod && matchStatus ? "" : "none";
+            row.style.display = matchPeriod && matchStatus ? "" : "none";
         });
     };
 
@@ -15102,17 +15074,10 @@ function loadContent(moduleCode, element = null) {
     };
 
     window.createNextYearPeriods = function () {
-        const bookId = document.getElementById("period-filter-book")?.value || "";
-        if (!bookId) {
-            alert("请选择账套后再新增期间。");
-            return;
-        }
         const books = window.getAccountBooks ? window.getAccountBooks() : [];
-        const book = books.find(b => b.id === bookId);
-        if (!book) return;
         const year = new Date().getFullYear() + 1;
         if (typeof window.ensureAccountPeriodsForBook === "function") {
-            window.ensureAccountPeriodsForBook(book, year);
+            books.forEach(book => window.ensureAccountPeriodsForBook(book, year));
         }
         loadContent("AcctPeriod");
     };

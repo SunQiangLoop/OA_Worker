@@ -159,13 +159,6 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 <div class="ve-voucher-center-title" id="veVoucherTitle">转账凭证</div>
                 <div class="ve-header-info">
                     <div class="ve-form-field">
-                        <label><span class="ve-required-star">*</span>账簿</label>
-                        <select class="ve-input-sm" id="veBookSelect">
-                            <option>总账账簿</option>
-                            <option>辅助账簿</option>
-                        </select>
-                    </div>
-                    <div class="ve-form-field">
                         <label><span class="ve-required-star">*</span>日期</label>
                         <input type="date" class="ve-input-sm" id="veDateInput" value="${veTodayDate}">
                     </div>

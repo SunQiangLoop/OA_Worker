@@ -1248,7 +1248,24 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
         <div style="padding:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 style="margin:0; font-size:18px; color:#1a1a1a;">多级会计账套体系</h2>
-                <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctOpenAddModal()">+ 新增账套</button>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <!-- ★ 当前帐套下拉选择器（核心入口） -->
+                    <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #e74c3c;border-radius:4px;padding:4px 10px;background:#fff8f8;">
+                        <span style="font-size:13px;color:#e74c3c;font-weight:500;white-space:nowrap;">当前帐套</span>
+                        <select id="global-acct-set-select"
+                            style="border:none;outline:none;background:transparent;color:#e74c3c;font-size:13px;font-weight:600;cursor:pointer;min-width:120px;max-width:180px;"
+                            onchange="window.switchAcctSet && window.switchAcctSet(this.value, this.options[this.selectedIndex].text)">
+                            <option value="" disabled selected>-- 请启用帐套 --</option>
+                        </select>
+                    </div>
+                    <!-- 帐套导入（仅 UI，功能待开发） -->
+                    <button class="acct-sbtn" onclick="alert('帐套导入功能开发中，敬请期待。')"
+                        style="color:#2563eb;border-color:#2563eb;">帐套导入</button>
+                    <!-- 帐套备份（仅 UI，功能待开发） -->
+                    <button class="acct-sbtn" onclick="alert('帐套备份功能开发中，敬请期待。')"
+                        style="color:#2563eb;border-color:#2563eb;">帐套备份</button>
+                    <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctOpenAddModal()">+ 新增帐套</button>
+                </div>
             </div>
             <div style="background:#fff; border:1px solid #e0e0e0; border-radius:4px; overflow:hidden;">
                 <table class="acct-tree-table">
@@ -1443,12 +1460,30 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
             window.acctHandleCopy = function(id) {
                 const src = window.acctFindNode(window._acctTreeData, id);
                 if (!src) return;
-                const copyName = prompt('复制账套，请输入新账套名称：', src.name + '-副本');
+                const copyName = prompt('复制帐套，请输入新帐套名称：', src.name + '-副本');
                 if (!copyName) return;
-                const copyCode = prompt('请输入新账套编码：', src.code + '2');
+                const copyCode = prompt('请输入新帐套编码（不能与已有编码重复）：', src.code + '2');
                 if (!copyCode) return;
-                const newNode = { id: Date.now(), name: copyName, code: copyCode, type: src.type, principle: src.principle, status: 'disabled', principleInherited: src.principleInherited, expanded: false, children: [] };
-                // 复制到同级（找父节点）
+
+                const newNode = {
+                    id: Date.now(), name: copyName, code: copyCode,
+                    type: src.type, principle: src.principle,
+                    status: 'disabled', principleInherited: src.principleInherited,
+                    expanded: false, children: []
+                };
+
+                // ★ 复制源帐套的数据快照（保留全部凭证、科目等）
+                const srcSnap = sessionStorage.getItem('AcctSetData_' + src.code);
+                if (srcSnap) {
+                    sessionStorage.setItem('AcctSetData_' + copyCode, srcSnap);
+                } else {
+                    // 源帐套无快照，用初始化数据代替
+                    if (typeof window.initAcctSetData === 'function') {
+                        window.initAcctSetData(copyCode, src.principle || '企业准则');
+                    }
+                }
+
+                // 插入到同级（紧跟在源帐套之后）
                 function findParentAndInsert(nodes, targetId) {
                     for (let i = 0; i < nodes.length; i++) {
                         if (nodes[i].id === targetId) { nodes.splice(i + 1, 0, newNode); return true; }
@@ -1459,6 +1494,7 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
                 if (!findParentAndInsert(window._acctTreeData, id)) window._acctTreeData.push(newNode);
                 sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
                 window.acctRenderTree();
+                alert('帐套「' + copyName + '」已复制（含原帐套数据），当前状态为"已停用"，可手动启用。');
             };
             window.acctOpenDisable = function(id) {
                 const node = window.acctFindNode(window._acctTreeData, id);
@@ -1484,20 +1520,53 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
             };
             window.acctHandleEnable = function(id) {
                 const node = window.acctFindNode(window._acctTreeData, id);
-                if (node) {
-                    node.status = 'enabled';
-                    sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
-                    // 同步到 FinanceAccountBooks，并初始化当年期间
-                    window.acctSyncToFinanceBooks();
-                    if (typeof window.ensureAccountPeriodsForBook === 'function') {
-                        window.ensureAccountPeriodsForBook({ id: String(node.id), code: node.code, name: node.name }, new Date().getFullYear());
+                if (!node) return;
+
+                node.status = 'enabled';
+                sessionStorage.setItem('AcctSetTree', JSON.stringify(window._acctTreeData));
+
+                // ★ 若该帐套还没有数据快照，则初始化默认数据（科目体系 + 空凭证）
+                const snapKey = 'AcctSetData_' + node.code;
+                if (!sessionStorage.getItem(snapKey)) {
+                    if (typeof window.initAcctSetData === 'function') {
+                        window.initAcctSetData(node.code, node.principle || '企业准则');
                     }
-                    window.acctRenderTree();
                 }
+
+                // 同步到 FinanceAccountBooks，并初始化当年期间
+                window.acctSyncToFinanceBooks();
+                if (typeof window.ensureAccountPeriodsForBook === 'function') {
+                    window.ensureAccountPeriodsForBook(
+                        { id: String(node.id), code: node.code, name: node.name },
+                        new Date().getFullYear()
+                    );
+                }
+
+                // ★ 更新 header 帐套选择器
+                if (typeof window.updateGlobalAcctSetSelector === 'function') {
+                    window.updateGlobalAcctSetSelector();
+                }
+                // ★ 刷新页面内当前帐套标签
+                window._acctRefreshCurrentLabel && window._acctRefreshCurrentLabel();
+
+                // ★ 询问是否切换到该帐套（切换后留在本页，不跳首页）
+                if (confirm('帐套「' + node.name + '」已启用并完成初始化。\n是否立即切换到该帐套？')) {
+                    if (typeof window.switchAcctSet === 'function') {
+                        window.switchAcctSet(node.code, node.name);
+                    }
+                }
+                // 无论是否切换，都留在帐套页刷新列表
+                window.acctRenderTree();
             };
+            // 刷新页面内的帐套选择器（updateGlobalAcctSetSelector 统一处理）
+            window._acctRefreshCurrentLabel = function() {
+                window.updateGlobalAcctSetSelector && window.updateGlobalAcctSetSelector();
+            };
+
             // 初始同步一次（页面加载时保证 FinanceAccountBooks 与树状态一致）
             window.acctSyncToFinanceBooks();
             window.acctRenderTree();
+            window._acctRefreshCurrentLabel();
         }, 0);
 
     contentArea.innerHTML = contentHTML;
@@ -1565,7 +1634,6 @@ window.VM_MODULES['AcctPeriod'] = function(contentArea, contentHTML, moduleCode)
                     <tr data-book="${item.bookId}" data-period="${item.period}" data-status="${item.status}">
                         <td style="text-align:center;"><input type="checkbox" class="period-select" data-id="${item.id}"></td>
                         <td>${item.site || "-"}</td>
-                        <td>${item.bookName || "-"}</td>
                         <td>${item.period}</td>
                         <td><span style="color:${statusColor}; font-weight:600;">● ${item.status}</span></td>
                     </tr>
@@ -1575,11 +1643,6 @@ window.VM_MODULES['AcctPeriod'] = function(contentArea, contentHTML, moduleCode)
         contentHTML += `
                     <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 16px;">
                         <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-                            <label style="color:#666;">账套名称</label>
-                            <select id="period-filter-book" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                                <option value="">全部</option>
-                                ${bookOptions}
-                            </select>
                             <label style="color:#666;">会计期间</label>
                             <select id="period-filter-period" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 160px;">
                                 <option value="">全部</option>
@@ -1609,7 +1672,6 @@ window.VM_MODULES['AcctPeriod'] = function(contentArea, contentHTML, moduleCode)
                             <tr>
                                 <th style="width:40px; text-align:center;"><input type="checkbox" onclick="toggleAllPeriods(this.checked)"></th>
                                 <th>网点</th>
-                                <th>账套名称</th>
                                 <th>会计期间</th>
                                 <th>状态</th>
                             </tr>

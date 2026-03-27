@@ -163,3 +163,120 @@ function numberToChinese(money) {
     }
     return chineseStr;
 }
+
+// =========================================================================
+// ★★★ 全局帐套管理工具函数 ★★★
+// =========================================================================
+
+/** 随帐套切换一起保存/恢复的 sessionStorage 键列表 */
+window._ACCT_SNAPSHOT_KEYS = [
+    'ManualVouchers', 'AcctSubjects', 'OpeningBalances',
+    'PeriodEndClosingHistory', 'TaxAccrualRules', 'AccountingStandard',
+    'EngineMappings', 'AutoVoucherTemplates', 'AuxiliaryItems',
+    'AcctAuxiliary', 'FinanceAccountPeriods'
+];
+
+/** 把当前全局数据保存到当前帐套的快照 */
+window.saveCurrentAcctSetSnapshot = function() {
+    const code = sessionStorage.getItem('CurrentAcctSetCode');
+    if (!code) return;
+    const snapshot = {};
+    window._ACCT_SNAPSHOT_KEYS.forEach(k => {
+        const v = sessionStorage.getItem(k);
+        if (v !== null) snapshot[k] = v;
+    });
+    sessionStorage.setItem('AcctSetData_' + code, JSON.stringify(snapshot));
+};
+
+/** 从快照恢复指定帐套数据到全局 sessionStorage，返回 true/false */
+window.loadAcctSetSnapshot = function(code) {
+    const raw = sessionStorage.getItem('AcctSetData_' + code);
+    if (!raw) return false;
+    try {
+        const snap = JSON.parse(raw);
+        window._ACCT_SNAPSHOT_KEYS.forEach(k => sessionStorage.removeItem(k));
+        Object.entries(snap).forEach(([k, v]) => { if (v !== undefined) sessionStorage.setItem(k, v); });
+        return true;
+    } catch (e) { return false; }
+};
+
+/** 初始化新帐套：按会计准则写入默认科目，其余数据全部清空 */
+window.initAcctSetData = function(code, principle) {
+    // ACCOUNTING_STANDARD_TEMPLATES 在 view_manager.js 中定义，此函数在用户操作时调用，届时已加载
+    const stdKey = (principle === '小企业准则') ? 'small' : 'enterprise';
+    let subjects = [];
+    try {
+        if (typeof ACCOUNTING_STANDARD_TEMPLATES !== 'undefined') {
+            subjects = ACCOUNTING_STANDARD_TEMPLATES[stdKey] || [];
+        }
+    } catch (e) { subjects = []; }
+
+    const snap = {
+        ManualVouchers:          '[]',
+        AcctSubjects:            JSON.stringify(subjects),
+        OpeningBalances:         '[]',
+        PeriodEndClosingHistory: '[]',
+        AccountingStandard:      stdKey
+    };
+    sessionStorage.setItem('AcctSetData_' + code, JSON.stringify(snap));
+};
+
+/** 切换全局帐套：保存当前 → 加载新帐套 → 更新标识 → 刷新界面 */
+window.switchAcctSet = function(newCode, newNameRaw) {
+    if (!newCode) return;
+    const newName = (newNameRaw || '').replace('（已停用）', '').trim();
+    const currentCode = sessionStorage.getItem('CurrentAcctSetCode');
+    if (currentCode === newCode) return;
+
+    // 1. 保存当前帐套数据
+    if (currentCode) window.saveCurrentAcctSetSnapshot();
+
+    // 2. 加载新帐套快照
+    const loaded = window.loadAcctSetSnapshot(newCode);
+    if (!loaded) {
+        alert('帐套「' + newName + '」数据快照不存在，请先在帐套管理中启用该帐套以完成初始化。');
+        window.updateGlobalAcctSetSelector();
+        return;
+    }
+
+    // 3. 更新当前帐套标识
+    sessionStorage.setItem('CurrentAcctSetCode', newCode);
+    sessionStorage.setItem('CurrentAcctSetName', newName);
+
+    // 4. 更新帐套选择器（含页面内的下拉）
+    window.updateGlobalAcctSetSelector();
+};
+
+/** 重建 header 中全局帐套选择器的 options，并同步显示当前帐套名 */
+window.updateGlobalAcctSetSelector = function() {
+    const sel = document.getElementById('global-acct-set-select');
+    if (!sel) return;
+
+    const currentCode = sessionStorage.getItem('CurrentAcctSetCode') || '';
+    const treeData    = JSON.parse(sessionStorage.getItem('AcctSetTree') || '[]');
+    const opts        = [];
+
+    if (!currentCode) {
+        opts.push('<option value="" disabled selected style="color:#999;">-- 请选择帐套 --</option>');
+    }
+
+    function collectNodes(nodes, prefix) {
+        nodes.forEach(n => {
+            const isEnabled   = n.status === 'enabled';
+            const selected    = n.code === currentCode ? 'selected' : '';
+            const disabled    = isEnabled ? '' : 'disabled';
+            const style       = isEnabled ? '' : 'style="color:#bbb;"';
+            const suffix      = isEnabled ? '' : '（已停用）';
+            opts.push(`<option value="${n.code}" ${selected} ${disabled} ${style}>${prefix}${n.name}${suffix}</option>`);
+            if (n.children && n.children.length) collectNodes(n.children, prefix + '　');
+        });
+    }
+
+    if (treeData.length === 0) {
+        opts.push('<option value="" disabled>-- 暂无帐套 --</option>');
+    } else {
+        collectNodes(treeData, '');
+    }
+
+    sel.innerHTML = opts.join('');
+};
