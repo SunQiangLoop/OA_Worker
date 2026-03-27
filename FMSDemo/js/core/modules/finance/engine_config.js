@@ -307,6 +307,10 @@ const ENGINE_DATA = [
         name: "结算",
         children: [
             {
+                name: "测试",
+                items: ["测试应收", "测试应付", "测试内部报销"]
+            },
+            {
                 name: "运单",
                 items: [
                     "现付结算",
@@ -455,6 +459,15 @@ const ENGINE_DATA = [
                     "提货费异动增款结算",
                     "提货费异动减款结算"
                 ]
+            }
+        ]
+    },
+    {
+        name: "核销",
+        children: [
+            {
+                name: "测试",
+                items: ["测试应收1", "测试应付1"]
             }
         ]
     },
@@ -788,6 +801,63 @@ const ENGINE_DEFAULT_TEMPLATES = {
             { dir: "借", subjectCode: "2202", subjectName: "应付账款",   summary: "", usePaymentMethod: false },
             { dir: "贷", subjectCode: "1002", subjectName: "银行存款",   summary: "", usePaymentMethod: false }
         ]
+    },
+    // ── 测试模板：结算-测试应收 ─────────────────────────────────────
+    // 借：应收账款（含税9%） = 贷：主营业务收入（不含税）+ 贷：应交税费（税额）
+    "测试应收": {
+        name: "测试应收", category: "结算", group: "测试",
+        voucherWord: "收", summaryTemplate: "确认应收-{clientName}", remark: "确认应收账款（含税9%）",
+        taxRate: 0.09,
+        entries: [
+            { dir: "借", subjectCode: "1122", subjectName: "应收账款",     summary: "确认应收债权", amountType: "gross", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "5001", subjectName: "主营业务收入", summary: "确认运输收入", amountType: "net",   usePaymentMethod: false },
+            { dir: "贷", subjectCode: "2221", subjectName: "应交税费",     summary: "确认销项税额", amountType: "tax",   usePaymentMethod: false }
+        ]
+    },
+    // ── 测试模板：结算-测试应付（网络货运3%简易计税进项税）──────────
+    // 借：运输成本（不含税）+ 借：应交税费进项（3%）= 贷：应付账款（含税）
+    "测试应付": {
+        name: "测试应付", category: "结算", group: "测试",
+        voucherWord: "付", summaryTemplate: "司机运费-{clientName}", remark: "网络货运司机成本（3%简易计税进项税）",
+        taxRate: 0.03,
+        entries: [
+            { dir: "借", subjectCode: "640101", subjectName: "运输成本",   summary: "运费成本（不含税）", amountType: "net",   usePaymentMethod: false },
+            { dir: "借", subjectCode: "2221",   subjectName: "应交税费",   summary: "进项税额（3%）",     amountType: "tax",   usePaymentMethod: false },
+            { dir: "贷", subjectCode: "2202",   subjectName: "应付账款",   summary: "应付司机款",          amountType: "gross", usePaymentMethod: false }
+        ]
+    },
+    // ── 测试模板：结算-测试内部报销 ───────────────────────────────────
+    "测试内部报销": {
+        name: "测试内部报销", category: "结算", group: "测试",
+        voucherWord: "付", summaryTemplate: "费用报销-{clientName}", remark: "内部员工费用报销",
+        taxRate: 0,
+        entries: [
+            { dir: "借", subjectCode: "6602", subjectName: "管理费用", summary: "报销费用", amountType: "gross", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1002", subjectName: "银行存款", summary: "报销支出", amountType: "gross", usePaymentMethod: false }
+        ]
+    },
+    // ── 测试模板：核销-测试应收1 ─────────────────────────────────────
+    // 借：银行存款 = 贷：应收账款
+    "测试应收1": {
+        name: "测试应收1", category: "核销", group: "运单",
+        voucherWord: "收", summaryTemplate: "收款核销-{clientName}", remark: "收款冲销应收账款",
+        taxRate: 0,
+        entries: [
+            { dir: "借", subjectCode: "1002", subjectName: "银行存款", summary: "收到客户款项", amountType: "gross", usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1122", subjectName: "应收账款", summary: "冲销应收账款", amountType: "gross", usePaymentMethod: false }
+        ]
+    },
+    // ── 测试模板：核销-测试应付1（付款代扣个税1%）───────────────────
+    // 借：应付账款 = 贷：应交个税（1% 平率代扣）+ 贷：银行存款（余额）
+    "测试应付1": {
+        name: "测试应付1", category: "核销", group: "运单",
+        voucherWord: "付", summaryTemplate: "付款核销-{clientName}", remark: "付款核销应付账款（代扣个税1%）",
+        taxRate: 0,
+        entries: [
+            { dir: "借", subjectCode: "2202",   subjectName: "应付账款",       summary: "核销应付账款",   amountType: "gross",         usePaymentMethod: false },
+            { dir: "贷", subjectCode: "222105", subjectName: "应交个人所得税", summary: "代扣个税（1%）", amountType: "flatRate",        flatRate: 0.01, usePaymentMethod: false },
+            { dir: "贷", subjectCode: "1002",   subjectName: "银行存款",       summary: "实付司机款",     amountType: "flatComplement",  flatRate: 0.01, usePaymentMethod: false }
+        ]
     }
 };
 
@@ -927,6 +997,15 @@ window.generateVoucherFromEngineTemplate = function(itemName, doc, options) {
         const t = entry.amountType || 'gross';
         if (t === 'tax') return taxAmt;
         if (t === 'net') return netAmt;
+        // 支持平率代扣（如1%个人所得税）: amount × flatRate
+        if (t === 'flatRate' && typeof entry.flatRate === 'number') {
+            return parseFloat((amountTotal * entry.flatRate).toFixed(2));
+        }
+        // 支持平率余额（配合flatRate使用）: amount × (1 - flatRate)
+        if (t === 'flatComplement' && typeof entry.flatRate === 'number') {
+            const deducted = parseFloat((amountTotal * entry.flatRate).toFixed(2));
+            return parseFloat((amountTotal - deducted).toFixed(2));
+        }
         return amountTotal; // 'gross' 或未设置
     };
 

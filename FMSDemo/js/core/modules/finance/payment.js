@@ -54,7 +54,6 @@ window.openReceiptForm = function (id) {
         document.getElementById('rcv-method').value = rec.payMethod || '银行转账';
         document.getElementById('rcv-total').value = rec.totalAmount || '';
         document.getElementById('rcv-summary').value = rec.summary || '';
-        window._rcvDetails = JSON.parse(JSON.stringify(rec.details || []));
     } else {
         if (titleEl) titleEl.textContent = '新建收款单';
         document.getElementById('rcv-id').value = window.generateReceiptId();
@@ -63,9 +62,7 @@ window.openReceiptForm = function (id) {
         document.getElementById('rcv-method').value = '银行转账';
         document.getElementById('rcv-total').value = '';
         document.getElementById('rcv-summary').value = '';
-        window._rcvDetails = [];
     }
-    window.renderReceiptDetails();
     modal.style.display = 'flex';
 };
 
@@ -74,53 +71,6 @@ window.closeReceiptModal = function () {
     if (modal) modal.style.display = 'none';
 };
 
-window.renderReceiptDetails = function () {
-    const tbody = document.getElementById('rcv-detail-body');
-    if (!tbody) return;
-    const details = window._rcvDetails || [];
-    if (details.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#aaa;padding:18px;">暂无运单明细，点击下方"添加运单"</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = details.map((d, i) => `
-        <tr>
-            <td><input type="text" value="${_pmEsc(d.waybillNo || '')}"
-                oninput="window._rcvDetails[${i}].waybillNo=this.value"
-                placeholder="运单号" style="width:130px;padding:5px;border:1px solid #dde3ea;border-radius:4px;"></td>
-            <td><input type="number" value="${d.arAmount || ''}"
-                oninput="window._rcvDetails[${i}].arAmount=parseFloat(this.value)||0"
-                placeholder="应收金额" style="width:110px;padding:5px;border:1px solid #dde3ea;border-radius:4px;text-align:right;"></td>
-            <td><input type="number" value="${d.recvAmount || ''}"
-                oninput="window._rcvDetails[${i}].recvAmount=parseFloat(this.value)||0;window.calcReceiptTotal()"
-                placeholder="本次收款" style="width:110px;padding:5px;border:1px solid #dde3ea;border-radius:4px;text-align:right;"></td>
-            <td style="text-align:center;">
-                <button onclick="window.removeReceiptDetail(${i})"
-                    style="padding:3px 8px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;">删除</button>
-            </td>
-        </tr>
-    `).join('');
-};
-
-window.addReceiptDetail = function () {
-    if (!window._rcvDetails) window._rcvDetails = [];
-    window._rcvDetails.push({ waybillNo: '', arAmount: '', recvAmount: '' });
-    window.renderReceiptDetails();
-};
-
-window.removeReceiptDetail = function (index) {
-    window._rcvDetails.splice(index, 1);
-    window.renderReceiptDetails();
-    window.calcReceiptTotal();
-};
-
-window.calcReceiptTotal = function () {
-    const details = window._rcvDetails || [];
-    const total = details.reduce((sum, d) => sum + (parseFloat(d.recvAmount) || 0), 0);
-    if (total > 0) {
-        const el = document.getElementById('rcv-total');
-        if (el) el.value = total.toFixed(2);
-    }
-};
 
 window.saveReceipt = function () {
     const id = (document.getElementById('rcv-id').value || '').trim();
@@ -134,7 +84,6 @@ window.saveReceipt = function () {
     if (!totalAmountRaw || parseFloat(totalAmountRaw) <= 0) return alert('请填写有效的收款金额');
 
     const totalAmount = parseFloat(totalAmountRaw).toFixed(2);
-    const details = (window._rcvDetails || []).filter(d => d.waybillNo || parseFloat(d.recvAmount) > 0);
 
     let list = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
     const existing = list.find(r => r.id === id);
@@ -145,7 +94,6 @@ window.saveReceipt = function () {
         payMethod,
         totalAmount,
         summary,
-        details,
         status: existing ? existing.status : '草稿',
         relatedVoucherId: existing ? (existing.relatedVoucherId || '') : '',
         createdAt: existing ? existing.createdAt : new Date().toISOString()
@@ -266,7 +214,6 @@ window.openPaymentForm = function (id) {
         document.getElementById('pay-method').value = rec.payMethod || '银行转账';
         document.getElementById('pay-total').value = rec.totalAmount || '';
         document.getElementById('pay-summary').value = rec.summary || '';
-        window._payDetails = JSON.parse(JSON.stringify(rec.details || []));
     } else {
         if (titleEl) titleEl.textContent = '新建付款单';
         document.getElementById('pay-id').value = window.generatePaymentId();
@@ -276,9 +223,7 @@ window.openPaymentForm = function (id) {
         document.getElementById('pay-method').value = '银行转账';
         document.getElementById('pay-total').value = '';
         document.getElementById('pay-summary').value = '';
-        window._payDetails = [];
     }
-    window.renderPaymentDetails();
     modal.style.display = 'flex';
 };
 
@@ -287,53 +232,6 @@ window.closePaymentModal = function () {
     if (modal) modal.style.display = 'none';
 };
 
-window.renderPaymentDetails = function () {
-    const tbody = document.getElementById('pay-detail-body');
-    if (!tbody) return;
-    const details = window._payDetails || [];
-    if (details.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#aaa;padding:18px;">暂无单据明细，点击下方"添加明细"</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = details.map((d, i) => `
-        <tr>
-            <td><input type="text" value="${_pmEsc(d.billNo || '')}"
-                oninput="window._payDetails[${i}].billNo=this.value"
-                placeholder="运单号/批次号" style="width:130px;padding:5px;border:1px solid #dde3ea;border-radius:4px;"></td>
-            <td><input type="number" value="${d.apAmount || ''}"
-                oninput="window._payDetails[${i}].apAmount=parseFloat(this.value)||0"
-                placeholder="应付金额" style="width:110px;padding:5px;border:1px solid #dde3ea;border-radius:4px;text-align:right;"></td>
-            <td><input type="number" value="${d.payAmount || ''}"
-                oninput="window._payDetails[${i}].payAmount=parseFloat(this.value)||0;window.calcPaymentTotal()"
-                placeholder="本次付款" style="width:110px;padding:5px;border:1px solid #dde3ea;border-radius:4px;text-align:right;"></td>
-            <td style="text-align:center;">
-                <button onclick="window.removePaymentDetail(${i})"
-                    style="padding:3px 8px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;">删除</button>
-            </td>
-        </tr>
-    `).join('');
-};
-
-window.addPaymentDetail = function () {
-    if (!window._payDetails) window._payDetails = [];
-    window._payDetails.push({ billNo: '', apAmount: '', payAmount: '' });
-    window.renderPaymentDetails();
-};
-
-window.removePaymentDetail = function (index) {
-    window._payDetails.splice(index, 1);
-    window.renderPaymentDetails();
-    window.calcPaymentTotal();
-};
-
-window.calcPaymentTotal = function () {
-    const details = window._payDetails || [];
-    const total = details.reduce((sum, d) => sum + (parseFloat(d.payAmount) || 0), 0);
-    if (total > 0) {
-        const el = document.getElementById('pay-total');
-        if (el) el.value = total.toFixed(2);
-    }
-};
 
 window.savePayment = function () {
     const id = (document.getElementById('pay-id').value || '').trim();
@@ -348,7 +246,6 @@ window.savePayment = function () {
     if (!totalAmountRaw || parseFloat(totalAmountRaw) <= 0) return alert('请填写有效的付款金额');
 
     const totalAmount = parseFloat(totalAmountRaw).toFixed(2);
-    const details = (window._payDetails || []).filter(d => d.billNo || parseFloat(d.payAmount) > 0);
 
     let list = JSON.parse(sessionStorage.getItem('PaymentVouchers') || '[]');
     const existing = list.find(r => r.id === id);
@@ -360,7 +257,6 @@ window.savePayment = function () {
         payMethod,
         totalAmount,
         summary,
-        details,
         status: existing ? existing.status : '草稿',
         relatedVoucherId: existing ? (existing.relatedVoucherId || '') : '',
         createdAt: existing ? existing.createdAt : new Date().toISOString()

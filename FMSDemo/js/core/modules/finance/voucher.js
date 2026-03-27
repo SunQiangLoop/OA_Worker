@@ -1225,78 +1225,9 @@ window.renderVoucherRecordPage = function(page = 1) {
     pager.innerHTML = pagerHtml;
 };
 
-
-// // ============================================
-// // 凭证状态流转逻辑 (Audit & Post)
-// // ============================================
-
-// /**
-//  * 1. 审核凭证
-//  * 作用：确认凭证无误，锁定修改权限
-//  */
-// window.auditVoucher = function(id) {
-//     if (!confirm(`确认审核通过凭证【${id}】吗？`)) return;
-
-//     let list = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-//     let item = list.find(v => v.id === id);
-
-//     if (item) {
-//         item.status = "已审核"; // 改变状态
-//         item.auditUser = "管理员"; // 记录审核人
-//         item.auditTime = new Date().toLocaleString();
-        
-//         sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
-        
-//         alert("✅ 审核通过！状态已更为【已审核】。");
-//         // 刷新当前页面
-//         if(typeof loadContent === 'function') loadContent('FinanceVoucherEntry');
-//     }
-// }
-
-// /**
-//  * 2. 凭证过账
-//  * 作用：将凭证数据正式写入总账/余额表 (这里模拟修改状态)
-//  */
-// window.postVoucher = function(id) {
-//     if (!confirm(`确认对凭证【${id}】进行过账吗？\n过账后数据将计入报表，且不可再修改。`)) return;
-
-//     let list = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-//     let item = list.find(v => v.id === id);
-
-//     if (item) {
-//         item.status = "已过账"; // 改变状态
-//         item.postTime = new Date().toLocaleString();
-        
-//         // ★★★ 这里未来可以加逻辑：把数据写入 'GeneralLedger' (总账表) ★★★
-        
-//         sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
-        
-//         alert("✅ 过账成功！数据已计入科目余额表。");
-//         // 刷新当前页面
-//         if(typeof loadContent === 'function') loadContent('FinanceVoucherEntry');
-//     }
-// }
-
-// /**
-//  * 3. 删除凭证 (仅限待审核状态)
-//  */
-// window.deleteVoucher = function(id) {
-//     if (!confirm(`确定删除凭证【${id}】吗？`)) return;
-    
-//     let list = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-//     // 过滤掉这就条
-//     let newList = list.filter(v => v.id !== id);
-    
-//     sessionStorage.setItem('ManualVouchers', JSON.stringify(newList));
-//     alert("🗑️ 删除成功");
-//     if(typeof loadContent === 'function') loadContent('FinanceVoucherEntry');
-// }
-
-
 // ============================================
 // 凭证审核与过账逻辑 (Added Logic)
 // ============================================
-
 // 1. 审核凭证
 window.auditVoucher = function(id) {
     if (!confirm(`确认审核通过凭证【${id}】吗？`)) return;
@@ -1444,11 +1375,6 @@ window.deleteVoucher = function(id) {
     sessionStorage.setItem('ManualVouchers', JSON.stringify(newList));
     loadContent('VoucherEntryReview');
 }
-
-
-// ==========================================================
-// 凭证审核与详情 - 修复版 (追加到 voucher.js 末尾)
-// ==========================================================
 
 /**
  * 1. 打开审核/详情弹窗 (修复了金额不显示的问题)
@@ -1668,7 +1594,6 @@ window.reverseVoucher = function(id) {
         loadContent('FinanceVoucherAudit'); // 刷新列表，你会看到旧的变灰，新的变红
     }
 }
-
 
 // ============================================
 // ★★★ 全局跳转函数：打开凭证详情页 ★★★

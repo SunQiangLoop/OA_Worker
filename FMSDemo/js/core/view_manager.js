@@ -114,6 +114,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
             { code: "222102", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222103", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222104", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222105", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
         { code: "2231", name: "应付利息",       type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
         { code: "2241", name: "其他应付款",     type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
         { code: "2501", name: "长期借款",       type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年以上借款" },
@@ -189,6 +190,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
             { code: "222102", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222103", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222104", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222105", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
 
         { code: "2231", name: "应付利息",           type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
         { code: "2232", name: "应付股利",           type: "负债", direction: "贷", aux: "股东",       status: "启用", remark: "已宣告未发放股利" },
@@ -486,6 +488,13 @@ window.applySubjectCodeSettingToSubjects = function(setting) {
     }
 };
 
+// 科目余额表"明细"按钮：设置当前科目后跳转明细账
+window.openSubjectDetail = function(code, name) {
+    sessionStorage.setItem('CurrentSubjectCode', code);
+    sessionStorage.setItem('CurrentSubjectName', name || code);
+    if (typeof loadContent === 'function') loadContent('AcctSubjectDetail');
+};
+
 function applyAccountingStandardSetting() {
     const selected = document.querySelector('input[name="acct-standard"]:checked');
     if (!selected) {
@@ -513,30 +522,6 @@ function applyAccountingStandardSetting() {
     alert("会计准则已保存，科目列表已更新。");
     loadContent("AcctSubject");
 }
-
-// ============================================
-// ★★★ 财务测试数据生成器 (执行一次即可) ★★★
-// ============================================
-// function initDemoFinanceData() {
-//     const demoVouchers = [
-//         { id: "记20251001", date: "2025-10-01", summary: "收到股东注资", status: "已审核", lines: [{ digest: "收到股东注资", account: "1002 银行存款", debit: 1000000, credit: 0 }, { digest: "收到股东注资", account: "4001 实收资本", debit: 0, credit: 1000000 }] },
-//         { id: "记20251002", date: "2025-10-02", summary: "支付办公室房租", status: "已审核", lines: [{ digest: "支付房租", account: "6602 管理费用-房租", debit: 20000, credit: 0 }, { digest: "支付房租", account: "1002 银行存款", debit: 0, credit: 20000 }] },
-//         { id: "记20251005", date: "2025-10-05", summary: "收到京东运费", status: "已审核", lines: [{ digest: "收到运费", account: "1002 银行存款", debit: 50000, credit: 0 }, { digest: "收到运费", account: "1122 应收账款", debit: 0, credit: 50000 }] },
-//         { id: "记20251008", date: "2025-10-08", summary: "支付中石化油费", status: "已审核", lines: [{ digest: "预充油卡", account: "1123 预付账款", debit: 10000, credit: 0 }, { digest: "银行转账", account: "1002 银行存款", debit: 0, credit: 10000 }] },
-//         { id: "记20251012", date: "2025-10-12", summary: "计提本月工资", status: "已审核", lines: [{ digest: "计提工资", account: "6601 管理费用-工资", debit: 50000, credit: 0 }, { digest: "计提工资", account: "6401 运输成本-司机工资", debit: 80000, credit: 0 }, { digest: "计提工资", account: "2211 应付职工薪酬", debit: 0, credit: 130000 }] },
-//         { id: "记20251015", date: "2025-10-15", summary: "确认干线收入", status: "已审核", lines: [{ digest: "干线运费收入", account: "1122 应收账款", debit: 200000, credit: 0 }, { digest: "干线运费收入", account: "6001 主营业务收入", debit: 0, credit: 200000 }] },
-//         { id: "记20251018", date: "2025-10-18", summary: "采购办公电脑", status: "已审核", lines: [{ digest: "采购电脑", account: "1601 固定资产", debit: 15000, credit: 0 }, { digest: "采购电脑", account: "1002 银行存款", debit: 0, credit: 15000 }] },
-//         { id: "记20251020", date: "2025-10-20", summary: "支付车辆维修费", status: "已审核", lines: [{ digest: "维修费", account: "6402 运输成本-维修", debit: 3500, credit: 0 }, { digest: "维修费", account: "1001 库存现金", debit: 0, credit: 3500 }] },
-//         { id: "记20251022", date: "2025-10-22", summary: "提取备用金", status: "已审核", lines: [{ digest: "提现", account: "1001 库存现金", debit: 5000, credit: 0 }, { digest: "提现", account: "1002 银行存款", debit: 0, credit: 5000 }] },
-//         { id: "记20251025", date: "2025-10-25", summary: "收到零担运费", status: "已审核", lines: [{ digest: "现金收入", account: "1001 库存现金", debit: 800, credit: 0 }, { digest: "现金收入", account: "6001 主营业务收入", debit: 0, credit: 800 }] },
-//         { id: "记20251028", date: "2025-10-28", summary: "支付承运商运费", status: "已审核", lines: [{ digest: "付运费", account: "2202 应付账款", debit: 40000, credit: 0 }, { digest: "付运费", account: "1002 银行存款", debit: 0, credit: 40000 }] },
-//         { id: "记20251030", date: "2025-10-30", summary: "结转本月成本", status: "已审核", lines: [{ digest: "结转成本", account: "6403 劳务成本", debit: 20000, credit: 0 }, { digest: "结转成本", account: "2202 应付账款", debit: 0, credit: 20000 }] }
-//     ];
-//     sessionStorage.setItem('ManualVouchers', JSON.stringify(demoVouchers));
-//     console.log("✅ 成功生成 12 笔财务凭证数据！请刷新查看余额表。");
-//     alert("测试数据已注入！\n包含了：现金、银行、应收、应付、收入、成本、费用等各类科目。");
-// }
-
 
 // 执行初始化（若存在）
 if (typeof initDemoFinanceData === "function") {
@@ -2080,9 +2065,18 @@ function loadContent(moduleCode, element = null) {
         const subjInfoMap = {};
         allSubjects.forEach(s => { subjInfoMap[s.code] = s; });
 
+        // 提取凭证期间（兼容 v.date / v.period，处理月份不补零）
+        const normVPeriod = (v) => {
+            const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
+            if (!raw) return "";
+            const parts = raw.split("-");
+            if (parts.length >= 2 && parts[0].length === 4 && /^\d+$/.test(parts[1]))
+                return `${parts[0]}-${parts[1].padStart(2, '0')}`;
+            return raw.slice(0, 7);
+        };
         // 可用期间列表
         const allPeriods = Array.from(new Set(
-            allVouchers.map(v => v.date).filter(Boolean).map(d => d.slice(0, 7))
+            allVouchers.map(v => normVPeriod(v)).filter(Boolean)
         )).sort();
         const mkPeriodOpts = (sel) =>
             `<option value="">--</option>` +
@@ -2104,13 +2098,13 @@ function loadContent(moduleCode, element = null) {
 
         // ── 凭证筛选（期间 + 是否含未记账） ──
         const vouchers = allVouchers.filter(v => {
-            if (!v.date) return false;
-            const p = v.date.slice(0, 7);
+            const p = normVPeriod(v);
+            if (!p) return false;
             if (periodFrom && p < periodFrom) return false;
             if (periodTo   && p > periodTo)   return false;
             if (!inclUnpost) {
                 const s = (v.status || "");
-                if (s && !["已记账","已审核","已提交"].includes(s)) return false;
+                if (s && !["已记账","已审核","已提交","待审核"].includes(s)) return false;
             }
             return true;
         });
@@ -2120,8 +2114,13 @@ function loadContent(moduleCode, element = null) {
         vouchers.forEach(v => {
             if (!v.lines) return;
             v.lines.forEach(line => {
-                const parts = (line.account || "9999 未知科目").split(' ');
-                const code = parts[0], name = parts[1] || parts[0];
+                // 兼容新版录入（subject字段）和旧版（account/accountCode字段）
+                const rawAcct = line.account || line.subject || (line.accountCode ? String(line.accountCode) : '') || "9999 未知科目";
+                const parts = rawAcct.trim().split(/\s+/);
+                const code = parts[0] || "9999";
+                // 科目名称：优先 parts[1..], 再查 AcctSubjects, 兜底显示 "未知科目"
+                const rawName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+                const name = rawName || (subjInfoMap[code] ? subjInfoMap[code].name : '') || (code === '9999' ? '未知科目' : code);
                 if (!balanceMap[code]) {
                     const si = subjInfoMap[code];
                     const dir = si
@@ -2413,8 +2412,10 @@ function loadContent(moduleCode, element = null) {
             vouchers.forEach(v => {
                 if (v.lines) {
                     v.lines.forEach(line => {
+                        // 兼容 account / accountCode / subject 三种字段名
+                        const lineAcct = (line.accountCode || line.account || line.subject || "").trim();
                         // 只有包含当前科目的行才显示
-                        if (line.account.startsWith(currentCode)) {
+                        if (lineAcct.startsWith(currentCode)) {
                             let debit = parseFloat(line.debit || 0);
                             let credit = parseFloat(line.credit || 0);
                             runningBalance += (debit - credit); // 简单计算余额方向
@@ -2423,7 +2424,7 @@ function loadContent(moduleCode, element = null) {
                             <tr>
                                 <td>${v.date}</td>
                                 <td><a href="#">${v.id}</a></td>
-                                <td>${line.digest || v.summary || '-'}</td>
+                                <td>${line.digest || line.summary || v.summary || '-'}</td>
                                 <td style="text-align:right; color:#27ae60;">${debit ? debit.toLocaleString() : ''}</td>
                                 <td style="text-align:right; color:#e74c3c;">${credit ? credit.toLocaleString() : ''}</td>
                                 <td style="text-align:right; font-weight:bold;">${runningBalance.toLocaleString()}</td>
@@ -4992,6 +4993,7 @@ function loadContent(moduleCode, element = null) {
             let list = JSON.parse(sessionStorage.getItem("BizTrunkBatches") || "[]");
             let count = 0;
             const now = new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-");
+            const nowDate = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
             const voucherList = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
             const std = typeof getAccountingStandardState==="function" ? getAccountingStandardState() : "小企业会计准则 2013";
             // 生成凭证字号
@@ -5011,15 +5013,22 @@ function loadContent(moduleCode, element = null) {
                 const vid = "转-" + String(maxSeq).padStart(4,"0");
                 const voucher = {
                     id: vid,
-                    date: now.slice(0,10),
+                    date: nowDate,
                     summary: "干线批次结算-" + id + "(" + (batch.driver||"") + ")",
                     type: "转账凭证",
                     status: "待审核",
                     user: "管理员",
-                    lines: [
-                        { accountCode:"640101", account:"640101 运输成本-干线运费", digest:"干线运费-"+id, debit: freight, credit: 0, aux: batch.driver||"" },
-                        { accountCode:"2202",   account:"2202 应付账款",           digest:"应付司机-"+(batch.driver||""), debit: 0, credit: freight, aux: batch.driver||"" }
-                    ]
+                    lines: (function(){
+                        // 网络货运 3% 简易计税：进项税额 = freight / 1.03 × 3%
+                        const inputTaxRate = 0.03;
+                        const noTax = Math.round(freight / (1 + inputTaxRate) * 100) / 100;
+                        const inputTax = Math.round((freight - noTax) * 100) / 100;
+                        return [
+                            { accountCode:"640101", account:"640101 运输成本-干线运费",    digest:"干线运费-"+id,              debit: noTax,     credit: 0,    aux: batch.driver||"" },
+                            { accountCode:"2221",   account:"2221 应交税费-进项税额",       digest:"进项税额（3%）-"+id,         debit: inputTax,  credit: 0 },
+                            { accountCode:"2202",   account:"2202 应付账款",               digest:"应付司机-"+(batch.driver||""), debit: 0,         credit: freight, aux: batch.driver||"" }
+                        ];
+                    })()
                 };
                 voucherList.push(voucher);
                 batch.settlementStatus = "已结算";
@@ -5074,7 +5083,7 @@ function loadContent(moduleCode, element = null) {
         </style>
         <div style="padding:10px 0 14px 0;">
             <h2 style="margin:0 0 4px 0;color:#2c3e50;">干线批次结算</h2>
-            <p style="color:#7f8c8d;margin:0;">对已挂帐的干线批次进行运费确认，生成应付账款凭证（借：640101 运输成本-干线运费 / 贷：2202 应付账款）。</p>
+            <p style="color:#7f8c8d;margin:0;">对已挂帐的干线批次进行运费确认，生成应付账款凭证（借：640101 不含税成本 / 借：2221 进项税额(3%) / 贷：2202 应付账款）。</p>
         </div>
         <div class="apt-tab-bar">
             <div class="apt-tab ${apTab==="pending"?"active":""}" onclick="apTrunkSettleTabSwitch('pending')">待结算 <span style="background:#e67e22;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${pendingBatches.length}</span></div>
@@ -5156,6 +5165,7 @@ function loadContent(moduleCode, element = null) {
             let pList = JSON.parse(sessionStorage.getItem("BizShortHaulPickup")   || "[]");
             let count = 0;
             const now = new Date().toLocaleString("zh-CN",{hour12:false}).replace(/\//g,"-");
+            const nowDate = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
             const voucherList = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
             const re = /^转-(\d+)$/;
             let maxSeq = 0;
@@ -5174,15 +5184,22 @@ function loadContent(moduleCode, element = null) {
                 const vid = "转-" + String(maxSeq).padStart(4,"0");
                 const voucher = {
                     id: vid,
-                    date: now.slice(0,10),
+                    date: nowDate,
                     summary: "短驳批次结算-" + id + "(" + (batch.driver||"") + ")",
                     type: "转账凭证",
                     status: "待审核",
                     user: "管理员",
-                    lines: [
-                        { accountCode:"640102", account:"640102 运输成本-短驳运费", digest:"短驳运费-"+id, debit: fee, credit: 0, aux: batch.driver||"" },
-                        { accountCode:"2202",   account:"2202 应付账款",           digest:"应付司机-"+(batch.driver||""), debit: 0, credit: fee, aux: batch.driver||"" }
-                    ]
+                    lines: (function(){
+                        // 网络货运 3% 简易计税：进项税额 = fee / 1.03 × 3%
+                        const inputTaxRate = 0.03;
+                        const noTax = Math.round(fee / (1 + inputTaxRate) * 100) / 100;
+                        const inputTax = Math.round((fee - noTax) * 100) / 100;
+                        return [
+                            { accountCode:"640102", account:"640102 运输成本-短驳运费",    digest:"短驳运费-"+id,              debit: noTax,    credit: 0,   aux: batch.driver||"" },
+                            { accountCode:"2221",   account:"2221 应交税费-进项税额",       digest:"进项税额（3%）-"+id,         debit: inputTax, credit: 0 },
+                            { accountCode:"2202",   account:"2202 应付账款",               digest:"应付司机-"+(batch.driver||""), debit: 0,        credit: fee, aux: batch.driver||"" }
+                        ];
+                    })()
                 };
                 voucherList.push(voucher);
                 batch.settlementStatus = "已结算";
@@ -5238,7 +5255,7 @@ function loadContent(moduleCode, element = null) {
         </style>
         <div style="padding:10px 0 14px 0;">
             <h2 style="margin:0 0 4px 0;color:#2c3e50;">短驳批次结算</h2>
-            <p style="color:#7f8c8d;margin:0;">对已挂帐的送货/提货批次进行运费确认，生成应付账款凭证（借：640102 运输成本-短驳运费 / 贷：2202 应付账款）。</p>
+            <p style="color:#7f8c8d;margin:0;">对已挂帐的送货/提货批次进行运费确认，生成应付账款凭证（借：640102 不含税成本 / 借：2221 进项税额(3%) / 贷：2202 应付账款）。</p>
         </div>
         <div class="sbt-tab-bar">
             <div class="sbt-tab ${sbTab==="pending"?"active":""}" onclick="sbSettleTabSwitch('pending')">待结算 <span style="background:#27ae60;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;">${pendingBatches.length}</span></div>
@@ -6449,7 +6466,7 @@ function loadContent(moduleCode, element = null) {
                 <td><strong>${r.customer || ''}</strong></td>
                 <td>${r.payMethod || ''}</td>
                 <td style="text-align:right;font-weight:600;">¥${fmtAmt}</td>
-                <td style="text-align:center;">${detailCount > 0 ? `<span style="background:#eaf4fb;color:#3498db;padding:2px 8px;border-radius:10px;font-size:12px;">${detailCount}张</span>` : '<span style="color:#ccc;">—</span>'}</td>
+                <td style="font-size:12px;color:#7f8c8d;">${r.summary || '—'}</td>
                 <td><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${r.status}</span></td>
                 <td style="font-size:12px;">${voucherCell}</td>
                 <td style="white-space:nowrap;">${actions}</td>
@@ -6494,7 +6511,7 @@ function loadContent(moduleCode, element = null) {
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">客户</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">收款方式</th>
                         <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">收款金额</th>
-                        <th style="padding:10px 12px;text-align:center;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联运单</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">备注</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">状态</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联凭证</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">操作</th>
@@ -6545,25 +6562,6 @@ function loadContent(moduleCode, element = null) {
                         <label>摘要备注</label>
                         <input type="text" id="rcv-summary" placeholder="如：3月运费收款">
                     </div>
-                </div>
-
-                <div class="pm-detail-section">
-                    <div class="pm-detail-header">
-                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联运单明细</span>
-                        <button onclick="window.addReceiptDetail()"
-                            style="padding:4px 12px;border:1px solid #3498db;color:#3498db;background:#fff;border-radius:5px;cursor:pointer;font-size:12px;">+ 添加运单</button>
-                    </div>
-                    <table class="pm-detail-table">
-                        <thead>
-                            <tr>
-                                <th>运单号</th>
-                                <th>应收金额</th>
-                                <th>本次收款</th>
-                                <th style="text-align:center;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rcv-detail-body"></tbody>
-                    </table>
                 </div>
 
                 <div class="pm-modal-footer">
@@ -6618,7 +6616,7 @@ function loadContent(moduleCode, element = null) {
                 <td><strong>${r.vendor || ''}</strong><br><span style="font-size:11px;color:#95a5a6;">${r.vendorType || ''}</span></td>
                 <td>${r.payMethod || ''}</td>
                 <td style="text-align:right;font-weight:600;">¥${fmtAmt}</td>
-                <td style="text-align:center;">${detailCount > 0 ? `<span style="background:#fef9e7;color:#e67e22;padding:2px 8px;border-radius:10px;font-size:12px;">${detailCount}条</span>` : '<span style="color:#ccc;">—</span>'}</td>
+                <td style="font-size:12px;color:#7f8c8d;">${r.summary || '—'}</td>
                 <td><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${r.status}</span></td>
                 <td style="font-size:12px;">${voucherCell}</td>
                 <td style="white-space:nowrap;">${actions}</td>
@@ -6627,63 +6625,6 @@ function loadContent(moduleCode, element = null) {
 
         const pmOpts2 = payMethods2.map(m => `<option value="${m}">${m}</option>`).join('');
         const vtOpts = vendorTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-
-        // 加载该司机的已结算待付款批次
-        window.payLoadBatches = function() {
-            const driver = (document.getElementById("pay-vendor")||{}).value || "";
-            const hint = document.getElementById("pay-batch-hint");
-            const wrap = document.getElementById("pay-detail-wrap");
-            const body = document.getElementById("pay-detail-body");
-            const list = document.getElementById("pay-batch-list");
-            if (!body || !hint || !wrap) return;
-            if (!driver.trim()) {
-                hint.textContent = "请先填写司机姓名";
-                wrap.style.display = "none";
-                if (list) list.innerHTML = "";
-                return;
-            }
-            const tBatches = (JSON.parse(sessionStorage.getItem("BizTrunkBatches")||"[]"))
-                .filter(b => b.driver===driver && b.settlementStatus==="已结算" && b.paymentStatus!=="已付款")
-                .map(b => ({...b, _type:"干线"}));
-            const sBatches = (JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]"))
-                .filter(b => b.driver===driver && b.settlementStatus==="已结算" && b.paymentStatus!=="已付款")
-                .map(b => ({...b, _type:"短驳"}));
-            const all = [...tBatches, ...sBatches];
-            if (!all.length) {
-                hint.textContent = "该司机暂无已结算待付款批次";
-                wrap.style.display = "none";
-                if (list) list.innerHTML = '<span style="color:#aaa;font-size:12px;">无可选批次</span>';
-                return;
-            }
-            hint.textContent = `共 ${all.length} 笔可选`;
-            wrap.style.display = "";
-            if (list) list.innerHTML = "";
-            body.innerHTML = all.map(b => `<tr>
-                <td><input type="checkbox" class="pay-batch-chk" value="${b._type}|${b.id}" onchange="window.payCalcTotal()"></td>
-                <td style="font-family:monospace;font-size:12px;">${b.id}</td>
-                <td><span style="background:${b._type==="干线"?"#e67e22":"#27ae60"};color:#fff;padding:1px 6px;border-radius:8px;font-size:11px;">${b._type}</span></td>
-                <td style="font-size:12px;">${b.route||b.customerName||""}</td>
-                <td style="text-align:right;font-weight:600;">¥${parseFloat(b.freight||b.deliveryFee||0).toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-            </tr>`).join("");
-        };
-        window.payToggleAllBatches = function(src) {
-            document.querySelectorAll(".pay-batch-chk").forEach(cb=>cb.checked=src.checked);
-            window.payCalcTotal();
-        };
-        window.payCalcTotal = function() {
-            const checked = Array.from(document.querySelectorAll(".pay-batch-chk:checked"));
-            if (!checked.length) { const t=document.getElementById("pay-total"); if(t) t.value=""; return; }
-            const tBatches = JSON.parse(sessionStorage.getItem("BizTrunkBatches")||"[]");
-            const sBatches = JSON.parse(sessionStorage.getItem("BizShortHaulDelivery")||"[]");
-            let total = 0;
-            checked.forEach(cb => {
-                const [type, id] = cb.value.split("|");
-                const list = type==="干线" ? tBatches : sBatches;
-                const b = list.find(x=>x.id===id);
-                if (b) total += parseFloat(b.freight||b.deliveryFee||0)||0;
-            });
-            const t=document.getElementById("pay-total"); if(t) t.value=total.toFixed(2);
-        };
 
         contentHTML = `
         <style>
@@ -6721,7 +6662,7 @@ function loadContent(moduleCode, element = null) {
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款对象</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款方式</th>
                         <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">付款金额</th>
-                        <th style="padding:10px 12px;text-align:center;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">明细条数</th>
+                        <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">备注</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">状态</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">关联凭证</th>
                         <th style="padding:10px 12px;text-align:left;border-bottom:1px solid #edf1f5;font-weight:600;color:#5a6a7a;">操作</th>
@@ -6754,8 +6695,8 @@ function loadContent(moduleCode, element = null) {
                         <input type="date" id="pay-date">
                     </div>
                     <div class="pm-form-group">
-                        <label>付款对象（司机）*</label>
-                        <input type="text" id="pay-vendor" placeholder="司机姓名" oninput="window.payLoadBatches()">
+                        <label>付款对象 *</label>
+                        <input type="text" id="pay-vendor" placeholder="客户/供应商/司机姓名">
                     </div>
                     <div class="pm-form-group">
                         <label>对象类型</label>
@@ -6773,26 +6714,6 @@ function loadContent(moduleCode, element = null) {
                         <label>摘要备注</label>
                         <input type="text" id="pay-summary" placeholder="如：3月干线运费结算">
                     </div>
-                </div>
-
-                <div class="pm-detail-section">
-                    <div class="pm-detail-header">
-                        <span style="font-size:13px;font-weight:600;color:#2c3e50;">关联批次明细（已结算待付款）</span>
-                        <span id="pay-batch-hint" style="font-size:12px;color:#aaa;">请先填写司机姓名</span>
-                    </div>
-                    <div id="pay-batch-list" style="padding:10px 14px;"></div>
-                    <table class="pm-detail-table" style="display:none;" id="pay-detail-wrap">
-                        <thead>
-                            <tr>
-                                <th style="width:32px;"><input type="checkbox" onchange="window.payToggleAllBatches(this)"></th>
-                                <th>批次号</th>
-                                <th>类型</th>
-                                <th>线路/客户</th>
-                                <th style="text-align:right;">运费</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pay-detail-body"></tbody>
-                    </table>
                 </div>
 
                 <div class="pm-modal-footer">
@@ -6819,11 +6740,12 @@ function loadContent(moduleCode, element = null) {
         };
 
         window.markAPWriteOff = function(pvId) {
-            if (!confirm('确认核销付款单【'+pvId+'】？将生成付款凭证并更新批次状态为已付款。')) return;
+            if (!confirm('确认核销付款单【'+pvId+'】？将生成付款凭证（含代扣个税 1%）。')) return;
             let pvList = JSON.parse(sessionStorage.getItem('PaymentVouchers')||'[]');
             const pv = pvList.find(x=>x.id===pvId);
             if (!pv) return;
             const now = new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+            const nowDate = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 
             // 生成付款凭证
             const voucherList = JSON.parse(sessionStorage.getItem('ManualVouchers')||'[]');
@@ -6833,35 +6755,25 @@ function loadContent(moduleCode, element = null) {
             maxSeq++;
             const vid = '付-' + String(maxSeq).padStart(4,'0');
             const totalAmt = parseFloat(pv.totalAmount||0);
+            // 代扣代缴个人所得税（网络货运 1%）
+            const personalTaxRate = 0.01;
+            const personalTax = Math.round(totalAmt * personalTaxRate * 100) / 100;
+            const bankAmt = Math.round((totalAmt - personalTax) * 100) / 100;
             const payVoucher = {
                 id: vid,
-                date: now.slice(0,10),
+                date: nowDate,
                 summary: '付款核销-' + pvId + '(' + (pv.vendor||'') + ')',
                 type: '付款凭证',
                 status: '待审核',
                 user: '管理员',
                 lines: [
-                    { accountCode:'2202', account:'2202 应付账款', digest:'核销应付-'+(pv.vendor||''), debit: totalAmt, credit: 0, aux: pv.vendor||'' },
-                    { accountCode:'1002', account:'1002 银行存款', digest:'支付运费-'+(pv.vendor||''), debit: 0, credit: totalAmt }
+                    { accountCode:'2202',   account:'2202 应付账款',                   digest:'核销应付-'+(pv.vendor||''),    debit: totalAmt,   credit: 0,          aux: pv.vendor||'' },
+                    { accountCode:'222105', account:'222105 应交个人所得税',             digest:'代扣个税（1%）-'+(pv.vendor||''), debit: 0,          credit: personalTax },
+                    { accountCode:'1002',   account:'1002 银行存款',                   digest:'支付运费-'+(pv.vendor||''),    debit: 0,          credit: bankAmt }
                 ]
             };
             voucherList.push(payVoucher);
             sessionStorage.setItem('ManualVouchers', JSON.stringify(voucherList));
-
-            // 更新批次付款状态
-            const details = Array.isArray(pv.details) ? pv.details : [];
-            const tBatches = JSON.parse(sessionStorage.getItem('BizTrunkBatches')||'[]');
-            const sBatches = JSON.parse(sessionStorage.getItem('BizShortHaulDelivery')||'[]');
-            details.forEach(d => {
-                if (!d.batchId) return;
-                if (d.batchType==='干线') {
-                    const b=tBatches.find(x=>x.id===d.batchId); if(b) b.paymentStatus='已付款';
-                } else {
-                    const b=sBatches.find(x=>x.id===d.batchId); if(b) b.paymentStatus='已付款';
-                }
-            });
-            sessionStorage.setItem('BizTrunkBatches', JSON.stringify(tBatches));
-            sessionStorage.setItem('BizShortHaulDelivery', JSON.stringify(sBatches));
 
             // 更新付款单
             pv.writeOffStatus = '已核销';
@@ -7716,132 +7628,7 @@ function loadContent(moduleCode, element = null) {
                 <tbody>${woRows}</tbody>
             </table>
         `;
-    } // =========================================================================
-    // 17. 运单挂账 (Pending Waybill)
-    // =========================================================================
-    // else if (moduleCode === "PendingWaybill") {
-    //     contentHTML += `
-    //                 <h2>运单挂账</h2>
-    //                 <p style="color: #7f8c8d;">记录因特殊原因（如客户信用额度不足、数据异常等）无法正常结算的运单，等待后续处理。</p>
-    //                 <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    //                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-    //                         <input type="text" placeholder="运单号 / 客户名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-    //                         <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-    //                             <option value="">挂账原因 (全部)</option>
-    //                             <option>信用额度超限</option>
-    //                             <option>结算数据待确认</option>
-    //                             <option>客户争议</option>
-    //                         </select>
-    //                         <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-    //                             <option value="">处理状态 (全部)</option>
-    //                             <option>待处理</option>
-    //                             <option>已解除</option>
-    //                         </select>
-    //                         <button class="btn-primary">查询</button>
-    //                     </div>
-    //                 </div>
-                    
-    //                 <div class="action-bar" style="margin-bottom: 15px;">
-    //                     <button class="btn-primary" style="background-color: #f39c12;">批量解除挂账</button>
-    //                 </div>
-
-    //                 <h3>运单挂账列表</h3>
-    //                 <table class="data-table">
-    //                     <thead>
-    //                         <tr>
-    //                             <th>运单号</th>
-    //                             <th>客户名称</th>
-    //                             <th>应收金额 (RMB)</th>
-    //                             <th>挂账日期</th>
-    //                             <th>挂账原因</th>
-    //                             <th>状态</th>
-    //                             <th>操作</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         <tr>
-    //                             <td>YD202511015</td>
-    //                             <td>Epsilon科技</td>
-    //                             <td>8,000.00</td>
-    //                             <td>2025-11-20</td>
-    //                             <td>信用额度超限</td>
-    //                             <td><span style="color: #e74c3c; font-weight: bold;">待处理</span></td>
-    //                             <td><a href="#" style="color:#3498db;">查看详情</a> | <a href="#" style="color:#27ae60;">解除挂账</a></td>
-    //                         </tr>
-    //                         <tr>
-    //                             <td>YD202511016</td>
-    //                             <td>Delta制造</td>
-    //                             <td>1,500.00</td>
-    //                             <td>2025-11-19</td>
-    //                             <td>结算数据待确认</td>
-    //                             <td><span style="color: #e74c3c; font-weight: bold;">待处理</span></td>
-    //                             <td><a href="#" style="color:#3498db;">查看详情</a> | <a href="#" style="color:#27ae60;">解除挂账</a></td>
-    //                         </tr>
-    //                     </tbody>
-    //                 </table>
-    //             `;
-    // }
-
-    // =========================================================================
-    // 18. 异动挂账 (Pending Abnormal)
-    // =========================================================================
-    // else if (moduleCode === "PendingAbnormal") {
-    //     contentHTML += `
-    //                 <h2>异动挂账</h2>
-    //                 <p style="color: #7f8c8d;">记录因运输过程中的异常或赔付产生的费用调整（如超期罚款、理赔费用），等待最终定损核算。</p>
-    //                 <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    //                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-    //                         <input type="text" placeholder="异动单号 / 关联运单号" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-    //                         <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-    //                             <option value="">异动类型 (全部)</option>
-    //                             <option>破损赔付</option>
-    //                             <option>超期罚款</option>
-    //                             <option>异常处理费</option>
-    //                         </select>
-    //                         <button class="btn-primary">查询</button>
-    //                     </div>
-    //                 </div>
-                    
-    //                 <div class="action-bar" style="margin-bottom: 15px;">
-    //                     <button class="btn-primary" style="background-color: #27ae60;">+ 新增异动挂账</button>
-    //                 </div>
-
-    //                 <h3>异动挂账列表</h3>
-    //                 <table class="data-table">
-    //                     <thead>
-    //                         <tr>
-    //                             <th>异动单号</th>
-    //                             <th>关联运单号</th>
-    //                             <th>异动类型</th>
-    //                             <th>挂账金额 (RMB)</th>
-    //                             <th>挂账对象</th>
-    //                             <th>状态</th>
-    //                             <th>操作</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         <tr>
-    //                             <td>YDZ202511003</td>
-    //                             <td>YD202511010</td>
-    //                             <td>破损赔付</td>
-    //                             <td>-2,500.00 (应收减少)</td>
-    //                             <td>客户A</td>
-    //                             <td><span style="color: #f39c12;">待定损</span></td>
-    //                             <td><a href="#" style="color:#3498db;">定损/处理</a></td>
-    //                         </tr>
-    //                         <tr>
-    //                             <td>YDZ202511004</td>
-    //                             <td>YD202511011</td>
-    //                             <td>超期罚款</td>
-    //                             <td>1,000.00 (应付增加)</td>
-    //                             <td>承运商B</td>
-    //                             <td><span style="color: #27ae60;">已核算</span></td>
-    //                             <td><a href="#" style="color:#3498db;">查看</a></td>
-    //                         </tr>
-    //                     </tbody>
-    //                 </table>
-    //             `;
-    // }
+    } 
 
     // =========================================================================
     // 11. 异动挂账 (AbnormalManagement) - [统一 wb-* 风格重写]
@@ -8144,67 +7931,6 @@ function loadContent(moduleCode, element = null) {
             </table>
         </div>`;
     }
-
-    // =========================================================================
-    // 19. 其他挂账 (Pending Other)
-    // =========================================================================
-    // else if (moduleCode === "PendingOther") {
-    //     contentHTML += `
-    //                 <h2>其他挂账</h2>
-    //                 <p style="color: #7f8c8d;">记录非运单和异动产生的、需财务部门单独跟进和解除的临时性或特殊性挂账。</p>
-    //                 <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    //                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-    //                         <input type="text" placeholder="挂账单号 / 摘要" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-    //                         <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-    //                             <option value="">挂账类型 (全部)</option>
-    //                             <option>系统接口差异</option>
-    //                             <option>临时借支</option>
-    //                         </select>
-    //                         <button class="btn-primary">查询</button>
-    //                     </div>
-    //                 </div>
-                    
-    //                 <div class="action-bar" style="margin-bottom: 15px;">
-    //                     <button class="btn-primary" style="background-color: #27ae60;">+ 新增其他挂账</button>
-    //                     <button class="btn-primary" style="background-color: #f39c12;">批量标记已处理</button>
-    //                 </div>
-
-    //                 <h3>其他挂账列表</h3>
-    //                 <table class="data-table">
-    //                     <thead>
-    //                         <tr>
-    //                             <th>挂账单号</th>
-    //                             <th>金额 (RMB)</th>
-    //                             <th>方向</th>
-    //                             <th>挂账日期</th>
-    //                             <th>摘要/说明</th>
-    //                             <th>状态</th>
-    //                             <th>操作</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         <tr>
-    //                             <td>QT202511001</td>
-    //                             <td>500.00</td>
-    //                             <td>应付</td>
-    //                             <td>2025-11-18</td>
-    //                             <td>系统运费计算接口差异</td>
-    //                             <td><span style="color: #e74c3c; font-weight: bold;">待处理</span></td>
-    //                             <td><a href="#" style="color:#3498db;">查看</a> | <a href="#" style="color:#27ae60;">标记解除</a></td>
-    //                         </tr>
-    //                         <tr>
-    //                             <td>QT202511002</td>
-    //                             <td>1,200.00</td>
-    //                             <td>应收</td>
-    //                             <td>2025-11-17</td>
-    //                             <td>临时客户借款</td>
-    //                             <td><span style="color: #27ae60;">已处理</span></td>
-    //                             <td><a href="#" style="color:#3498db;">查看</a></td>
-    //                         </tr>
-    //                     </tbody>
-    //                 </table>
-    //             `;
-    // }
 
     // =========================================================================
     // 20. 进项发票台账 (Tax Input Invoice)
@@ -9172,22 +8898,6 @@ function loadContent(moduleCode, element = null) {
             </div>
         `;
     }
-
-    // =========================================================================
-    // 29. 会计科目 (Acct Subject) - [全量完整版]
-    // =========================================================================
-
-    // =========================================================================
-    // 30. 会计账套 (Acct Set)
-    // =========================================================================
-
-    // =========================================================================
-    // 31. 会计期间 (Acct Period) - 的最新修改版
-    // =========================================================================
-
-    // =========================================================================
-    // 32. 辅助核算项 (Acct Auxiliary)
-    // =========================================================================
 
     // =========================================================================
     // 34. 资产卡片 (AssetCard) - [数据增强版：含无形资产]
@@ -10186,10 +9896,18 @@ function loadContent(moduleCode, element = null) {
     else if (moduleCode === "ReportTrialBalance") {
         const books = window.getAccountBooks ? window.getAccountBooks() : [];
         const vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+        // 归一化凭证期间（兼容 "2026-3-25" / "2026-03-25" / v.period）
+        const normPeriod = (v) => {
+            const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
+            if (!raw) return "";
+            const parts = raw.split("-");
+            if (parts.length >= 2 && parts[0].length === 4 && /^\d+$/.test(parts[1]))
+                return `${parts[0]}-${parts[1].padStart(2, '0')}`;
+            return raw.slice(0, 7);
+        };
         const periodOptions = Array.from(new Set(vouchers
-            .map(v => v.date)
-            .filter(Boolean)
-            .map(date => date.slice(0, 7))))
+            .map(v => normPeriod(v))
+            .filter(p => /^\d{4}-\d{2}$/.test(p))))   // 只保留合法 YYYY-MM 格式
             .sort()
             .map(period => `<option value="${period}">${period}</option>`).join("");
         const defaultPeriod = new Date().toISOString().slice(0, 7);
@@ -10288,7 +10006,7 @@ function loadContent(moduleCode, element = null) {
         vouchers.forEach((v) => {
             if (!bsStatuses.includes(v.status)) return;
             (v.lines || []).forEach((line) => {
-                const rawCode = (line.accountCode || line.account || "").trim();
+                const rawCode = (line.accountCode || line.account || line.subject || "").trim();
                 const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
                 if (!code) return;
                 const debit = parseFloat(line.debit) || 0;
@@ -10481,10 +10199,55 @@ function loadContent(moduleCode, element = null) {
             `;
         }
 
-        // 7. 平衡检查
+        // 7. 自动填充合计/总计行（模板中这些行 codesA 为空，需要手动汇总）
+        (function() {
+            // 资产合计行
+            const aSubNames = new Set(['流动资产：','非流动资产：','流动资产合计','非流动资产合计','资产总计']);
+            let cSum = 0, ncSum = 0, inNC = false;
+            assets.items.forEach(r => {
+                if (r.name === '非流动资产：') { inNC = true; return; }
+                if (aSubNames.has(r.name)) return;
+                if (inNC) ncSum += r.balance; else cSum += r.balance;
+            });
+            assets.items.forEach(r => {
+                if (r.name === '流动资产合计') r.balance = cSum;
+                else if (r.name === '非流动资产合计') r.balance = ncSum;
+                else if (r.name === '资产总计') r.balance = assets.total;
+            });
+
+            // 负债合计行
+            const lSubNames = new Set(['流动负债：','非流动负债：','流动负债合计','非流动负债合计','负债合计']);
+            let lcSum = 0, lncSum = 0, inLNC = false;
+            liabilities.items.forEach(r => {
+                if (r.name === '非流动负债：') { inLNC = true; return; }
+                if (lSubNames.has(r.name)) return;
+                if (inLNC) lncSum += r.balance; else lcSum += r.balance;
+            });
+            liabilities.items.forEach(r => {
+                if (r.name === '流动负债合计') r.balance = lcSum;
+                else if (r.name === '非流动负债合计') r.balance = lncSum;
+                else if (r.name === '负债合计') r.balance = liabilities.total;
+            });
+
+            // 权益合计行（在 rightTotal 计算前无法获取，但 equity.total 已正确）
+            const eSubNames = new Set(['所有者权益：','归属于母公司所有者权益合计','少数股东权益','所有者权益合计','负债及所有者权益总计']);
+            const eRealSum = equity.items
+                .filter(r => !eSubNames.has(r.name) && !r.name.endsWith('：'))
+                .reduce((s, r) => s + r.balance, 0);
+            equity.items.forEach(r => {
+                if (r.name === '归属于母公司所有者权益合计' || r.name === '所有者权益合计') r.balance = eRealSum;
+            });
+        })();
+
+        // 8. 平衡检查
         // 资产 = 负债 + 权益 (允许 0.01 的计算误差)
         const rightTotal = liabilities.total + equity.total;
         const isBalanced = Math.abs(assets.total - rightTotal) < 0.01;
+
+        // 负债及所有者权益总计行（需要 rightTotal，所以在计算后填充）
+        equity.items.forEach(r => {
+            if (r.name === '负债及所有者权益总计') r.balance = rightTotal;
+        });
 
         contentHTML += `
             <div class="balance-sheet-page">
@@ -10601,7 +10364,7 @@ function loadContent(moduleCode, element = null) {
             if (!isStatuses.includes(v.status)) return;
             if (isClosingV(v)) return; // 跳过结转凭证
             (v.lines || []).forEach((line) => {
-                const rawCode = (line.accountCode || line.account || "").trim();
+                const rawCode = (line.accountCode || line.account || line.subject || "").trim();
                 const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
                 const val = parseFloat(line.debit) || 0;
                 const valCredit = parseFloat(line.credit) || 0;
@@ -10857,8 +10620,9 @@ function loadContent(moduleCode, element = null) {
                 if (!v.lines) return;
 
                 // 检查这张凭证里有没有涉及资金 (1001 或 1002)
+                const getLineAcct = (l) => (l.accountCode || l.account || l.subject || "").trim();
                 const cashLine = v.lines.find(
-                    (l) => l.account.startsWith("1001") || l.account.startsWith("1002")
+                    (l) => getLineAcct(l).startsWith("1001") || getLineAcct(l).startsWith("1002")
                 );
 
                 if (cashLine) {
@@ -10871,9 +10635,9 @@ function loadContent(moduleCode, element = null) {
                     // 找对方科目 (简单逻辑：找分录里第一行不是资金的科目)
                     const otherLine = v.lines.find(
                         (l) =>
-                            !l.account.startsWith("1001") && !l.account.startsWith("1002")
-                    ) || { account: "未知", summary: "未说明" };
-                    const otherCode = otherLine.account.split(" ")[0];
+                            !getLineAcct(l).startsWith("1001") && !getLineAcct(l).startsWith("1002")
+                    ) || { account: "未知", subject: "未知", summary: "未说明" };
+                    const otherCode = getLineAcct(otherLine).split(" ")[0];
 
                     // 判定类型
                     let type = "经营活动"; // 默认为经营
@@ -10909,7 +10673,7 @@ function loadContent(moduleCode, element = null) {
                         // 职工薪酬：2211应付职工薪酬，或6602/5602管理费用
                         else if (otherCode.startsWith("2211") ||
                             ((otherCode.startsWith("6602") || otherCode.startsWith("5602")) &&
-                             (otherLine.account.includes("工资") || otherLine.account.includes("薪酬"))))
+                             (getLineAcct(otherLine).includes("工资") || getLineAcct(otherLine).includes("薪酬"))))
                             item = "支付给职工以及为职工支付的现金";
                         // 购建固定资产/无形资产：16xx/17xx
                         else if (otherCode.startsWith("16") || otherCode.startsWith("17")) {
@@ -11864,7 +11628,8 @@ function loadContent(moduleCode, element = null) {
             if (v.status === "已审核" || v.status === "已记账") {
                 if (v.lines) {
                     v.lines.forEach((line) => {
-                        if (line.account.startsWith(targetCode)) {
+                        const lineAcct = (line.accountCode || line.account || line.subject || "").trim();
+                        if (lineAcct.startsWith(targetCode)) {
                             const debit = parseFloat(line.debit) || 0;
                             const credit = parseFloat(line.credit) || 0;
 
@@ -13674,6 +13439,10 @@ function loadContent(moduleCode, element = null) {
                     name: "结算",
                     children: [
                         {
+                            name: "测试",
+                            items: ["测试应收", "测试应付", "测试内部报销"]
+                        },
+                        {
                             name: "运单",
                             items: [
                                 "现付结算","现返结算","网点中转现返结算","单票提货费已付结算","单票提货费未付结算",
@@ -13776,6 +13545,10 @@ function loadContent(moduleCode, element = null) {
                 {
                     name: "核销",
                     children: [
+                        {
+                            name: "测试",
+                            items: ["测试应收1", "测试应付1"]
+                        },
                         {
                             name: "运单",
                             items: [
@@ -14015,7 +13788,7 @@ function loadContent(moduleCode, element = null) {
                     { code: '2203', name: '预收账款' },
                     { code: '2211', name: '应付职工薪酬' },
                     { code: '2221', name: '应交税费' },
-                    { code: '2221.01', name: '应交税费-增值税' },
+                    { code: '222101', name: '应交税费-增值税' },
                     { code: '6001', name: '主营业务收入' },
                     { code: '6401', name: '主营业务成本' },
                     { code: '6601', name: '销售费用' },
@@ -14206,6 +13979,7 @@ function loadContent(moduleCode, element = null) {
                     '</tbody></table></div>' +
                     '<div class="action-bar">' +
                     '<button class="btn-reset" onclick="resetTemplate(\'' + itemName.replace(/'/g, "\\'") + '\')">清空科目</button>' +
+                    '<button class="btn-test" onclick="testGenerateVoucher(\'' + itemName.replace(/'/g, "\\'") + '\')" style="background:#2ecc71;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;">▶ 测试生成(100元)</button>' +
                     '<button class="btn-save" onclick="saveTemplate(\'' + itemName.replace(/'/g, "\\'") + '\', ' + isSettlement + ')">&#x2713; 保存模板</button>' +
                     '</div>';
 
@@ -14300,6 +14074,116 @@ function loadContent(moduleCode, element = null) {
                 t.style.display = 'block';
                 setTimeout(function() { t.style.display = 'none'; }, 3000);
             }
+
+            // ============================================================
+            // 八点五、测试生成凭证（在配置面板验证金额逻辑）
+            // ============================================================
+            window.testGenerateVoucher = function(itemName) {
+                if (typeof window.generateVoucherFromEngineTemplate !== 'function') {
+                    showToast('会计引擎未加载，请刷新页面', 'error');
+                    return;
+                }
+                var result = window.generateVoucherFromEngineTemplate(itemName, {
+                    type: itemName,
+                    date: new Date().toISOString().split('T')[0],
+                    amount: 100,
+                    clientName: '测试客户',
+                    waybillNo: 'TEST-001',
+                    id: 'TEST-001'
+                });
+                if (result && result.success) {
+                    var v = result.voucher;
+                    var rows = (v.lines || []).map(function(l) {
+                        return '  ' + (l.debit ? '借 ' + l.account + ' ' + l.debit : '贷 ' + l.account + ' ' + l.credit);
+                    }).join('\n');
+                    showToast('✅ 凭证 ' + result.voucherId + ' 已生成，请前往凭证列表查看', 'success');
+                    alert('✅ 测试凭证已生成：' + result.voucherId + '\n\n分录明细：\n' + rows + '\n\n（金额=100元）');
+                } else {
+                    showToast('❌ 生成失败：' + (result ? result.error : '未知错误'), 'error');
+                }
+            };
+
+            // ============================================================
+            // 九、预置默认模板（仅首次未配置时写入）
+            // ============================================================
+            (function() {
+                var DEFAULT_TPLS = {
+                    '测试应收': {
+                        name: '测试应收', category: '结算', group: '测试',
+                        voucherWord: '收', remark: '确认应收账款（含税9%）',
+                        taxRate: 0.09,
+                        entries: [
+                            { dir: '借', subjectCode: '1122',   subjectName: '应收账款',     summary: '确认应收债权', amountType: 'gross', usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '5001',   subjectName: '主营业务收入', summary: '确认运输收入', amountType: 'net',   usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '2221',   subjectName: '应交税费',     summary: '确认销项税额', amountType: 'tax',   usePaymentMethod: false }
+                        ]
+                    },
+                    '测试应付': {
+                        name: '测试应付', category: '结算', group: '测试',
+                        voucherWord: '付', remark: '网络货运司机成本（3%简易计税进项税）',
+                        taxRate: 0.03,
+                        entries: [
+                            { dir: '借', subjectCode: '640101', subjectName: '运输成本',   summary: '运费成本（不含税）', amountType: 'net',   usePaymentMethod: false },
+                            { dir: '借', subjectCode: '2221',   subjectName: '应交税费',   summary: '进项税额（3%）',     amountType: 'tax',   usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '2202',   subjectName: '应付账款',   summary: '应付司机款',          amountType: 'gross', usePaymentMethod: false }
+                        ]
+                    },
+                    '测试内部报销': {
+                        name: '测试内部报销', category: '结算', group: '测试',
+                        voucherWord: '付', remark: '内部员工费用报销',
+                        taxRate: 0,
+                        entries: [
+                            { dir: '借', subjectCode: '6602', subjectName: '管理费用', summary: '报销费用', amountType: 'gross', usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '1002', subjectName: '银行存款', summary: '报销支出', amountType: 'gross', usePaymentMethod: false }
+                        ]
+                    },
+                    '测试应收1': {
+                        name: '测试应收1', category: '核销', group: '运单',
+                        voucherWord: '收', remark: '收款冲销应收账款',
+                        taxRate: 0,
+                        entries: [
+                            { dir: '借', subjectCode: '1002', subjectName: '银行存款', summary: '收到客户款项', amountType: 'gross', usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '1122', subjectName: '应收账款', summary: '冲销应收账款', amountType: 'gross', usePaymentMethod: false }
+                        ]
+                    },
+                    '测试应付1': {
+                        name: '测试应付1', category: '核销', group: '运单',
+                        voucherWord: '付', remark: '付款核销应付账款（代扣个税1%）',
+                        taxRate: 0,
+                        entries: [
+                            { dir: '借', subjectCode: '2202',   subjectName: '应付账款',       summary: '核销应付账款',   amountType: 'gross',         usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '222105', subjectName: '应交个人所得税', summary: '代扣个税（1%）', amountType: 'flatRate',       flatRate: 0.01, usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '1002',   subjectName: '银行存款',       summary: '实付司机款',     amountType: 'flatComplement', flatRate: 0.01, usePaymentMethod: false }
+                        ]
+                    }
+                };
+                // 判断模板是否已配置科目（entries 里有任意 subjectCode 则视为已配置）
+                var hasFilledEntries = function(tpl) {
+                    return tpl && Array.isArray(tpl.entries) && tpl.entries.some(function(e) { return (e.subjectCode || '').trim(); });
+                };
+                var lsStore = loadStore();
+                var dirty = false;
+                Object.keys(DEFAULT_TPLS).forEach(function(name) {
+                    // 不存在 或 entries 全为空（从未配置过）则写入预置
+                    if (!hasFilledEntries(lsStore[name])) {
+                        lsStore[name] = DEFAULT_TPLS[name];
+                        dirty = true;
+                    }
+                });
+                if (dirty) saveStore(lsStore);
+                // 同步写入 EngineVoucherTemplates（runtime 引擎读取）
+                try {
+                    var ssStore = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
+                    var lsRtStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
+                    var rtDirtyS = false, rtDirtyL = false;
+                    Object.keys(DEFAULT_TPLS).forEach(function(name) {
+                        if (!hasFilledEntries(ssStore[name])) { ssStore[name] = DEFAULT_TPLS[name]; rtDirtyS = true; }
+                        if (!hasFilledEntries(lsRtStore[name])) { lsRtStore[name] = DEFAULT_TPLS[name]; rtDirtyL = true; }
+                    });
+                    if (rtDirtyS) sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(ssStore));
+                    if (rtDirtyL) localStorage.setItem('EngineVoucherTemplates', JSON.stringify(lsRtStore));
+                } catch(e) {}
+            })();
 
             // ============================================================
             // 初始化
@@ -15256,11 +15140,15 @@ function loadContent(moduleCode, element = null) {
             return m;
         };
 
-        // 提取凭证所属期间（兼容 v.date 和 v.period 两种字段）
+        // 提取凭证所属期间（兼容 v.date 和 v.period，处理 "YYYY-M-DD" 月份不补零格式）
         const getVPeriod = (v) => {
-            if (v.date && v.date.length >= 7) return v.date.slice(0, 7);
-            if (v.period && v.period.length >= 7) return v.period.slice(0, 7);
-            return "";
+            const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
+            if (!raw) return "";
+            const parts = raw.split("-");
+            if (parts.length >= 2 && parts[0].length === 4 && /^\d+$/.test(parts[1])) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}`;
+            }
+            return raw.slice(0, 7);
         };
 
         // ── 本期凭证（只含选中期间） ──
@@ -16057,8 +15945,8 @@ function loadContent(moduleCode, element = null) {
     };
 
     function createExpenseVoucher(item, paymentMethod) {
-        const getVoucherId = window.generateSequentialVoucherId || ((word) => `${word || "记"}-${Date.now()}`);
-        const voucherId = getVoucherId("记");
+        const getVoucherId = window.generateSequentialVoucherId || ((word) => `${word || "付"}-${Date.now()}`);
+        const voucherId = getVoucherId("付");
         const amount = Number(item.amount) || 0;
         const expenseSubjectMap = {
             "办公费": { code: "6601-01", name: "管理费用-办公" },

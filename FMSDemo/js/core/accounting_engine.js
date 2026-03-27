@@ -79,13 +79,15 @@ const DEFAULT_AUTO_TEMPLATES = [
     },
     {
         id: "TPL_COST_TRUNK",
-        name: "供应商运费应付模板",
+        name: "供应商运费应付模板（含进项抵扣）",
         voucherWord: "记",
         trigger: "对账审批",
         matchRule: { bizType: "干线" },
+        // 网络货运 3% 简易计税：不含税成本 + 进项税额 / 应付账款（价税合计）
         entries: [
-            { dir: "借", subject: "6401 主营业务成本", amountType: "价税合计" },
-            { dir: "贷", subject: "2202 应付账款", amountType: "价税合计" }
+            { dir: "借", subject: "6401 主营业务成本",              amountType: "不含税" },
+            { dir: "借", subject: "2221 应交税费-进项税额",          amountType: "税额" },
+            { dir: "贷", subject: "2202 应付账款",                  amountType: "价税合计" }
         ],
         status: "启用"
     }

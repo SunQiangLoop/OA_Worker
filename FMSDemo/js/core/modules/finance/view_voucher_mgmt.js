@@ -639,7 +639,8 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var totalDebit = 0;
                 var lines = window.veRows.map(function (r) {
                     totalDebit += r.debit;
-                    return { summary: r.summary, subject: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
+                    // 同时存 account 字段，保证科目余额表/试算平衡表能正确识别
+                    return { summary: r.summary, subject: r.subject, account: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
                 });
                 var voucher = {
                     id: voucherId,
@@ -873,11 +874,19 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                         var totalD = 0;
                         var ls = window.veRows.map(function(r) {
                             totalD += r.debit;
-                            return { summary: r.summary, subject: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
+                            return { summary: r.summary, subject: r.subject, account: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
                         });
                         var store = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
                         var i = store.findIndex(function(v) { return v.id === editId; });
                         if (i !== -1) {
+                            // 凭证字变更时同步更新 ID（保留原序号，如 转-0009 → 付-0009）
+                            var savedId = editId;
+                            if (w && w !== editWord) {
+                                var seqPart = editId.replace(/^[^\d]*/, '');
+                                savedId = w + '-' + seqPart;
+                                store[i].id = savedId;
+                                store[i].type = w === '收' ? '收款凭证' : w === '付' ? '付款凭证' : '转账凭证';
+                            }
                             store[i].date        = d;
                             store[i].attachCount = att;
                             store[i].amount      = totalD.toFixed(2);
@@ -885,7 +894,7 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                             store[i].lines       = ls;
                             sessionStorage.setItem('ManualVouchers', JSON.stringify(store));
                         }
-                        return editId;
+                        return savedId || editId;
                     };
                     // 提示
                     setTimeout(function() { veShowToast('已载入凭证 ' + editId + '，修改后点击保存', 'success'); }, 100);
@@ -2501,6 +2510,14 @@ window.VM_MODULES['VoucherDetail'] = function(contentArea, contentHTML, moduleCo
                 }
                 if (!subjectCode) subjectCode = fallbackCode || "";
                 if (!subjectName) subjectName = fallbackName || "";
+            }
+            // 如果名称仍为空，查 AcctSubjects 补充
+            if (!subjectName && subjectCode) {
+                try {
+                    const _subs = JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]');
+                    const _found = _subs.find(s => (s.code || '').toString().trim() === subjectCode);
+                    if (_found && _found.name) subjectName = _found.name;
+                } catch(e) {}
             }
 
             const auxCode = line.auxCode || "";
