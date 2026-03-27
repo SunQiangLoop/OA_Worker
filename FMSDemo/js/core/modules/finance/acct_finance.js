@@ -1247,24 +1247,22 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
 
         <div style="padding:20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="margin:0; font-size:18px; color:#1a1a1a;">多级会计账套体系</h2>
+                <h2 style="margin:0; font-size:18px; color:#1a1a1a;">多级会计账套体系 <span style="font-size:14px;font-weight:400;color:#888;">(平行分类账架构)</span></h2>
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <!-- ★ 当前帐套下拉选择器（核心入口） -->
-                    <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #e74c3c;border-radius:4px;padding:4px 10px;background:#fff8f8;">
-                        <span style="font-size:13px;color:#e74c3c;font-weight:500;white-space:nowrap;">当前帐套</span>
-                        <select id="global-acct-set-select"
-                            style="border:none;outline:none;background:transparent;color:#e74c3c;font-size:13px;font-weight:600;cursor:pointer;min-width:120px;max-width:180px;"
-                            onchange="window.switchAcctSet && window.switchAcctSet(this.value, this.options[this.selectedIndex].text)">
-                            <option value="" disabled selected>-- 请启用帐套 --</option>
-                        </select>
-                    </div>
+                    <!-- ★ 当前帐套标签 + 下拉选择器（分开显示） -->
+                    <span style="font-size:13px;color:#374151;font-weight:500;white-space:nowrap;">当前账套</span>
+                    <select id="global-acct-set-select"
+                        style="border:1.5px solid #a8c4e8;border-radius:6px;padding:5px 10px;background:#f0f7ff;color:#1d4ed8;font-size:13px;font-weight:600;cursor:pointer;min-width:100px;max-width:180px;outline:none;"
+                        onchange="window.switchAcctSet && window.switchAcctSet(this.value, this.options[this.selectedIndex].text)">
+                        <option value="" disabled selected>-- 请启用帐套 --</option>
+                    </select>
                     <!-- 帐套导入（仅 UI，功能待开发） -->
                     <button class="acct-sbtn" onclick="alert('帐套导入功能开发中，敬请期待。')"
                         style="color:#2563eb;border-color:#2563eb;">帐套导入</button>
                     <!-- 帐套备份（仅 UI，功能待开发） -->
                     <button class="acct-sbtn" onclick="alert('帐套备份功能开发中，敬请期待。')"
                         style="color:#2563eb;border-color:#2563eb;">帐套备份</button>
-                    <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctOpenAddModal()">+ 新增帐套</button>
+                    <button class="acct-sbtn acct-sbtn-primary" onclick="window.acctOpenAddModal()">+ 新增组织/账套</button>
                 </div>
             </div>
             <div style="background:#fff; border:1px solid #e0e0e0; border-radius:4px; overflow:hidden;">
@@ -1274,8 +1272,9 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
                             <th style="width:220px;">账套名称</th>
                             <th style="width:120px;">账套编码</th>
                             <th style="width:100px;">账套类型</th>
-                            <th style="width:130px;">会计准则</th>
-                            <th style="width:120px;">当前状态</th>
+                            <th style="width:110px;">关联源</th>
+                            <th style="width:160px;">核算准则</th>
+                            <th style="width:110px;">当前状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -1354,11 +1353,9 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
                     id: 1, name: '集团总账套', code: 'ZJKZ', type: 'merge',
                     principle: '企业准则', status: 'disabled', principleInherited: false, expanded: true,
                     children: [
-                        {id: 2, name: '分公司-华北', code: 'FJBN', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []},
                         {id: 3, name: '分公司-华东', code: 'FJBD', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: true, children: [
                             {id: 5, name: '子公司-上海', code: 'ZJSH', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []}
-                        ]},
-                        {id: 4, name: '分公司-华南', code: 'FJHN', type: 'calc', principle: '企业准则', status: 'disabled', principleInherited: true, expanded: false, children: []}
+                        ]}
                     ]
                 }];
                 sessionStorage.setItem('AcctSetTree', JSON.stringify(treeData));
@@ -1393,37 +1390,65 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
                 const tbody = document.getElementById('acctTreeBody');
                 if (!tbody) return;
                 const rows = [];
-                function renderNodes(nodes, level) {
+                function renderNodes(nodes, level, parentNode) {
                     nodes.forEach(node => {
                         const indent = level * 22;
                         const hasChildren = node.children && node.children.length > 0;
                         const typeClass = node.type === 'merge' ? 'badge-type-merge' : 'badge-type-calc';
                         const typeText = node.type === 'merge' ? '合并账套' : '核算账套';
-                        let statusBadge = '';
-                        if (node.status === 'enabled') statusBadge = '<span class="badge-acct-enabled">已启用</span>';
-                        else if (node.status === 'init') statusBadge = '<span class="badge-acct-init">待初始化</span>';
-                        else statusBadge = '<span class="badge-acct-disabled">已停用</span>';
-                        const principleText = node.principleInherited
-                            ? node.principle + ' <span style="color:#999;font-size:12px;">(继承)</span>'
-                            : node.principle;
-                        // 所有账套都显示：新增子账套、引擎配置、复制
-                        let actions = '';
-                        actions += `<button class="acct-action-link" onclick="window.acctOpenAddModal(${node.id})">新增子账套</button>`;
-                        actions += `<button class="acct-action-link" onclick="loadContent('SettlementEngineConfig')">引擎配置</button>`;
-                        actions += `<button class="acct-action-link" onclick="window.acctHandleCopy(${node.id})">复制</button>`;
-                        if (node.status === 'disabled') {
-                            actions += `<button class="acct-action-link" style="color:#27ae60;" onclick="window.acctHandleEnable(${node.id})">启用</button>`;
+
+                        // 关联源：二级及以下节点显示父账套编码
+                        const linkedSource = (level >= 2 && parentNode)
+                            ? `<span style="color:#555;font-size:13px;">🔗 ${parentNode.code}</span>`
+                            : '–';
+
+                        // 状态：dot + text 样式
+                        let statusText = '';
+                        if (node.status === 'enabled') {
+                            statusText = '<span style="color:#16a34a;font-weight:500;">● 已启用</span>';
                         } else {
-                            actions += `<button class="acct-action-link danger" onclick="window.acctOpenDisable(${node.id})">停用</button>`;
+                            statusText = '<span style="color:#dc2626;font-weight:500;">● 已停用</span>';
                         }
+
+                        const principleText = node.principle || '企业准则';
+
+                        // 操作按钮（按截图规则）
+                        let actions = '';
+                        if (node.status === 'enabled') {
+                            actions += `<button class="acct-action-link" onclick="loadContent('SettlementEngineConfig')">引擎配置</button>`;
+                            // 核算账套且有子账套：显示"推送模板引擎"
+                            if (node.type === 'calc' && hasChildren) {
+                                actions += `<button class="acct-action-link" style="color:#e67e22;" onclick="window.acctPushTemplate(${node.id})">推送模板引擎</button>`;
+                            }
+                            // 非合并账套才显示"复制"
+                            if (node.type !== 'merge') {
+                                actions += `<button class="acct-action-link" onclick="window.acctHandleCopy(${node.id})">复制</button>`;
+                            }
+                            actions += `<button class="acct-action-link danger" onclick="window.acctOpenDisable(${node.id})">停用</button>`;
+                        } else {
+                            actions += `<button class="acct-action-link" style="color:#27ae60;" onclick="window.acctHandleEnable(${node.id})">启用</button>`;
+                        }
+
                         const toggleBtn = hasChildren
                             ? `<span class="acct-toggle-btn" onclick="window.acctToggleNode(${node.id})">${node.expanded ? '▼' : '▶'}</span>`
                             : '<span style="display:inline-block;width:18px;"></span>';
-                        rows.push(`<tr><td><span style="padding-left:${indent}px;">${toggleBtn}${node.name}</span></td><td style="color:#666;">${node.code}</td><td><span class="${typeClass}">${typeText}</span></td><td>${principleText}</td><td>${statusBadge}</td><td>${actions}</td></tr>`);
-                        if (hasChildren && node.expanded) renderNodes(node.children, level + 1);
+                        const childPrefix = level > 0
+                            ? `<span style="color:#bbb;margin-right:2px;font-size:12px;">└─</span>`
+                            : '';
+
+                        rows.push(`<tr>
+                            <td><span style="padding-left:${indent}px;">${toggleBtn}${childPrefix}${node.name}</span></td>
+                            <td style="color:#555;">${node.code}</td>
+                            <td><span class="${typeClass}">${typeText}</span></td>
+                            <td>${linkedSource}</td>
+                            <td style="color:#444;">${principleText}</td>
+                            <td>${statusText}</td>
+                            <td>${actions}</td>
+                        </tr>`);
+                        if (hasChildren && node.expanded) renderNodes(node.children, level + 1, node);
                     });
                 }
-                renderNodes(window._acctTreeData, 0);
+                renderNodes(window._acctTreeData, 0, null);
                 tbody.innerHTML = rows.join('');
                 const parentSelect = document.getElementById('acctFormParent');
                 if (parentSelect) {
@@ -1432,6 +1457,12 @@ window.VM_MODULES['AcctSet'] = function(contentArea, contentHTML, moduleCode) {
                     collectOpts(window._acctTreeData, '');
                     parentSelect.innerHTML = opts.join('');
                 }
+            };
+
+            window.acctPushTemplate = function(id) {
+                const node = window.acctFindNode(window._acctTreeData, id);
+                if (!node) return;
+                alert('已将「' + node.name + '」的会计引擎模板推送至所有子账套。（当前为演示功能）');
             };
 
             window.acctToggleNode = function(id) {
