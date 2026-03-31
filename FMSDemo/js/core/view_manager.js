@@ -159,8 +159,13 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
     enterprise: [
         // 资产类
         { code: "1001", name: "库存现金",           type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "日常现金收付" },
-        { code: "1002", name: "银行存款",           type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
-        { code: "1012", name: "其他货币资金",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
+        { code: "1002", name: "银行存款",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100201", name: "银行存款-中国银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100202", name: "银行存款-南京银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100203", name: "银行存款-建设银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+        { code: "1012", name: "其他货币资金",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
+            { code: "101201", name: "云链支付宝账户0676",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
+            { code: "101202", name: "云链微信",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
         { code: "1101", name: "交易性金融资产",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "以公允价值计量的金融资产" },
         { code: "1121", name: "应收票据",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "商业汇票" },
         { code: "1122", name: "应收账款",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "客户应收款" },
@@ -526,20 +531,22 @@ function applyAccountingStandardSetting() {
     const { standard, locked } = getAccountingStandardState();
     const nextStandard = selected.value;
 
-    if (locked && standard) {
-        alert("已有凭证数据，当前会计准则已锁定，无法修改。");
-        return;
-    }
-
     if (standard && standard !== nextStandard) {
-        const confirmed = confirm("切换会计准则将覆盖当前科目模板，确认继续？");
-        if (!confirmed) return;
+        const warnMsg = locked
+            ? "当前帐套已有凭证数据！切换会计准则只会更新科目模板，不会删除已有凭证，但科目编码体系将发生变化，请确认已知晓影响。\n\n确认切换为新准则？"
+            : "切换会计准则将覆盖当前科目模板，确认继续？";
+        if (!confirm(warnMsg)) return;
     }
 
     const template = ACCOUNTING_STANDARD_TEMPLATES[nextStandard] || [];
     localStorage.setItem("AccountingStandard", nextStandard);
+    sessionStorage.setItem("AccountingStandard", nextStandard);
     sessionStorage.setItem("AcctSubjects", JSON.stringify(template));
     localStorage.setItem("AcctSubjects", JSON.stringify(template));
+    // 同步更新当前帐套快照，避免切换帐套时被旧数据覆盖
+    if (typeof window.saveCurrentAcctSetSnapshot === 'function') {
+        window.saveCurrentAcctSetSnapshot();
+    }
     alert("会计准则已保存，科目列表已更新。");
     loadContent("AcctSubject");
 }
@@ -6409,7 +6416,7 @@ function loadContent(moduleCode, element = null) {
                 user: '管理员',
                 lines: [
                     { accountCode:'2202',   account:'2202 应付账款',                   digest:'核销应付-'+(pv.vendor||''),    debit: totalAmt,   credit: 0,          aux: pv.vendor||'' },
-                    { accountCode:'222105', account:'222105 应交个人所得税',             digest:'代扣个税（1%）-'+(pv.vendor||''), debit: 0,          credit: personalTax },
+                    { accountCode:'222119', account:'222119 应交个人所得税',             digest:'代扣个税（1%）-'+(pv.vendor||''), debit: 0,          credit: personalTax },
                     { accountCode:'1002',   account:'1002 银行存款',                   digest:'支付运费-'+(pv.vendor||''),    debit: 0,          credit: bankAmt }
                 ]
             };
@@ -9332,6 +9339,8 @@ function loadContent(moduleCode, element = null) {
                 <div id="trial-balance-result" class="tb-balance-badge tb-balance-info">等待查询…</div>
             </div>
 
+            <div id="trial-balance-alert"></div>
+
             <div class="tb-wrap">
                 <table class="tb-table">
                     <thead>
@@ -9678,18 +9687,6 @@ function loadContent(moduleCode, element = null) {
                                 <th style="width:120px;">年初数</th>
                                 <th style="width:120px;">期末数</th>
                             </tr>
-                            <tr class="balance-sheet-filter-row">
-                                <th>筛选</th>
-                                <th></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                            </tr>
                         </thead>
                         <tbody>
                             ${rowsHTML ||
@@ -9717,214 +9714,208 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // 46. 利润损益表 (ReportIncomeStatement) 
+    // 46. 利润损益表 (ReportIncomeStatement)
     // =========================================================================
     else if (moduleCode === "ReportIncomeStatement") {
-        let data = {
-            income: 0,
-            cost: 0,
-            saleExp: 0,
-            adminExp: 0,
-            finExp: 0,
-            tax: 0,
+        // ── 筛选参数 ──
+        const selYear       = parseInt(sessionStorage.getItem("IS_Year")  || new Date().getFullYear());
+        const selMonth      = parseInt(sessionStorage.getItem("IS_Month") || 0); // 0 = 全年
+        const selPostStatus = sessionStorage.getItem("IS_PostStatus") || "全部";
+
+        const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+
+        // 过账状态过滤
+        let validSt;
+        if (selPostStatus === "已过账")      validSt = ["已过账"];
+        else if (selPostStatus === "未过账") validSt = ["待审核","已审核","已记账"];
+        else                                 validSt = ["待审核","已审核","已记账","已过账"];
+
+        const isClosingV = v => (v.user||"").includes("期末结转") || (v.summary||"").includes("期末结转");
+
+        // 标准化期间 YYYY-MM
+        const normVP = v => {
+            const raw = ((v.date||v.period||"").toString().trim()).replace(/\//g,"-");
+            if (!raw) return "";
+            const p = raw.split("-");
+            if (p.length >= 2 && p[0].length === 4) return `${p[0]}-${p[1].padStart(2,"0")}`;
+            return raw.slice(0,7);
         };
-        const vouchers = JSON.parse(
-            sessionStorage.getItem("ManualVouchers") || "[]"
-        );
 
-        // 包含待审核凭证；但排除期末结转系统凭证（它们会把收入/费用归零，导致利润表显示0）
-        const isStatuses = ["待审核", "已审核", "已记账", "已过账"];
-        const isClosingV = (v) => (v.user || "").includes("期末结转") || (v.summary || "").includes("期末结转");
-        vouchers.forEach((v) => {
-            if (!isStatuses.includes(v.status)) return;
-            if (isClosingV(v)) return; // 跳过结转凭证
-            (v.lines || []).forEach((line) => {
-                const rawCode = (line.accountCode || line.account || line.subject || "").trim();
-                const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
-                const val = parseFloat(line.debit) || 0;
-                const valCredit = parseFloat(line.credit) || 0;
-
-                // 收入：小企业准则(5001/5051/5101/5301) + 企业准则(6001/6011/6051/6111/6301)
-                if (/^(5001|5002|5051|5101|5301|6001|6002|6011|6051|6111|6301)/.test(code)) {
-                    data.income += valCredit - val; // 贷方净额
-                }
-                // 成本：小企业准则(5401/5402) + 企业准则(6401/6402)
-                else if (/^(5401|5402|6401|6402)/.test(code)) {
-                    data.cost += val - valCredit;
-                }
-                // 税金附加：5403 / 6403
-                else if (code.startsWith("5403") || code.startsWith("6403")) {
-                    data.tax += val - valCredit;
-                }
-                // 销售费用：5601 / 6601
-                else if (code.startsWith("5601") || code.startsWith("6601")) {
-                    data.saleExp += val - valCredit;
-                }
-                // 管理费用：5602 / 6602
-                else if (code.startsWith("5602") || code.startsWith("6602")) {
-                    data.adminExp += val - valCredit;
-                }
-                // 财务费用：5603 / 6603
-                else if (code.startsWith("5603") || code.startsWith("6603")) {
-                    data.finExp += val - valCredit;
-                }
-            });
+        // 按年/月过滤
+        const filterV = (ytd) => allVouchers.filter(v => {
+            if (!validSt.includes(v.status)) return false;
+            if (isClosingV(v)) return false;
+            const p = normVP(v); if (!p) return false;
+            if (parseInt(p.slice(0,4)) !== selYear) return false;
+            const m = parseInt(p.slice(5,7));
+            if (ytd)  { return selMonth === 0 || m <= selMonth; }
+            else      { return selMonth === 0 || m === selMonth; }
         });
 
-        // 计算利润
-        const opProfit =
-            data.income -
-            data.cost -
-            data.tax -
-            data.saleExp -
-            data.adminExp -
-            data.finExp;
-        const netProfit = opProfit; // 简化
+        const vPeriod = filterV(false);
+        const vYTD    = filterV(true);
 
-        const fmt = (num) =>
-            num.toLocaleString("en-US", { minimumFractionDigits: 2 });
-        const color = (num) =>
-            num < 0 ? "color: #e74c3c; font-weight:bold;" : "color: #333;";
-
-        const currentYear = new Date().getFullYear();
-        const monthLabels = Array.from({ length: 12 }, (_, i) => `${currentYear}-${i + 1}月`);
-        const parseCodes = (value) => (value || "")
-            .toString()
-            .split(/[,，]/)
-            .map(item => item.trim())
-            .filter(Boolean);
-        const matchCode = (code, codes) => codes.some(prefix => code.startsWith(prefix));
-        const isStatuses2 = ["待审核", "已审核", "已记账", "已过账"];
-        const calcTemplateAmount = (codes, op) => {
-            if (!codes.length) return null; // null 表示小计行，后续计算
-            let total = 0;
-            vouchers.forEach((v) => {
-                if (!isStatuses2.includes(v.status)) return;
-                if (isClosingV(v)) return; // 排除期末结转凭证
-                if (!v.lines) return;
-                v.lines.forEach((line) => {
-                    const rawCode = (line.accountCode || line.account || "").trim();
-                    const code = rawCode.match(/^\d+/) ? rawCode.match(/^\d+/)[0] : rawCode.split(" ")[0];
-                    if (!code || !matchCode(code, codes)) return;
-                    const debit = parseFloat(line.debit) || 0;
-                    const credit = parseFloat(line.credit) || 0;
-                    total += op === "-" ? (debit - credit) : (credit - debit);
+        // 按科目前缀求发生净额
+        const parseC = s => s ? s.split(",").map(x=>x.trim()).filter(Boolean) : [];
+        const calcAmt = (vArr, prefixes, op) => {
+            if (!prefixes.length) return null;
+            let tot = 0;
+            vArr.forEach(v => {
+                (v.lines||[]).forEach(line => {
+                    const raw = (line.accountCode||line.account||line.subject||"").trim();
+                    const code = raw.match(/^\d+/) ? raw.match(/^\d+/)[0] : raw.split(" ")[0];
+                    if (!code || !prefixes.some(px => code.startsWith(px))) return;
+                    const d = parseFloat(line.debit)||0, c = parseFloat(line.credit)||0;
+                    tot += op === "+" ? (c-d) : (d-c);
                 });
             });
-            return total;
+            return tot;
         };
-        const incomeTemplate = (() => {
-            const raw = sessionStorage.getItem("IncomeStatementTemplate");
-            if (!raw) return [];
-            try {
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (error) {
-                return [];
-            }
-        })();
-        // 默认利润表模板：同时兼容小企业准则(5xxx)和企业准则(6xxx)科目编码
-        const defaultIncomeRows = [
-            { name: "一、营业收入",                                              codes: "5001,5051,6001,6011,6051", op: "+" },
-            { name: "减：营业成本",                                              codes: "5401,5402,6401,6402",      op: "-" },
-            { name: "税金及附加",                                                codes: "5403,6403",                op: "-" },
-            { name: "其中：消费税",                                              codes: "",                         op: "-" },
-            { name: "城市维护建设税",                                            codes: "",                         op: "-" },
-            { name: "资源税",                                                    codes: "",                         op: "-" },
-            { name: "土地增值税",                                                codes: "",                         op: "-" },
-            { name: "城镇土地使用税、房产税、车船税、印花税",                    codes: "",                         op: "-" },
-            { name: "教育费附加、矿产资源补偿费、排污费",                        codes: "",                         op: "-" },
-            { name: "销售费用",                                                  codes: "5601,6601",                op: "-" },
-            { name: "其中：商品维修费",                                          codes: "",                         op: "-" },
-            { name: "广告费和业务宣传费",                                        codes: "",                         op: "-" },
-            { name: "管理费用",                                                  codes: "5602,6602",                op: "-" },
-            { name: "其中：开办费",                                              codes: "",                         op: "-" },
-            { name: "业务招待费",                                                codes: "",                         op: "-" },
-            { name: "研究费用",                                                  codes: "",                         op: "-" },
-            { name: "财务费用",                                                  codes: "5603,6603",                op: "-" },
-            { name: "其中：利息费用（收以\"-\"号填列）",                         codes: "",                         op: "-" },
-            { name: "加：投资收益（损失以\"-\"号填列）",                         codes: "5101,6111",                op: "+" },
-            { name: "二、营业利润（亏损以\"-\"号填列）",                         codes: "",                         op: "+" },
-            { name: "加：营业外收入",                                            codes: "5301,6301",                op: "+" },
-            { name: "其中：政府补助",                                            codes: "",                         op: "+" },
-            { name: "减：营业外支出",                                            codes: "5801,6711",                op: "-" },
-            { name: "其中：坏账损失",                                            codes: "",                         op: "-" },
-            { name: "无法收回的长期债券投资损失",                                codes: "",                         op: "-" },
-            { name: "无法收回的长期股权投资损失",                                codes: "",                         op: "-" },
-            { name: "自然灾害等不可抗力因素造成的损失",                          codes: "",                         op: "-" },
-            { name: "税收滞纳金",                                                codes: "",                         op: "-" },
-            { name: "三、利润总额（亏损总额以\"-\"号填列）",                     codes: "",                         op: "+" },
-            { name: "减：所得税费用",                                            codes: "5901,6801",                op: "-" },
-            { name: "四、净利润（净亏损以\"-\"号填列）",                         codes: "",                         op: "+" },
+
+        // 行定义：level=缩进, codes=科目前缀, op=+/-, accum=归属累计器
+        const ROWS = [
+            { seq:1,  name:"一、营业收入",                                          level:0, codes:"5001,5002,5051,6001,6002,6011,6051",       op:"+", accum:"op"    },
+            { seq:2,  name:"减：营业成本",                                          level:0, codes:"5401,5402,6401,6402",                      op:"-", accum:"op"    },
+            { seq:3,  name:"税金及附加",                                            level:1, codes:"5403,6403",                                op:"-", accum:"op"    },
+            { seq:4,  name:"其中：消费税",                                          level:2, codes:"",                                         op:"-"               },
+            { seq:5,  name:"城市维护建设税",                                        level:3, codes:"",                                         op:"-"               },
+            { seq:6,  name:"资源税",                                                level:3, codes:"",                                         op:"-"               },
+            { seq:7,  name:"土地增值税",                                            level:3, codes:"",                                         op:"-"               },
+            { seq:8,  name:"城镇土地使用税、房产税、车船税、印花税",               level:3, codes:"",                                         op:"-"               },
+            { seq:9,  name:"教育费附加、矿产资源补偿费、排污费",                   level:3, codes:"",                                         op:"-"               },
+            { seq:10, name:"销售费用",                                              level:1, codes:"5601,6601",                                op:"-", accum:"op"    },
+            { seq:11, name:"其中：商品维修费",                                      level:2, codes:"",                                         op:"-"               },
+            { seq:12, name:"广告费和业务宣传费",                                    level:3, codes:"",                                         op:"-"               },
+            { seq:13, name:"管理费用",                                              level:1, codes:"5602,6602",                                op:"-", accum:"op"    },
+            { seq:14, name:"其中：开办费",                                          level:2, codes:"",                                         op:"-"               },
+            { seq:15, name:"业务招待费",                                            level:3, codes:"",                                         op:"-"               },
+            { seq:16, name:"研究费用",                                              level:3, codes:"",                                         op:"-"               },
+            { seq:17, name:"财务费用",                                              level:1, codes:"5603,6603",                                op:"-", accum:"op"    },
+            { seq:18, name:"其中：利息费用（收入以\"-\"号填列）",                   level:2, codes:"",                                         op:"-"               },
+            { seq:19, name:"加：投资收益（损失以\"-\"号填列）",                     level:2, codes:"5101,6111",                               op:"+", accum:"op"    },
+            { seq:20, name:"二、营业利润（亏损以\"-\"号填列）",                     level:0, codes:"__op__",                                   op:"+"               },
+            { seq:21, name:"加：营业外收入",                                        level:1, codes:"5301,6301",                                op:"+", accum:"total" },
+            { seq:22, name:"其中：政府补助",                                        level:2, codes:"",                                         op:"+"               },
+            { seq:23, name:"减：营业外支出",                                        level:1, codes:"5801,6711",                                op:"-", accum:"total" },
+            { seq:24, name:"其中：坏账损失",                                        level:2, codes:"",                                         op:"-"               },
+            { seq:25, name:"无法收回的长期债券投资损失",                            level:3, codes:"",                                         op:"-"               },
+            { seq:26, name:"无法收回的长期股权投资损失",                            level:3, codes:"",                                         op:"-"               },
+            { seq:27, name:"自然灾害等不可抗力因素造成的损失",                     level:3, codes:"",                                         op:"-"               },
+            { seq:28, name:"税收滞纳金",                                            level:3, codes:"",                                         op:"-"               },
+            { seq:29, name:"三、利润总额（亏损总额以\"-\"号填列）",                 level:0, codes:"__total__",                                op:"+"               },
+            { seq:30, name:"减：所得税费用",                                        level:1, codes:"5901,6801",                                op:"-", accum:"net"   },
+            { seq:31, name:"四、净利润（净亏损以\"-\"号填列）",                     level:0, codes:"__net__",                                  op:"+"               },
         ];
 
-        // 先计算每行金额，null 表示空科目行（小计或无映射的明细）
-        const rawRows = (incomeTemplate && incomeTemplate.length ? incomeTemplate : defaultIncomeRows).map((item) => {
-            const codes = parseCodes(item.codes);
-            const amount = calcTemplateAmount(codes, item.op || "+"); // codes空时返回null
-            return { label: item.name || item.label || "", amount, op: item.op || "+" };
-        });
+        // 计算行金额
+        function calcRows(vArr) {
+            const acc = { op:0, total:0, net:0 };
+            const res = {};
+            ROWS.forEach(row => {
+                const prefixes = parseC(row.codes);
+                let amt = null;
+                if (row.codes.startsWith("__")) {
+                    if (row.codes === "__op__")        { amt = acc.op;    acc.total = acc.op; }
+                    else if (row.codes === "__total__") { amt = acc.total; acc.net = acc.total; }
+                    else if (row.codes === "__net__")   { amt = acc.net; }
+                } else if (prefixes.length > 0) {
+                    amt = calcAmt(vArr, prefixes, row.op);
+                    if (row.accum) acc[row.accum] += (row.op === "+" ? 1 : -1) * amt;
+                }
+                res[row.seq] = amt;
+            });
+            return res;
+        }
 
-        // 小计行自动从上方明细行汇算
-        let runningTotal = 0;
-        const rows = rawRows.map((row) => {
-            if (row.amount !== null) {
-                // 有科目映射的明细行：按符号累加到运行小计
-                const sign = row.op === "-" ? -1 : 1;
-                runningTotal += sign * row.amount;
-                return { label: row.label, amount: row.amount };
-            }
-            // 空科目行：若是汇总行则显示当前累计值，否则留空
-            const lbl = row.label;
-            if (lbl.includes("营业利润") || lbl.includes("利润总额") || lbl.includes("净利润")) {
-                return { label: lbl, amount: runningTotal, isSubtotal: true };
-            }
-            return { label: lbl, amount: null }; // null → 渲染为空单元格
-        });
+        const periodR = calcRows(vPeriod);
+        const ytdR    = calcRows(vYTD);
 
-        const bodyRows = rows.map((row, idx) => {
-            const lineNo = idx + 1;
-            // null → 空单元格；0 也显示出来（明细行有映射才显示）
-            const displayVal = row.amount !== null ? fmt(row.amount) : "";
-            const amount = displayVal;
-            const ytd = displayVal;
-            const firstMonth = displayVal;
-            return `
-                <tr>
-                    <td class="is-row-no">${lineNo}</td>
-                    <td class="is-check"><input type="checkbox"></td>
-                    <td class="is-item">${row.label}</td>
-                    <td class="is-line">${lineNo}</td>
-                    <td class="is-num">${ytd}</td>
-                    ${monthLabels.map((_, i) => `<td class="is-num">${i === 0 ? firstMonth : ""}</td>`).join("")}
-                    <td class="is-num">${amount}</td>
-                </tr>
-            `;
-        }).join("");
+        // 格式化
+        const fmt = n => {
+            if (n === null || n === undefined) return "";
+            if (n === 0) return "";
+            return n.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+        };
+        const fmtCalc = n => {
+            if (n === null || n === undefined) return "";
+            return n.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 });
+        };
+
+        // 可选年份
+        const availYears = [...new Set(allVouchers.map(v => {
+            const p = normVP(v); return p ? parseInt(p.slice(0,4)) : null;
+        }).filter(Boolean))];
+        if (!availYears.includes(new Date().getFullYear())) availYears.push(new Date().getFullYear());
+        availYears.sort();
+
+        const yearOpts  = availYears.map(y => `<option value="${y}" ${y===selYear?'selected':''}>${y}年</option>`).join('');
+        const monthOpts = `<option value="0" ${selMonth===0?'selected':''}>全年</option>` +
+            Array.from({length:12},(_,i)=>i+1).map(m =>
+                `<option value="${m}" ${m===selMonth?'selected':''}>${m}月</option>`).join('');
+        const postOpts = ["全部","已过账","未过账"].map(s =>
+            `<option value="${s}" ${s===selPostStatus?'selected':''}>${s}</option>`).join('');
+
+        const INDENT = [0, 20, 40, 60];
+        const periodLabel = selMonth > 0 ? `${selYear}年${selMonth}月` : `${selYear}年`;
+
+        // 生成表格行
+        let isLineNo = 0;
+        const tableRows = ROWS.map(row => {
+            isLineNo++;
+            const indent = INDENT[row.level] || 0;
+            const bold   = row.level === 0;
+            const isCalc = row.codes.startsWith("__");
+            const ytdAmt  = ytdR[row.seq];
+            const perAmt  = periodR[row.seq];
+            const ytdDisp = isCalc ? fmtCalc(ytdAmt) : fmt(ytdAmt);
+            const perDisp = isCalc ? fmtCalc(perAmt) : fmt(perAmt);
+            return `<tr>
+                <td class="is-row-no">${isLineNo}</td>
+                <td class="is-check"><input type="checkbox"></td>
+                <td class="is-item" style="padding-left:${indent+8}px;${bold?'font-weight:600;':''}">${row.name}</td>
+                <td class="is-line">${row.seq}</td>
+                <td class="is-num">${ytdDisp}</td>
+                <td class="is-num">${perDisp}</td>
+            </tr>`;
+        }).join('');
+
+        // Excel导出（CSV），捕获当前期间数据闭包
+        window.is2Export = function() {
+            let csv = '\uFEFF项目,行次,本年累计金额,本期金额\n';
+            ROWS.forEach(row => {
+                const ic = row.codes.startsWith("__");
+                const y = ic ? fmtCalc(ytdR[row.seq]) : fmt(ytdR[row.seq]);
+                const p = ic ? fmtCalc(periodR[row.seq]) : fmt(periodR[row.seq]);
+                csv += `"${row.name}",${row.seq},"${y}","${p}"\n`;
+            });
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url; a.download = `利润表_${periodLabel}.csv`; a.click();
+            URL.revokeObjectURL(url);
+        };
 
         contentHTML += `
             <div class="income-sheet-page">
                 <div class="income-sheet-toolbar">
                     <div class="income-sheet-field">
-                        <label>会计年度</label>
-                        <select>
-                            <option>${currentYear}</option>
-                            <option>${currentYear - 1}</option>
-                        </select>
+                        <label>年份</label>
+                        <select id="is2-year" style="min-width:90px;">${yearOpts}</select>
+                    </div>
+                    <div class="income-sheet-field">
+                        <label>月份</label>
+                        <select id="is2-month" style="min-width:80px;">${monthOpts}</select>
                     </div>
                     <div class="income-sheet-field">
                         <label>过账状态</label>
-                        <select>
-                            <option>已过账</option>
-                            <option>未过账</option>
-                        </select>
+                        <select id="is2-post">${postOpts}</select>
                     </div>
-                    <button class="btn-primary income-sheet-search">查询</button>
+                    <button class="btn-primary income-sheet-search" onclick="window.is2Query()">查询</button>
                 </div>
 
                 <div class="income-sheet-actions">
                     <div class="income-sheet-action-buttons">
-                        <button class="btn-primary btn-ghost">导出</button>
+                        <button class="btn-primary btn-ghost" onclick="window.is2Export()">导出</button>
                         <button class="btn-primary btn-ghost">打印</button>
                         <button class="btn-primary btn-ghost">设置</button>
                     </div>
@@ -9936,40 +9927,39 @@ function loadContent(moduleCode, element = null) {
                             <tr>
                                 <th style="width:48px;"></th>
                                 <th style="width:48px;"></th>
-                                <th>项目</th>
-                                <th style="width:80px;">行次</th>
-                                <th style="width:110px;">本年累计</th>
-                                ${monthLabels.map(label => `<th style="width:110px;">${label}</th>`).join("")}
-                                <th style="width:110px;">余额</th>
-                            </tr>
-                            <tr class="income-sheet-filter-row">
-                                <th>筛选</th>
-                                <th></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                ${monthLabels.map(() => `<th><input type="text" placeholder=""></th>`).join("")}
-                                <th><input type="text" placeholder=""></th>
+                                <th>项 目</th>
+                                <th style="width:60px;">行次</th>
+                                <th style="width:150px;">本年累计金额</th>
+                                <th style="width:150px;">本期金额</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${bodyRows || '<tr><td colspan="18" style="text-align:center; padding:20px; color:#94a3b8;">暂无数据</td></tr>'}
+                            ${tableRows || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">暂无数据，请先录入凭证</td></tr>'}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="2">合计</td>
+                                <td colspan="2"></td>
+                                <td style="color:#111827;font-weight:600;">利润表（${periodLabel}）</td>
                                 <td></td>
-                                <td></td>
-                                <td class="is-num">${fmt(netProfit)}</td>
-                                ${monthLabels.map((_, i) => `<td class="is-num">${i === 0 ? fmt(netProfit) : ""}</td>`).join("")}
-                                <td class="is-num">${fmt(netProfit)}</td>
+                                <td class="is-num">${fmtCalc(ytdR[31])}</td>
+                                <td class="is-num">${fmtCalc(periodR[31])}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
         `;
+
+        setTimeout(() => {
+            window.is2Query = function() {
+                sessionStorage.setItem("IS_Year",       document.getElementById("is2-year").value);
+                sessionStorage.setItem("IS_Month",      document.getElementById("is2-month").value);
+                sessionStorage.setItem("IS_PostStatus", document.getElementById("is2-post").value);
+                loadContent("ReportIncomeStatement");
+            };
+        }, 0);
     }
+
 
     // =========================================================================
     // 47. 现金流量表 (ReportCashFlow) - [自动分析版]
@@ -10204,14 +10194,6 @@ function loadContent(moduleCode, element = null) {
                                 <th style="width:80px;">行次</th>
                                 <th style="width:110px;">本期金额</th>
                                 <th style="width:110px;">本年累计</th>
-                            </tr>
-                            <tr class="cashflow-sheet-filter-row">
-                                <th>筛选</th>
-                                <th></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
-                                <th><input type="text" placeholder=""></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -13633,7 +13615,7 @@ function loadContent(moduleCode, element = null) {
                         taxRate: 0,
                         entries: [
                             { dir: '借', subjectCode: '2202',   subjectName: '应付账款',       summary: '核销应付账款',   amountType: 'gross',         usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '222105', subjectName: '应交个人所得税', summary: '代扣个税（1%）', amountType: 'flatRate',       flatRate: 0.01, usePaymentMethod: false },
+                            { dir: '贷', subjectCode: '222119', subjectName: '应交个人所得税', summary: '代扣个税（1%）', amountType: 'flatRate',       flatRate: 0.01, usePaymentMethod: false },
                             { dir: '贷', subjectCode: '1002',   subjectName: '银行存款',       summary: '实付司机款',     amountType: 'flatComplement', flatRate: 0.01, usePaymentMethod: false }
                         ]
                     }
@@ -14656,30 +14638,39 @@ function loadContent(moduleCode, element = null) {
         const sortedCodes = Array.from(allCodes).sort();
 
         const rows = sortedCodes.map(code => {
-            // ── 期初余额 = 期初凭证的借贷净额 ──
+            // ── 期末余额方向判断：严格按科目编码首位前缀，不依赖 AcctSubjects.direction 字段 ──
+            // '1'(资产) '5'(成本) '6'(损益-费用) → 借方正常科目
+            // '2'(负债) '3'(共同) '4'(所有者权益/本年利润) → 贷方正常科目
+            const isDebitNormal = (code[0] === '1' || code[0] === '5' || code[0] === '6');
+
+            // 期初余额（来自期初凭证汇总）：借贷净额，正值→借方列，负值→贷方列
             const pr = priorSums[code] || { debit: 0, credit: 0 };
-            const priorNet = pr.debit - pr.credit; // 正=借方余额，负=贷方余额
-            const openingDebit  = priorNet > 0 ? priorNet : 0;
-            const openingCredit = priorNet < 0 ? Math.abs(priorNet) : 0;
+            const priorNet      = pr.debit - pr.credit;
+            const openingDebit  = priorNet > 0 ?  priorNet : 0;
+            const openingCredit = priorNet < 0 ? -priorNet : 0;
 
             const total = sums[code] || { debit: 0, credit: 0 };
             const periodDebit  = total.debit;
             const periodCredit = total.credit;
             const name = nameCache[code] || code;
-            const net = (openingDebit - openingCredit) + (periodDebit - periodCredit);
-            // net > 0 → 借方余额；net < 0 → 贷方余额
-            const endingDebit = net > 0 ? net : 0;
-            const endingCredit = net < 0 ? Math.abs(net) : 0;
-            return {
-                code,
-                name,
-                openingDebit,
-                openingCredit,
-                periodDebit,
-                periodCredit,
-                endingDebit,
-                endingCredit
-            };
+
+            // 期末余额：按余额方向决定列
+            let endingDebit = 0, endingCredit = 0;
+            if (isDebitNormal) {
+                // 借方正常：期末值 = 期初借 - 期初贷 + 本期借 - 本期贷
+                // > 0 填借方；< 0 取绝对值填贷方
+                const n = (openingDebit - openingCredit) + (periodDebit - periodCredit);
+                endingDebit  = n > 0 ?  n : 0;
+                endingCredit = n < 0 ? -n : 0;
+            } else {
+                // 贷方正常：期末值 = 期初贷 - 期初借 + 本期贷 - 本期借
+                // > 0 填贷方；< 0 取绝对值填借方
+                const n = (openingCredit - openingDebit) + (periodCredit - periodDebit);
+                endingCredit = n > 0 ?  n : 0;
+                endingDebit  = n < 0 ? -n : 0;
+            }
+
+            return { code, name, openingDebit, openingCredit, periodDebit, periodCredit, endingDebit, endingCredit };
         });
         // 过滤掉没有任何数据的行（避免空行污染报表）
         const activeRows = rows.filter(r =>
@@ -14736,6 +14727,12 @@ function loadContent(moduleCode, element = null) {
         const diffEnding  = Math.abs(t.endingDebit  - t.endingCredit);
         const allBalanced = diffOpening < 0.01 && diffPeriod < 0.01 && diffEnding < 0.01;
 
+        // 构建差额描述列表（供徽章和横幅共用）
+        const diffParts = [];
+        if (diffOpening >= 0.01) diffParts.push(`期初差额 ${fmt2(diffOpening)}`);
+        if (diffPeriod  >= 0.01) diffParts.push(`本期发生差额 ${fmt2(diffPeriod)}`);
+        if (diffEnding  >= 0.01) diffParts.push(`期末差额 ${fmt2(diffEnding)}`);
+
         // 更新状态徽章
         if (badge) {
             if (allBalanced) {
@@ -14743,11 +14740,28 @@ function loadContent(moduleCode, element = null) {
                 badge.textContent = "✓ 试算平衡";
             } else {
                 badge.className = "tb-balance-badge tb-balance-fail";
-                const parts = [];
-                if (diffOpening >= 0.01) parts.push(`期初差额 ${fmt2(diffOpening)}`);
-                if (diffPeriod  >= 0.01) parts.push(`本期差额 ${fmt2(diffPeriod)}`);
-                if (diffEnding  >= 0.01) parts.push(`期末差额 ${fmt2(diffEnding)}`);
-                badge.textContent = "✗ 不平衡：" + parts.join("；");
+                badge.textContent = "✗ 不平衡：" + diffParts.join("；");
+            }
+        }
+
+        // Bug 4 Fix：醒目红色警告横幅（不平衡时显示在表格上方）
+        const alertEl = document.getElementById("trial-balance-alert");
+        if (alertEl) {
+            if (!allBalanced) {
+                alertEl.innerHTML = `
+                    <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;">
+                        <span style="font-size:26px;line-height:1.3;flex-shrink:0;">⚠️</span>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;color:#b91c1c;margin-bottom:4px;">
+                                底层凭证试算不平衡！差额：${diffParts.join('；')}
+                            </div>
+                            <div style="font-size:13px;color:#dc2626;margin-top:2px;">
+                                请检查凭证是否存在单边分录或金额录入错误，确保"有借必有贷，借贷必相等"。
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                alertEl.innerHTML = '';
             }
         }
 

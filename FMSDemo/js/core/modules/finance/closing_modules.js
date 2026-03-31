@@ -12,17 +12,19 @@
 
     // 默认方案数据 (防止页面显示为空)
     function getFactoryDefaultSchemes() {
+        const std = localStorage.getItem('AccountingStandard') || 'enterprise';
+        const taxCode = std === 'enterprise' ? '6403' : '5403';
         return [
-            { 
-                id: 's-1', name: '计提税金及附加', ledger: '总账', word: '转', status: '启用', lastPeriod: '-', 
+            {
+                id: 's-1', name: '计提税金及附加', ledger: '总账', word: '转', status: '启用', lastPeriod: '-',
                 summary: '计提本期城建税、教育费附加、地方教育附加',
                 lines: [
-                    { digest: '城市维护建设税', baseCode: '2221', ratio: 7, debitName: '6403 税金及附加', creditName: '222102 应交城市维护建设税', aux: '项目' },
-                    { digest: '教育附加',       baseCode: '2221', ratio: 3, debitName: '6403 税金及附加', creditName: '222103 应交教育费附加', aux: '项目' },
-                    { digest: '地方教育附加',   baseCode: '2221', ratio: 2, debitName: '6403 税金及附加', creditName: '222104 应交地方教育附加', aux: '项目' }
+                    // 计税基数 = (22210107 销项税额 - 22210101 进项税额) × 比率
+                    { digest: '城市维护建设税', baseCode: '22210107', deductCode: '22210101', ratio: 7, debitName: `${taxCode} 税金及附加`, creditName: '222115 应交城市维护建设税', aux: '项目' },
+                    { digest: '教育附加',       baseCode: '22210107', deductCode: '22210101', ratio: 3, debitName: `${taxCode} 税金及附加`, creditName: '222120 应交教育费附加',      aux: '项目' },
+                    { digest: '地方教育附加',   baseCode: '22210107', deductCode: '22210101', ratio: 2, debitName: `${taxCode} 税金及附加`, creditName: '222125 应交地方教育附加税', aux: '项目' }
                 ]
             }
-        
         ];
     }
 
@@ -162,14 +164,39 @@
             schemes = getFactoryDefaultSchemes();
             lsSet('QM_AdvancedSchemes', schemes);
         } else {
-            // 迁移：旧版 debitName 没有科目代码，补充 6403
             let migrated = false;
+            const stdM = localStorage.getItem('AccountingStandard') || 'enterprise';
+            const taxCodeM = stdM === 'enterprise' ? '6403' : '5403';
+
+            // ── 全量迁移：所有方案 ──
             schemes.forEach(s => {
                 (s.lines || []).forEach(l => {
-                    if (l.debitName === '税金及附加') { l.debitName = '6403 税金及附加'; migrated = true; }
-                    if (l.baseCode === '222101') { l.baseCode = '2221'; migrated = true; }
+                    // 旧版 debitName 没有科目代码
+                    if (l.debitName === '税金及附加') { l.debitName = `${taxCodeM} 税金及附加`; migrated = true; }
+                    // 补充缺失的 deductCode 字段
+                    if (!('deductCode' in l)) { l.deductCode = ''; migrated = true; }
                 });
             });
+
+            // ── s-1 专项迁移：升级到正确科目体系 ──
+            const s1 = schemes.find(s => s.id === 's-1');
+            if (s1) {
+                (s1.lines || []).forEach(l => {
+                    // 基数科目：旧 2221 / 222101 → 22210107 应交增值税-销项税额
+                    if (l.baseCode === '2221' || l.baseCode === '222101') { l.baseCode = '22210107'; migrated = true; }
+                    // 扣减科目：空 → 22210101 应交增值税-进项税额
+                    if (!l.deductCode) { l.deductCode = '22210101'; migrated = true; }
+                    // 贷方科目：旧编码 → 正确编码
+                    if (l.creditName === '222102 应交城市维护建设税') { l.creditName = '222115 应交城市维护建设税'; migrated = true; }
+                    if (l.creditName === '222103 应交教育费附加')     { l.creditName = '222120 应交教育费附加';      migrated = true; }
+                    if (l.creditName === '222104 应交地方教育附加')   { l.creditName = '222125 应交地方教育附加税'; migrated = true; }
+                    // 借方科目：同步当前会计准则
+                    if (l.debitName === '6403 税金及附加' || l.debitName === '5403 税金及附加') {
+                        l.debitName = `${taxCodeM} 税金及附加`; migrated = true;
+                    }
+                });
+            }
+
             if (migrated) lsSet('QM_AdvancedSchemes', schemes);
         }
         const editingId = lsGet('QM_At_EditingId') || null;
@@ -197,7 +224,7 @@
                         }
                     });
                 });
-                return Math.max(c - d, 0);
+                return { net: Math.max(c - d, 0), netDebit: Math.max(d - c, 0) };
             }
 
             // 先按期间过滤
@@ -206,12 +233,11 @@
                 const vP = (v.period || (v.date||'').substring(0,7) || '').substring(0,7);
                 return vP === targetPeriod;
             });
-            const netWithPeriod = calcNet(periodV);
-            if (netWithPeriod > 0) return { net: netWithPeriod };
+            const resWithPeriod = calcNet(periodV);
+            if (resWithPeriod.net > 0 || resWithPeriod.netDebit > 0) return resWithPeriod;
 
             // 回退：不限期间（防止期间标记不一致导致永远找不到）
-            const netAll = calcNet(allV);
-            return { net: netAll };
+            return calcNet(allV);
         }
 
         // 从 "222102 应交城市维护建设税" 中提取科目代码（首段纯数字）
@@ -309,14 +335,19 @@
                                     <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:13px; color:#606266;">字:</span><select class="at-input" id="cfg-word"><option value="转">转</option><option value="记">记</option></select></div>
                                 </div>
                                 <table class="at-table" style="box-shadow:none; border:1px solid #d9ecff;">
-                                    <thead><tr style="background:#e6f1fc;"><th>摘要名称</th><th style="width:180px;">计算基数科目</th><th style="width:80px;">比例(%)</th><th style="width:180px;">借方科目</th><th style="width:180px;">贷方科目</th><th>辅助项</th><th style="width:40px;"></th></tr></thead>
+                                    <thead><tr style="background:#e6f1fc;"><th>摘要名称</th><th style="width:160px;">计算基数科目</th><th style="width:160px;">基数扣减科目(-)</th><th style="width:70px;">比例(%)</th><th style="width:160px;">借方科目</th><th style="width:160px;">贷方科目</th><th>辅助项</th><th style="width:40px;"></th></tr></thead>
                                     <tbody id="cfg-body">
                                         ${(s.lines||[]).map(l => {
                                             const bal = getBal(l.baseCode);
+                                            const deductBal = l.deductCode ? getBal(l.deductCode) : { net: 0, netDebit: 0 };
+                                            // 扣减科目取借方余额（进项税本质是借方），避免和基数贷方双重计算
+                                            const deductAmt = deductBal.netDebit || 0;
+                                            const netBase = Math.max(bal.net - deductAmt, 0);
                                             return `
                                             <tr>
                                                 <td><input class="at-input" style="width:100%;" name="l-digest" value="${l.digest}"></td>
-                                                <td title="当前余额: ¥${fmt(bal.net)}"><select class="at-input" style="width:100%;" name="l-base">${buildBaseOpts(l.baseCode)}</select></td>
+                                                <td title="发生额: ¥${fmt(bal.net)}"><select class="at-input" style="width:100%;" name="l-base">${buildBaseOpts(l.baseCode)}</select></td>
+                                                <td title="扣减额: ¥${fmt(deductAmt)}  计税基数: ¥${fmt(netBase)}"><select class="at-input" style="width:100%;" name="l-deduct">${buildBaseOpts(l.deductCode||'')}</select></td>
                                                 <td><input class="at-input" style="width:100%;" name="l-ratio" type="number" value="${l.ratio}"></td>
                                                 <td><select class="at-input" style="width:100%;" name="l-debit">${buildNameOpts(l.debitName||'')}</select></td>
                                                 <td><select class="at-input" style="width:100%;" name="l-credit">${buildNameOpts(l.creditName||'')}</select></td>
@@ -354,12 +385,13 @@
             s.word = document.getElementById('cfg-word').value;
             const rows = document.querySelectorAll('#cfg-body tr');
             s.lines = Array.from(rows).map(r => ({
-                digest: r.querySelector('[name="l-digest"]').value,
-                baseCode: r.querySelector('[name="l-base"]').value,
-                ratio: parseFloat(r.querySelector('[name="l-ratio"]').value) || 0,
-                debitName: r.querySelector('[name="l-debit"]').value,
+                digest:     r.querySelector('[name="l-digest"]').value,
+                baseCode:   r.querySelector('[name="l-base"]').value,
+                deductCode: r.querySelector('[name="l-deduct"]').value,
+                ratio:      parseFloat(r.querySelector('[name="l-ratio"]').value) || 0,
+                debitName:  r.querySelector('[name="l-debit"]').value,
                 creditName: r.querySelector('[name="l-credit"]').value,
-                aux: r.querySelector('[name="l-aux"]').value
+                aux:        r.querySelector('[name="l-aux"]').value
             }));
             lsSet('QM_AdvancedSchemes', list); alert('✅ 保存成功'); window.atEdit(null);
         };
@@ -380,7 +412,15 @@
                 let total = 0;
                 s.lines.forEach(l => {
                     const bal = getBal(l.baseCode);
-                    const amt = Math.round(bal.net * (l.ratio / 100) * 100) / 100;
+                    // 基数扣减：(基数发生额 - 扣减科目发生额) × 比例
+                    let netBase = bal.net;
+                    if (l.deductCode) {
+                        const deductBal = getBal(l.deductCode);
+                        // 扣减科目只取借方余额（进项税），不取贷方，防止父科目双向命中导致互相抵消为0
+                        const deductAmt = deductBal.netDebit || 0;
+                        netBase = Math.max(netBase - deductAmt, 0);
+                    }
+                    const amt = Math.round(netBase * (l.ratio / 100) * 100) / 100;
                     if(amt <= 0) return;
                     total += amt;
                     // 借方
@@ -467,6 +507,7 @@
             tr.innerHTML = `
                 <td><input class="at-input" style="width:100%;" name="l-digest"></td>
                 <td><select class="at-input" style="width:100%;" name="l-base">${buildBaseOpts('')}</select></td>
+                <td><select class="at-input" style="width:100%;" name="l-deduct">${buildBaseOpts('')}</select></td>
                 <td><input class="at-input" style="width:100%;" name="l-ratio" type="number" value="100"></td>
                 <td><select class="at-input" style="width:100%;" name="l-debit">${buildNameOpts('')}</select></td>
                 <td><select class="at-input" style="width:100%;" name="l-credit">${buildNameOpts('')}</select></td>
@@ -492,26 +533,60 @@
         const std = (localStorage.getItem('AccountingStandard') || 'enterprise');
         const profitCode = std === 'enterprise' ? '4103' : '3103';
 
-        // 默认模板：收入科目 & 成本费用科目
+        // 默认模板：兼容小企业准则(5xxx)和企业准则(6xxx)两套科目
+        // 执行时余额为0的科目会被自动跳过，无需按准则分别配置
         function getDefaultTpl() {
             return {
-                income: [{ id: 'i1', ledger: '', codes: '5001,6001,6002,6051,6101,6111,6301,6302', targetCode: profitCode, word: '转' }],
-                cost:   [{ id: 'c1', ledger: '', codes: '6401,6402,6403,6601,6602,6603,6701,6711,6801', targetCode: profitCode, word: '转' }]
+                income: [{ id: 'i1', ledger: '总账',
+                    codes: '5001,5051,5101,5201,5301,6001,6002,6051,6101,6111,6301,6302',
+                    targetCode: profitCode, word: '转' }],
+                cost:   [{ id: 'c1', ledger: '总账',
+                    codes: '5401,5402,5403,5601,5602,5603,5701,5801,5901,6401,6402,6403,6601,6602,6603,6701,6711,6801',
+                    targetCode: profitCode, word: '转' }]
             };
         }
         let tpl = lsGet('QM_ProfitTpl') || getDefaultTpl();
         if (!tpl.income) tpl.income = getDefaultTpl().income;
         if (!tpl.cost)   tpl.cost   = getDefaultTpl().cost;
 
+        // ── 迁移：将旧模板中遗漏的损益科目自动补入 ──
+        (function migrateTpl() {
+            const defIncomeCodes = getDefaultTpl().income[0].codes.split(',');
+            const defCostCodes   = getDefaultTpl().cost[0].codes.split(',');
+            let changed = false;
+            tpl.income.forEach(row => {
+                const cur = (row.codes||'').split(',').map(c=>c.trim()).filter(Boolean);
+                defIncomeCodes.forEach(c => { if (!cur.includes(c)) { cur.push(c); changed = true; } });
+                row.codes = cur.join(',');
+            });
+            tpl.cost.forEach(row => {
+                const cur = (row.codes||'').split(',').map(c=>c.trim()).filter(Boolean);
+                defCostCodes.forEach(c => { if (!cur.includes(c)) { cur.push(c); changed = true; } });
+                row.codes = cur.join(',');
+            });
+            if (changed) lsSet('QM_ProfitTpl', tpl);
+        })();
+
         // 从 sessionStorage 读取科目名称，找不到时从已有凭证行中反查
+        // 常用科目硬编码兜底，防止 AcctSubjects 未初始化时显示"-"
+        const BUILTIN_NAMES = {
+            '3103': '本年利润', '4103': '本年利润',
+            '5001': '生产成本', '5401': '主营业务成本',
+            '5403': '税金及附加', '6001': '主营业务收入',
+            '6401': '主营业务成本', '6402': '其他业务成本',
+            '6403': '税金及附加', '6601': '销售费用',
+            '6602': '管理费用', '6603': '财务费用',
+            '6711': '营业外支出', '6801': '所得税费用',
+        };
         function getSubjectName(code) {
             const codeStr = code.toString().trim();
+            // 1. 先查 AcctSubjects
             try {
                 const subjects = JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]');
                 const found = subjects.find(s => (s.code||'').toString().trim() === codeStr);
                 if (found && found.name) return found.name;
             } catch(e) {}
-            // 兜底：从已有凭证行的 account 字段中反查名称
+            // 2. 从已有凭证行的 account 字段反查
             try {
                 for (const v of fetchAllVouchers()) {
                     for (const l of (v.lines || [])) {
@@ -523,7 +598,8 @@
                     }
                 }
             } catch(e) {}
-            return '';
+            // 3. 硬编码兜底
+            return BUILTIN_NAMES[codeStr] || '';
         }
 
         // 计算某科目本期净余额（debit方向或credit方向）
@@ -545,6 +621,30 @@
                 });
             });
             return { debit: d, credit: c, netCredit: c - d, netDebit: d - c };
+        }
+
+        // Bug 2 Fix：按实际凭证末级编码汇总本期余额（仅向下前缀匹配，避免父级反向汇总）
+        // 返回 { realCode: {debit, credit}, ... }，每个 key 是凭证中真实使用的科目编码
+        function getLeafPeriodBalances(templateCode) {
+            const allV = fetchAllVouchers();
+            const prefix = templateCode.toString().trim().replace(/\D/g, '');
+            const leafMap = {};
+            allV.forEach(v => {
+                const vP = v.period || (v.date || '').substring(0, 7);
+                if (vP !== period) return;
+                if (!['已记账', '已过账', '已审核', '待审核'].includes(v.status)) return;
+                (v.lines || []).forEach(l => {
+                    const raw = (l.accountCode || l.account || '').toString().trim()
+                        .split(/[\s\u3000]/)[0].replace(/\D/g, '');
+                    if (!raw) return;
+                    // 仅向下匹配：凭证科目以模板科目编码开头（含完全相等），不做反向父级汇总
+                    if (!raw.startsWith(prefix)) return;
+                    if (!leafMap[raw]) leafMap[raw] = { debit: 0, credit: 0 };
+                    leafMap[raw].debit  += parseFloat((l.debit  || '0').toString().replace(/,/g, '')) || 0;
+                    leafMap[raw].credit += parseFloat((l.credit || '0').toString().replace(/,/g, '')) || 0;
+                });
+            });
+            return leafMap;
         }
 
         // 获取所有科目（用于 picker）
@@ -580,31 +680,70 @@
             return `<option value="">-请选择-</option>${baseOpts}${subjOpts}`;
         }
 
+        // ── 标签选择器：渲染 wrap 内的 tags ──
+        function buildTagsHtml(rowId, type_, selectedCodes) {
+            const subjects = getAllSubj();
+            if (!selectedCodes.length) return `<span class="cw-tag-ph">点击选择科目...</span>`;
+            return selectedCodes.map(code => {
+                const s = subjects.find(s => s.code === code);
+                const label = s ? `${s.code} ${s.name}` : code;
+                return `<span class="cw-tag">${label}<i class="cw-tag-x" onclick="window.cwTagRemove('${type_}','${rowId}','${code}',event)">×</i></span>`;
+            }).join('');
+        }
+
+        // ── 标签选择器：渲染下拉面板的 checkbox 列表 ──
+        function buildDropItems(rowId, type_, selectedCodes) {
+            const subjects = getAllSubj();
+            // 损益/成本类排最前，其余类型置后
+            const sorted = [...subjects].sort((a, b) => {
+                const apl = (a.type === '损益' || a.type === '成本') ? 0 : 1;
+                const bpl = (b.type === '损益' || b.type === '成本') ? 0 : 1;
+                return apl - bpl || (a.code||'').localeCompare(b.code||'');
+            });
+            let lastGroup = '';
+            return sorted.map(s => {
+                const isPL = s.type === '损益' || s.type === '成本';
+                const group = isPL ? '损益/成本类' : '其他科目';
+                let header = '';
+                if (group !== lastGroup) {
+                    lastGroup = group;
+                    header = `<div style="font-size:11px;color:#9ca3af;padding:4px 4px 2px;font-weight:600;letter-spacing:.5px;">${group}</div>`;
+                }
+                const chk = selectedCodes.includes(s.code) ? 'checked' : '';
+                const color = isPL ? '#111827' : '#6b7280';
+                return `${header}<label class="cw-di" style="color:${color};">
+                    <input type="checkbox" ${chk} onchange="window.cwTagCheck('${type_}','${rowId}','${s.code}',this.checked)">
+                    <span>${s.code} ${s.name}</span>
+                </label>`;
+            }).join('');
+        }
+
         // 渲染模板行
         function renderRows(arr, type) {
             if (!arr.length) return `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:12px;">暂无配置，点击"+ 新增"添加</td></tr>`;
-            return arr.map((r, i) => `
+            return arr.map((r, i) => {
+                const selectedCodes = (r.codes||'').split(',').map(c=>c.trim()).filter(Boolean);
+                return `
             <tr data-id="${r.id}" data-type="${type}">
                 <td style="text-align:center;">${i+1}</td>
                 <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','ledger',this.value)">
                     <option value="">-请选择-</option>
                     <option value="总账" ${r.ledger==='总账'?'selected':''}>总账</option>
                 </select></td>
-                <td>
-                    <div style="position:relative;display:inline-block;width:100%;">
-                        <div style="display:flex;align-items:center;gap:4px;">
-                            <input class="cw-inp" id="codes-${r.id}" style="flex:1;min-width:180px;" value="${r.codes}"
-                                onchange="window.cwUpdateField('${type}','${r.id}','codes',this.value)"
-                                placeholder="如: 6001,6002,6301">
-                            <button type="button"
-                                onclick="window.cwPickerToggle('${r.id}')"
-                                style="padding:4px 8px;font-size:12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0;">选科目 ▾</button>
+                <td style="position:relative;min-width:280px;">
+                    <div class="cw-tag-wrap" id="tw-${r.id}" onclick="window.cwTagOpen('${r.id}',event)">
+                        ${buildTagsHtml(r.id, type, selectedCodes)}
+                        <i class="cw-tag-arrow">▾</i>
+                    </div>
+                    <div class="cw-tag-drop" id="td-${r.id}">
+                        <div style="padding:6px 6px 4px;">
+                            <input type="text" class="cw-inp" placeholder="搜索科目编码或名称..."
+                                style="width:100%;font-size:12px;"
+                                oninput="window.cwTagFilter('${r.id}',this.value)"
+                                onclick="event.stopPropagation()">
                         </div>
-                        <div id="spk-${r.id}" style="display:none;position:absolute;z-index:99999;top:calc(100% + 3px);left:0;min-width:300px;max-height:270px;overflow-y:auto;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:6px;">
-                            ${buildSubPicker(r.id, r.codes, type)}
-                            <div style="text-align:right;padding:4px 6px 2px;border-top:1px solid #f0f0f0;margin-top:4px;">
-                                <button onclick="window.cwPickerToggle('${r.id}')" style="padding:3px 12px;font-size:12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;">关闭</button>
-                            </div>
+                        <div id="tl-${r.id}" style="max-height:220px;overflow-y:auto;padding:0 6px 6px;">
+                            ${buildDropItems(r.id, type, selectedCodes)}
                         </div>
                     </div>
                 </td>
@@ -614,7 +753,8 @@
                     <option value="记" ${r.word==='记'?'selected':''}>记</option>
                 </select></td>
                 <td><button onclick="window.cwDelRow('${type}','${r.id}')" style="color:#ef4444;background:none;border:none;cursor:pointer;font-weight:700;">删除</button></td>
-            </tr>`).join('');
+            </tr>`;
+            }).join('');
         }
 
         contentArea.innerHTML = `
@@ -631,6 +771,33 @@
             .cw-inp { border:1px solid #d1d5db; border-radius:5px; padding:6px 8px; font-size:13px; }
             .cw-sel { border:1px solid #d1d5db; border-radius:5px; padding:6px 8px; font-size:13px; }
             .cw-btn { padding:7px 16px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; border:none; }
+            /* ── 标签选择器 ── */
+            .cw-tag-wrap {
+                min-height:36px; padding:4px 28px 4px 6px; border:1px solid #d1d5db; border-radius:5px;
+                background:#fff; cursor:pointer; display:flex; flex-wrap:wrap; gap:4px; align-items:center;
+                position:relative; user-select:none;
+            }
+            .cw-tag-wrap:hover { border-color:#6366f1; }
+            .cw-tag-arrow { position:absolute; right:8px; top:50%; transform:translateY(-50%); color:#9ca3af; font-style:normal; font-size:11px; pointer-events:none; }
+            .cw-tag-ph { color:#aaa; font-size:12px; }
+            .cw-tag {
+                display:inline-flex; align-items:center; gap:3px; background:#eff6ff; color:#1d4ed8;
+                border:1px solid #bfdbfe; border-radius:3px; padding:2px 5px; font-size:12px; line-height:1.4;
+            }
+            .cw-tag-x { cursor:pointer; color:#93c5fd; font-style:normal; font-size:14px; line-height:1; margin-left:1px; }
+            .cw-tag-x:hover { color:#ef4444; }
+            .cw-tag-drop {
+                display:none; position:absolute; z-index:9999; left:0; top:calc(100% + 3px);
+                width:320px; background:#fff; border:1px solid #d1d5db; border-radius:6px;
+                box-shadow:0 8px 24px rgba(0,0,0,0.12);
+            }
+            .cw-tag-drop.open { display:block; }
+            .cw-di {
+                display:flex; align-items:center; gap:6px; padding:5px 6px; font-size:12px;
+                cursor:pointer; border-radius:3px;
+            }
+            .cw-di:hover { background:#f0f9ff; }
+            .cw-di input[type=checkbox] { flex-shrink:0; cursor:pointer; accent-color:#6366f1; }
         </style>
         <div class="cw-wrap">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -735,18 +902,99 @@
             el.style.display = el.style.display === 'none' ? 'block' : 'none';
         };
 
-        // ── 科目 picker 勾选变化 ──
-        window.cwPickerChange = function(type, id, code, checked) {
+        // ── 标签选择器：展开/收起下拉 ──
+        window.cwTagOpen = function(rowId, event) {
+            event.stopPropagation();
+            const drop = document.getElementById('td-' + rowId);
+            if (!drop) return;
+            const isOpen = drop.classList.contains('open');
+            // 关闭其他所有下拉
+            document.querySelectorAll('.cw-tag-drop.open').forEach(el => el.classList.remove('open'));
+            if (!isOpen) {
+                drop.classList.add('open');
+                // 自动聚焦搜索框
+                const inp = drop.querySelector('input[type=text]');
+                if (inp) setTimeout(() => inp.focus(), 30);
+            }
+        };
+
+        // ── 标签选择器：搜索过滤 ──
+        window.cwTagFilter = function(rowId, query) {
+            const list = document.getElementById('tl-' + rowId);
+            if (!list) return;
+            const q = (query || '').toLowerCase();
+            list.querySelectorAll('.cw-di').forEach(el => {
+                const text = el.textContent.toLowerCase();
+                el.style.display = (!q || text.includes(q)) ? '' : 'none';
+            });
+            // 分组 header：如该组下所有 cw-di 都隐藏则也隐藏 header
+            list.querySelectorAll('div').forEach(header => {
+                if (!header.classList.contains('cw-di')) {
+                    let next = header.nextElementSibling;
+                    let allHidden = true;
+                    while (next && !next.tagName.match(/^DIV$/i)) { next = next.nextElementSibling; }
+                    // 简单处理：有查询词时隐藏分组标签避免干扰
+                    header.style.display = q ? 'none' : '';
+                }
+            });
+        };
+
+        // ── 标签选择器：checkbox 勾选/取消 ──
+        window.cwTagCheck = function(type, id, code, checked) {
             const arr = type === 'income' ? tpl.income : tpl.cost;
             const row = arr.find(r => r.id === id);
             if (!row) return;
-            let codes = (row.codes || '').split(',').map(c => c.trim()).filter(Boolean);
+            let codes = (row.codes||'').split(',').map(c=>c.trim()).filter(Boolean);
             if (checked) { if (!codes.includes(code)) codes.push(code); }
-            else { codes = codes.filter(c => c !== code); }
+            else codes = codes.filter(c => c !== code);
             row.codes = codes.join(',');
-            const inp = document.getElementById('codes-' + id);
-            if (inp) inp.value = row.codes;
+            window.cwTagRefreshWrap(type, id);
         };
+
+        // ── 标签选择器：点 × 移除标签 ──
+        window.cwTagRemove = function(type, id, code, event) {
+            event.stopPropagation();
+            // 同步取消 dropdown 中的 checkbox
+            const list = document.getElementById('tl-' + id);
+            if (list) {
+                list.querySelectorAll('.cw-di input[type=checkbox]').forEach(cb => {
+                    const span = cb.nextElementSibling;
+                    if (span && span.textContent.trim().startsWith(code + ' ') ||
+                        (span && span.textContent.trim() === code)) cb.checked = false;
+                });
+            }
+            window.cwTagCheck(type, id, code, false);
+        };
+
+        // ── 标签选择器：刷新 wrap 显示 ──
+        window.cwTagRefreshWrap = function(type, id) {
+            const wrap = document.getElementById('tw-' + id);
+            if (!wrap) return;
+            const arr = type === 'income' ? tpl.income : tpl.cost;
+            const row = arr.find(r => r.id === id);
+            if (!row) return;
+            const subjects = getAllSubj();
+            const selectedCodes = (row.codes||'').split(',').map(c=>c.trim()).filter(Boolean);
+            let html = '';
+            if (!selectedCodes.length) {
+                html = '<span class="cw-tag-ph">点击选择科目...</span>';
+            } else {
+                html = selectedCodes.map(code => {
+                    const s = subjects.find(s => s.code === code);
+                    const label = s ? `${s.code} ${s.name}` : code;
+                    return `<span class="cw-tag">${label}<i class="cw-tag-x" onclick="window.cwTagRemove('${type}','${id}','${code}',event)">×</i></span>`;
+                }).join('');
+            }
+            wrap.innerHTML = html + '<i class="cw-tag-arrow">▾</i>';
+        };
+
+        // ── 点击页面其他区域关闭所有下拉 ──
+        if (!window._cwTagDocListener) {
+            window._cwTagDocListener = true;
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.cw-tag-drop.open').forEach(el => el.classList.remove('open'));
+            });
+        }
 
         // ── 重新结转：删除本期期末结转凭证，清除历史记录和标记，重新执行 ──
         window.cwReExecute = function() {
@@ -782,20 +1030,26 @@
             const newVouchers = [];
             const previewLines = [];
 
-            // ── 处理收入结转（借：收入科目，贷：本年利润）──
+            // ── 处理收入结转（借：收入科目末级，贷：本年利润）──
             tpl.income.forEach(row => {
                 if (!row.codes || !row.targetCode) return;
                 const codes = row.codes.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
                 const entryLines = [];
                 let total = 0;
+                // Bug 2 Fix：使用 getLeafPeriodBalances 按末级实际编码取数，防止父级汇总重复计量
+                const seenIncome = new Set();
                 codes.forEach(code => {
-                    const bal = getPeriodBalance(code);
-                    const amt = Math.round(bal.netCredit * 100) / 100;
-                    if (amt <= 0) return;
-                    const name = getSubjectName(code);
-                    entryLines.push({ summary: `结转${name||code}`, accountCode: code, account: name ? `${code} ${name}` : code, debit: amt.toFixed(2), credit: '' });
-                    previewLines.push({ summary: `结转${name||code}`, code, name, debit: amt.toFixed(2), credit: '' });
-                    total += amt;
+                    const leafMap = getLeafPeriodBalances(code);
+                    Object.entries(leafMap).forEach(([realCode, bal]) => {
+                        if (seenIncome.has(realCode)) return; // 防止多个模板科目涵盖同一末级重复处理
+                        seenIncome.add(realCode);
+                        const amt = Math.round((bal.credit - bal.debit) * 100) / 100;
+                        if (amt <= 0) return;
+                        const name = getSubjectName(realCode);
+                        entryLines.push({ summary: `结转${name||realCode}`, accountCode: realCode, account: name ? `${realCode} ${name}` : realCode, debit: amt.toFixed(2), credit: '' });
+                        previewLines.push({ summary: `结转${name||realCode}`, code: realCode, name, debit: amt.toFixed(2), credit: '' });
+                        total += amt;
+                    });
                 });
                 if (entryLines.length > 0) {
                     const tName = getSubjectName(row.targetCode);
@@ -806,20 +1060,26 @@
                 }
             });
 
-            // ── 处理成本费用结转（借：本年利润，贷：成本费用科目）──
+            // ── 处理成本费用结转（借：本年利润，贷：成本费用科目末级）──
             tpl.cost.forEach(row => {
                 if (!row.codes || !row.targetCode) return;
                 const codes = row.codes.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
                 const entryLines = [];
                 let total = 0;
+                // Bug 2 Fix：使用 getLeafPeriodBalances 按末级实际编码取数
+                const seenCost = new Set();
                 codes.forEach(code => {
-                    const bal = getPeriodBalance(code);
-                    const amt = Math.round(bal.netDebit * 100) / 100;
-                    if (amt <= 0) return;
-                    const name = getSubjectName(code);
-                    entryLines.push({ summary: `结转${name||code}`, accountCode: code, account: name ? `${code} ${name}` : code, debit: '', credit: amt.toFixed(2) });
-                    previewLines.push({ summary: `结转${name||code}`, code, name, debit: '', credit: amt.toFixed(2) });
-                    total += amt;
+                    const leafMap = getLeafPeriodBalances(code);
+                    Object.entries(leafMap).forEach(([realCode, bal]) => {
+                        if (seenCost.has(realCode)) return;
+                        seenCost.add(realCode);
+                        const amt = Math.round((bal.debit - bal.credit) * 100) / 100;
+                        if (amt <= 0) return;
+                        const name = getSubjectName(realCode);
+                        entryLines.push({ summary: `结转${name||realCode}`, accountCode: realCode, account: name ? `${realCode} ${name}` : realCode, debit: '', credit: amt.toFixed(2) });
+                        previewLines.push({ summary: `结转${name||realCode}`, code: realCode, name, debit: '', credit: amt.toFixed(2) });
+                        total += amt;
+                    });
                 });
                 if (entryLines.length > 0) {
                     const tName = getSubjectName(row.targetCode);

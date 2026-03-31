@@ -862,6 +862,15 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
         // 2. 排序：按科目编码排序，保证父子顺序
         storedAccounts.sort((a, b) => a.code.localeCompare(b.code));
 
+        // Bug 3 Fix：检测科目编码重复（同一编码对应多条记录或多个名称）
+        const _dupCodeMap = {};
+        storedAccounts.forEach(s => {
+            if (!s.code) return;
+            if (!_dupCodeMap[s.code]) _dupCodeMap[s.code] = [];
+            _dupCodeMap[s.code].push(s.name || '(无名称)');
+        });
+        const _dupCodes = Object.entries(_dupCodeMap).filter(([, names]) => names.length > 1);
+
         // 3. 生成表格 HTML
         const subjectSetting = getSubjectCodeSetting();
         const getSubjectLevelByCode = (code) => {
@@ -873,16 +882,25 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
             return 1;
         };
 
+        // 从两套准则模板构建兜底名称映射，防止孤立条目显示空名
+        const _subjFallbackMap = {};
+        try {
+            (ACCOUNTING_STANDARD_TEMPLATES.small || [])
+                .concat(ACCOUNTING_STANDARD_TEMPLATES.enterprise || [])
+                .forEach(s => { if (s.code && s.name && !_subjFallbackMap[s.code]) _subjFallbackMap[s.code] = s.name; });
+        } catch(e) {}
+
         const buildSubjectRows = (list) => list.map((item) => {
             const statusClass = item.status === "启用" ? "status-enabled" : "status-disabled";
             const controlDirection = item.controlDirection || "否";
+            const displayName = item.name || _subjFallbackMap[item.code] || '';
             return `
-                        <tr id="row-${item.code}" data-code="${item.code}" data-name="${item.name}" data-type="${item.type}">
+                        <tr id="row-${item.code}" data-code="${item.code}" data-name="${displayName}" data-type="${item.type}">
                             <td style="text-align:center;">
                                 <input type="checkbox" class="subject-select" data-code="${item.code}">
                             </td>
                             <td class="val-code"><strong>${item.code}</strong></td>
-                            <td class="val-name">${item.name}</td>
+                            <td class="val-name">${displayName}</td>
                             <td>${item.type}</td>
                             <td>${item.aux || "-"}</td>
                             <td class="val-dir">${item.direction}</td>
@@ -1084,7 +1102,27 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                             <button class="btn-primary" onclick="searchSubjects()">查询</button>
                         </div>
                     </div>
-                    
+
+                    ${_dupCodes.length > 0 ? `
+                    <div id="subj-dup-alert" style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;">
+                        <span style="font-size:24px;line-height:1.3;flex-shrink:0;">⚠️</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;color:#b91c1c;margin-bottom:6px;">
+                                检测到 ${_dupCodes.length} 个科目编码重复 —— 可能导致凭证科目引用混乱！
+                            </div>
+                            <div style="font-size:13px;color:#dc2626;line-height:2;margin-bottom:8px;">
+                                ${_dupCodes.map(([code, names]) =>
+                                    `<span style="background:#fff1f2;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;margin:2px 4px;display:inline-block;">
+                                        <b>${code}</b>：${names.join(' / ')}
+                                    </span>`
+                                ).join('')}
+                            </div>
+                            <button class="btn-primary btn-danger" style="font-size:12px;" onclick="window.deduplicateSubjects()">
+                                一键去重（每个编码保留最后一条）
+                            </button>
+                        </div>
+                    </div>` : ''}
+
                     <div class="subject-toolbar">
                         <button class="btn-primary" onclick="addSubject()">+ 添加</button>
                         <button class="btn-primary" onclick="addSubjectSameLevel()">+ 添加同级</button>
@@ -1206,6 +1244,25 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                 window.renderSubjectTablePage(1);
             }
         }, 0);
+
+        // Bug 3 Fix：一键去重——每个科目编码只保留最后一条（后来者优先）
+        window.deduplicateSubjects = function () {
+            if (!confirm('将对科目列表执行去重：每个编码只保留最后一条记录，重复条目将被删除。确认继续？')) return;
+            let accounts = [];
+            try { accounts = JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]'); } catch(e) {}
+            const seen = {};
+            // 从后往前遍历，保留最后一条
+            for (let i = accounts.length - 1; i >= 0; i--) {
+                if (seen[accounts[i].code]) {
+                    accounts.splice(i, 1);
+                } else {
+                    seen[accounts[i].code] = true;
+                }
+            }
+            sessionStorage.setItem('AcctSubjects', JSON.stringify(accounts));
+            localStorage.setItem('AcctSubjects', JSON.stringify(accounts));
+            if (typeof loadContent === 'function') loadContent('AcctSubject');
+        };
 
     contentArea.innerHTML = contentHTML;
 

@@ -15,13 +15,13 @@ window.__voucherSeedRows = [
         user: "财务小王",
         status: "已记账",
         lines: [
-            { summary: "1月运费收入结算", accountCode: "1122", account: "1122 应收账款",       debit: "113000.00", credit: "" },
-            { summary: "1月运费收入结算", accountCode: "6001", account: "6001 主营业务收入",   debit: "", credit: "100000.00" },
-            { summary: "1月运费收入结算", accountCode: "222101", account: "222101 应交增值税-应交税额", debit: "", credit: "13000.00" }
+            { summary: "1月运费收入结算", accountCode: "1122",     account: "1122 应收账款",                        debit: "113000.00", credit: "" },
+            { summary: "1月运费收入结算", accountCode: "6001",     account: "6001 主营业务收入",                    debit: "",          credit: "100000.00" },
+            { summary: "1月运费收入结算", accountCode: "22210107", account: "22210107 应交增值税-销项税额",          debit: "",          credit: "13000.00" }
         ]
     },
     // ──────────────────────────────────────────────────────
-    // 凭证2：本月干线运输成本
+    // 凭证2：本月干线运输成本（含可抵扣进项增值税）
     // ──────────────────────────────────────────────────────
     {
         id: "记-0002",
@@ -31,8 +31,9 @@ window.__voucherSeedRows = [
         user: "财务小王",
         status: "已记账",
         lines: [
-            { summary: "1月干线运输成本结算", accountCode: "6401", account: "6401 主营业务成本", debit: "65000.00", credit: "" },
-            { summary: "1月干线运输成本结算", accountCode: "2202", account: "2202 应付账款",    debit: "", credit: "65000.00" }
+            { summary: "1月干线运输成本结算", accountCode: "6401",     account: "6401 主营业务成本",                debit: "57522.00", credit: "" },
+            { summary: "1月干线运输成本结算", accountCode: "22210101", account: "22210101 应交增值税-进项税额",      debit: "7478.00",  credit: "" },
+            { summary: "1月干线运输成本结算", accountCode: "2202",     account: "2202 应付账款",                    debit: "",         credit: "65000.00" }
         ]
     },
     // ──────────────────────────────────────────────────────

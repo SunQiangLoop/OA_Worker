@@ -985,6 +985,213 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
         return Array.from(new Set(ids));
     };
 
+    // ── 凭证打印 ──────────────────────────────────────────────────────────────
+    window.printSelectedVouchers = function() {
+        const ids = window.getSelectedVoucherIds();
+        if (!ids.length) { alert("请先勾选要打印的凭证。"); return; }
+
+        const all = window.getManualVouchers();
+        const selected = ids.map(id => all.find(v => v.id === id)).filter(Boolean);
+        if (!selected.length) { alert("未找到对应凭证数据。"); return; }
+
+        const BUILTIN = {
+            "1001":"库存现金","1002":"银行存款","1012":"其他货币资金",
+            "1101":"短期投资","1121":"应收票据","1122":"应收账款",
+            "1123":"预付账款","1131":"应收股利","1132":"应收利息",
+            "1221":"其他应收款","1231":"坏账准备","1401":"物资采购",
+            "1402":"在途物资","1403":"原材料","1405":"库存商品",
+            "2001":"短期借款","2201":"应付票据","2202":"应付账款",
+            "2203":"预收账款","2211":"应付职工薪酬","2221":"应交税费",
+            "222101":"应交增值税","222102":"应交城市维建税",
+            "222103":"应交教育费附加","222104":"应交地方教育附加",
+            "222105":"应交个人所得税","2231":"应付利息",
+            "2241":"其他应付款","2501":"长期借款",
+            "3001":"实收资本","3002":"资本公积",
+            "3103":"本年利润","3104":"利润分配",
+            "4001":"实收资本","4002":"资本公积",
+            "4103":"本年利润","4104":"利润分配",
+            "5001":"主营业务收入","5101":"其他业务收入",
+            "5201":"营业外收入","5301":"主营业务成本","5401":"主营业务成本",
+            "5403":"税金及附加","5601":"管理费用","5701":"财务费用",
+            "6001":"主营业务收入","6002":"其他业务收入",
+            "6051":"利息收入","6111":"投资收益","6301":"营业外收入",
+            "6401":"主营业务成本","6402":"其他业务成本",
+            "6403":"税金及附加","6601":"销售费用","6602":"管理费用",
+            "6603":"财务费用","6701":"资产减值损失",
+            "6711":"营业外支出","6801":"所得税费用"
+        };
+        const storedSubjects = (() => { try { return JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]'); } catch(e) { return []; } })();
+        function resolveSubjectName(code, accountStr) {
+            let name = '';
+            const s = storedSubjects.find(s => (s.code||'').toString().trim() === code);
+            if (s && s.name) name = s.name;
+            if (!name) {
+                if (BUILTIN[code]) name = BUILTIN[code];
+                else {
+                    const pk = Object.keys(BUILTIN).find(k => code.startsWith(k) && k.length >= 4);
+                    if (pk) name = BUILTIN[pk];
+                }
+            }
+            if (!name && accountStr) {
+                const m = accountStr.match(/^[0-9-]+\s+(.+)$/);
+                if (m) name = m[1].trim();
+            }
+            return name;
+        }
+
+        function buildVoucherBox(v) {
+            const dateParts = (v.date || '').split('-');
+            const y = dateParts[0] || '', m = dateParts[1] || '', d = dateParts[2] || '';
+            const firstChar = (v.id || '').charAt(0);
+            const wordText = firstChar ? firstChar + '字' : '';
+            const seqNum = (v.id || '').replace(/\D/g,'');
+            const titleText = v.isRed ? '红字记账凭证' : '记账凭证';
+            const minRows = 5;
+            const loopCount = Math.max((v.lines||[]).length, minRows);
+            let linesHTML = '';
+            let totalDebit = 0, totalCredit = 0;
+
+            for (let i = 0; i < loopCount; i++) {
+                const line = (v.lines || [])[i] || {};
+                const rawSummary = line.summary || line.zy || '';
+                const accountStr = line.account || line.subject || '';
+                let code = (line.accountCode || '').toString().trim();
+                let name = (line.accountName || '').toString().trim();
+                if (!code || !name) {
+                    const m2 = accountStr.match(/^([0-9-]+)\s*(.*)$/);
+                    if (m2) { if (!code) code = m2[1]; if (!name) name = m2[2].trim(); }
+                    else if (/^[0-9-]+$/.test(accountStr)) { if (!code) code = accountStr; }
+                }
+                if (!name && code) name = resolveSubjectName(code, accountStr);
+                const auxDisplay = line.auxCode ? `${line.auxCode} ${line.auxName||''}`.trim()
+                    : (line.aux || line.auxiliary || '');
+                const debitVal  = (line.debit  || line.jf || '').toString().replace(/,/g, '');
+                const creditVal = (line.credit || line.df || '').toString().replace(/,/g, '');
+                totalDebit  += parseFloat(debitVal)  || 0;
+                totalCredit += parseFloat(creditVal) || 0;
+                const rowStyle = v.isRed ? 'color:red;' : '';
+                linesHTML += `
+                <tr style="${rowStyle}">
+                    <td style="padding:0 8px;">${rawSummary}</td>
+                    <td style="padding:0 8px;">${name || '-'}</td>
+                    <td style="padding:0 8px;text-align:center;">${code || '-'}</td>
+                    <td style="text-align:center;">${auxDisplay || '-'}</td>
+                    <td class="money-grid-bg">${debitVal}</td>
+                    <td class="money-grid-bg">${creditVal}</td>
+                </tr>`;
+            }
+            const fmt = n => n === 0 ? '' : n.toFixed(2);
+            return `
+            <div class="voucher-box" style="${v.isRed ? 'border:2px solid #e74c3c;' : ''}">
+                <div class="v-title-container">
+                    <div class="v-title">${titleText}</div>
+                    <div style="position:absolute;right:10px;top:10px;font-size:14px;">${wordText}第 ${seqNum} 号</div>
+                </div>
+                <div class="v-header-info">
+                    <div style="visibility:hidden;">占位</div>
+                    <div class="v-date-group"><span>${y}</span>年<span>${m}</span>月<span>${d}</span>日</div>
+                    <div style="visibility:hidden;">占位</div>
+                </div>
+                <table class="v-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="width:15%;">摘 要</th>
+                            <th rowspan="2" style="width:15%;">总账科目</th>
+                            <th rowspan="2" style="width:15%;">明细科目</th>
+                            <th rowspan="2" style="width:15%;">辅助项</th>
+                            <th style="width:20%;">借 方 金 额</th>
+                            <th style="width:20%;">贷 方 金 额</th>
+                        </tr>
+                        <tr class="money-header-row">
+                            <th style="padding:0;"><div style="border:none;"><span>千</span><span>百</span><span>十</span><span>万</span><span>千</span><span>百</span><span>十</span><span>元</span><span>角</span><span>分</span></div></th>
+                            <th style="padding:0;"><div style="border:none;"><span>千</span><span>百</span><span>十</span><span>万</span><span>千</span><span>百</span><span>十</span><span>元</span><span>角</span><span>分</span></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linesHTML}
+                        <tr style="${v.isRed ? 'color:red;' : ''}">
+                            <td colspan="3" style="text-align:left;padding-left:20px;font-weight:bold;">合　　计</td>
+                            <td></td>
+                            <td class="money-grid-bg"><span style="float:left;font-size:12px;margin-top:3px;margin-left:5px;">¥</span>${fmt(totalDebit)}</td>
+                            <td class="money-grid-bg"><span style="float:left;font-size:12px;margin-top:3px;margin-left:5px;">¥</span>${fmt(totalCredit)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="attachment-side">附<br>单<br>据<br><br><strong>1</strong><br><br>张</div>
+                <div class="v-footer">
+                    <div>财务主管：<span>___________</span></div>
+                    <div>记账：<span>${v.bookkeeperUser || ''}</span></div>
+                    <div>出纳：<span>${v.cashierUser || ''}</span></div>
+                    <div>审核：<span>${v.auditUser || ''}</span></div>
+                    <div>制单：<span>${v.user || ''}</span></div>
+                </div>
+            </div>`;
+        }
+
+        const printCss = `
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { background: #f5f5f5; padding: 20px; font-family: "SimSun","Songti SC",serif; }
+            .voucher-box {
+                font-family: "SimSun","Songti SC",serif; color: #333;
+                width: 980px; margin: 0 auto 40px; padding: 30px;
+                background: #fff; position: relative;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 1px solid #ddd;
+                page-break-after: always;
+            }
+            .voucher-box:last-child { page-break-after: avoid; }
+            .v-title-container { text-align:center; margin-bottom:10px; position:relative; }
+            .v-title { font-size:36px; font-weight:bold; letter-spacing:15px; display:inline-block;
+                border-bottom:3px double #333; padding-bottom:5px; margin-bottom:5px; text-shadow:0.5px 0 0 #333; }
+            .v-header-info { display:flex; justify-content:space-between; align-items:flex-end;
+                margin-bottom:5px; font-size:15px; padding:0 5px; }
+            .v-date-group span { display:inline-block; border-bottom:1px solid #333;
+                width:50px; text-align:center; margin:0 2px; font-family:Arial; }
+            .v-table { width:100%; border-collapse:collapse; border:2px solid #333; }
+            .v-table th, .v-table td { border:1px solid #333; height:40px; vertical-align:middle; font-size:15px; }
+            .v-table th { text-align:center; font-weight:bold; padding:5px; }
+            .money-grid-bg {
+                background-image: linear-gradient(to right, transparent 95%, #ddd 95%);
+                background-size: 9.09% 100%;
+                font-family:'Courier New',monospace; font-size:18px; font-weight:bold;
+                letter-spacing:6px; text-align:right; padding-right:3px; overflow:hidden;
+            }
+            .money-header-row div { display:flex; justify-content:space-between; padding:0 2px;
+                color:#666; font-weight:normal; transform:scale(0.95); font-size:12px; }
+            .money-header-row span { flex:1; text-align:center; border-right:1px solid #eee; }
+            .money-header-row span:last-child { border:0; }
+            .v-footer { margin-top:15px; display:flex; justify-content:space-between; font-size:14px; padding:0 10px; }
+            .v-footer span { display:inline-block; width:70px; border-bottom:1px solid #333; height:20px; text-align:center; }
+            .attachment-side { position:absolute; right:-25px; top:110px; width:20px; font-size:13px; line-height:1.2; text-align:center; }
+            @media print {
+                body { background:#fff; padding:0; }
+                .voucher-box { box-shadow:none; border:1px solid #333; margin:0 auto 0; }
+                .no-print { display:none !important; }
+            }
+        </style>`;
+
+        const vouchersHTML = selected.map(buildVoucherBox).join('');
+        const company = (window.CURRENT_SESSION || {}).company || '财务管理系统';
+        const html = `<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<title>凭证打印 - ${company}</title>
+${printCss}
+</head><body>
+<div class="no-print" style="text-align:center;margin-bottom:20px;">
+    <button onclick="window.print()" style="padding:8px 24px;font-size:14px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:12px;">🖨 打印</button>
+    <button onclick="window.close()" style="padding:8px 24px;font-size:14px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;">关闭</button>
+    <span style="margin-left:20px;color:#666;font-size:13px;">共 ${selected.length} 张凭证</span>
+</div>
+${vouchersHTML}
+</body></html>`;
+
+        const win = window.open('', '_blank', 'width=1100,height=800,scrollbars=yes');
+        if (!win) { alert('弹出窗口被浏览器拦截，请允许此网站的弹出窗口后重试。'); return; }
+        win.document.write(html);
+        win.document.close();
+    };
+
     window.updateVoucherActionButtons = function() {
         const hasSelection = window.getSelectedVoucherIds().length > 0;
         document.querySelectorAll(".voucher-center__action").forEach(btn => {
@@ -2257,7 +2464,7 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                 <button class="va-btn voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
                 <button class="va-btn voucher-center__action" style="color:#e67e22;border-color:#e67e22;"
                     onclick="pushSelectedVouchersToExternal()" disabled title="将选中凭证推送到外账帐套">📤 推送至外账</button>
-                <button class="va-btn" onclick="window.print()" title="打印">🖨</button>
+                <button class="va-btn voucher-center__action" onclick="printSelectedVouchers()" disabled title="打印选中凭证">🖨</button>
             </div>
             <!-- 筛选区 -->
             <div class="va-filter-section">

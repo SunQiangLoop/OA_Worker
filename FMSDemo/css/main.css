@@ -1598,7 +1598,7 @@
     border-radius: 16px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     padding: 0;
-    overflow: hidden;
+    overflow: clip;
 }
 
 .balance-sheet-toolbar {
@@ -1695,7 +1695,7 @@
 }
 
 .balance-sheet-filter-row th {
-    top: 42px;
+    top: 0;
     background: #ffffff;
     padding: 6px 8px;
     border-bottom: 1px solid #e2e8f0;
@@ -1767,7 +1767,7 @@
     border-radius: 16px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     padding: 0;
-    overflow: hidden;
+    overflow: clip;
 }
 
 .income-sheet-toolbar {
@@ -1848,7 +1848,7 @@
 }
 
 .income-sheet-filter-row th {
-    top: 42px;
+    top: 0;
     background: #ffffff;
     padding: 6px 8px;
     border-bottom: 1px solid #e2e8f0;
@@ -2217,7 +2217,7 @@
     border-radius: 16px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     padding: 0;
-    overflow: hidden;
+    overflow: clip;
 }
 
 .cashflow-sheet-toolbar {
@@ -2297,7 +2297,7 @@
 }
 
 .cashflow-sheet-filter-row th {
-    top: 42px;
+    top: 0;
     background: #ffffff;
     padding: 6px 8px;
     border-bottom: 1px solid #e2e8f0;
