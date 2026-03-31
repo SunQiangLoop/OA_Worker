@@ -1889,9 +1889,20 @@ function loadContent(moduleCode, element = null) {
         const periodTo   = sessionStorage.getItem("AcctSBPeriodTo")   || "";
 
         const allVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
-        const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
+        let allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
+        if (!allSubjects || allSubjects.length === 0) {
+            allSubjects = JSON.parse(localStorage.getItem("AcctSubjects") || "[]");
+        }
         const subjInfoMap = {};
         allSubjects.forEach(s => { subjInfoMap[s.code] = s; });
+
+        // 标准模板补丁，防止科目名称显示为编码
+        const getFullSubjInfo = (code) => {
+            if (subjInfoMap[code]) return subjInfoMap[code];
+            const std = sessionStorage.getItem('AccountingStandard') || 'enterprise';
+            const tpl = ACCOUNTING_STANDARD_TEMPLATES[std] || [];
+            return tpl.find(t => t.code === code);
+        };
 
         // 标准化期间
         const normVP = (v) => {
@@ -1960,9 +1971,9 @@ function loadContent(moduleCode, element = null) {
         const tot = { oD:0, oC:0, pD:0, pC:0, yD:0, yC:0, eD:0, eC:0 };
 
         allCodes.forEach(code => {
-            const si  = subjInfoMap[code];
+            const si  = getFullSubjInfo(code);
             const name = si ? si.name : code;
-            const dir  = si ? (si.direction === "贷" ? -1 : 1) : 1;
+            const dir  = si ? (si.direction === "贷" ? -1 : 1) : (["2","3","4"].some(p=>code.startsWith(p)) ? -1 : 1);
 
             const oD = (openMap[code]||{}).debit  || 0;
             const oC = (openMap[code]||{}).credit || 0;
@@ -1991,8 +2002,16 @@ function loadContent(moduleCode, element = null) {
             isFirst = false;
 
             rows += `<tr style="${rowBg}">
-                <td style="font-family:monospace;font-size:13px;padding-left:8px;">${arrow}${code}</td>
-                <td>${name}</td>
+                <td style="font-family:monospace;font-size:13px;padding-left:8px; cursor:pointer; color:#1890ff;" 
+                    onclick="if(window.openSubjectDetail) window.openSubjectDetail('${code}', '${name.replace(/'/g, "\\'")}'); event.stopPropagation();" 
+                    title="点击查看明细账">
+                    ${arrow}${code}
+                </td>
+                <td style="cursor:pointer; color:#1890ff;" 
+                    onclick="if(window.openSubjectDetail) window.openSubjectDetail('${code}', '${name.replace(/'/g, "\\'")}'); event.stopPropagation();"
+                    title="点击查看明细账">
+                    ${name}
+                </td>
                 <td style="text-align:right;">${fmt(openBalD)}</td>
                 <td style="text-align:right;">${fmt(openBalC)}</td>
                 <td style="text-align:right;">${fmt(pD)}</td>
@@ -10961,12 +10980,45 @@ function loadContent(moduleCode, element = null) {
                 `<option value="${s.code}" data-name="${s.name}" ${s.code===targetCode?"selected":""}>${s.code} ${s.name}</option>`
             ).join("");
 
-        // 科目方向
-        const defaultDir = subjInfo
-            ? (subjInfo.direction === "贷" ? "贷" : "借")
-            : (["2","3","4"].some(p => targetCode.startsWith(p)) ? "贷" : "借");
+        // 科目方向 - 强化版
+        const getSubjectDirection = (sCode, sInfo) => {
+            if (sInfo && sInfo.direction) return sInfo.direction;
+            const prefix = (sCode || "").substring(0, 1);
+            if (prefix === "1") return "借"; // 资产
+            if (prefix === "2") return "贷"; // 负债
+            if (prefix === "3") return "贷"; // 权益 (小企业)
+            if (prefix === "4") {
+                const std = sessionStorage.getItem('AccountingStandard') || 'enterprise';
+                return std === 'small' ? "借" : "贷"; // 小企业:成本, 企业:权益
+            }
+            if (prefix === "5") {
+                const std = sessionStorage.getItem('AccountingStandard') || 'enterprise';
+                if (std === 'small') {
+                    if (["50", "51", "53"].some(p => sCode.startsWith(p))) return "贷"; // 收入
+                    return "借"; // 费用
+                }
+                return "借"; // 企业:成本
+            }
+            if (prefix === "6") {
+                if (["60", "61", "63"].some(p => sCode.startsWith(p))) return "贷"; // 收入
+                return "借"; // 费用
+            }
+            return "借";
+        };
 
-        const fmt = n => (Math.abs(n)||0).toLocaleString("en-US", { minimumFractionDigits: 2 });
+        const defaultDir = getSubjectDirection(targetCode, subjInfo);
+
+        // 格式化金额：绝对值规则，红字（负数）显示为红色
+        const fmt = n => {
+            if (!n && n !== 0) return "";
+            const absVal = Math.abs(n);
+            const s = absVal.toLocaleString("en-US", { minimumFractionDigits: 2 });
+            return n < 0 ? `<span style="color:red;">${s}</span>` : s;
+        };
+        const fmtBal = n => {
+            const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2 });
+            return n < 0 ? `<span style="color:red;">${s}</span>` : s;
+        };
 
         // 筛选凭证
         const filteredVouchers = allVouchers.filter(v => {
@@ -11010,7 +11062,7 @@ function loadContent(moduleCode, element = null) {
 
                     let dirText = "平";
                     if (runBal >  0.005) dirText = defaultDir;
-                    if (runBal < -0.005) dirText = defaultDir === "借" ? "贷" : "借";
+                    else if (runBal < -0.005) dirText = defaultDir === "借" ? "贷" : "借";
 
                     const period = normVP(v);
                     tableRows += `
@@ -11023,7 +11075,7 @@ function loadContent(moduleCode, element = null) {
                             <td style="text-align:right;">${debit  ? fmt(debit)  : ""}</td>
                             <td style="text-align:right;">${credit ? fmt(credit) : ""}</td>
                             <td>${dirText}</td>
-                            <td style="text-align:right;font-weight:bold;">${fmt(runBal)}</td>
+                            <td style="text-align:right;font-weight:bold;">${fmtBal(runBal)}</td>
                         </tr>`;
                 });
             });
