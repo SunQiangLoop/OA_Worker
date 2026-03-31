@@ -429,6 +429,15 @@ window.getAuxiliaryDataByKey = function(key) {
     try {
         const raw = sessionStorage.getItem(`AuxiliaryData:${key}`) || localStorage.getItem(`AuxiliaryData:${key}`);
         const parsed = JSON.parse(raw || "[]");
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        // 若 storage 为空，从全局默认值自动种入
+        const defaults = window._AUX_GLOBAL_DEFAULTS && window._AUX_GLOBAL_DEFAULTS[key];
+        if (defaults && defaults.length > 0) {
+            const seeded = defaults.map(item => ({ ...item }));
+            sessionStorage.setItem(`AuxiliaryData:${key}`, JSON.stringify(seeded));
+            localStorage.setItem(`AuxiliaryData:${key}`, JSON.stringify(seeded));
+            return seeded;
+        }
         return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
         return [];
@@ -454,7 +463,10 @@ window.mapAuxLabelToKey = function(label) {
         "项目": "project",
         "存货": "inventory",
         "车辆": "inventory",
-        "往来单位": "customer"
+        "往来单位": "customer",
+        "现金流量项目": "cashflow",
+        "现金流量": "cashflow",
+        "现金流量表项目": "cashflow"
     };
     return map[label] || "";
 };

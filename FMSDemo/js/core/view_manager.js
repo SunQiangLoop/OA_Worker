@@ -30,9 +30,6 @@ function getModuleName(code) {
         TaxInputInvoice: "进项发票台账",
         TaxOutputInvoice: "销项发票台账",
         TaxRateConfig: "税率配置",
-        BudgetPlanning: "预算编制",
-        BudgetExecutionAnalysis: "预算执行分析",
-        BudgetPerformance: "绩效考核",
         OperationLogCenter: "操作日志中心",
         AcctSubject: "会计科目",
         AcctSet: "会计账套",
@@ -89,9 +86,14 @@ function getModuleName(code) {
 const ACCOUNTING_STANDARD_TEMPLATES = {
     small: [
         // 资产类
-        { code: "1001", name: "库存现金",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "日常现金收付" },
-        { code: "1002", name: "银行存款",       type: "资产", direction: "借", aux: "银行账户",   status: "启用", remark: "银行往来资金" },
-        { code: "1012", name: "其他货币资金",   type: "资产", direction: "借", aux: "无",         status: "启用", remark: "微信/支付宝/汇票等" },
+        { code: "1001", name: "库存现金",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "日常现金收付" },
+        { code: "1002", name: "银行存款",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100201", name: "银行存款-中国银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100202", name: "银行存款-南京银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+            { code: "100203", name: "银行存款-建设银行",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+        { code: "1012", name: "其他货币资金",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
+            { code: "101201", name: "云链支付宝账户0676",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
+            { code: "101202", name: "云链微信",   type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
         { code: "1121", name: "应收票据",       type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "商业汇票" },
         { code: "1122", name: "应收账款",       type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "客户应收款" },
         { code: "1123", name: "预付账款",       type: "资产", direction: "借", aux: "供应商",     status: "启用", remark: "预付供应商款项" },
@@ -113,14 +115,23 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "2211", name: "应付职工薪酬",   type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
         { code: "2221", name: "应交税费",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222101", name: "应交税费-应交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222102", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222103", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222104", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222105", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
+                { code: "22210101", name: "应交增值税-进项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210102", name: "应交增值税-销项税额抵扣",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210103", name: "应交增值税-已缴税金",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210104", name: "应交增值税-转出未交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210105", name: "应交增值税-减免税款",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210106", name: "应交增值税-出口退税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210107", name: "应交增值税-销项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210108", name: "应交增值税-进项税额转出",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210108", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222115", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222119", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
+            { code: "222120", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222125", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
         { code: "2231", name: "应付利息",       type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
         { code: "2241", name: "其他应付款",     type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
         { code: "2501", name: "长期借款",       type: "负债", direction: "贷", aux: "银行",       status: "启用", remark: "一年以上借款" },
-        { code: "2502", name: "长期应付款",     type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "融资租赁等长期应付" },
+        { code: "2502", name: "长期应付款",     type: "负债", direction: "贷", aux: "无",         status:"启用", remark:"融资租赁等长期应付" },
         // 所有者权益类（小企业准则：3xxx，★ 区别于企业准则4xxx ★）
         { code: "3001", name: "实收资本",       type: "权益", direction: "贷", aux: "股东",       status: "启用", remark: "股东出资" },
         { code: "3002", name: "资本公积",       type: "权益", direction: "贷", aux: "无",         status: "启用", remark: "资本溢价" },
@@ -147,9 +158,9 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
     ],
     enterprise: [
         // 资产类
-        { code: "1001", name: "库存现金",           type: "资产", direction: "借", aux: "无",         status: "启用", remark: "日常现金收付" },
-        { code: "1002", name: "银行存款",           type: "资产", direction: "借", aux: "银行账户",   status: "启用", remark: "银行往来资金" },
-        { code: "1012", name: "其他货币资金",       type: "资产", direction: "借", aux: "无",         status: "启用", remark: "微信/支付宝/汇票等" },
+        { code: "1001", name: "库存现金",           type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "日常现金收付" },
+        { code: "1002", name: "银行存款",           type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "银行往来资金" },
+        { code: "1012", name: "其他货币资金",       type: "资产", direction: "借", aux: "现金流量项目",   status: "启用", remark: "微信/支付宝/汇票等" },
         { code: "1101", name: "交易性金融资产",     type: "资产", direction: "借", aux: "无",         status: "启用", remark: "以公允价值计量的金融资产" },
         { code: "1121", name: "应收票据",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "商业汇票" },
         { code: "1122", name: "应收账款",           type: "资产", direction: "借", aux: "客户",       status: "启用", remark: "客户应收款" },
@@ -189,11 +200,19 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "2211", name: "应付职工薪酬",       type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
         { code: "2221", name: "应交税费",           type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222101", name: "应交税费-应交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222102", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222103", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222104", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-            { code: "222105", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
-
+                { code: "22210101", name: "应交增值税-进项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210102", name: "应交增值税-销项税额抵扣",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210103", name: "应交增值税-已缴税金",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210104", name: "应交增值税-转出未交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210105", name: "应交增值税-减免税款",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210106", name: "应交增值税-出口退税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210107", name: "应交增值税-销项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210108", name: "应交增值税-进项税额转出",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210108", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222115", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222119", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
+            { code: "222120", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+            { code: "222125", name: "应交地方教育附加税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
         { code: "2231", name: "应付利息",           type: "负债", direction: "贷", aux: "无",         status: "启用", remark: "应计利息" },
         { code: "2232", name: "应付股利",           type: "负债", direction: "贷", aux: "股东",       status: "启用", remark: "已宣告未发放股利" },
         { code: "2241", name: "其他应付款",         type: "负债", direction: "贷", aux: "部门/员工",  status: "启用", remark: "保证金与其他应付" },
@@ -1856,30 +1875,19 @@ function loadContent(moduleCode, element = null) {
 
 
     // =========================================================================
-    // ★★★ [完整版] 科目余额表 (双模式 + 完整筛选条件) ★★★
+    // ★★★ 科目余额表 (标准格式：期初/本期/本年累计/期末) ★★★
     // =========================================================================
     else if (moduleCode === "AcctSubjectBalance") {
-        // ── 读取所有筛选状态 ──
-        const sbMode     = sessionStorage.getItem("AcctSubjectMode")       || "balance";
-        const periodFrom = sessionStorage.getItem("AcctSubjectPeriodFrom") || "";
-        const periodTo   = sessionStorage.getItem("AcctSubjectPeriodTo")   || "";
-        const sbCategory = sessionStorage.getItem("AcctSubjectCategory")   || "";
-        const sbSubjCode = sessionStorage.getItem("AcctSubjectFilterCode") || "";
-        const levelMode  = sessionStorage.getItem("AcctSubjectLevelMode")  || "level";
-        const levelFrom  = parseInt(sessionStorage.getItem("AcctSubjectLevelFrom") || "1");
-        const levelTo    = parseInt(sessionStorage.getItem("AcctSubjectLevelTo")   || "4");
-        const inclUnpost = sessionStorage.getItem("AcctSubjectInclUnpost") !== "false";
-        const showCumul  = sessionStorage.getItem("AcctSubjectShowCumul")  === "true";
+        const periodFrom = sessionStorage.getItem("AcctSBPeriodFrom") || "";
+        const periodTo   = sessionStorage.getItem("AcctSBPeriodTo")   || "";
 
         const allVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || "[]");
         const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
-
-        // 科目信息表（快速查 type / direction / name）
         const subjInfoMap = {};
         allSubjects.forEach(s => { subjInfoMap[s.code] = s; });
 
-        // 提取凭证期间（兼容 v.date / v.period，处理月份不补零）
-        const normVPeriod = (v) => {
+        // 标准化期间
+        const normVP = (v) => {
             const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
             if (!raw) return "";
             const parts = raw.split("-");
@@ -1887,317 +1895,203 @@ function loadContent(moduleCode, element = null) {
                 return `${parts[0]}-${parts[1].padStart(2, '0')}`;
             return raw.slice(0, 7);
         };
-        // 可用期间列表
+
         const allPeriods = Array.from(new Set(
-            allVouchers.map(v => normVPeriod(v)).filter(Boolean)
+            allVouchers.map(v => normVP(v)).filter(Boolean)
         )).sort();
-        const mkPeriodOpts = (sel) =>
+
+        const latestPeriod = allPeriods[allPeriods.length - 1] || "";
+        const pFrom = periodFrom || latestPeriod;
+        const pTo   = periodTo   || latestPeriod;
+        const pYear = (pTo || latestPeriod || "2026-01").slice(0, 4);
+
+        const mkPOpts = (sel) =>
             `<option value="">--</option>` +
-            allPeriods.map(p => `<option value="${p}" ${sel === p ? 'selected' : ''}>${p.replace('-','.')}</option>`).join('');
+            allPeriods.map(p => `<option value="${p}" ${sel===p?'selected':''}>${p.replace('-','.')}</option>`).join('');
 
-        // 科目类别列表
-        const allCategories = Array.from(new Set(allSubjects.map(s => s.type).filter(Boolean)));
-        const catOpts = `<option value="">全部</option>` +
-            allCategories.map(c => `<option value="${c}" ${sbCategory===c?'selected':''}>${c}</option>`).join('');
+        // 上下期导航
+        const pFromIdx = allPeriods.indexOf(pFrom);
+        const pToIdx   = allPeriods.indexOf(pTo);
+        const prevFrom = pFromIdx > 0 ? allPeriods[pFromIdx-1] : pFrom;
+        const prevTo   = pToIdx   > 0 ? allPeriods[pToIdx-1]   : pTo;
+        const nextFrom = pFromIdx < allPeriods.length-1 ? allPeriods[pFromIdx+1] : pFrom;
+        const nextTo   = pToIdx   < allPeriods.length-1 ? allPeriods[pToIdx+1]   : pTo;
 
-        // 科目列表
-        const subjOpts = `<option value="">全部</option>` +
-            allSubjects.map(s => `<option value="${s.code}" ${sbSubjCode===s.code?'selected':''}>${s.code} ${s.name}</option>`).join('');
+        // 三组数据累计
+        const openMap = {}, periMap = {}, ytdMap = {};
+        const ensC = (map, code) => { if (!map[code]) map[code] = { debit: 0, credit: 0 }; };
 
-        // 级次辅助
-        const getLevel = code => (String(code).match(/\./g) || []).length + 1;
-        const lvOpts = (sel) => [1,2,3,4,5].map(n =>
-            `<option value="${n}" ${sel===n?'selected':''}>${n}</option>`).join('');
+        allVouchers.forEach(v => {
+            const p = normVP(v);
+            if (!p || !v.lines) return;
+            const beforeRange = pFrom && p < pFrom;
+            const inRange     = (!pFrom || p >= pFrom) && (!pTo || p <= pTo);
+            const inYTD       = p >= `${pYear}-01` && (!pTo || p <= pTo);
+            if (!beforeRange && !inRange) return;
 
-        // ── 凭证筛选（期间 + 是否含未记账） ──
-        const vouchers = allVouchers.filter(v => {
-            const p = normVPeriod(v);
-            if (!p) return false;
-            if (periodFrom && p < periodFrom) return false;
-            if (periodTo   && p > periodTo)   return false;
-            if (!inclUnpost) {
-                const s = (v.status || "");
-                if (s && !["已记账","已审核","已提交","待审核"].includes(s)) return false;
-            }
-            return true;
-        });
-
-        // ── 汇总发生额 ──
-        const balanceMap = {};
-        vouchers.forEach(v => {
-            if (!v.lines) return;
             v.lines.forEach(line => {
-                // 兼容新版录入（subject字段）和旧版（account/accountCode字段）
-                const rawAcct = line.account || line.subject || (line.accountCode ? String(line.accountCode) : '') || "9999 未知科目";
-                const parts = rawAcct.trim().split(/\s+/);
-                const code = parts[0] || "9999";
-                // 科目名称：优先 parts[1..], 再查 AcctSubjects, 兜底显示 "未知科目"
-                const rawName = parts.length > 1 ? parts.slice(1).join(' ') : '';
-                const name = rawName || (subjInfoMap[code] ? subjInfoMap[code].name : '') || (code === '9999' ? '未知科目' : code);
-                if (!balanceMap[code]) {
-                    const si = subjInfoMap[code];
-                    const dir = si
-                        ? (si.direction === "贷" ? -1 : 1)
-                        : (code.startsWith('2')||code.startsWith('3')||code.startsWith('4')||
-                           (code.startsWith('6')&&name.includes('收入'))) ? -1 : 1;
-                    balanceMap[code] = { name: si ? si.name : name, type: si ? si.type : '', dir, open: 0, debit: 0, credit: 0 };
-                }
-                balanceMap[code].debit  += parseFloat(line.debit  || 0);
-                balanceMap[code].credit += parseFloat(line.credit || 0);
+                const code = ((line.account || line.subject || "").trim().split(/\s+/)[0]) || "9999";
+                const d = parseFloat(line.debit  || 0);
+                const c = parseFloat(line.credit || 0);
+                if (!d && !c) return;
+                ensC(openMap, code); ensC(periMap, code); ensC(ytdMap, code);
+                if (beforeRange) { openMap[code].debit += d; openMap[code].credit += c; }
+                if (inRange)     { periMap[code].debit += d; periMap[code].credit += c; }
+                if (inYTD)       { ytdMap[code].debit  += d; ytdMap[code].credit  += c; }
             });
         });
 
-        // 平衡校验模式：补全所有科目
-        if (sbMode === "trial") {
-            allSubjects.forEach(s => {
-                if (!balanceMap[s.code]) balanceMap[s.code] = {
-                    name: s.name, type: s.type, dir: s.direction === "贷" ? -1 : 1, open: 0, debit: 0, credit: 0
-                };
-            });
-        }
+        const allCodes = Array.from(new Set([
+            ...Object.keys(openMap), ...Object.keys(periMap), ...Object.keys(ytdMap)
+        ])).sort();
 
-        // 所有科目的历史发生集合（用于"累计有发生"过滤）
-        const cumulCodes = new Set();
-        if (showCumul) {
-            allVouchers.forEach(v => {
-                if (!v.lines) return;
-                v.lines.forEach(line => { cumulCodes.add((line.account||"").split(' ')[0]); });
-            });
-        }
+        const fmt  = n => n ? n.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '';
+        const fmtZ = n => (n||0).toLocaleString('en-US', { minimumFractionDigits: 2 });
 
-        // 叶子科目判断（无子科目）
-        const allCodes = Object.keys(balanceMap);
-        const isLeaf = code => !allCodes.some(c => c !== code && c.startsWith(code + '.'));
+        let rows = '';
+        let isFirst = true;
+        const tot = { oD:0, oC:0, pD:0, pC:0, yD:0, yC:0, eD:0, eC:0 };
 
-        // ── 应用筛选条件 ──
-        const filteredCodes = allCodes.filter(code => {
-            const item = balanceMap[code];
-            if (sbCategory && item.type !== sbCategory) return false;
-            if (sbSubjCode && !code.startsWith(sbSubjCode)) return false;
-            const lv = getLevel(code);
-            if (levelMode === "level") {
-                if (lv < levelFrom || lv > levelTo) return false;
-            } else {
-                if (!isLeaf(code)) return false;
-            }
-            const hasActivity = item.debit || item.credit || item.open;
-            if (!hasActivity) {
-                if (showCumul && cumulCodes.has(code)) return true; // 累计有发生也显示
-                return false;
-            }
-            return true;
-        }).sort();
+        allCodes.forEach(code => {
+            const si  = subjInfoMap[code];
+            const name = si ? si.name : code;
+            const dir  = si ? (si.direction === "贷" ? -1 : 1) : 1;
 
-        // ── 生成行 ──
-        const fmt  = n => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
-        const blue = n => n ? `<span style="color:#2196f3">${fmt(n)}</span>` : '';
-        let totOD=0, totOC=0, totD=0, totC=0, totED=0, totEC=0, rowNum=0;
+            const oD = (openMap[code]||{}).debit  || 0;
+            const oC = (openMap[code]||{}).credit || 0;
+            const pD = (periMap[code]||{}).debit  || 0;
+            const pC = (periMap[code]||{}).credit || 0;
+            const yD = (ytdMap[code] ||{}).debit  || 0;
+            const yC = (ytdMap[code] ||{}).credit || 0;
+            if (!oD && !oC && !pD && !pC && !yD && !yC) return;
 
-        const rows = filteredCodes.map(code => {
-            rowNum++;
-            const item  = balanceMap[code];
-            const close = item.dir === 1
-                ? item.open + item.debit - item.credit
-                : item.open + item.credit - item.debit;
-            const openD = item.dir===1 && item.open>0 ? item.open : 0;
-            const openC = item.dir===-1 && item.open>0 ? item.open : 0;
-            const closeD = close>0 ? close : 0;
-            const closeC = close<0 ? -close : 0;
-            totOD+=openD; totOC+=openC; totD+=item.debit; totC+=item.credit; totED+=closeD; totEC+=closeC;
+            // 期初余额
+            const openBal = dir === 1 ? oD - oC : oC - oD;
+            const openBalD = openBal > 0 ? openBal : 0;
+            const openBalC = openBal < 0 ? -openBal : 0;
+            // 期末余额
+            const endBal = openBal + (dir === 1 ? pD - pC : pC - pD);
+            const endBalD = endBal > 0 ? endBal : 0;
+            const endBalC = endBal < 0 ? -endBal : 0;
 
-            if (sbMode === "balance") {
-                return `<tr>
-                    <td style="text-align:center;color:#aaa;">${rowNum}</td>
-                    <td style="font-family:monospace;font-size:13px;">${code}</td>
-                    <td>${item.name}</td>
-                    <td style="text-align:right;">${blue(openD)}</td>
-                    <td style="text-align:right;">${blue(openC)}</td>
-                    <td style="text-align:right;">${blue(item.debit)}</td>
-                    <td style="text-align:right;">${blue(item.credit)}</td>
-                    <td style="text-align:right;">${blue(closeD)}</td>
-                    <td style="text-align:right;">${blue(closeC)}</td>
-                    <td style="text-align:center;"><a href="javascript:void(0)" style="color:#3498db;font-size:13px;"
-                        onclick="window.openSubjectDetail('${code}','${item.name}')">明细</a></td>
-                </tr>`;
-            } else {
-                const g = n => `<span style="color:${n?'#333':'#bbb'}">${fmt(n)}</span>`;
-                return `<tr>
-                    <td style="font-family:monospace;font-size:13px;">${code}</td>
-                    <td>${item.name}</td>
-                    <td style="text-align:right;">${g(openD)}</td><td style="text-align:right;">${g(openC)}</td>
-                    <td style="text-align:right;">${g(item.debit)}</td><td style="text-align:right;">${g(item.credit)}</td>
-                    <td style="text-align:right;">${g(closeD)}</td><td style="text-align:right;">${g(closeC)}</td>
-                </tr>`;
-            }
-        }).join('');
+            tot.oD += openBalD; tot.oC += openBalC;
+            tot.pD += pD;       tot.pC += pC;
+            tot.yD += yD;       tot.yC += yC;
+            tot.eD += endBalD;  tot.eC += endBalC;
 
-        // ── 合计行 ──
-        const isBalanced = Math.abs(totD - totC) < 0.01;
-        const balColor   = isBalanced ? '#52c41a' : '#e74c3c';
-        const balText    = isBalanced ? '试算结果平衡' : `不平衡，差额 ${fmt(Math.abs(totD-totC))}`;
-        const numStyle   = sbMode==='balance' ? 'color:#2196f3;' : '';
-        const totalCols  = `${sbMode==='balance'?'<td></td>':''}<td colspan="2" style="text-align:center;font-weight:bold;">合计</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totOD)}</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totOC)}</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totD)}</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totC)}</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totED)}</td>
-            <td style="text-align:right;font-weight:bold;${numStyle}">${fmt(totEC)}</td>
-            ${sbMode==='balance'?'<td></td>':''}`;
+            const rowBg = isFirst ? 'background:#fffff0;' : '';
+            const arrow = isFirst ? '<span style="margin-right:3px;color:#333;">▶</span>' : '';
+            isFirst = false;
 
-        // ── 期间显示 ──
-        const pFrom = periodFrom ? periodFrom.replace('-','.') : (allPeriods[0]||'').replace('-','.');
-        const pTo   = periodTo   ? periodTo.replace('-','.')   : (allPeriods[allPeriods.length-1]||'').replace('-','.');
-        const periodLabel = (pFrom || pTo) ? `${pFrom||'--'} - ${pTo||'--'}` : '全部';
+            rows += `<tr style="${rowBg}">
+                <td style="font-family:monospace;font-size:13px;padding-left:8px;">${arrow}${code}</td>
+                <td>${name}</td>
+                <td style="text-align:right;">${fmt(openBalD)}</td>
+                <td style="text-align:right;">${fmt(openBalC)}</td>
+                <td style="text-align:right;">${fmt(pD)}</td>
+                <td style="text-align:right;">${fmt(pC)}</td>
+                <td style="text-align:right;">${fmt(yD)}</td>
+                <td style="text-align:right;">${fmt(yC)}</td>
+                <td style="text-align:right;">${fmt(endBalD)}</td>
+                <td style="text-align:right;">${fmt(endBalC)}</td>
+            </tr>`;
+        });
 
-        // ── 表头 ──
-        const seqTh    = sbMode==='balance' ? '<th rowspan="2" style="width:46px;text-align:center;">序号</th>' : '';
-        const detailTh = sbMode==='balance' ? '<th rowspan="2" style="width:52px;text-align:center;">操作</th>' : '';
-        const detailTd = sbMode==='balance' ? '<th></th>' : '';
+        const dispFrom  = pFrom ? pFrom.replace('-', '.') : '--';
+        const dispTo    = pTo   ? pTo.replace('-', '.')   : '--';
+        const periodLabel = `${dispFrom} -- ${dispTo}`;
+        const companyName = sessionStorage.getItem('CompanyName') || '公司';
 
         contentHTML += `
         <style>
-            .sb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-            .sb-seg{display:flex;border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;}
-            .sb-seg button{padding:6px 18px;border:none;font-size:14px;cursor:pointer;background:#fff;color:#555;}
-            .sb-seg button.on{background:#1890ff;color:#fff;}
-            .sb-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-bottom:12px;padding:0 0 4px;}
-            .sb-frow{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f0f0;gap:10px;}
-            .sb-frow:last-child{border-bottom:none;}
-            .sb-flabel{font-size:14px;color:#555;min-width:70px;white-space:nowrap;}
-            .sb-flabel.req::before{content:"* ";color:#e74c3c;}
-            .sb-frow select,.sb-frow input[type=text]{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
-            .sb-lv-box{border:1px solid #e0e0e0;border-radius:6px;padding:8px 12px;display:flex;flex-direction:column;gap:8px;margin:0 4px;}
-            .sb-lv-row{display:flex;align-items:center;gap:8px;font-size:14px;color:#333;}
-            .sb-chk-row{display:flex;align-items:center;gap:6px;font-size:14px;color:#333;padding:8px 16px;}
-            .sb-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
-            .sb-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;}
-            .sb-card-title{text-align:center;font-size:22px;font-weight:bold;padding:22px 0 2px;color:#222;}
-            .sb-card-period{font-size:13px;color:#888;padding:4px 20px 14px;}
-            .sb-tbl{width:100%;border-collapse:collapse;font-size:14px;}
-            .sb-tbl th{padding:9px 12px;font-weight:500;color:#444;background:#f5f6f8;border-bottom:1px solid #e8e8e8;white-space:nowrap;}
-            .sb-tbl td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
-            .sb-tbl tbody tr:hover{background:#f9fbff;}
-            .sb-tbl tfoot tr{background:#f5f6f8;}
+            .sb2-infobar{display:flex;align-items:center;gap:32px;background:#fff;border:1px solid #d0d0d0;padding:10px 18px;margin-bottom:8px;font-size:14px;}
+            .sb2-infobar-item{display:flex;align-items:center;gap:8px;}
+            .sb2-infobar-label{color:#555;white-space:nowrap;}
+            .sb2-infobar-val{border:1px solid #c0c0c0;padding:5px 12px;min-width:160px;background:#fafafa;font-size:14px;}
+            .sb2-nav{display:flex;flex-direction:column;gap:2px;margin-left:4px;}
+            .sb2-nav button{padding:1px 7px;border:1px solid #c0c0c0;background:#f5f5f5;cursor:pointer;font-size:11px;line-height:16px;border-radius:2px;}
+            .sb2-nav button:hover{background:#e0eeff;}
+            .sb2-qrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;}
+            .sb2-qrow select{border:1px solid #d0d0d0;padding:5px 8px;border-radius:3px;}
+            .sb2-card{background:#fff;border:1px solid #d0d0d0;overflow:hidden;}
+            .sb2-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+            .sb2-tbl th{padding:7px 10px;font-weight:500;background:#efefef;border:1px solid #c8c8c8;text-align:center;white-space:nowrap;}
+            .sb2-tbl td{padding:7px 12px;border-bottom:1px solid #e8e8e8;border-right:1px solid #ebebeb;white-space:nowrap;}
+            .sb2-tbl tbody tr:hover{background:#ddeeff !important;}
+            .sb2-tbl tfoot td{padding:7px 12px;border-top:2px solid #b0b0b0;font-weight:bold;background:#f0f0f0;text-align:right;}
         </style>
 
-        <!-- 顶部模式切换 -->
-        <div class="sb-top">
-            <div class="sb-seg">
-                <button class="${sbMode==='balance'?'on':''}"
-                    onclick="sessionStorage.setItem('AcctSubjectMode','balance');loadContent('AcctSubjectBalance')">余额查询</button>
-                <button class="${sbMode==='trial'?'on':''}"
-                    onclick="sessionStorage.setItem('AcctSubjectMode','trial');loadContent('AcctSubjectBalance')">平衡校验</button>
+        <div class="sb2-infobar">
+            <div class="sb2-infobar-item">
+                <span class="sb2-infobar-label">账簿</span>
+                <span class="sb2-infobar-val">${companyName}账簿</span>
             </div>
-            ${sbMode==='trial' ? `<input type="text" value="${balText}" readonly
-                style="padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;min-width:200px;color:${balColor};background:#fafafa;">` : ''}
-        </div>
-
-        <!-- 筛选条件面板 -->
-        <div class="sb-fcard">
-            <div class="sb-frow">
-                <span class="sb-flabel req">期间</span>
-                <select id="sb-pf">${mkPeriodOpts(periodFrom)}</select>
-                <span style="color:#999;padding:0 4px;">-</span>
-                <select id="sb-pt">${mkPeriodOpts(periodTo)}</select>
-            </div>
-            <div class="sb-frow">
-                <span class="sb-flabel">科目类别</span>
-                <select id="sb-cat" style="min-width:160px;">${catOpts}</select>
-            </div>
-            <div class="sb-frow">
-                <span class="sb-flabel">科目</span>
-                <select id="sb-subj" style="min-width:240px;">${subjOpts}</select>
-            </div>
-            <div class="sb-frow">
-                <div class="sb-lv-box">
-                    <div class="sb-lv-row">
-                        <input type="radio" name="sb-lv-mode" id="sb-lv-mode-level" value="level" ${levelMode==='level'?'checked':''}>
-                        <label for="sb-lv-mode-level" style="cursor:pointer;">
-                            <span class="sb-flabel req" style="min-width:auto;">级次</span>
-                        </label>
-                        <select id="sb-lv-from" style="min-width:60px;">${lvOpts(levelFrom)}</select>
-                        <span style="color:#999;">-</span>
-                        <select id="sb-lv-to" style="min-width:60px;">${lvOpts(levelTo)}</select>
-                    </div>
-                    <div class="sb-lv-row">
-                        <input type="radio" name="sb-lv-mode" id="sb-lv-mode-leaf" value="leaf" ${levelMode==='leaf'?'checked':''}>
-                        <label for="sb-lv-mode-leaf" style="cursor:pointer;">末级科目</label>
-                    </div>
+            <div class="sb2-infobar-item">
+                <span class="sb2-infobar-label">期间</span>
+                <span class="sb2-infobar-val">${periodLabel}</span>
+                <div class="sb2-nav">
+                    <button onclick="sessionStorage.setItem('AcctSBPeriodFrom','${prevFrom}');sessionStorage.setItem('AcctSBPeriodTo','${prevTo}');loadContent('AcctSubjectBalance')" title="上期">▲</button>
+                    <button onclick="sessionStorage.setItem('AcctSBPeriodFrom','${nextFrom}');sessionStorage.setItem('AcctSBPeriodTo','${nextTo}');loadContent('AcctSubjectBalance')" title="下期">▼</button>
                 </div>
             </div>
-            <div style="display:flex;flex-wrap:wrap;">
-                <label class="sb-chk-row">
-                    <input type="checkbox" id="sb-unpost" ${inclUnpost?'checked':''}>
-                    <span>包含未记账</span>
-                </label>
-                <label class="sb-chk-row">
-                    <input type="checkbox" id="sb-cumul" ${showCumul?'checked':''}>
-                    <span>显示无余额无发生、累计有发生</span>
-                </label>
-            </div>
-            <div class="sb-actions">
-                <button onclick="window.sbReset()" style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
-                <button class="btn-primary" onclick="window.sbQuery()">查询</button>
+            <div class="sb2-infobar-item">
+                <span class="sb2-infobar-label">币别</span>
+                <span class="sb2-infobar-val">人民币</span>
             </div>
         </div>
 
-        <!-- 数据卡片 -->
-        <div class="sb-card">
-            ${sbMode==='balance' ? `
-            <div class="sb-card-title">发生额及余额表</div>
-            <div class="sb-card-period">期间：${periodLabel}</div>` : ''}
-            <table class="sb-tbl">
+        <div class="sb2-qrow">
+            <span style="color:#555;">期间</span>
+            <select id="sb2-pf">${mkPOpts(pFrom)}</select>
+            <span style="color:#999;">--</span>
+            <select id="sb2-pt">${mkPOpts(pTo)}</select>
+            <button class="btn-primary" onclick="window.sb2Query()" style="margin-left:6px;">查询</button>
+            <button onclick="window.sb2Reset()" style="padding:5px 14px;border:1px solid #d0d0d0;border-radius:3px;background:#fff;cursor:pointer;font-size:13px;">重置</button>
+        </div>
+
+        <div class="sb2-card">
+            <table class="sb2-tbl">
                 <thead>
                     <tr>
-                        ${seqTh}
-                        <th rowspan="2" style="width:110px;">科目编码</th>
-                        <th rowspan="2">科目名称</th>
-                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">期初余额</th>
-                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">本期发生</th>
-                        <th colspan="2" style="text-align:center;border-left:1px solid #e0e0e0;">期末余额</th>
-                        ${detailTh}
+                        <th rowspan="2" style="min-width:90px;border-right:1px solid #c8c8c8;">科目编码</th>
+                        <th rowspan="2" style="min-width:100px;border-right:2px solid #b0b0b0;">科目名称</th>
+                        <th colspan="2" style="border-right:2px solid #b0b0b0;">期初余额</th>
+                        <th colspan="2" style="border-right:2px solid #b0b0b0;">本期发生</th>
+                        <th colspan="2" style="border-right:2px solid #b0b0b0;">本年累计</th>
+                        <th colspan="2">期末余额</th>
                     </tr>
                     <tr>
-                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
-                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
-                        <th style="text-align:right;border-left:1px solid #e0e0e0;">借方</th><th style="text-align:right;">贷方</th>
-                        ${detailTd}
+                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
+                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
+                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
+                        <th style="min-width:100px;">借方</th><th style="min-width:100px;">贷方</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${rows || `<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">暂无符合条件的数据</td></tr>`}
                 </tbody>
-                <tfoot><tr>${totalCols}</tr></tfoot>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" style="text-align:center;font-weight:bold;background:#f0f0f0;">合计</td>
+                        <td>${fmtZ(tot.oD)}</td><td>${fmtZ(tot.oC)}</td>
+                        <td>${fmtZ(tot.pD)}</td><td>${fmtZ(tot.pC)}</td>
+                        <td>${fmtZ(tot.yD)}</td><td>${fmtZ(tot.yC)}</td>
+                        <td>${fmtZ(tot.eD)}</td><td>${fmtZ(tot.eC)}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
-
-        ${sbMode==='trial' ? `
-        <div style="margin-top:10px;padding:10px 14px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:13px;color:#7c5a00;">
-            说明：三组合计（期初借=期初贷、发生借=发生贷、期末借=期末贷）全部相等方为完全平衡。
-        </div>` : ''}
         `;
 
-        // 挂载查询函数
         setTimeout(() => {
-            window.sbQuery = function() {
-                sessionStorage.setItem('AcctSubjectPeriodFrom', document.getElementById('sb-pf').value);
-                sessionStorage.setItem('AcctSubjectPeriodTo',   document.getElementById('sb-pt').value);
-                sessionStorage.setItem('AcctSubjectCategory',   document.getElementById('sb-cat').value);
-                sessionStorage.setItem('AcctSubjectFilterCode', document.getElementById('sb-subj').value);
-                sessionStorage.setItem('AcctSubjectLevelMode',
-                    document.querySelector('input[name="sb-lv-mode"]:checked').value);
-                sessionStorage.setItem('AcctSubjectLevelFrom',  document.getElementById('sb-lv-from').value);
-                sessionStorage.setItem('AcctSubjectLevelTo',    document.getElementById('sb-lv-to').value);
-                sessionStorage.setItem('AcctSubjectInclUnpost', document.getElementById('sb-unpost').checked ? 'true' : 'false');
-                sessionStorage.setItem('AcctSubjectShowCumul',  document.getElementById('sb-cumul').checked  ? 'true' : 'false');
+            window.sb2Query = function() {
+                sessionStorage.setItem('AcctSBPeriodFrom', document.getElementById('sb2-pf').value);
+                sessionStorage.setItem('AcctSBPeriodTo',   document.getElementById('sb2-pt').value);
                 loadContent('AcctSubjectBalance');
             };
-            window.sbReset = function() {
-                ['AcctSubjectPeriodFrom','AcctSubjectPeriodTo','AcctSubjectCategory',
-                 'AcctSubjectFilterCode','AcctSubjectLevelMode','AcctSubjectLevelFrom',
-                 'AcctSubjectLevelTo','AcctSubjectInclUnpost','AcctSubjectShowCumul']
-                .forEach(k => sessionStorage.removeItem(k));
+            window.sb2Reset = function() {
+                sessionStorage.removeItem('AcctSBPeriodFrom');
+                sessionStorage.removeItem('AcctSBPeriodTo');
                 loadContent('AcctSubjectBalance');
             };
         }, 0);
@@ -7035,6 +6929,8 @@ function loadContent(moduleCode, element = null) {
                         <div class="expense-daily__table-head">
                             <span>日常报销单列表</span>
                             <div class="expense-daily__table-actions">
+                                <button class="btn-ghost" id="expense-batch-print-btn" style="color:#1890ff;border-color:#1890ff;" disabled
+                                    onclick="batchPrintExpense()">🖨 批量打印</button>
                                 <button class="btn-ghost" onclick="renderExpenseDailyList()">刷新列表</button>
                             </div>
                         </div>
@@ -7042,6 +6938,11 @@ function loadContent(moduleCode, element = null) {
                             <table class="data-table expense-daily-table">
                                 <thead>
                                     <tr>
+                                        <th style="width:36px;text-align:center;">
+                                            <input type="checkbox" id="expense-select-all"
+                                                onchange="toggleAllExpenseSelection(this.checked)"
+                                                title="全选">
+                                        </th>
                                         <th>报销单号</th>
                                         <th>报销人</th>
                                         <th>费用类型</th>
@@ -7917,71 +7818,6 @@ function loadContent(moduleCode, element = null) {
                     </table>
                 `;
     }
-    // =========================================================================
-    // 23. 预算编制 (Budget Planning)
-    // =========================================================================
-    else if (moduleCode === "BudgetPlanning") {
-        contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">预算年度</option>
-                                <option>2026</option>
-                                <option>2025</option>
-                            </select>
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">预算版本</option>
-                                <option>初稿</option>
-                                <option>终版</option>
-                                <option>调整版A</option>
-                            </select>
-                            <input type="text" placeholder="部门名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;">+ 新增预算版本</button>
-                        <button class="btn-primary" style="background-color: #3498db;">下载预算模板</button>
-                        <button class="btn-primary" style="background-color: #f39c12;">导入预算数据</button>
-                    </div>
-
-                    <h3>2025年度预算概览 (终版)</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>部门/科目</th>
-                                <th>年度预算总额 (RMB)</th>
-                                <th>一季度</th>
-                                <th>二季度</th>
-                                <th>三季度</th>
-                                <th>四季度</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>销售部 - 差旅费</td>
-                                <td>500,000.00</td>
-                                <td>150,000.00</td>
-                                <td>150,000.00</td>
-                                <td>100,000.00</td>
-                                <td>100,000.00</td>
-                                <td><a href="#" style="color:#3498db;">编辑详情</a></td>
-                            </tr>
-                            <tr>
-                                <td>运营部 - 车辆维护费</td>
-                                <td>800,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td><a href="#" style="color:#3498db;">编辑详情</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
 
     // =========================================================================
     // 24. 预算执行分析 (Budget Analysis)
@@ -8116,208 +7952,9 @@ function loadContent(moduleCode, element = null) {
                     </table>
                 `;
     }
-    // =========================================================================
-    // 23. 预算编制 (Budget Planning)
-    // =========================================================================
-    else if (moduleCode === "BudgetPlanning") {
-        contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">预算年度</option>
-                                <option>2026</option>
-                                <option>2025</option>
-                            </select>
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">预算版本</option>
-                                <option>初稿</option>
-                                <option>终版</option>
-                                <option>调整版A</option>
-                            </select>
-                            <input type="text" placeholder="部门名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;">+ 新增预算版本</button>
-                        <button class="btn-primary" style="background-color: #3498db;">下载预算模板</button>
-                        <button class="btn-primary" style="background-color: #f39c12;">导入预算数据</button>
-                    </div>
-
-                    <h3>2025年度预算概览 (终版)</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>部门/科目</th>
-                                <th>年度预算总额 (RMB)</th>
-                                <th>一季度</th>
-                                <th>二季度</th>
-                                <th>三季度</th>
-                                <th>四季度</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>销售部 - 差旅费</td>
-                                <td>500,000.00</td>
-                                <td>150,000.00</td>
-                                <td>150,000.00</td>
-                                <td>100,000.00</td>
-                                <td>100,000.00</td>
-                                <td><a href="#" style="color:#3498db;">编辑详情</a></td>
-                            </tr>
-                            <tr>
-                                <td>运营部 - 车辆维护费</td>
-                                <td>800,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td>200,000.00</td>
-                                <td><a href="#" style="color:#3498db;">编辑详情</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
 
     // =========================================================================
-    // 24. 预算执行分析 (Budget Execution Analysis) - 修正代码名称
-    // =========================================================================
-    else if (moduleCode === "BudgetExecutionAnalysis") {
-        contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">预算周期</option>
-                                <option>本年度</option>
-                                <option>本季度</option>
-                                <option>本月</option>
-                            </select>
-                            <input type="text" placeholder="部门/科目筛选" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-cards" style="display: flex; gap: 20px; margin-bottom: 20px;">
-                        <div class="card" style="flex: 1; padding: 15px; border-radius: 6px; background-color: #e8f5e9; border-left: 5px solid #27ae60;">
-                            <h4>预算总额 (本年)</h4>
-                            <p style="font-size: 24px; color: #27ae60;">12,000,000.00</p>
-                        </div>
-                        <div class="card" style="flex: 1; padding: 15px; border-radius: 6px; background-color: #fff3e0; border-left: 5px solid #f39c12;">
-                            <h4>实际发生 (本年)</h4>
-                            <p style="font-size: 24px; color: #f39c12;">8,500,000.00</p>
-                        </div>
-                        <div class="card" style="flex: 1; padding: 15px; border-radius: 6px; background-color: #fbecec; border-left: 5px solid #e74c3c;">
-                            <h4>超支风险预警</h4>
-                            <p style="font-size: 24px; color: #e74c3c;">2个科目</p>
-                        </div>
-                    </div>
-
-                    <h3>预算执行明细</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>部门</th>
-                                <th>费用科目</th>
-                                <th>预算金额 (RMB)</th>
-                                <th>实际发生 (RMB)</th>
-                                <th>预算差异 (RMB)</th>
-                                <th>执行率 (%)</th>
-                                <th>趋势</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>销售部</td>
-                                <td>差旅费</td>
-                                <td>500,000.00</td>
-                                <td>450,000.00</td>
-                                <td>+50,000.00</td>
-                                <td>90.0%</td>
-                                <td><span style="color: #27ae60;">达标</span></td>
-                            </tr>
-                            <tr>
-                                <td>运营部</td>
-                                <td>车辆维护费</td>
-                                <td>800,000.00</td>
-                                <td>850,000.00</td>
-                                <td>-50,000.00</td>
-                                <td>106.3%</td>
-                                <td><span style="color: #e74c3c; font-weight: bold;">超支</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 25. 绩效考核 (Budget Performance) - 修正代码名称
-    // =========================================================================
-    else if (moduleCode === "BudgetPerformance") {
-        contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">考核周期</option>
-                                <option>2025 Q4</option>
-                                <option>2025 Q3</option>
-                            </select>
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">考核对象类型</option>
-                                <option>部门</option>
-                                <option>员工</option>
-                            </select>
-                            <input type="text" placeholder="考核对象名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 150px;">
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #3498db;">发起绩效计算</button>
-                        <button class="btn-primary" style="background-color: #f39c12;">导出考核结果</button>
-                    </div>
-
-                    <h3>2025 Q4 部门绩效结果</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>考核对象 (部门)</th>
-                                <th>回款率目标</th>
-                                <th>实际回款率 (%)</th>
-                                <th>成本控制目标</th>
-                                <th>实际成本偏差 (%)</th>
-                                <th>综合得分</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>销售部</td>
-                                <td>98.0%</td>
-                                <td>99.5%</td>
-                                <td>±3%</td>
-                                <td>+1.2%</td>
-                                <td>95.0</td>
-                                <td><a href="#" style="color:#3498db;">查看明细</a></td>
-                            </tr>
-                            <tr>
-                                <td>运营部</td>
-                                <td>N/A</td>
-                                <td>N/A</td>
-                                <td>±5%</td>
-                                <td>-6.5%</td>
-                                <td>80.5</td>
-                                <td><a href="#" style="color:#3498db;">查看明细</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-    }
-
-    // =========================================================================
-    // 26 & 28 (合并). 操作日志中心 (OperationLogCenter)
+    // 26. 操作日志中心 (OperationLogCenter)
     // 读取 GlobalAuditLogs + GlobalDataChangeLogs，统一展示，支持多选导出与完善分页
     // =========================================================================
     else if (moduleCode === "OperationLogCenter") {
@@ -13715,6 +13352,42 @@ function loadContent(moduleCode, element = null) {
             };
 
             // ============================================================
+            // 五点五、辅助核算项选项构建（读取辅助核算项页面数据）
+            // ============================================================
+            function buildEngineAuxOptions(selectedVal) {
+                var AUX_TYPES = [
+                    { key: 'dept',     label: '部门' },
+                    { key: 'customer', label: '客户' },
+                    { key: 'vendor',   label: '供应商' },
+                    { key: 'employee', label: '职员' },
+                    { key: 'project',  label: '项目' },
+                    { key: 'inventory',label: '存货' },
+                    { key: 'cashflow', label: '现金流量项目' }
+                ];
+                var html = '<option value="">无</option>';
+                AUX_TYPES.forEach(function(t) {
+                    var list = [];
+                    if (typeof window.getAuxiliaryDataByKey === 'function') {
+                        list = window.getAuxiliaryDataByKey(t.key).filter(function(item) { return item.enabled !== false; });
+                    } else {
+                        try {
+                            var raw = sessionStorage.getItem('AuxiliaryData:' + t.key) || localStorage.getItem('AuxiliaryData:' + t.key);
+                            var parsed = JSON.parse(raw || '[]');
+                            list = Array.isArray(parsed) ? parsed.filter(function(item) { return item.enabled !== false; }) : [];
+                        } catch(e) {}
+                    }
+                    if (!list.length) return;
+                    html += '<optgroup label="' + t.label + '">';
+                    list.forEach(function(item) {
+                        var val = t.key + '|||' + item.code + '|||' + item.name;
+                        html += '<option value="' + val + '"' + (val === selectedVal ? ' selected' : '') + '>' + item.code + ' ' + item.name + '</option>';
+                    });
+                    html += '</optgroup>';
+                });
+                return html;
+            }
+
+            // ============================================================
             // 六、加载右侧配置面板
             // ============================================================
             window.loadEngineConfig = function(itemName, clickedEl) {
@@ -13731,6 +13404,8 @@ function loadContent(moduleCode, element = null) {
                         var v = s.code + '|||' + s.name;
                         return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' ' + s.name + '</option>';
                     }).join('');
+                    var auxSelectedVal = (e.auxType && e.auxCode) ? (e.auxType + '|||' + e.auxCode + '|||' + (e.auxName || '')) : '';
+                    var auxOpts = buildEngineAuxOptions(auxSelectedVal);
                     return '<tr data-index="' + i + '">' +
                         '<td style="width:80px;">' +
                         '<select class="engine-dir">' +
@@ -13738,6 +13413,7 @@ function loadContent(moduleCode, element = null) {
                         '<option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option>' +
                         '</select></td>' +
                         '<td><select class="engine-subject"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
+                        '<td style="min-width:160px;"><select class="engine-aux" style="width:100%;padding:5px 6px;border:1px solid #dfe6e9;border-radius:4px;font-size:13px;">' + auxOpts + '</select></td>' +
                         '<td><input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="摘要模板，如：{waybillNo}"></td>' +
                         '<td style="width:70px; text-align:center;">' +
                         '<button class="btn-remove" onclick="removeEntry(\'' + itemName.replace(/'/g, "\\'") + '\', ' + i + ')">删除</button>' +
@@ -13773,9 +13449,9 @@ function loadContent(moduleCode, element = null) {
                     '<button class="btn-add-entry" onclick="addEntry(\'' + itemName.replace(/'/g, "\\'") + '\')">+ 添加分录</button>' +
                     '</div>' +
                     '<table class="entries-table">' +
-                    '<thead><tr><th>方向</th><th>会计科目</th><th>摘要模板</th><th>操作</th></tr></thead>' +
+                    '<thead><tr><th>方向</th><th>会计科目</th><th>辅助核算项</th><th>摘要模板</th><th>操作</th></tr></thead>' +
                     '<tbody id="engine-entries-body">' +
-                    (entryRows || '<tr><td colspan="4" style="text-align:center; padding:20px; color:#9ca3af;">暂无分录，点击"添加分录"创建</td></tr>') +
+                    (entryRows || '<tr><td colspan="5" style="text-align:center; padding:20px; color:#9ca3af;">暂无分录，点击"添加分录"创建</td></tr>') +
                     '</tbody></table></div>' +
                     '<div class="action-bar">' +
                     '<button class="btn-reset" onclick="resetTemplate(\'' + itemName.replace(/'/g, "\\'") + '\')">清空科目</button>' +
@@ -13792,7 +13468,7 @@ function loadContent(moduleCode, element = null) {
             // ============================================================
             window.addEntry = function(itemName) {
                 var tpl = getTemplate(itemName);
-                tpl.entries.push({ dir: '借', subjectCode: '', subjectName: '', summary: '', usePaymentMethod: false });
+                tpl.entries.push({ dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '', usePaymentMethod: false });
                 setTemplate(itemName, tpl);
                 window.loadEngineConfig(itemName);
             };
@@ -13826,10 +13502,15 @@ function loadContent(moduleCode, element = null) {
                 var entries = rows.map(function(row) {
                     var subVal = (row.querySelector('.engine-subject') || {}).value || '';
                     var parts = subVal.split('|||');
+                    var auxVal = (row.querySelector('.engine-aux') || {}).value || '';
+                    var auxParts = auxVal && auxVal.indexOf('|||') !== -1 ? auxVal.split('|||') : [];
                     return {
                         dir: (row.querySelector('.engine-dir') || {}).value || '借',
                         subjectCode: (parts[0] || '').trim(),
                         subjectName: (parts[1] || '').trim(),
+                        auxType:  auxParts[0] || '',
+                        auxCode:  auxParts[1] || '',
+                        auxName:  auxParts[2] || '',
                         summary: ((row.querySelector('.engine-summary') || {}).value || '').trim(),
                         usePaymentMethod: false
                     };
@@ -15006,6 +14687,8 @@ function loadContent(moduleCode, element = null) {
         );
 
         const totals = activeRows.reduce((acc, row) => {
+            // 直接累加所有入账科目的发生额。如果子科目和父科目由于结转产生对冲余额，
+            // 它们会自动正负抵消。由于系统允许直接在父科目记账，必须全量统计。
             acc.openingDebit += row.openingDebit;
             acc.openingCredit += row.openingCredit;
             acc.periodDebit += row.periodDebit;
@@ -15986,6 +15669,10 @@ function loadContent(moduleCode, element = null) {
                 : "";
             return `
                 <tr>
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="expense-row-check" data-id="${item.id || ""}"
+                            onchange="updateExpensePrintBtn()">
+                    </td>
                     <td>${displayId}</td>
                     <td>${item.applicant || "-"}</td>
                     <td>${item.expense_type || "-"}</td>
@@ -15998,6 +15685,7 @@ function loadContent(moduleCode, element = null) {
                         <div class="expense-daily__actions">
                             <button class="btn-primary btn-ghost expense-daily__action-btn" onclick="openExpenseDailyDetail('${item.id || ""}')">查看</button>
                             ${payAction}
+                            <button class="btn-primary btn-ghost expense-daily__action-btn" style="color:#1890ff;border-color:#1890ff;" onclick="printExpenseItem('${item.id || ""}')">🖨 打印</button>
                             <button class="btn-primary btn-ghost expense-daily__action-btn expense-daily__action-btn--danger" onclick="deleteExpenseDailyItem('${item.id || ""}')">删除</button>
                         </div>
                     </td>
@@ -16023,6 +15711,144 @@ function loadContent(moduleCode, element = null) {
         if (paidEl) paidEl.textContent = String(paidCount);
 
         // 已移除审批进度看板与待办提醒
+    };
+
+    // ── 勾选联动：更新批量打印按钮状态 ──
+    window.toggleAllExpenseSelection = function(checked) {
+        document.querySelectorAll('.expense-row-check').forEach(cb => { cb.checked = checked; });
+        window.updateExpensePrintBtn();
+    };
+
+    window.updateExpensePrintBtn = function() {
+        const selected = document.querySelectorAll('.expense-row-check:checked').length;
+        const btn = document.getElementById('expense-batch-print-btn');
+        if (btn) {
+            btn.disabled = selected === 0;
+            btn.textContent = selected > 0 ? `🖨 批量打印 (${selected})` : '🖨 批量打印';
+        }
+        // 同步全选框状态
+        const all = document.querySelectorAll('.expense-row-check');
+        const allSel = document.getElementById('expense-select-all');
+        if (allSel && all.length > 0) {
+            allSel.checked = all.length === selected;
+            allSel.indeterminate = selected > 0 && selected < all.length;
+        }
+    };
+
+    // ── 生成单张报销单打印 HTML ──
+    function buildExpensePrintHTML(items) {
+        const company = sessionStorage.getItem('CurrentAcctSetName') || '物流公司';
+        const blocks = items.map(item => {
+            const displayId = item.bill_no || item.id || '-';
+            const oaStatusLabel = (function() {
+                const s = (item.oa_status || '').toLowerCase();
+                if (s === 'approved') return '审批通过';
+                if (s === 'pending') return '审批中';
+                if (s === 'rejected') return '已拒绝';
+                return item.oa_status || '未同步';
+            })();
+            const amount = parseFloat(item.amount || 0).toFixed(2);
+            const payable = parseFloat(item.payable_amount || item.amount || 0).toFixed(2);
+            const offset = parseFloat(item.offset_amount || 0).toFixed(2);
+            const date = (item.created_at || '').toString().slice(0, 10) || '-';
+            return `
+            <div class="print-form">
+                <div class="print-header">
+                    <div class="print-company">${company}</div>
+                    <div class="print-title">日常费用报销单</div>
+                    <div class="print-no">单据编号：${displayId}</div>
+                </div>
+                <table class="print-table">
+                    <tr>
+                        <td class="label">报销人</td><td>${item.applicant || '-'}</td>
+                        <td class="label">所属部门</td><td>${item.department || '-'}</td>
+                        <td class="label">提交日期</td><td>${date}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">费用类型</td><td>${item.expense_type || '-'}</td>
+                        <td class="label">发票数量</td><td>${item.invoice_count || '0'} 张</td>
+                        <td class="label">OA 审批</td><td>${oaStatusLabel}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">报销金额</td><td>¥ ${amount}</td>
+                        <td class="label">冲销借款</td><td>${parseFloat(offset) > 0 ? '¥ ' + offset : '无'}</td>
+                        <td class="label">实付金额</td><td style="font-weight:700;color:#c0392b;">¥ ${payable}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">付款状态</td>
+                        <td colspan="5">${item.payment_status || '-'}${item.payment_date ? '　付款日期：' + item.payment_date : ''}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">报销说明</td>
+                        <td colspan="5" style="min-height:50px;">${item.reason || item.description || '-'}</td>
+                    </tr>
+                </table>
+                <div class="print-sign">
+                    <div class="sign-cell"><div class="sign-line"></div><div>申请人</div></div>
+                    <div class="sign-cell"><div class="sign-line"></div><div>部门经理</div></div>
+                    <div class="sign-cell"><div class="sign-line"></div><div>财务审核</div></div>
+                    <div class="sign-cell"><div class="sign-line"></div><div>总经理</div></div>
+                </div>
+                <div class="print-footer">本单据一式两份，财务留存一份，申请人留存一份。</div>
+            </div>`;
+        }).join('<div class="page-break"></div>');
+
+        return `<!DOCTYPE html><html><head><meta charset="utf-8">
+        <title>报销单打印</title>
+        <style>
+            * { box-sizing:border-box; margin:0; padding:0; font-family:"Microsoft YaHei",sans-serif; }
+            body { background:#f0f0f0; padding:20px; }
+            .print-form { background:#fff; width:210mm; margin:0 auto 20px; padding:20mm 15mm; }
+            .print-header { text-align:center; margin-bottom:16px; }
+            .print-company { font-size:13px; color:#555; margin-bottom:4px; }
+            .print-title { font-size:22px; font-weight:700; letter-spacing:4px; margin-bottom:6px; }
+            .print-no { font-size:12px; color:#777; }
+            .print-table { width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px; }
+            .print-table td { border:1px solid #ccc; padding:8px 10px; }
+            .print-table td.label { background:#f8f8f8; font-weight:600; width:80px; white-space:nowrap; }
+            .print-sign { display:flex; gap:0; border:1px solid #ccc; border-right:none; margin-bottom:12px; }
+            .sign-cell { flex:1; border-right:1px solid #ccc; padding:10px 8px 6px; text-align:center; font-size:12px; color:#666; }
+            .sign-line { height:36px; border-bottom:1px dashed #ccc; margin-bottom:6px; }
+            .print-footer { text-align:center; font-size:11px; color:#999; padding-top:8px; border-top:1px dashed #ddd; }
+            .page-break { page-break-after:always; }
+            @media print {
+                body { background:#fff; padding:0; }
+                .print-form { margin:0; padding:15mm 10mm; box-shadow:none; }
+                .no-print { display:none !important; }
+            }
+        </style></head><body>
+        <div class="no-print" style="text-align:center;margin-bottom:16px;">
+            <button onclick="window.print()" style="padding:8px 24px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;">🖨 打印</button>
+            <button onclick="window.close()" style="padding:8px 16px;margin-left:10px;border:1px solid #ddd;border-radius:4px;cursor:pointer;">关闭</button>
+        </div>
+        ${blocks}
+        </body></html>`;
+    }
+
+    // ── 单张打印 ──
+    window.printExpenseItem = function(id) {
+        const list = getExpenseDailyList();
+        const item = list.find(it => it.id === id || it.bill_no === id);
+        if (!item) { alert('找不到该报销单数据'); return; }
+        const html = buildExpensePrintHTML([item]);
+        const win = window.open('', '_blank', 'width=900,height=700');
+        if (!win) { alert('请允许弹出窗口以进行打印'); return; }
+        win.document.write(html);
+        win.document.close();
+    };
+
+    // ── 批量打印 ──
+    window.batchPrintExpense = function() {
+        const ids = Array.from(document.querySelectorAll('.expense-row-check:checked')).map(cb => cb.dataset.id);
+        if (!ids.length) { alert('请先勾选要打印的报销单'); return; }
+        const list = getExpenseDailyList();
+        const items = ids.map(id => list.find(it => it.id === id || it.bill_no === id)).filter(Boolean);
+        if (!items.length) { alert('未找到选中报销单数据'); return; }
+        const html = buildExpensePrintHTML(items);
+        const win = window.open('', '_blank', 'width=900,height=700');
+        if (!win) { alert('请允许弹出窗口以进行打印'); return; }
+        win.document.write(html);
+        win.document.close();
     };
 
     window.deleteExpenseDailyItem = async function (id) {

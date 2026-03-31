@@ -229,7 +229,23 @@ window.switchAcctSet = function(newCode, newNameRaw) {
     if (currentCode === newCode) return;
 
     // 1. 保存当前帐套数据
-    if (currentCode) window.saveCurrentAcctSetSnapshot();
+    if (currentCode) {
+        window.saveCurrentAcctSetSnapshot();
+    } else {
+        // 首次切换（无当前帐套）：若目标帐套快照为空，把当前全局数据（含种子凭证）存入
+        const targetSnapRaw = sessionStorage.getItem('AcctSetData_' + newCode);
+        const targetSnap = targetSnapRaw ? JSON.parse(targetSnapRaw) : {};
+        const targetVouchers = JSON.parse(targetSnap.ManualVouchers || '[]');
+        const currentVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+        if (targetVouchers.length === 0 && currentVouchers.length > 0) {
+            const snap = {};
+            window._ACCT_SNAPSHOT_KEYS.forEach(k => {
+                const v = sessionStorage.getItem(k);
+                if (v !== null) snap[k] = v;
+            });
+            sessionStorage.setItem('AcctSetData_' + newCode, JSON.stringify(snap));
+        }
+    }
 
     // 2. 加载新帐套快照
     const loaded = window.loadAcctSetSnapshot(newCode);

@@ -114,17 +114,20 @@
             </div>
             <div class="menu-item" onclick="loadContent('PeriodEndCenter', this)">期末处理</div>
             <div class="menu-group-title">数据报表</div>
-                        <div class="menu-item collapsed" onclick="toggleSubMenu(this)">财务报表</div>
-                        <div class="sub-menu">
-                            <div class="sub-menu-item" onclick="loadContent('AcctGeneralLedger', this)">总账</div>
-                            <div class="sub-menu-item" onclick="loadContent('AcctSubjectDetail', this)">明细账</div>
-                            <div class="sub-menu-item" onclick="loadContent('AcctSubjectBalance', this)">科目余额表</div>
-                            <div class="sub-menu-item" onclick="loadContent('AcctAuxLedger', this)">辅助核算表</div>
-                            <div class="sub-menu-item" onclick="loadContent('ReportTrialBalance', this)">试算平衡表</div>
-                            <div class="sub-menu-item" onclick="loadContent('ReportBalanceSheet', this)">资产负债表</div>
-                            <div class="sub-menu-item" onclick="loadContent('ReportIncomeStatement', this)">利润损益表</div>
-                            <div class="sub-menu-item" onclick="loadContent('ReportCashFlow', this)">现金流量表</div>
-                        </div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">账薄</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('AcctGeneralLedger', this)">总账</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctSubjectDetail', this)">明细账</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctAuxLedger', this)">辅助核算表</div>
+                <div class="sub-menu-item" onclick="loadContent('AcctSubjectBalance', this)">科目余额表</div>
+                <div class="sub-menu-item" onclick="loadContent('ReportTrialBalance', this)">试算平衡表</div>
+            </div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">财务报表</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ReportBalanceSheet', this)">资产负债表</div>
+                <div class="sub-menu-item" onclick="loadContent('ReportIncomeStatement', this)">利润损益表</div>
+                <div class="sub-menu-item" onclick="loadContent('ReportCashFlow', this)">现金流量表</div>
+            </div>
 
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">管理报表</div>
             <div class="sub-menu">
@@ -139,13 +142,13 @@
                 <div class="sub-menu-item" onclick="loadContent('BudgetPlanning', this)">预算编制</div>
                 <div class="sub-menu-item" onclick="loadContent('BudgetExecutionAnalysis', this)">预算执行分析</div>
                 <div class="sub-menu-item" onclick="loadContent('BudgetPerformance', this)">绩效考核</div>
-            </div> 
+            </div>  -->
             <div class="menu-group-title">基础资料</div>
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">往来单位</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('BaseCustomer', this)">客户档案</div>
             </div>
-            <div class="menu-group-title">人事中心</div>
+            <!-- <div class="menu-group-title">人事中心</div>
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">人事管理</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('HREmployee', this)">员工花名册</div>

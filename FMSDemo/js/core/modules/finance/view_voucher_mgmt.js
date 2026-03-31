@@ -18,6 +18,23 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             var standardKey = localStorage.getItem("AccountingStandard") || sessionStorage.getItem("AccountingStandard") || "enterprise";
             veSubjectList = (ACCOUNTING_STANDARD_TEMPLATES[standardKey] || ACCOUNTING_STANDARD_TEMPLATES.enterprise || []);
         }
+        // 迁移：确保现金类科目包含"现金流量项目"辅助核算（修正旧数据中的"银行账户"或空值）
+        var _cashAuxCodes = {'1001':1,'1002':1,'1012':1,'100201':1,'100202':1,'100203':1,'101201':1,'101202':1};
+        var _needSave = false;
+        veSubjectList.forEach(function(s) {
+            if (_cashAuxCodes[s.code]) {
+                var a = (s.aux || '').trim();
+                if (!a || a === '无' || a === '银行账户') {
+                    s.aux = '现金流量项目'; _needSave = true;
+                } else if (a.indexOf('现金流量项目') === -1) {
+                    s.aux = a + ',现金流量项目'; _needSave = true;
+                }
+            }
+        });
+        if (_needSave) {
+            sessionStorage.setItem('AcctSubjects', JSON.stringify(veSubjectList));
+            localStorage.setItem('AcctSubjects', JSON.stringify(veSubjectList));
+        }
         window._veSubjectList = veSubjectList;
         var veSummaryTpls = (typeof getVoucherSummaryTemplates === 'function') ? getVoucherSummaryTemplates() : [];
         var veTodayDate = new Date().toISOString().split('T')[0];
@@ -381,9 +398,24 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 if (!tbody) return;
                 var html = '';
                 window.veRows.forEach(function (row, idx) {
-                    var auxOptions = ['无','部门','客户','供应商','员工'].map(function(opt) {
-                        return '<option' + (row.auxiliary === opt ? ' selected' : '') + '>' + opt + '</option>';
-                    }).join('');
+                    // 根据已选科目动态构建辅助核算选项
+                    var auxOptionsHtml = '';
+                    var subjectCode = (row.subject || '').split(' ')[0];
+                    if (subjectCode && window.buildAuxOptions && window.parseAuxLabels) {
+                        var subjectObj = (window._veSubjectList || []).find(function(s) { return s.code === subjectCode; });
+                        if (subjectObj && subjectObj.aux) {
+                            var labels = window.parseAuxLabels(subjectObj.aux);
+                            auxOptionsHtml = window.buildAuxOptions(labels);
+                        }
+                    }
+                    if (!auxOptionsHtml) auxOptionsHtml = '<option value="">无</option>';
+                    // 恢复已选值
+                    if (row.auxiliary && row.auxiliary !== '无' && row.auxiliary !== '') {
+                        auxOptionsHtml = auxOptionsHtml.replace(
+                            'value="' + row.auxiliary + '"',
+                            'value="' + row.auxiliary + '" selected'
+                        );
+                    }
                     var sumVal = (row.summary || '').replace(/"/g, '&quot;');
                     var subjVal = (row.subject || '').replace(/"/g, '&quot;');
                     html += '<tr>' +
@@ -400,7 +432,7 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                             ' onfocus="veShowSubjectAC(' + idx + ',this.value,true)"' +
                             ' onblur="setTimeout(function(){veHideAC(\'veSubjAC\')},200)">' +
                         '</td>' +
-                        '<td class="ve-col-auxiliary"><select class="ve-entry-select" onchange="window.veRows[' + idx + '].auxiliary=this.value">' + auxOptions + '</select></td>' +
+                        '<td class="ve-col-auxiliary"><select class="ve-entry-select" id="veAuxSel_' + idx + '" onchange="window.veRows[' + idx + '].auxiliary=this.value">' + auxOptionsHtml + '</select></td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.debit || 0) + '" oninput="window.veRows[' + idx + '].debit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.credit || 0) + '" oninput="window.veRows[' + idx + '].credit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
                         '<td class="ve-col-op"><span class="ve-btn-delete-row" title="删除本行" onclick="veDeleteRow(' + idx + ')">&#8722;</span></td>' +
@@ -474,9 +506,20 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
 
             window.veSelectSubject = function(idx, val) {
                 window.veRows[idx].subject = val;
+                window.veRows[idx].auxiliary = '';
                 var input = document.getElementById('veSubjInput_' + idx);
                 if (input) { input.value = val; input.focus(); }
                 veHideAC('veSubjAC');
+                // 根据新选科目刷新辅助核算下拉
+                var auxSel = document.getElementById('veAuxSel_' + idx);
+                if (auxSel && window.buildAuxOptions && window.parseAuxLabels) {
+                    var code = val.split(' ')[0];
+                    var subj = (window._veSubjectList || []).find(function(s) { return s.code === code; });
+                    var newHtml = (subj && subj.aux)
+                        ? window.buildAuxOptions(window.parseAuxLabels(subj.aux))
+                        : '<option value="">无</option>';
+                    auxSel.innerHTML = newHtml;
+                }
             };
 
             window.veShowSummaryAC = function(idx, val, showAll) {
@@ -632,8 +675,24 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var totalDebit = 0;
                 var lines = window.veRows.map(function (r) {
                     totalDebit += r.debit;
-                    // 同时存 account 字段，保证科目余额表/试算平衡表能正确识别
-                    return { summary: r.summary, subject: r.subject, account: r.subject, auxiliary: r.auxiliary, debit: r.debit, credit: r.credit };
+                    // 解析辅助核算值 "auxType|||auxCode|||auxName"
+                    var auxType = '', auxCode = '', auxName = '', auxDisplay = '';
+                    var auxVal = r.auxiliary || '';
+                    if (auxVal && auxVal.indexOf('|||') !== -1) {
+                        var parts = auxVal.split('|||');
+                        auxType = parts[0] || '';
+                        auxCode = parts[1] || '';
+                        auxName = parts[2] || '';
+                        auxDisplay = auxName || auxCode;
+                    } else if (auxVal && auxVal !== '无') {
+                        auxDisplay = auxVal;
+                    }
+                    return {
+                        summary: r.summary, subject: r.subject, account: r.subject,
+                        auxiliary: auxDisplay, aux: auxDisplay,
+                        auxType: auxType, auxCode: auxCode, auxName: auxName,
+                        debit: r.debit, credit: r.credit
+                    };
                 });
                 var voucher = {
                     id: voucherId,
@@ -1160,6 +1219,108 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
         sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
         window.closeCashierReviewModal();
         loadContent('FinanceVoucherAudit');
+    };
+
+    // ── 推送选中凭证至外账帐套 ──
+    window.pushSelectedVouchersToExternal = function() {
+        const ids = window.getSelectedVoucherIds();
+        if (!ids.length) { alert('请先选择要推送的凭证。'); return; }
+
+        const currentCode = sessionStorage.getItem('CurrentAcctSetCode');
+        if (!currentCode) { alert('当前未选择帐套，请先在帐套管理中启用并切换帐套。'); return; }
+
+        // 找到当前帐套在树中的节点，获取子帐套列表
+        const treeData = JSON.parse(sessionStorage.getItem('AcctSetTree') || '[]');
+        function findNode(nodes, code) {
+            for (const n of nodes) {
+                if (n.code === code) return n;
+                if (n.children) { const r = findNode(n.children, code); if (r) return r; }
+            }
+            return null;
+        }
+        const sourceNode = findNode(treeData, currentCode);
+        const children = (sourceNode && sourceNode.children || []).filter(c => c.status === 'enabled');
+        if (!children.length) {
+            alert('当前帐套「' + currentCode + '」没有已启用的子帐套，无法推送。\n请先在账套管理中创建并启用外账帐套。');
+            return;
+        }
+
+        // 若有多个子帐套，弹出选择（当前仅 1 个时自动选择）
+        let targetCode;
+        if (children.length === 1) {
+            targetCode = children[0].code;
+        } else {
+            const options = children.map((c, i) => `${i + 1}. ${c.name}（${c.code}）`).join('\n');
+            const sel = prompt('请选择目标外账帐套（输入编号）：\n' + options, '1');
+            const idx = parseInt(sel) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= children.length) { alert('取消推送。'); return; }
+            targetCode = children[idx].code;
+        }
+
+        const targetSnapRaw = sessionStorage.getItem('AcctSetData_' + targetCode);
+        if (!targetSnapRaw) {
+            alert('目标帐套「' + targetCode + '」快照不存在，请先启用该帐套。');
+            return;
+        }
+
+        // 读取推送模板（可选，无模板则全量复制选中凭证）
+        const tplRaw = sessionStorage.getItem('PushTemplate_' + targetCode);
+        const tpl = tplRaw ? JSON.parse(tplRaw) : null;
+
+        // 获取选中凭证
+        const allVouchers = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
+        const idSet = new Set(ids);
+        let selected = allVouchers.filter(v => idSet.has(v.id));
+
+        // 应用模板规则（若有）
+        if (tpl) {
+            const statusSet = new Set(tpl.statusFilter || []);
+            const excludePrefixes = (tpl.excludeAccountPrefixes || '').split(/[,，]/).map(s => s.trim()).filter(Boolean);
+            selected = selected
+                .filter(v => {
+                    if (statusSet.size && !statusSet.has(v.status)) return false;
+                    if (tpl.excludeSystemVouchers) {
+                        if ((v.user || '').includes('期末结转') || (v.summary || '').includes('期末结转')) return false;
+                    }
+                    return true;
+                })
+                .map(v => {
+                    if (!excludePrefixes.length) return JSON.parse(JSON.stringify(v));
+                    const filteredLines = (v.lines || []).filter(line => {
+                        const code = (line.accountCode || line.account || '').toString().trim().split(/\s+/)[0];
+                        return !excludePrefixes.some(p => code.startsWith(p));
+                    });
+                    return Object.assign({}, v, { lines: filteredLines });
+                })
+                .filter(v => (v.lines || []).length > 0);
+        } else {
+            selected = selected.map(v => JSON.parse(JSON.stringify(v))); // 深拷贝
+        }
+
+        if (!selected.length) {
+            alert('选中凭证经模板规则过滤后为空，无凭证可推送。\n请检查凭证状态或模板配置。');
+            return;
+        }
+
+        if (!confirm(`确认将 ${selected.length} 张凭证推送至外账「${targetCode}」？\n（将追加/更新到目标帐套，不会删除目标已有的其他凭证）`)) return;
+
+        // 追加到目标帐套（不覆盖，按 ID 去重更新）
+        const targetSnap = JSON.parse(targetSnapRaw);
+        const targetVouchers = JSON.parse(targetSnap.ManualVouchers || '[]');
+        const targetIdMap = {};
+        targetVouchers.forEach(v => { targetIdMap[v.id] = v; });
+        let added = 0, updated = 0;
+        selected.forEach(v => {
+            if (targetIdMap[v.id]) { targetIdMap[v.id] = v; updated++; }
+            else { targetIdMap[v.id] = v; added++; }
+        });
+        targetSnap.ManualVouchers = JSON.stringify(Object.values(targetIdMap));
+        sessionStorage.setItem('AcctSetData_' + targetCode, JSON.stringify(targetSnap));
+
+        const now = new Date().toLocaleString('zh-CN');
+        sessionStorage.setItem('PushLog_' + targetCode, now);
+
+        alert(`✅ 推送完成！\n新增：${added} 张  更新：${updated} 张\n目标帐套：${targetCode}（${now}）`);
     };
 
     window.exportSelectedVouchers = function() {
@@ -2079,6 +2240,7 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                 <button class="va-btn voucher-center__action" onclick="openCashierReviewModal()" disabled>出纳复核</button>
                 <button class="va-btn voucher-center__action" onclick="vaCancelCashierReview()" disabled>取消复核</button>
                 <button class="va-btn voucher-center__action" onclick="applyVoucherAction('post')" disabled>记账</button>
+                <button class="va-btn voucher-center__action" onclick="applyVoucherAction('unpost')" disabled>取消记账</button>
                 <button class="va-btn voucher-center__action" onclick="deleteSelectedVouchers()" disabled>删除</button>
                 <div class="va-dropdown-wrap">
                     <button class="va-btn" id="vaOpBtn" onclick="vaToggleOpMenu(event)">操作 ▼</button>
@@ -2093,6 +2255,8 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                 <button class="va-btn" onclick="vaOpenColDlg()">栏目</button>
                 <div class="va-sep"></div>
                 <button class="va-btn voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
+                <button class="va-btn voucher-center__action" style="color:#e67e22;border-color:#e67e22;"
+                    onclick="pushSelectedVouchersToExternal()" disabled title="将选中凭证推送到外账帐套">📤 推送至外账</button>
                 <button class="va-btn" onclick="window.print()" title="打印">🖨</button>
             </div>
             <!-- 筛选区 -->

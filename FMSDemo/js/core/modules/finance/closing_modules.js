@@ -21,14 +21,8 @@
                     { digest: '教育附加',       baseCode: '2221', ratio: 3, debitName: '6403 税金及附加', creditName: '222103 应交教育费附加', aux: '项目' },
                     { digest: '地方教育附加',   baseCode: '2221', ratio: 2, debitName: '6403 税金及附加', creditName: '222104 应交地方教育附加', aux: '项目' }
                 ]
-            },
-            {
-                id: 's-2', name: '管理费用期末结转', ledger: '管理账', word: '转', status: '禁用', lastPeriod: '-',
-                summary: '管理费用月末结转',
-                lines: [
-                    { digest: '结转管理费用', baseCode: '6602', ratio: 100, debitName: '本年利润', creditName: '管理费用', aux: '' }
-                ]
             }
+        
         ];
     }
 
@@ -91,13 +85,27 @@
         function renderCards(p) {
             return STEPS.map(s => {
                 const isDone = getStepDone(p, s.key);
+                const isWip = s.url === '#';
+                const clickAttr = isWip
+                    ? `onclick="alert('「${s.label}」功能正在建设中，敬请期待。')"`
+                    : `onclick="loadContent('${s.url}')"`;
+                const cardStyle = isWip
+                    ? 'background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:default; opacity:0.75;'
+                    : 'background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;';
+                const btnStyle = isWip
+                    ? 'background:#a0aec0; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:not-allowed;'
+                    : `background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;`;
+                const btnLabel = isWip ? '开发中' : (isDone ? '查看 →' : '进入 →');
                 return `
-                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;" onclick="loadContent('${s.url}')">
-                    <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
+                <div style="${cardStyle}" ${clickAttr}>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
+                        ${isWip ? '<span style="font-size:11px;background:#e2e8f0;color:#718096;padding:2px 8px;border-radius:10px;height:fit-content;">建设中</span>' : ''}
+                    </div>
                     <h3 style="font-size:17px; margin-bottom:10px;">${s.label}</h3>
                     <p style="font-size:13px; color:#718096; line-height:1.5;">${s.desc}</p>
                     <div style="margin-top:20px; text-align:right;">
-                        <button style="background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">${isDone?'查看':'进入'} →</button>
+                        <button style="${btnStyle}" ${isWip ? 'disabled' : ''}>${btnLabel}</button>
                     </div>
                 </div>`;
             }).join('');
@@ -212,6 +220,29 @@
             return /^\d+$/.test(first) ? first : '';
         }
 
+        // ── 科目选择辅助 ──
+        function getAllSubjects() {
+            try { return JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]'); } catch(e) { return []; }
+        }
+        // 用于计算基数科目：value = 纯科目编码
+        function buildBaseOpts(selCode) {
+            return `<option value="">-- 选科目 --</option>` +
+                getAllSubjects().map(s => `<option value="${s.code}" ${s.code===selCode?'selected':''}>${s.code} ${s.name}</option>`).join('');
+        }
+        // 用于借方/贷方科目：value = "编码 名称" 格式
+        function buildNameOpts(selVal) {
+            return `<option value="">-- 选科目 --</option>` +
+                getAllSubjects().map(s => {
+                    const v = `${s.code} ${s.name}`;
+                    return `<option value="${v}" ${v===selVal?'selected':''}>${v}</option>`;
+                }).join('');
+        }
+        // 辅助项类型
+        function buildAuxTypeOpts(selVal) {
+            return ['','部门','客户','供应商','员工','项目','存货','现金流量项目']
+                .map(t => `<option value="${t}" ${t===selVal?'selected':''}>${t||'-- 辅助项 --'}</option>`).join('');
+        }
+
         contentArea.innerHTML = `
         <style>
             .at-main { padding:24px; background:#f8fafc; min-height:100%; font-family:sans-serif; }
@@ -285,11 +316,11 @@
                                             return `
                                             <tr>
                                                 <td><input class="at-input" style="width:100%;" name="l-digest" value="${l.digest}"></td>
-                                                <td><input class="at-input" style="width:100%;" name="l-base" value="${l.baseCode}" title="当前余额: ¥${fmt(bal.net)}"></td>
+                                                <td title="当前余额: ¥${fmt(bal.net)}"><select class="at-input" style="width:100%;" name="l-base">${buildBaseOpts(l.baseCode)}</select></td>
                                                 <td><input class="at-input" style="width:100%;" name="l-ratio" type="number" value="${l.ratio}"></td>
-                                                <td><input class="at-input" style="width:100%;" name="l-debit" value="${l.debitName || ''}"></td>
-                                                <td><input class="at-input" style="width:100%;" name="l-credit" value="${l.creditName || ''}"></td>
-                                                <td><input class="at-input" style="width:100%;" name="l-aux" value="${l.aux||''}"></td>
+                                                <td><select class="at-input" style="width:100%;" name="l-debit">${buildNameOpts(l.debitName||'')}</select></td>
+                                                <td><select class="at-input" style="width:100%;" name="l-credit">${buildNameOpts(l.creditName||'')}</select></td>
+                                                <td><select class="at-input" style="width:100%;" name="l-aux">${buildAuxTypeOpts(l.aux||'')}</select></td>
                                                 <td><button onclick="this.closest('tr').remove()" style="color:#f56c6c; border:none; background:none; cursor:pointer;">×</button></td>
                                             </tr>`;
                                         }).join('')}
@@ -433,7 +464,14 @@
 
         window.atAddLine = () => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input class="at-input" style="width:100%;" name="l-digest"></td><td><input class="at-input" style="width:100%;" name="l-base" value="222101"></td><td><input class="at-input" style="width:100%;" name="l-ratio" value="100"></td><td><input class="at-input" style="width:100%;" name="l-debit"></td><td><input class="at-input" style="width:100%;" name="l-credit"></td><td><input class="at-input" style="width:100%;" name="l-aux"></td><td><button onclick="this.closest('tr').remove()" style="color:#f56c6c; border:none; background:none; cursor:pointer;">×</button></td>`;
+            tr.innerHTML = `
+                <td><input class="at-input" style="width:100%;" name="l-digest"></td>
+                <td><select class="at-input" style="width:100%;" name="l-base">${buildBaseOpts('')}</select></td>
+                <td><input class="at-input" style="width:100%;" name="l-ratio" type="number" value="100"></td>
+                <td><select class="at-input" style="width:100%;" name="l-debit">${buildNameOpts('')}</select></td>
+                <td><select class="at-input" style="width:100%;" name="l-credit">${buildNameOpts('')}</select></td>
+                <td><select class="at-input" style="width:100%;" name="l-aux">${buildAuxTypeOpts('')}</select></td>
+                <td><button onclick="this.closest('tr').remove()" style="color:#f56c6c; border:none; background:none; cursor:pointer;">×</button></td>`;
             document.getElementById('cfg-body').appendChild(tr);
         };
     };
@@ -509,6 +547,39 @@
             return { debit: d, credit: c, netCredit: c - d, netDebit: d - c };
         }
 
+        // 获取所有科目（用于 picker）
+        function getAllSubj() {
+            try { return JSON.parse(sessionStorage.getItem('AcctSubjects') || '[]'); } catch(e) { return []; }
+        }
+
+        // 构建科目多选 picker 内容
+        function buildSubPicker(rowId, codes, type) {
+            const selectedCodes = (codes||'').split(',').map(c=>c.trim()).filter(Boolean);
+            const subjects = getAllSubj();
+            if (!subjects.length) return '<div style="padding:8px;color:#aaa;font-size:12px;">暂无科目数据</div>';
+            return subjects.map(s => `
+                <label style="display:flex;align-items:center;gap:6px;padding:3px 6px;cursor:pointer;border-radius:3px;font-size:12px;">
+                    <input type="checkbox" ${selectedCodes.includes(s.code)?'checked':''}
+                        onchange="window.cwPickerChange('${type}','${rowId}','${s.code}',this.checked)">
+                    <span style="font-family:monospace;color:#555;">${s.code}</span>
+                    <span>${s.name}</span>
+                </label>`).join('');
+        }
+
+        // 构建转入科目 options（覆盖所有科目）
+        function buildTargetOpts(selVal) {
+            const subjects = getAllSubj();
+            const baseOpts = [
+                `<option value="4103" ${selVal==='4103'?'selected':''}>4103 本年利润</option>`,
+                `<option value="3103" ${selVal==='3103'?'selected':''}>3103 本年利润</option>`
+            ].join('');
+            const subjOpts = subjects
+                .filter(s => !['4103','3103'].includes(s.code))
+                .map(s => `<option value="${s.code}" ${selVal===s.code?'selected':''}>${s.code} ${s.name}</option>`)
+                .join('');
+            return `<option value="">-请选择-</option>${baseOpts}${subjOpts}`;
+        }
+
         // 渲染模板行
         function renderRows(arr, type) {
             if (!arr.length) return `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:12px;">暂无配置，点击"+ 新增"添加</td></tr>`;
@@ -519,12 +590,25 @@
                     <option value="">-请选择-</option>
                     <option value="总账" ${r.ledger==='总账'?'selected':''}>总账</option>
                 </select></td>
-                <td><input class="cw-inp" style="width:100%;" value="${r.codes}" onchange="window.cwUpdateField('${type}','${r.id}','codes',this.value)" placeholder="如: 6001,6002,6301"></td>
-                <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','targetCode',this.value)">
-                    <option value="">-请选择-</option>
-                    <option value="4103" ${r.targetCode==='4103'?'selected':''}>4103 本年利润</option>
-                    <option value="3103" ${r.targetCode==='3103'?'selected':''}>3103 本年利润</option>
-                </select></td>
+                <td>
+                    <div style="position:relative;display:inline-block;width:100%;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <input class="cw-inp" id="codes-${r.id}" style="flex:1;min-width:180px;" value="${r.codes}"
+                                onchange="window.cwUpdateField('${type}','${r.id}','codes',this.value)"
+                                placeholder="如: 6001,6002,6301">
+                            <button type="button"
+                                onclick="window.cwPickerToggle('${r.id}')"
+                                style="padding:4px 8px;font-size:12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0;">选科目 ▾</button>
+                        </div>
+                        <div id="spk-${r.id}" style="display:none;position:absolute;z-index:99999;top:calc(100% + 3px);left:0;min-width:300px;max-height:270px;overflow-y:auto;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:6px;">
+                            ${buildSubPicker(r.id, r.codes, type)}
+                            <div style="text-align:right;padding:4px 6px 2px;border-top:1px solid #f0f0f0;margin-top:4px;">
+                                <button onclick="window.cwPickerToggle('${r.id}')" style="padding:3px 12px;font-size:12px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','targetCode',this.value)">${buildTargetOpts(r.targetCode)}</select></td>
                 <td><select class="cw-sel" onchange="window.cwUpdateField('${type}','${r.id}','word',this.value)">
                     <option value="转" ${r.word==='转'?'selected':''}>转</option>
                     <option value="记" ${r.word==='记'?'selected':''}>记</option>
@@ -536,7 +620,8 @@
         contentArea.innerHTML = `
         <style>
             .cw-wrap { padding:24px; background:#f8fafc; min-height:100%; font-family:sans-serif; }
-            .cw-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:20px; overflow:hidden; }
+            .cw-card { background:#fff; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:20px; overflow:visible; }
+            .cw-card-head { border-radius:10px 10px 0 0; }
             .cw-card-head { padding:14px 20px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center; background:#f9fafb; }
             .cw-card-head h3 { font-size:14px; font-weight:700; color:#111827; }
             .cw-table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -575,7 +660,7 @@
                     </div>
                 </div>
                 <table class="cw-table">
-                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>收入科目范围</th><th style="width:160px;">转入科目</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
+                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>借方 （收入科目范围）</th><th style="width:160px;">贷方 （转入科目）</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
                     <tbody id="cw-income-body">${renderRows(tpl.income, 'income')}</tbody>
                 </table>
             </div>
@@ -590,9 +675,16 @@
                     </div>
                 </div>
                 <table class="cw-table">
-                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>成本费用科目范围</th><th style="width:160px;">转入科目</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
+                    <thead><tr><th style="width:50px;">序号</th><th style="width:110px;">账套</th><th>贷方 （成本费用科目范围）</th><th style="width:160px;">借方 （转入科目）</th><th style="width:70px;">凭证字</th><th style="width:60px;">操作</th></tr></thead>
                     <tbody id="cw-cost-body">${renderRows(tpl.cost, 'cost')}</tbody>
                 </table>
+            </div>
+
+            <!-- 本年利润说明 -->
+            <div style="padding:12px 18px;background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;line-height:1.9;color:#8c8c8c;font-size:12px;">
+                经过上面两张凭证的对冲，"本年利润"科目就会自动计算出差额：<br>
+                如果<strong style="color:#aaa;">贷方总额 &gt; 借方总额</strong>：余额在贷方，代表本期盈利（净利润）。<br>
+                如果<strong style="color:#aaa;">借方总额 &gt; 贷方总额</strong>：余额在借方，代表本期亏损（净亏损）。
             </div>
 
             <!-- 执行预览区 -->
@@ -630,6 +722,30 @@
         window.cwSave = function() {
             lsSet('QM_ProfitTpl', tpl);
             alert('✅ 模板已保存');
+        };
+
+        // ── 科目 picker 展开/收起 ──
+        window.cwPickerToggle = function(rowId) {
+            const el = document.getElementById('spk-' + rowId);
+            if (!el) return;
+            // 关闭其他所有 picker
+            document.querySelectorAll('[id^="spk-"]').forEach(p => {
+                if (p.id !== 'spk-' + rowId) p.style.display = 'none';
+            });
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        };
+
+        // ── 科目 picker 勾选变化 ──
+        window.cwPickerChange = function(type, id, code, checked) {
+            const arr = type === 'income' ? tpl.income : tpl.cost;
+            const row = arr.find(r => r.id === id);
+            if (!row) return;
+            let codes = (row.codes || '').split(',').map(c => c.trim()).filter(Boolean);
+            if (checked) { if (!codes.includes(code)) codes.push(code); }
+            else { codes = codes.filter(c => c !== code); }
+            row.codes = codes.join(',');
+            const inp = document.getElementById('codes-' + id);
+            if (inp) inp.value = row.codes;
         };
 
         // ── 重新结转：删除本期期末结转凭证，清除历史记录和标记，重新执行 ──
