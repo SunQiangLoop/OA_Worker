@@ -1983,14 +1983,18 @@ function loadContent(moduleCode, element = null) {
             const yC = (ytdMap[code] ||{}).credit || 0;
             if (!oD && !oC && !pD && !pC && !yD && !yC) return;
 
-            // 期初余额
-            const openBal = dir === 1 ? oD - oC : oC - oD;
-            const openBalD = openBal > 0 ? openBal : 0;
-            const openBalC = openBal < 0 ? -openBal : 0;
-            // 期末余额
-            const endBal = openBal + (dir === 1 ? pD - pC : pC - pD);
-            const endBalD = endBal > 0 ? endBal : 0;
-            const endBalC = endBal < 0 ? -endBal : 0;
+            // 期初余额 (净额计算：借方 - 贷方)
+            const netOpen = oD - oC;
+            const openBalD = netOpen > 0 ? netOpen : 0;
+            const openBalC = netOpen < 0 ? -netOpen : 0;
+
+            // 本期净额
+            const netPeri = pD - pC;
+
+            // 期末余额 (净额计算)
+            const netEnd = netOpen + netPeri;
+            const endBalD = netEnd > 0 ? netEnd : 0;
+            const endBalC = netEnd < 0 ? -netEnd : 0;
 
             tot.oD += openBalD; tot.oC += openBalC;
             tot.pD += pD;       tot.pC += pC;
