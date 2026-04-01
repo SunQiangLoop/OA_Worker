@@ -1855,8 +1855,17 @@ ${vouchersHTML}
 
     const formatAmount = (value) => {
         const num = parseFloat((value || "0").toString().replace(/,/g, ""));
-        if (!num) return "";
+        if (isNaN(num) || num === 0) return "";
         return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    // 辅助：渲染带颜色的金额（黑正红负）
+    const renderColoredAmount = (val) => {
+        const num = parseFloat((val || "0").toString().replace(/,/g, ""));
+        if (isNaN(num) || num === 0) return "";
+        const formatted = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const color = num < 0 ? "#e74c3c" : "#333"; 
+        return `<span style="color:${color}; font-weight:500;">${formatted}</span>`;
     };
 
     const rowsData = [];
@@ -2243,17 +2252,17 @@ ${vouchersHTML}
                     <td>${start + index + 1}</td>
                     <td>${v.date || "-"}</td>
                     <td><a href="javascript:void(0)" onclick="openVoucherForEdit('${v.id}')" class="voucher-link" title="点击编辑此凭证">${v.id || "-"}</a></td>
-                    <td class="amount-cell">${formatAmount(v.amount)}</td>
+                    <td style="text-align:right; font-weight:bold;">${formatAmount(v.amount)}</td>
                     <td>${auditUser}</td>
                     <td>${maker}</td>
                     <td class="summary-cell">${summary}</td>
-                    <td class="related-docs-cell">${relatedDocs}</td>
+                    <td style="text-align:center;">${relatedDocs}</td>
                     <td>${statusTag}</td>
                     <td>${code}</td>
                     <td>${name || "-"}</td>
                     <td>${aux || "-"}</td>
-                    <td class="amount-cell">${formatAmount(line.debit)}</td>
-                    <td class="amount-cell">${formatAmount(line.credit)}</td>
+                    <td style="text-align:right;">${renderColoredAmount(line.debit)}</td>
+                    <td style="text-align:right;">${renderColoredAmount(line.credit)}</td>
                 </tr>
             `;
         }).join("") || `<tr><td colspan="15" class="empty-row">暂无数据</td></tr>`;

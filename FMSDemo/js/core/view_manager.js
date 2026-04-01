@@ -124,7 +124,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
                 { code: "22210106", name: "应交增值税-出口退税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210107", name: "应交增值税-销项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210108", name: "应交增值税-进项税额转出",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-                { code: "22210108", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210109", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222115", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222119", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
             { code: "222120", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
@@ -214,7 +214,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
                 { code: "22210106", name: "应交增值税-出口退税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210107", name: "应交增值税-销项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210108", name: "应交增值税-进项税额转出",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
-                { code: "22210108", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
+                { code: "22210109", name: "应交增值税-转出多交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222115", name: "应交城市维护建设税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222119", name: "应交个人所得税",           type: "负债", direction: "贷", aux: "人员",       status: "启用", remark: "代扣代缴司机个人所得税" },
             { code: "222120", name: "应交教育费附加",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
@@ -4488,17 +4488,34 @@ function loadContent(moduleCode, element = null) {
                     // 产生销售凭证 (ManualVouchers)
                     let vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
                     const vId = "记-" + String(Math.floor(Math.random() * 9000) + 1000);
+                    
+                    // 强力解析金额数值
+                    const rawAmt = (r.amount || "0").toString().replace(/[^\d.-]/g, '');
+                    const totalAmt = parseFloat(rawAmt) || 0;
+                    
+                    // 价税分离 (税率 9%)
+                    const baseAmt  = totalAmt / 1.09;
+                    const taxAmt   = totalAmt - baseAmt;
+
                     vouchers.unshift({
-                        id: vId, period: r.period, date: r.customerConfirmTime.slice(0, 10),
-                        summary: "客户对账确认产生销售收入 (" + r.client + ")", status: "待审核", user: "系统",
+                        id: vId, 
+                        period: r.period || new Date().toISOString().slice(0, 7).replace('-', '.'), 
+                        date: r.customerConfirmTime.slice(0, 10),
+                        summary: "客户对账确认产生销售收入 (" + (r.client || "客户") + ")", 
+                        amount: totalAmt.toFixed(2),
+                        sourceType: "Recon",
+                        sourceId: r.id,
+                        status: "待审核", 
+                        user: "系统",
                         lines: [
-                            { summary: "应收账款", accountCode: "1122", account: "1122 应收账款", debit: r.amount.replace(/,/g,''), credit: "" },
-                            { summary: "主营业务收入", accountCode: "5001", account: "5001 主营业务收入", debit: "", credit: r.amount.replace(/,/g,'') }
+                            { summary: "确认应收债权", accountCode: "1122", account: "1122 应收账款", debit: totalAmt.toFixed(2), credit: "" },
+                            { summary: "确认运输收入(不含税)", accountCode: "5001", account: "5001 主营业务收入", debit: "", credit: baseAmt.toFixed(2) },
+                            { summary: "确认销项税额(9%)", accountCode: "2221", account: "2221 应交税费", debit: "", credit: taxAmt.toFixed(2) }
                         ]
                     });
                     sessionStorage.setItem("ManualVouchers", JSON.stringify(vouchers));
                     
-                    alert("✅ 确认成功！已自动生成销售凭证： " + vId);
+                    alert("✅ 确认成功！已自动生成销售凭证： " + vId + "\n总金额：¥" + totalAmt.toLocaleString());
                     loadContent('ReconCustomerPortal');
                 }
             };
