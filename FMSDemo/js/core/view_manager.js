@@ -2030,83 +2030,89 @@ function loadContent(moduleCode, element = null) {
         const dispFrom  = pFrom ? pFrom.replace('-', '.') : '--';
         const dispTo    = pTo   ? pTo.replace('-', '.')   : '--';
         const periodLabel = `${dispFrom} -- ${dispTo}`;
-        const companyName = sessionStorage.getItem('CompanyName') || '公司';
 
         contentHTML += `
         <style>
-            .sb2-infobar{display:flex;align-items:center;gap:32px;background:#fff;border:1px solid #d0d0d0;padding:10px 18px;margin-bottom:8px;font-size:14px;}
-            .sb2-infobar-item{display:flex;align-items:center;gap:8px;}
-            .sb2-infobar-label{color:#555;white-space:nowrap;}
-            .sb2-infobar-val{border:1px solid #c0c0c0;padding:5px 12px;min-width:160px;background:#fafafa;font-size:14px;}
-            .sb2-nav{display:flex;flex-direction:column;gap:2px;margin-left:4px;}
-            .sb2-nav button{padding:1px 7px;border:1px solid #c0c0c0;background:#f5f5f5;cursor:pointer;font-size:11px;line-height:16px;border-radius:2px;}
-            .sb2-nav button:hover{background:#e0eeff;}
-            .sb2-qrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;}
-            .sb2-qrow select{border:1px solid #d0d0d0;padding:5px 8px;border-radius:3px;}
-            .sb2-card{background:#fff;border:1px solid #d0d0d0;overflow:hidden;}
-            .sb2-tbl{width:100%;border-collapse:collapse;font-size:13px;}
-            .sb2-tbl th{padding:7px 10px;font-weight:500;background:#efefef;border:1px solid #c8c8c8;text-align:center;white-space:nowrap;}
-            .sb2-tbl td{padding:7px 12px;border-bottom:1px solid #e8e8e8;border-right:1px solid #ebebeb;white-space:nowrap;}
-            .sb2-tbl tbody tr:hover{background:#ddeeff !important;}
-            .sb2-tbl tfoot td{padding:7px 12px;border-top:2px solid #b0b0b0;font-weight:bold;background:#f0f0f0;text-align:right;}
+            .sb-page { background:#fff; border-radius:16px; box-shadow:0 6px 18px rgba(15,23,42,0.06); overflow:hidden; }
+            .sb-header { padding:24px 20px 10px; text-align:center; }
+            .sb-title { font-size:24px; font-weight:700; color:#111827; margin:0; }
+            
+            .sb-toolbar { display:flex; gap:20px; align-items:center; padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#fff; flex-wrap:wrap; }
+            .sb-field { display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; }
+            .sb-field label { font-weight:600; }
+            .sb-field select { min-width:120px; padding:6px 10px; border:1px solid #d7dde6; border-radius:6px; background:#fff; font-size:13px; outline:none; }
+            .sb-field .period-display { display:flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #d7dde6; padding:5px 12px; border-radius:6px; min-width:180px; }
+            .sb-field .period-text { color:#111827; font-weight:600; }
+            
+            .sb-nav-btns { display:flex; flex-direction:column; gap:2px; }
+            .sb-nav-btn { padding:0px 6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; font-size:10px; border-radius:3px; color:#64748b; line-height:12px; }
+            .sb-nav-btn:hover { background:#f1f5f9; color:#1e293b; }
+            
+            .sb-btn-query { background:#3b82f6; color:#fff; border:none; padding:8px 24px; border-radius:6px; cursor:pointer; font-weight:600; font-size:14px; margin-left:10px; transition:all 0.2s; box-shadow:0 2px 4px rgba(59,130,246,0.2); }
+            .sb-btn-query:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 6px rgba(59,130,246,0.3); }
+            .sb-btn-reset { background:#fff; color:#475569; border:1px solid #d7dde6; padding:7px 20px; border-radius:6px; cursor:pointer; font-weight:500; font-size:14px; transition:all 0.2s; }
+            .sb-btn-reset:hover { background:#f8fafc; border-color:#cbd5e1; }
+
+            .sb-table-wrap { background:#fff; overflow:auto; max-height:720px; border-top:1px solid #e2e8f0; }
+            .sb-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; color:#1f2937; }
+            .sb-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:10px 8px; text-align:center; font-weight:600; color:#475569; }
+            .sb-table thead th:last-child { border-right:none; }
+            
+            .sb-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:10px 12px; white-space:nowrap; }
+            .sb-table td:last-child { border-right:none; }
+            .sb-table tbody tr:hover td { background:#f0f7ff !important; }
+            .sb-table tfoot td { position:sticky; bottom:0; background:#f8fafc; font-weight:700; color:#111827; border-top:2px solid #e2e8f0; padding:12px; }
+            
+            .sb-col-code { font-family:monospace; font-size:13px; color:#3b82f6; cursor:pointer; font-weight:500; }
+            .sb-col-name { color:#3b82f6; cursor:pointer; font-weight:500; }
+            .sb-num { text-align:right; font-variant-numeric:tabular-nums; min-width:110px; }
+            .sb-group-hdr { background:#f1f5f9; }
         </style>
 
-        <div class="sb2-infobar">
-            <div class="sb2-infobar-item">
-                <span class="sb2-infobar-label">账簿</span>
-                <span class="sb2-infobar-val">${companyName}账簿</span>
+        <div class="sb-page">
+            <div class="sb-header">
+                <h1 class="sb-title">科目余额表</h1>
             </div>
-            <div class="sb2-infobar-item">
-                <span class="sb2-infobar-label">期间</span>
-                <span class="sb2-infobar-val">${periodLabel}</span>
-                <div class="sb2-nav">
-                    <button onclick="sessionStorage.setItem('AcctSBPeriodFrom','${prevFrom}');sessionStorage.setItem('AcctSBPeriodTo','${prevTo}');loadContent('AcctSubjectBalance')" title="上期">▲</button>
-                    <button onclick="sessionStorage.setItem('AcctSBPeriodFrom','${nextFrom}');sessionStorage.setItem('AcctSBPeriodTo','${nextTo}');loadContent('AcctSubjectBalance')" title="下期">▼</button>
+
+            <div class="sb-toolbar">
+                <div class="sb-field">
+                    <label>选择期间</label>
+                    <select id="sb2-pf">${mkPOpts(pFrom)}</select>
+                    <span style="color:#cbd5e1;">至</span>
+                    <select id="sb2-pt">${mkPOpts(pTo)}</select>
                 </div>
+                <button class="sb-btn-query" onclick="window.sb2Query()">查询</button>
+                <button class="sb-btn-reset" onclick="window.sb2Reset()">重置</button>
             </div>
-            <div class="sb2-infobar-item">
-                <span class="sb2-infobar-label">币别</span>
-                <span class="sb2-infobar-val">人民币</span>
-            </div>
-        </div>
 
-        <div class="sb2-qrow">
-            <span style="color:#555;">期间</span>
-            <select id="sb2-pf">${mkPOpts(pFrom)}</select>
-            <span style="color:#999;">--</span>
-            <select id="sb2-pt">${mkPOpts(pTo)}</select>
-            <button class="btn-primary" onclick="window.sb2Query()" style="margin-left:6px;">查询</button>
-            <button onclick="window.sb2Reset()" style="padding:5px 14px;border:1px solid #d0d0d0;border-radius:3px;background:#fff;cursor:pointer;font-size:13px;">重置</button>
-        </div>
-
-        <div class="sb2-card">
-            <table class="sb2-tbl">
-                <thead>
-                    <tr>
-                        <th rowspan="2" style="min-width:90px;border-right:1px solid #c8c8c8;">科目编码</th>
-                        <th rowspan="2" style="min-width:100px;border-right:2px solid #b0b0b0;">科目名称</th>
-                        <th colspan="2" style="border-right:2px solid #b0b0b0;">期初余额</th>
-                        <th colspan="2" style="border-right:2px solid #b0b0b0;">本期发生</th>
-                        <th colspan="2" style="border-right:2px solid #b0b0b0;">本年累计</th>
-                        <th colspan="2">期末余额</th>
-                    </tr>
-                    <tr>
-                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
-                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
-                        <th style="min-width:100px;">借方</th><th style="min-width:100px;border-right:2px solid #b0b0b0;">贷方</th>
-                        <th style="min-width:100px;">借方</th><th style="min-width:100px;">贷方</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="sb-table-wrap">
+                <table class="sb-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="width:100px;">科目编码</th>
+                            <th rowspan="2" style="min-width:160px;">科目名称</th>
+                            <th colspan="2" class="sb-group-hdr">期初余额</th>
+                            <th colspan="2" class="sb-group-hdr">本期发生</th>
+                            <th colspan="2" class="sb-group-hdr">本年累计</th>
+                            <th colspan="2" class="sb-group-hdr">期末余额</th>
+                        </tr>
+                        <tr>
+                            <th class="sb-num">借方</th><th class="sb-num">贷方</th>
+                            <th class="sb-num">借方</th><th class="sb-num">贷方</th>
+                            <th class="sb-num">借方</th><th class="sb-num">贷方</th>
+                            <th class="sb-num">借方</th><th class="sb-num">贷方</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     ${rows || `<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">暂无符合条件的数据</td></tr>`}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="2" style="text-align:center;font-weight:bold;background:#f0f0f0;">合计</td>
-                        <td>${fmtZ(tot.oD)}</td><td>${fmtZ(tot.oC)}</td>
-                        <td>${fmtZ(tot.pD)}</td><td>${fmtZ(tot.pC)}</td>
-                        <td>${fmtZ(tot.yD)}</td><td>${fmtZ(tot.yC)}</td>
-                        <td>${fmtZ(tot.eD)}</td><td>${fmtZ(tot.eC)}</td>
+                        <td colspan="2" style="text-align:center;font-weight:bold;">合计</td>
+                        <td class="sb-num">${fmtZ(tot.oD)}</td><td class="sb-num">${fmtZ(tot.oC)}</td>
+                        <td class="sb-num">${fmtZ(tot.pD)}</td><td class="sb-num">${fmtZ(tot.pC)}</td>
+                        <td class="sb-num">${fmtZ(tot.yD)}</td><td class="sb-num">${fmtZ(tot.yC)}</td>
+                        <td class="sb-num">${fmtZ(tot.eD)}</td><td class="sb-num">${fmtZ(tot.eC)}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -10944,26 +10950,20 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 40. 科目明细账 (AcctSubjectDetail) - [修复版：智能识别借贷方向]
+    // 40. 科目明细账 (AcctSubjectDetail) - [精美复刻版]
     // =========================================================================
     else if (moduleCode === "AcctSubjectDetail") {
-        // =========================================================================
-        // ★★★ 科目明细账 - 独立选科目版本 ★★★
-        // =========================================================================
         const allSubjects = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
         const allVouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
         const openingList  = JSON.parse(sessionStorage.getItem("OpeningBalances") || "[]");
         const openingMap   = {};
         openingList.forEach(s => { openingMap[s.code] = parseFloat(s.balance) || 0; });
 
-        // 读取当前选中科目（可从余额表跳入，也可自行选择）
         const savedCode = sessionStorage.getItem("CurrentSubjectCode") || "";
-        const firstSubj = allSubjects.length > 0 ? allSubjects[0] : { code: "", name: "" };
-        const targetCode = savedCode || firstSubj.code;
+        const targetCode = savedCode || (allSubjects[0] ? allSubjects[0].code : "");
         const subjInfo   = allSubjects.find(s => s.code === targetCode);
-        const targetName = (subjInfo && subjInfo.name) || sessionStorage.getItem("CurrentSubjectName") || targetCode;
+        const targetName = (subjInfo && subjInfo.name) || sessionStorage.getItem("CurrentSubjectName") || "";
 
-        // 期间筛选
         const normVP = (v) => {
             const raw = ((v.date || v.period || "").toString().trim()).replace(/\//g, "-");
             if (!raw) return "";
@@ -10972,232 +10972,249 @@ function loadContent(moduleCode, element = null) {
                 ? `${parts[0]}-${parts[1].padStart(2,"0")}` : raw.slice(0,7);
         };
         const allPeriods = Array.from(new Set(allVouchers.map(v => normVP(v)).filter(Boolean))).sort();
-        const sdPF = sessionStorage.getItem("SDPeriodFrom") || "";
-        const sdPT = sessionStorage.getItem("SDPeriodTo")   || "";
-        const mkPOpts = (sel) =>
-            `<option value="">-- 全部 --</option>` +
-            allPeriods.map(p => `<option value="${p}" ${sel===p?"selected":""}>${p.replace("-",".")}</option>`).join("");
+        const sdPF = sessionStorage.getItem("SDPeriodFrom") || (allPeriods.length > 0 ? allPeriods[0] : "");
+        const sdPT = sessionStorage.getItem("SDPeriodTo")   || (allPeriods.length > 0 ? allPeriods[allPeriods.length-1] : "");
+        
+        const mkPOpts = (sel) => allPeriods.map(p => `<option value="${p}" ${sel===p?"selected":""}>${p.replace("-",".")}</option>`).join("");
+        const subjOpts = allSubjects.map(s => `<option value="${s.code}" ${s.code===targetCode?"selected":""}>${s.code} ${s.name}</option>`).join("");
 
-        // 科目下拉
-        const subjOpts = `<option value="">-- 请选择科目 --</option>` +
-            allSubjects.map(s =>
-                `<option value="${s.code}" data-name="${s.name}" ${s.code===targetCode?"selected":""}>${s.code} ${s.name}</option>`
-            ).join("");
-
-        // 科目方向 - 强化版
         const getSubjectDirection = (sCode, sInfo) => {
             if (sInfo && sInfo.direction) return sInfo.direction;
             const prefix = (sCode || "").substring(0, 1);
-            if (prefix === "1") return "借"; // 资产
-            if (prefix === "2") return "贷"; // 负债
-            if (prefix === "3") return "贷"; // 权益 (小企业)
-            if (prefix === "4") {
+            if (prefix === "1" || prefix === "5" || prefix === "4") {
                 const std = sessionStorage.getItem('AccountingStandard') || 'enterprise';
-                return std === 'small' ? "借" : "贷"; // 小企业:成本, 企业:权益
+                if (prefix === "4" && std === 'enterprise') return "贷"; 
+                return "借";
             }
-            if (prefix === "5") {
-                const std = sessionStorage.getItem('AccountingStandard') || 'enterprise';
-                if (std === 'small') {
-                    if (["50", "51", "53"].some(p => sCode.startsWith(p))) return "贷"; // 收入
-                    return "借"; // 费用
-                }
-                return "借"; // 企业:成本
-            }
-            if (prefix === "6") {
-                if (["60", "61", "63"].some(p => sCode.startsWith(p))) return "贷"; // 收入
-                return "借"; // 费用
-            }
-            return "借";
+            return "贷";
         };
 
         const defaultDir = getSubjectDirection(targetCode, subjInfo);
-
-        // 格式化金额：绝对值规则，红字（负数）显示为红色
         const fmt = n => {
             if (!n && n !== 0) return "";
-            const absVal = Math.abs(n);
-            const s = absVal.toLocaleString("en-US", { minimumFractionDigits: 2 });
-            return n < 0 ? `<span style="color:red;">${s}</span>` : s;
-        };
-        const fmtBal = n => {
             const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2 });
             return n < 0 ? `<span style="color:red;">${s}</span>` : s;
         };
+        const fmtBal = n => Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2 });
 
-        // 筛选凭证
-        const filteredVouchers = allVouchers.filter(v => {
-            const p = normVP(v);
-            if (sdPF && p < sdPF) return false;
-            if (sdPT && p > sdPT) return false;
-            const s = v.status || "";
-            return !s || ["已记账","已审核","已提交","待审核"].includes(s);
-        }).sort((a, b) => (a.date||"").localeCompare(b.date||""));
-
-        // 构建明细行
-        let openBal = openingMap[targetCode] || 0;
-        let runBal = openBal;
-        let totalDebit = 0, totalCredit = 0;
         let tableRows = "";
+        let rowIndex = 1;
+        let runBal = 0;
+        let periodDebit = 0, periodCredit = 0;
 
         if (targetCode) {
-            const startDir = openBal === 0 ? "平" : defaultDir;
-            tableRows += `
-                <tr style="background:#fafafa;color:#888;">
-                    <td>期初</td><td>-</td><td>-</td><td>期初余额</td>
-                    <td></td><td></td><td>${startDir}</td>
-                    <td style="text-align:right;">${fmt(openBal)}</td>
-                </tr>`;
+            let initialBal = openingMap[targetCode] || 0;
+            let ytdDebitBefore = 0, ytdCreditBefore = 0;
+            const currentYear = sdPF.substring(0, 4);
 
-            filteredVouchers.forEach(v => {
-                if (!v.lines) return;
-                v.lines.forEach(line => {
-                    const rawAcct = (line.account || line.subject || (line.accountCode ? String(line.accountCode) : "") || "").trim();
-                    const lineCode = rawAcct.split(/\s+/)[0] || rawAcct;
-                    if (!lineCode.startsWith(targetCode)) return;
-
-                    const debit  = parseFloat(line.debit)  || 0;
-                    const credit = parseFloat(line.credit) || 0;
-                    totalDebit  += debit;
-                    totalCredit += credit;
-
-                    runBal = defaultDir === "借"
-                        ? runBal + debit - credit
-                        : runBal + credit - debit;
-
-                    let dirText = "平";
-                    if (runBal >  0.005) dirText = defaultDir;
-                    else if (runBal < -0.005) dirText = defaultDir === "借" ? "贷" : "借";
-
-                    const period = normVP(v);
-                    tableRows += `
-                        <tr>
-                            <td>${period ? period.replace("-",".") : "-"}</td>
-                            <td>${v.date || "-"}</td>
-                            <td style="color:#1890ff;cursor:pointer;"
-                                onclick="if(window.openVoucherDetailById)window.openVoucherDetailById('${v.id}')">${v.id}</td>
-                            <td>${line.summary || v.summary || "-"}</td>
-                            <td style="text-align:right;">${debit  ? fmt(debit)  : ""}</td>
-                            <td style="text-align:right;">${credit ? fmt(credit) : ""}</td>
-                            <td>${dirText}</td>
-                            <td style="text-align:right;font-weight:bold;">${fmtBal(runBal)}</td>
-                        </tr>`;
-                });
+            allVouchers.forEach(v => {
+                const p = normVP(v);
+                if (p < sdPF && v.lines) {
+                    v.lines.forEach(l => {
+                        const lCode = (l.account || l.subject || l.accountCode || "").trim().split(/\s+/)[0];
+                        if (lCode === targetCode) {
+                            const d = parseFloat(l.debit) || 0;
+                            const c = parseFloat(l.credit) || 0;
+                            initialBal += (defaultDir === "借" ? (d - c) : (c - d));
+                            if (p.startsWith(currentYear)) {
+                                ytdDebitBefore += d; ytdCreditBefore += c;
+                            }
+                        }
+                    });
+                }
             });
 
-            const closeDirText = runBal === 0 ? "平" : (runBal > 0 ? defaultDir : (defaultDir === "借" ? "贷" : "借"));
-            tableRows += `
-                <tr style="background:#f0f5ff;font-weight:bold;">
-                    <td colspan="4" style="text-align:center;">本期合计</td>
-                    <td style="text-align:right;color:#1890ff;">${fmt(totalDebit)}</td>
-                    <td style="text-align:right;color:#1890ff;">${fmt(totalCredit)}</td>
-                    <td>${closeDirText}</td>
-                    <td style="text-align:right;color:#1890ff;">${fmt(runBal)}</td>
-                </tr>`;
-        }
+            runBal = initialBal;
+            tableRows += `<tr>
+                <td style="text-align:center; color:#999;">${rowIndex++}</td>
+                <td></td><td></td><td>期初余额</td><td></td><td></td>
+                <td style="text-align:center;">${runBal === 0 ? "平" : defaultDir}</td>
+                <td style="text-align:right;">${fmtBal(runBal)}</td>
+            </tr>`;
 
-        const periodLabel = (sdPF||sdPT)
-            ? `${(sdPF||"--").replace("-",".")} - ${(sdPT||"--").replace("-",".")}`
-            : "全部期间";
+            const monthsInRange = allPeriods.filter(p => p >= sdPF && p <= sdPT);
+            let ytdDebit = ytdDebitBefore;
+            let ytdCredit = ytdCreditBefore;
 
-        contentHTML += `
-        <style>
-            .sd-fcard{background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:0 0 4px;margin-bottom:12px;}
-            .sd-frow{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f0f0;gap:10px;flex-wrap:wrap;}
-            .sd-frow:last-child{border-bottom:none;}
-            .sd-flabel{font-size:14px;color:#555;min-width:60px;white-space:nowrap;}
-            .sd-frow select{padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;}
-            .sd-actions{padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;}
-            .sd-card{background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;}
-            .sd-card-title{text-align:center;font-size:20px;font-weight:bold;padding:20px 0 4px;color:#222;}
-            .sd-card-subj{text-align:center;font-size:14px;color:#1890ff;padding:0 0 4px;font-weight:500;}
-            .sd-card-period{text-align:center;font-size:13px;color:#888;padding:4px 20px 14px;}
-            .sd-tbl{width:100%;border-collapse:collapse;font-size:14px;}
-            .sd-tbl th{padding:9px 12px;font-weight:500;color:#444;background:#f5f6f8;border-bottom:1px solid #e8e8e8;white-space:nowrap;}
-            .sd-tbl td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
-            .sd-tbl tbody tr:hover{background:#f9fbff;}
-            .sd-tbl tfoot tr{background:#f0f5ff;font-weight:bold;}
-        </style>
+            monthsInRange.forEach(m => {
+                let monthDebit = 0, monthCredit = 0;
+                const monthVouchers = allVouchers.filter(v => normVP(v) === m).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+                
+                monthVouchers.forEach(v => {
+                    if (!v.lines) return;
+                    v.lines.forEach(l => {
+                        const lCode = (l.account || l.subject || l.accountCode || "").trim().split(/\s+/)[0];
+                        if (lCode === targetCode) {
+                            const d = parseFloat(l.debit) || 0;
+                            const c = parseFloat(l.credit) || 0;
+                            monthDebit += d; monthCredit += c;
+                            ytdDebit += d; ytdCredit += c;
+                            runBal += (defaultDir === "借" ? (d - c) : (c - d));
+                            const curDir = runBal === 0 ? "平" : (runBal > 0.005 ? defaultDir : (defaultDir==="借"?"贷":"借"));
 
-        <div class="sd-fcard">
-            <div class="sd-frow">
-                <span class="sd-flabel">科目</span>
-                <select id="sd-subj" style="min-width:280px;" onchange="window.sdAutoQuery && window.sdAutoQuery()">
-                    ${subjOpts}
-                </select>
-            </div>
-            <div class="sd-frow">
-                <span class="sd-flabel">期间</span>
-                <select id="sd-pf">${mkPOpts(sdPF)}</select>
-                <span style="color:#999;padding:0 4px;">-</span>
-                <select id="sd-pt">${mkPOpts(sdPT)}</select>
-            </div>
-            <div class="sd-actions">
-                <button onclick="window.sdReset && window.sdReset()"
-                    style="padding:6px 18px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;font-size:14px;cursor:pointer;">重置</button>
-                <button class="btn-primary" onclick="window.sdQuery && window.sdQuery()">查询</button>
-            </div>
-        </div>
+                            tableRows += `<tr>
+                                <td class="ledger-row-idx">${rowIndex++}</td>
+                                <td class="ledger-row-date">${v.date || ""}</td>
+                                <td class="ledger-row-vno" onclick="if(window.openVoucherDetailById)window.openVoucherDetailById('${v.id}')">${v.id}</td>
+                                <td class="ledger-row-summary">${l.summary || v.summary || ""}</td>
+                                <td class="ledger-row-num">${d ? fmt(d) : ""}</td>
+                                <td class="ledger-row-num">${c ? fmt(c) : ""}</td>
+                                <td class="ledger-row-dir">${curDir}</td>
+                                <td class="ledger-row-num" style="font-weight:600;">${fmtBal(runBal)}</td>
+                            </tr>`;
+                            }
+                            });
+                            });
 
-        <div class="sd-card">
-            <div class="sd-card-title">科目明细账</div>
-            ${targetCode ? `<div class="sd-card-subj">${targetCode} ${targetName}</div>` : ""}
-            <div class="sd-card-period">期间：${periodLabel}</div>
-            <table class="sd-tbl">
-                <thead>
-                    <tr>
-                        <th style="width:72px;">期间</th>
-                        <th style="width:100px;">日期</th>
-                        <th style="width:90px;">凭证号</th>
-                        <th>摘要</th>
-                        <th style="text-align:right;width:130px;">借方金额</th>
-                        <th style="text-align:right;width:130px;">贷方金额</th>
-                        <th style="width:52px;">方向</th>
-                        <th style="text-align:right;width:140px;">余额</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${targetCode
-                        ? (tableRows || `<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">该科目本期无发生额</td></tr>`)
-                        : `<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">请在上方选择科目</td></tr>`}
-                </tbody>
-            </table>
-            ${targetCode ? `
-            <div style="padding:10px 14px;font-size:12px;color:#999;">
-                * ${targetCode} 属于<strong>${defaultDir}方科目</strong>，
-                ${defaultDir==="借" ? "借方表示增加，贷方表示减少" : "贷方表示增加，借方表示减少"}。
-            </div>` : ""}
-        </div>
-        `;
+                            periodDebit += monthDebit; periodCredit += monthCredit;
+                            const monthEndDir = runBal === 0 ? "平" : (runBal > 0.005 ? defaultDir : (defaultDir==="借"?"贷":"借"));
+
+                            tableRows += `<tr class="row-month-total">
+                            <td class="ledger-row-idx">${rowIndex++}</td>
+                            <td class="ledger-row-date">${m.replace("-",".")}</td><td></td><td>本月合计</td>
+                            <td class="ledger-row-num">${fmt(monthDebit)}</td>
+                            <td class="ledger-row-num">${fmt(monthCredit)}</td>
+                            <td class="ledger-row-dir">${monthEndDir}</td>
+                            <td class="ledger-row-num">${fmtBal(runBal)}</td>
+                            </tr>`;
+                            tableRows += `<tr class="row-year-total">
+                            <td class="ledger-row-idx">${rowIndex++}</td>
+                            <td class="ledger-row-date">${m.replace("-",".")}</td><td></td><td>本年累计</td>
+                            <td class="ledger-row-num">${fmt(ytdDebit)}</td>
+                            <td class="ledger-row-num">${fmt(ytdCredit)}</td>
+                            <td class="ledger-row-dir">${monthEndDir}</td>
+                            <td class="ledger-row-num">${fmtBal(runBal)}</td>
+                            </tr>`;
+                            });
+
+                            const finalDir = runBal === 0 ? "平" : (runBal > 0.005 ? defaultDir : (defaultDir==="借"?"贷":"借"));
+                            tableRows += `<tr class="row-period-total">
+                            <td class="ledger-row-idx">${rowIndex++}</td>
+                            <td></td><td></td><td>本期合计</td>
+                            <td class="ledger-row-num">${fmt(periodDebit)}</td>
+                            <td class="ledger-row-num">${fmt(periodCredit)}</td>
+                            <td class="ledger-row-dir">${finalDir}</td>
+                            <td class="ledger-row-num">${fmtBal(runBal)}</td>
+                            </tr>`;
+                            }
+
+                            for(let i=rowIndex; i<=12; i++) {
+                            tableRows += `<tr><td class="ledger-row-idx">${i}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+                            }
+
+                            const periodLabel = `${sdPF.replace("-",".")} - ${sdPT.replace("-",".")}`;
+
+                            contentHTML += `
+                            <style>
+                            .ledger-page { background:#fff; border-radius:16px; box-shadow:0 6px 18px rgba(15,23,42,0.06); overflow:hidden; }
+                            .ledger-header { padding:24px 20px 10px; text-align:center; }
+                            .ledger-title { font-size:24px; font-weight:700; color:#111827; margin:0; }
+
+                            .ledger-toolbar { display:flex; gap:20px; align-items:center; padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#fff; flex-wrap:wrap; }
+                            .ledger-field { display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; }
+                            .ledger-field label { font-weight:600; }
+                            .ledger-field select { min-width:180px; padding:6px 10px; border:1px solid #d7dde6; border-radius:6px; background:#fff; font-size:13px; outline:none; }
+                            .ledger-field .period-text { color:#111827; font-weight:500; margin-left:4px; }
+
+                            .ledger-btn-query { background:#3b82f6; color:#fff; border:none; padding:8px 24px; border-radius:6px; cursor:pointer; font-weight:600; font-size:14px; margin-left:auto; transition:all 0.2s; box-shadow:0 2px 4px rgba(59,130,246,0.2); }
+                            .ledger-btn-query:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 6px rgba(59,130,246,0.3); }
+
+                            .ledger-table-wrap { background:#fff; overflow:auto; max-height:720px; border-top:1px solid #e2e8f0; }
+                            .ledger-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; color:#1f2937; table-layout:fixed; }
+                            .ledger-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:12px 8px; text-align:center; font-weight:600; color:#475569; }
+                            .ledger-table thead th:last-child { border-right:none; }
+
+                            .ledger-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:10px 8px; height:40px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:#fff; }
+                            .ledger-table td:last-child { border-right:none; }
+                            .ledger-table tr:hover td { background:#f8fafc; }
+
+                            .ledger-row-idx { text-align:center; color:#94a3b8; width:50px; }
+                            .ledger-row-date { text-align:center; width:110px; }
+                            .ledger-row-vno { text-align:center; width:100px; color:#3b82f6; cursor:pointer; }
+                            .ledger-row-summary { text-align:left; }
+                            .ledger-row-num { text-align:right; width:140px; font-variant-numeric:tabular-nums; }
+                            .ledger-row-dir { text-align:center; width:60px; }
+
+                            .row-month-total td { background:#e6f7ff !important; font-weight:500; }
+                            .row-year-total td { background:#fff7e6 !important; font-weight:500; }
+                            .row-period-total td { background:#f5f5f5 !important; font-weight:700; color:#111827; }
+                            </style>
+
+                            <div class="ledger-page">
+                            <div class="ledger-header">
+                            <h1 class="ledger-title">${targetCode} ${targetName}明细账</h1>
+                            </div>
+
+                            <div class="ledger-toolbar">
+                            <div class="ledger-field">
+                            <label>科目</label>
+                            <select id="sd-subj-rep" onchange="window.sdRepAutoQuery()">${subjOpts}</select>
+                            </div>
+                            <div class="ledger-field">
+                            <label>期间：</label>
+                            <span class="period-text">${periodLabel}</span>
+                            </div>
+                            <button class="ledger-btn-query" onclick="window.sdRepOpenFilter()">查询</button>
+                            </div>
+
+                            <div class="ledger-table-wrap">
+                            <table class="ledger-table">
+                            <thead>
+                            <tr>
+                            <th style="width:50px;">序号</th>
+                            <th style="width:110px;">日期</th>
+                            <th style="width:100px;">凭证字号</th>
+                            <th>摘要</th>
+                            <th style="width:140px;">借方</th>
+                            <th style="width:140px;">贷方</th>
+                            <th style="width:60px;">方向</th>
+                            <th style="width:150px;">余额</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            ${tableRows}
+                            </tbody>
+                            </table>
+                            </div>
+                            </div>
+
+                            <div id="sd-rep-filter-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+                            <div style="background:#fff; padding:25px; border-radius:12px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+                            <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:12px; font-size:18px; font-weight:700; color:#111827;">查询条件</h3>
+                            <div style="margin-bottom:16px;">
+                            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:#475569;">开始期间</label>
+                            <select id="sd-pf-rep" style="width:100%; padding:8px 12px; border:1px solid #d7dde6; border-radius:6px; outline:none;">${mkPOpts(sdPF)}</select>
+                            </div>
+                            <div style="margin-bottom:24px;">
+                            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:#475569;">结束期间</label>
+                            <select id="sd-pt-rep" style="width:100%; padding:8px 12px; border:1px solid #d7dde6; border-radius:6px; outline:none;">${mkPOpts(sdPT)}</select>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:12px;">
+                            <button onclick="document.getElementById('sd-rep-filter-modal').style.display='none'" style="padding:8px 20px; border:1px solid #d7dde6; background:#fff; color:#475569; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">取消</button>
+                            <button onclick="window.sdRepExecuteQuery()" style="padding:8px 24px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600;">确定</button>
+                            </div>
+                            </div>
+                            </div>
+                            `;
+
 
         setTimeout(() => {
-            window.sdAutoQuery = function() {
-                const sel = document.getElementById("sd-subj");
-                if (!sel || !sel.value) return;
-                const opt = sel.options[sel.selectedIndex];
-                sessionStorage.setItem("CurrentSubjectCode", sel.value);
-                sessionStorage.setItem("CurrentSubjectName", opt.getAttribute("data-name") || sel.value);
-                sessionStorage.setItem("SDPeriodFrom", document.getElementById("sd-pf").value);
-                sessionStorage.setItem("SDPeriodTo",   document.getElementById("sd-pt").value);
-                loadContent("AcctSubjectDetail");
+            window.sdRepAutoQuery = function() {
+                const sel = document.getElementById('sd-subj-rep');
+                sessionStorage.setItem('CurrentSubjectCode', sel.value);
+                loadContent('AcctSubjectDetail');
             };
-            window.sdQuery = function() {
-                const sel = document.getElementById("sd-subj");
-                if (sel && sel.value) {
-                    const opt = sel.options[sel.selectedIndex];
-                    sessionStorage.setItem("CurrentSubjectCode", sel.value);
-                    sessionStorage.setItem("CurrentSubjectName", opt.getAttribute("data-name") || sel.value);
-                }
-                sessionStorage.setItem("SDPeriodFrom", document.getElementById("sd-pf").value);
-                sessionStorage.setItem("SDPeriodTo",   document.getElementById("sd-pt").value);
-                loadContent("AcctSubjectDetail");
+            window.sdRepOpenFilter = function() {
+                document.getElementById('sd-rep-filter-modal').style.display = 'flex';
             };
-            window.sdReset = function() {
-                ["CurrentSubjectCode","CurrentSubjectName","SDPeriodFrom","SDPeriodTo"]
-                    .forEach(k => sessionStorage.removeItem(k));
-                loadContent("AcctSubjectDetail");
+            window.sdRepExecuteQuery = function() {
+                sessionStorage.setItem('SDPeriodFrom', document.getElementById('sd-pf-rep').value);
+                sessionStorage.setItem('SDPeriodTo', document.getElementById('sd-pt-rep').value);
+                loadContent('AcctSubjectDetail');
             };
-        }, 0);
+        }, 50);
     }
+
 
     // =========================================================================
     // 50. 员工花名册 (HREmployee) - [人员基础库]
