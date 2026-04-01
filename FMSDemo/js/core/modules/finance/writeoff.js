@@ -107,43 +107,6 @@ window._injectWriteOffModals = function () {
                         <div id="wo-waybill-total" style="margin-top:6px;font-size:12px;color:#2980b9;font-weight:bold;"></div>
                     </div>
 
-                    <!-- 核销路径 -->
-                    <div style="margin-bottom:16px;">
-                        <label style="font-weight:bold;color:#2c3e50;display:block;margin-bottom:8px;">核销路径 <span style="color:#e74c3c;">*</span></label>
-                        <div style="display:flex;flex-direction:column;gap:8px;">
-                            <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border:2px solid #e0e0e0;border-radius:6px;cursor:pointer;" id="wo-path-a-label">
-                                <input type="radio" name="wo_path" value="A" onchange="window.onWoPathChange()" style="margin-top:2px;flex-shrink:0;">
-                                <div>
-                                    <div style="font-weight:bold;color:#e67e22;">路径A：先核销再补票</div>
-                                    <div style="font-size:12px;color:#7f8c8d;">款项已到账，暂无发票，先完成核销，后续再补开发票并关联</div>
-                                </div>
-                            </label>
-                            <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border:2px solid #e0e0e0;border-radius:6px;cursor:pointer;" id="wo-path-b-label">
-                                <input type="radio" name="wo_path" value="B" onchange="window.onWoPathChange()" style="margin-top:2px;flex-shrink:0;">
-                                <div>
-                                    <div style="font-weight:bold;color:#8e44ad;">路径B：先开票再核销</div>
-                                    <div style="font-size:12px;color:#7f8c8d;">发票已开具，选择关联发票后完成核销</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- 路径A：补票期限 -->
-                    <div id="wo-path-a-extra" style="display:none;margin-bottom:16px;padding:12px;background:#fff8f0;border:1px solid #f39c12;border-radius:6px;">
-                        <label style="font-weight:bold;color:#e67e22;display:block;margin-bottom:6px;">补票期限（可选）</label>
-                        <input type="date" id="wo_invoice_deadline" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
-                        <p style="color:#7f8c8d;font-size:11px;margin:6px 0 0 0;">超期未补票将在核销记录中显示预警</p>
-                    </div>
-
-                    <!-- 路径B：关联发票 -->
-                    <div id="wo-path-b-extra" style="display:none;margin-bottom:16px;padding:12px;background:#f5f0ff;border:1px solid #9b59b6;border-radius:6px;">
-                        <label style="font-weight:bold;color:#8e44ad;display:block;margin-bottom:6px;">关联发票 <span style="color:#e74c3c;">*</span></label>
-                        <select id="wo_invoice_no" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;">
-                            <option value="">-- 请选择已开具发票 --</option>
-                        </select>
-                        <p style="color:#7f8c8d;font-size:11px;margin:6px 0 0 0;">仅显示状态为"已开票"的销项发票</p>
-                    </div>
-
                     <!-- 金额 & 日期 -->
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                         <div>
@@ -275,14 +238,6 @@ window.openARWriteOffModal = function (arId, client, unverified, rcvIdEnc, invNo
     document.getElementById('wo_display_remain').textContent = '¥' + parseFloat(unverified).toLocaleString('zh-CN', { minimumFractionDigits: 2 });
     document.getElementById('wo_date').value    = new Date().toISOString().split('T')[0];
     document.getElementById('wo_remark').value  = '';
-    document.getElementById('wo_invoice_deadline').value = '';
-
-    // 重置路径选择
-    document.querySelectorAll('input[name="wo_path"]').forEach(r => r.checked = false);
-    document.getElementById('wo-path-a-extra').style.display   = 'none';
-    document.getElementById('wo-path-b-extra').style.display   = 'none';
-    document.getElementById('wo-path-a-label').style.borderColor = '#e0e0e0';
-    document.getElementById('wo-path-b-label').style.borderColor = '#e0e0e0';
 
     // 填充关联收款单下拉（筛选同客户、有可用余额的已审核收款单）
     const rcvList = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
@@ -314,10 +269,12 @@ window.openARWriteOffModal = function (arId, client, unverified, rcvIdEnc, invNo
         hint.style.display = 'none';
     }
 
-    // 填充同客户的待核销AR列表（运单批量选择）
+    // 填充同客户同账期的待核销AR列表（运单批量选择）
+    const currentPeriod = ar.period || '';
     const pendingARs = arList.filter(a => {
         const unv = parseFloat((a.unverified || a.amount || '0').toString().replace(/,/g, '')) || 0;
-        return a.client === client && unv > 0;
+        const samePeriod = !currentPeriod || !a.period || a.period === currentPeriod || a.id === arId;
+        return a.client === client && unv > 0 && samePeriod;
     });
     const waybillSection = document.getElementById('wo-waybill-section');
     const waybillList = document.getElementById('wo-waybill-list');
@@ -340,22 +297,6 @@ window.openARWriteOffModal = function (arId, client, unverified, rcvIdEnc, invNo
         document.getElementById('wo_amount').value = parseFloat(unverified).toFixed(2);
     }
 
-    // 填充发票下拉（路径B）
-    const outputInvoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
-    const availInv = outputInvoices.filter(i => i.status === '已开票');
-    const invSel = document.getElementById('wo_invoice_no');
-    invSel.innerHTML = '<option value="">-- 请选择已开具发票 --</option>' +
-        availInv.map(i => {
-            const selected = i.no === invNoHint ? ' selected' : '';
-            return `<option value="${i.no}"${selected}>${i.no}  ${i.client || ''}  ¥${i.total || i.amount || ''}</option>`;
-        }).join('');
-
-    // 若已检测到关联发票，默认预选路径B
-    if (invNoHint && availInv.some(i => i.no === invNoHint)) {
-        const radioB = document.querySelector('input[name="wo_path"][value="B"]');
-        if (radioB) { radioB.checked = true; window.onWoPathChange(); }
-    }
-
     modal.style.display = 'flex';
 };
 
@@ -376,7 +317,6 @@ window.openWriteOffModal = function (type, billId, counterparty, remainingAmount
     document.getElementById('wo_amount').value  = parseFloat(remainingAmount).toFixed(2);
     document.getElementById('wo_date').value    = new Date().toISOString().split('T')[0];
     document.getElementById('wo_remark').value  = '';
-    document.getElementById('wo_invoice_deadline').value = '';
 
     // 隐藏运单选择区（AP/Expense不需要）
     const waybillSection = document.getElementById('wo-waybill-section');
@@ -384,12 +324,6 @@ window.openWriteOffModal = function (type, billId, counterparty, remainingAmount
 
     const hint = document.getElementById('wo-rcv-hint');
     if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
-
-    document.querySelectorAll('input[name="wo_path"]').forEach(r => r.checked = false);
-    document.getElementById('wo-path-a-extra').style.display   = 'none';
-    document.getElementById('wo-path-b-extra').style.display   = 'none';
-    document.getElementById('wo-path-a-label').style.borderColor = '#e0e0e0';
-    document.getElementById('wo-path-b-label').style.borderColor = '#e0e0e0';
 
     // 收款单下拉（AP场景：显示付款单，过滤已用完的）
     const rcvSel = document.getElementById('wo_rcv_id');
@@ -409,34 +343,12 @@ window.openWriteOffModal = function (type, billId, counterparty, remainingAmount
         rcvSel.innerHTML = '<option value="">-- 无关联收款单 --</option>';
     }
 
-    // 发票下拉
-    const inputInvoices  = JSON.parse(sessionStorage.getItem('InputInvoices')  || '[]');
-    const outputInvoices = JSON.parse(sessionStorage.getItem('OutputInvoices') || '[]');
-    let avail = type === 'AP'
-        ? inputInvoices.filter(i => i.status !== '已核销')
-        : outputInvoices.filter(i => i.status === '已开票');
-    const invSel = document.getElementById('wo_invoice_no');
-    invSel.innerHTML = '<option value="">-- 请选择发票 --</option>' +
-        avail.map(i => {
-            const no = i.no || i.number || i.id;
-            return `<option value="${no}">${no}  ${i.client || i.supplier || ''}  ¥${i.total || i.amount || ''}</option>`;
-        }).join('');
-
     modal.style.display = 'flex';
 };
 
 window.closeWriteOffModal = function () {
     const modal = document.getElementById('wo-modal');
     if (modal) modal.style.display = 'none';
-};
-
-window.onWoPathChange = function () {
-    const sel = document.querySelector('input[name="wo_path"]:checked');
-    const path = sel ? sel.value : '';
-    document.getElementById('wo-path-a-extra').style.display   = path === 'A' ? 'block' : 'none';
-    document.getElementById('wo-path-b-extra').style.display   = path === 'B' ? 'block' : 'none';
-    document.getElementById('wo-path-a-label').style.borderColor = path === 'A' ? '#e67e22' : '#e0e0e0';
-    document.getElementById('wo-path-b-label').style.borderColor = path === 'B' ? '#9b59b6' : '#e0e0e0';
 };
 
 // ============================================================
@@ -451,10 +363,7 @@ window.confirmWriteOff = function () {
     const date         = document.getElementById('wo_date').value;
     const remark       = document.getElementById('wo_remark').value;
     const rcvId        = (document.getElementById('wo_rcv_id').value || '').trim();
-    const selPath      = document.querySelector('input[name="wo_path"]:checked');
-    const invoicePath  = selPath ? selPath.value : '';
 
-    if (!invoicePath) return alert('请选择核销路径（路径A或路径B）');
     if (amount <= 0)  return alert('核销金额必须大于 0');
     if (!date)        return alert('请填写核销日期');
 
@@ -470,18 +379,6 @@ window.confirmWriteOff = function () {
                 '请调整核销金额或选择其他收款单。'
             );
         }
-    }
-
-    let invoiceNo      = '';
-    let invoiceStatus  = '待补票';
-    let invoiceDeadline= '';
-
-    if (invoicePath === 'A') {
-        invoiceDeadline = document.getElementById('wo_invoice_deadline').value || '';
-    } else {
-        invoiceNo = document.getElementById('wo_invoice_no').value;
-        if (!invoiceNo) return alert('路径B请选择关联发票');
-        invoiceStatus = '已关联';
     }
 
     // 收集批量选择的AR ID（AR模式下）
@@ -589,18 +486,12 @@ window.confirmWriteOff = function () {
         billId: billIdStr,
         rcvId, counterparty,
         writeOffAmount: amount.toFixed(2), date,
-        invoicePath, invoiceStatus, invoiceNo, invoiceDeadline,
         remark, voucherId, status: '已核销',
         createdAt: new Date().toISOString()
     };
     let woList = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
     woList.unshift(woRecord);
     sessionStorage.setItem('WriteOffRecords', JSON.stringify(woList));
-
-    // 路径B：更新发票状态
-    if (invoicePath === 'B' && invoiceNo) {
-        _updateInvoiceWriteOffStatus(type, invoiceNo);
-    }
 
     // 更新应收账款台账（按比例分配到各AR，或各自按全额写销）
     if (type === 'AR' && selectedArIds.length > 0) {
@@ -629,6 +520,21 @@ window.confirmWriteOff = function () {
         }
     }
 
+    // 更新 BizWaybills 核销状态
+    if (type === 'AR' && selectedArIds.length > 0) {
+        let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
+        let wbChanged = false;
+        selectedArIds.forEach(arId => {
+            waybills.forEach(w => {
+                if (w.reconId === arId || w.arSettlementId === arId) {
+                    w.writeOffStatus = '已核销';
+                    wbChanged = true;
+                }
+            });
+        });
+        if (wbChanged) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
+    }
+
     if (typeof addAuditLog === 'function') {
         addAuditLog({
             level: '低风险', time: new Date().toLocaleString(), user: '当前用户',
@@ -636,19 +542,14 @@ window.confirmWriteOff = function () {
             action: '核销确认',
             detail: '核销单号:' + woId + ', 来源账款:' + billIdStr +
                 (rcvId ? ', 收款单:' + rcvId : '') +
-                ', 金额:' + amount.toFixed(2) + ', 路径:' + (invoicePath === 'A' ? '先核销后补票' : '先开票后核销')
+                ', 金额:' + amount.toFixed(2)
         });
     }
-
-    const pathDesc = invoicePath === 'A'
-        ? '先核销后补票（待补票）'
-        : '先开票后核销（已关联发票：' + invoiceNo + '）';
 
     const arCountDesc = type === 'AR' && selectedArIds.length > 1 ? '\n核销运单数：' + selectedArIds.length + ' 条' : '';
 
     alert('✅ 核销成功！\n核销单号：' + woId +
         '\n核销金额：¥' + amount.toFixed(2) + arCountDesc +
-        '\n核销路径：' + pathDesc +
         (voucherId ? '\n已生成凭证：' + voucherId : ''));
 
     window.closeWriteOffModal();

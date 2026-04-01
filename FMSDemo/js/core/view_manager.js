@@ -13,6 +13,7 @@ function getModuleName(code) {
         ReconCustomer: "客户对账",
         ReconCarrier: "承运商对账",
         ReconDriver: "司机对账",
+        ReconCustomerPortal: "客户对账",
         ReconDiffHandle: "对账差异处理",
         ARCollectionVerify: "运单结算",
         ARAgeAnalysis: "客户账龄分析",
@@ -4268,81 +4269,423 @@ function loadContent(moduleCode, element = null) {
     }
 
     // =========================================================================
-    // 2.2. 客户对账-客户视角 (ReconCustomerPortal)
+    // =========================================================================
+    // 2.2. 客户对账结算中心 (ReconCustomerPortal) - [3步工作流版]
     // =========================================================================
     else if (moduleCode === "ReconCustomerPortal") {
         let recons = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");
-        const visible = recons.filter(r => ["已发送对账单","客户已确认","客户打回"].includes(r.status));
         const allWaybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
 
-        const rows = visible.map(r => {
-            const cnt = r.waybillCount || allWaybills.filter(w => w.reconId === r.id).length;
-            const isPending = r.status === "已发送对账单";
-            const isConfirmed = r.status === "客户已确认";
-            const isRejected = r.status === "客户打回";
+        // === Step 1 Data ===
+        const pendingRecons = recons.filter(r => ["已发送对账单", "待客户确认", "客户已确认", "客户打回"].includes(r.status));
+        const step1Rows = pendingRecons.map(r => {
+            const isPending = r.status === "已发送对账单" || r.status === "待客户确认";
+            const statusHtml = isPending 
+                ? `<span style="background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">待确认</span>`
+                : r.status === "客户打回"
+                ? `<span style="background:#f1f5f9; color:#64748b; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; font-style:italic;">已驳回</span>`
+                : `<span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">已确认</span>`;
 
-            const statusBadge = isPending
-                ? `<span style="background:#fff7ed;color:#ea580c;border:1px solid #fdba74;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">待确认</span>`
-                : isConfirmed
-                ? `<span style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">✅ 已确认</span>`
-                : `<span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">❌ 已打回</span>`;
+            const actionHtml = isPending
+                ? `<button class="btn-cp-primary" style="padding:8px 16px; font-size:13px;" onclick="window.cpConfirmRecon('${r.id}')">核对无误</button>
+                   <button style="margin-left:8px; padding:8px 16px; border:1px solid #e2e8f0; background:#fff; border-radius:10px; font-size:13px; color:#ef4444; cursor:pointer;" onclick="window.cpRejectRecon('${r.id}')">驳回</button>`
+                : `<span style="color:#2563eb; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="window.viewReconDetailsFromPortal('${r.id}')">查看明细</span>`;
 
-            const actionBtn = isPending
-                ? `<button onclick="viewReconDetailFromPortal('${r.id}')" style="padding:4px 10px;font-size:12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;">查看并操作</button>`
-                : `<button onclick="viewReconDetailFromPortal('${r.id}')" style="padding:4px 10px;font-size:12px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;">查看明细</button>`;
-
-            const rejectReasonCell = isRejected
-                ? `<span style="font-size:12px;color:#dc2626;">💬 ${r.customerRejectReason || '-'}</span>`
-                : `<span style="color:#ccc;font-size:12px;">-</span>`;
-
-            return `<tr>
-                <td><a href="javascript:void(0)" onclick="viewReconDetailFromPortal('${r.id}')" style="color:#3498db;font-weight:bold;text-decoration:underline;font-size:13px;">${r.id}</a></td>
-                <td>${r.client}</td>
-                <td>${r.period}</td>
-                <td style="text-align:center;">${cnt}</td>
-                <td style="text-align:right;font-weight:bold;">¥${r.amount}</td>
-                <td>${statusBadge}</td>
-                <td>${rejectReasonCell}</td>
-                <td>${actionBtn}</td>
-            </tr>`;
+            return `
+                <tr class="hover:bg-slate-50 transition">
+                    <td style="font-family:monospace; font-weight:700; color:#334155; cursor:pointer; text-decoration:underline;" onclick="window.viewReconDetailsFromPortal('${r.id}')">${r.id}</td>
+                    <td style="text-align:center; color:#64748b;">${r.period}</td>
+                    <td style="text-align:right; font-weight:800; font-size:16px; ${isPending ? 'color:#2563eb;' : 'color:#94a3b8;'}">¥ ${r.amount}</td>
+                    <td style="text-align:center;">${statusHtml}</td>
+                    <td style="text-align:right;">${actionHtml}</td>
+                </tr>
+            `;
         }).join("");
+        const step1Html = step1Rows || `<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">暂无待处理对账单</td></tr>`;
+
+        // === Step 2 Data ===
+        const confirmedReconIds = recons.filter(r => r.status === "客户已确认" || r.status === "已结算").map(r => r.id);
+        const unsettledWaybills = allWaybills.filter(w => confirmedReconIds.includes(w.reconId) && !w.arSettlementId);
+        
+        const step2Rows = unsettledWaybills.map(w => `
+            <div class="cp-wb-row" style="padding:20px; display:flex; align-items:center; gap:16px; border-bottom:1px solid #f1f5f9; cursor:pointer;" onclick="window.cpToggleWaybill('${w.id}')">
+                <input type="checkbox" class="cp-wb-chk" value="${w.id}" data-amount="${(w.totalAmount || w.amount || '0').toString().replace(/,/g,'')}" style="width:20px; height:20px; pointer-events:none;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;">${w.id} <span style="font-size:12px; color:#94a3b8; font-weight:normal; margin-left:8px;">[对账单: ${w.reconId}]</span></div>
+                    <div style="font-size:10px; color:#64748b; margin-top:4px;">${w.feeType || '干线运输费'}</div>
+                </div>
+                <div style="font-weight:900; color:#334155; font-size:16px;">¥ ${w.totalAmount || w.amount || '0.00'}</div>
+            </div>
+        `).join("");
+        const step2Html = step2Rows || `<div style="padding:40px; text-align:center; color:#94a3b8;">暂无可结算的运单数据，请先在第一步确认对账单。</div>`;
+
+        // === Step 3 Data ===
+        const currentPayMethod = sessionStorage.getItem("PortalPayMethod") || "bank";
+        const uploadedReceipt = sessionStorage.getItem("PortalReceiptFile");
 
         contentHTML += `
-        <div style="background:#fff;padding:14px 18px;margin-bottom:16px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <span style="font-weight:700;font-size:15px;">客户对账确认</span>
-                <span style="font-size:12px;color:#999;margin-left:10px;">以下为业务员发送的对账单，点击对账单号查看运单明细并操作。</span>
-            </div>
-            <button onclick="loadContent('ReconCustomerPortal')" class="btn-primary">刷新</button>
-        </div>
-        <div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;">
-        <table class="data-table">
-            <thead><tr>
-                <th>对账单号</th>
-                <th>客户名称</th>
-                <th>对账期间</th>
-                <th style="text-align:center;">运单数</th>
-                <th style="text-align:right;">应收金额</th>
-                <th>状态</th>
-                <th>驳回原因</th>
-                <th>操作</th>
-            </tr></thead>
-            <tbody>${rows || '<tr><td colspan="8" style="text-align:center;color:#999;padding:40px;">暂无对账单，业务员发送后将在此显示。</td></tr>'}</tbody>
-        </table>
-        </div>
-        <!-- 打回弹窗 -->
-        <div id="reject-recon-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1001;">
-            <div style="position:absolute;top:25%;left:50%;transform:translateX(-50%);width:480px;background:#fff;padding:24px;border-radius:10px;">
-                <h3 style="margin-top:0;color:#dc2626;">❌ 打回对账单</h3>
-                <p style="font-size:13px;color:#666;">请填写打回原因，业务员将据此重新生成对账单。</p>
-                <textarea id="reject-reason-input" placeholder="例如：第3笔运单号运费有误，应为2200元；第5笔运单已作废..." style="width:100%;height:100px;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
-                <div style="text-align:right;margin-top:14px;">
-                    <input type="hidden" id="reject-recon-id">
-                    <button onclick="closeRejectModal()" style="padding:8px 16px;background:#95a5a6;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:8px;">取消</button>
-                    <button onclick="submitCustomerReject()" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">确认打回</button>
+        <style>
+            .cp-nav { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+            .cp-steps { display: flex; gap: 32px; font-weight: 500; }
+            .cp-step { border-bottom: 2px solid transparent; padding-bottom: 4px; transition: all 0.2s; cursor: pointer; color: #64748b; font-size: 14px; }
+            .cp-step.active { color: #2563eb; border-color: #2563eb; }
+            
+            .cp-page { display: none; padding: 40px 24px; max-width: 1000px; margin: 0 auto; animation: cp-fade 0.4s ease-out; }
+            .cp-page.active { display: block; }
+            @keyframes cp-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            
+            .cp-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+            .cp-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+            .cp-table thead { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+            .cp-table th { padding: 16px 20px; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 12px; }
+            .cp-table td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+            
+            .cp-summary-card { background: #0f172a; border-radius: 16px; padding: 24px; color: #fff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); position:sticky; top:100px; }
+            .btn-cp-primary { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
+            .btn-cp-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+            .btn-cp-primary:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+            
+            .pay-option { border: 2px solid #f1f5f9; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+            .pay-option:hover { border-color: #3b82f6; }
+            .pay-option.active { border-color: #3b82f6; background: #eff6ff; }
+
+            .cp-wb-row:hover { background: #f8fafc; }
+            .cp-wb-row.selected { background: #eff6ff; }
+        </style>
+
+        <div class="cp-nav">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:#2563eb; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-style:italic; font-size:18px;">F</div>
+                <div>
+                    <div style="font-weight:800; font-size:16px;">客户结算中心</div>
+                    <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px;">Financial Settlement Portal</div>
                 </div>
             </div>
-        </div>`;
+            <div class="cp-steps">
+                <div id="cp-step1" class="cp-step active" onclick="window.cpGoToPage(1)">1. 对账确认</div>
+                <div id="cp-step2" class="cp-step" onclick="window.cpGoToPage(2)">2. 合并结算</div>
+                <div id="cp-step3" class="cp-step" onclick="window.cpGoToPage(3)">3. 支付核销</div>
+            </div>
+        </div>
+
+        <main>
+            <!-- 第一步：对账单列表 -->
+            <div id="cp-page1" class="cp-page active">
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-size:24px; font-weight:800; color:#0f172a;">待确认对账单</h2>
+                    <p style="font-size:14px; color:#64748b; margin-top:4px;">请核对财务发出的对账单，核对无误后将生成销售凭证并可进行后续结算。</p>
+                </div>
+                <div class="cp-card">
+                    <table class="cp-table">
+                        <thead>
+                            <tr>
+                                <th>账单编号</th>
+                                <th style="text-align:center;">业务月份</th>
+                                <th style="text-align:right;">含税金额</th>
+                                <th style="text-align:center;">状态</th>
+                                <th style="text-align:right;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${step1Html}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 第二步：合并产生结算单 -->
+            <div id="cp-page2" class="cp-page">
+                <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+                    <button style="background:none; border:none; color:#94a3b8; font-weight:700; cursor:pointer; font-size:16px;" onclick="window.cpGoToPage(1)">← 返回</button>
+                    <h2 style="font-size:24px; font-weight:800; color:#0f172a;">合并产生结算单</h2>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 320px; gap:32px;">
+                    <div class="cp-card">
+                        <div style="padding:16px; background:#eff6ff; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:12px; font-weight:800; color:#1e40af;">
+                            <span>勾选已确认的运单进行结算</span>
+                            <span>汇率: 1.0000</span>
+                        </div>
+                        <div id="cp-wb-container">
+                            ${step2Html}
+                        </div>
+                    </div>
+                    <div style="position:relative;">
+                        <div class="cp-summary-card">
+                            <div style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:16px; letter-spacing:0.1em;">结算汇总</div>
+                            <div style="display:flex; flex-direction:column; gap:12px;">
+                                <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="opacity:0.6;">已勾选运单</span><span id="cp-selected-count">0 笔</span></div>
+                                <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="opacity:0.6;">含税合计</span><span id="cp-selected-amount">¥ 0.00</span></div>
+                                <div style="height:1px; background:#fff; opacity:0.1; margin:8px 0;"></div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:14px; color:#60a5fa; font-weight:700;">应付总计</span>
+                                    <span style="font-size:20px; font-weight:900;" id="cp-total-amount">¥ 0.00</span>
+                                </div>
+                            </div>
+                            <button id="cp-btn-to-pay" class="btn-cp-primary" style="width:100%; margin-top:32px; padding:16px; font-size:15px;" disabled onclick="window.cpProceedToPayment()">生成结算单并前往支付 →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第三步：确认支付 -->
+            <div id="cp-page3" class="cp-page">
+                <div style="max-width:500px; margin:0 auto;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:32px;">
+                        <button style="background:none; border:none; color:#94a3b8; font-weight:700; cursor:pointer; font-size:16px;" onclick="window.cpGoToPage(2)">← 返回修改</button>
+                        <h2 style="font-size:24px; font-weight:800; color:#0f172a;">最后一步：确认支付</h2>
+                    </div>
+                    <div class="cp-card" style="border-top:8px solid #2563eb;">
+                        <div style="padding:32px; text-align:center; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                            <p style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em;">应付金额小计</p>
+                            <div style="font-size:36px; font-weight:900; color:#0f172a; margin-top:8px;" id="cp-final-amount">¥ 0.00</div>
+                        </div>
+                        <div style="padding:32px;">
+                            <label style="display:block; font-size:12px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:12px;">1. 选择支付渠道</label>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:32px;">
+                                <div class="pay-option ${currentPayMethod==='bank'?'active':''}" onclick="window.cpSetPayMethod('bank')">
+                                    <div style="font-weight:700; font-size:14px; ${currentPayMethod==='bank'?'color:#1e40af;':'color:#334155;'}">公司对公网银</div>
+                                    <div style="font-size:10px; ${currentPayMethod==='bank'?'color:#3b82f6;':'color:#94a3b8;'}">自动同步财务流水</div>
+                                </div>
+                                <div class="pay-option ${currentPayMethod==='online'?'active':''}" onclick="window.cpSetPayMethod('online')">
+                                    <div style="font-weight:700; font-size:14px; ${currentPayMethod==='online'?'color:#1e40af;':'color:#334155;'}">第三方线上支付</div>
+                                    <div style="font-size:10px; ${currentPayMethod==='online'?'color:#3b82f6;':'color:#94a3b8;'}">支付宝/微信企业端</div>
+                                </div>
+                            </div>
+                            
+                            <label style="display:block; font-size:12px; font-weight:800; color:#94a3b8; text-transform:uppercase; margin-bottom:12px;">2. 上传付款水单凭证</label>
+                            <div style="border:2px dashed ${uploadedReceipt?'#10b981':'#e2e8f0'}; border-radius:16px; padding:32px; text-align:center; cursor:pointer; background:${uploadedReceipt?'#f0fdf4':'#fff'}; transition:all 0.2s;" onclick="document.getElementById('cp-file-input').click()">
+                                <div style="font-size:32px; margin-bottom:12px;">${uploadedReceipt?'✅':'📄'}</div>
+                                <div style="font-size:14px; font-weight:700; color:${uploadedReceipt?'#047857':'#475569'};">${uploadedReceipt?'已上传：'+uploadedReceipt:'点击上传付款回执'}</div>
+                                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">支持图片、PDF 或 扫描件</div>
+                                <input type="file" id="cp-file-input" style="display:none;" onchange="window.cpHandleUpload(this)">
+                            </div>
+                            
+                            <button class="btn-cp-primary" style="width:100%; margin-top:32px; padding:20px; font-size:18px; background:#0f172a;" onclick="window.cpSubmitFinal()">我已支付，通知财务核销</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        `;
+
+        setTimeout(() => {
+            // 查看详情
+            window.viewReconDetailsFromPortal = function(id) {
+                window.g_currentRecon = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]").find(r => r.id === id);
+                window.g_reconDetailBackTo = 'ReconCustomerPortal';
+                loadContent('ReconDetail');
+            };
+
+            // 客户确认逻辑
+            window.cpConfirmRecon = function(id) {
+                let recons = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");
+                let r = recons.find(x => x.id === id);
+                if (r) {
+                    r.status = "客户已确认";
+                    r.customerConfirmTime = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+                    sessionStorage.setItem("CustomerRecons", JSON.stringify(recons));
+                    
+                    // 产生销售凭证 (ManualVouchers)
+                    let vouchers = JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+                    const vId = "记-" + String(Math.floor(Math.random() * 9000) + 1000);
+                    vouchers.unshift({
+                        id: vId, period: r.period, date: r.customerConfirmTime.slice(0, 10),
+                        summary: "客户对账确认产生销售收入 (" + r.client + ")", status: "待审核", user: "系统",
+                        lines: [
+                            { summary: "应收账款", accountCode: "1122", account: "1122 应收账款", debit: r.amount.replace(/,/g,''), credit: "" },
+                            { summary: "主营业务收入", accountCode: "5001", account: "5001 主营业务收入", debit: "", credit: r.amount.replace(/,/g,'') }
+                        ]
+                    });
+                    sessionStorage.setItem("ManualVouchers", JSON.stringify(vouchers));
+                    
+                    alert("✅ 确认成功！已自动生成销售凭证： " + vId);
+                    loadContent('ReconCustomerPortal');
+                }
+            };
+
+            // 客户驳回逻辑
+            window.cpRejectRecon = function(id) {
+                const reason = prompt("请输入驳回原因：", "费用存在差异");
+                if (reason) {
+                    let recons = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");
+                    let r = recons.find(x => x.id === id);
+                    if (r) {
+                        r.status = "客户打回";
+                        r.customerRejectReason = reason;
+                        sessionStorage.setItem("CustomerRecons", JSON.stringify(recons));
+                        alert("已驳回，并通知业务员修改。");
+                        loadContent('ReconCustomerPortal');
+                    }
+                }
+            };
+
+            // 页面切换
+            window.cpGoToPage = function(n) {
+                document.querySelectorAll('.cp-page').forEach(p => p.classList.remove('active'));
+                document.getElementById('cp-page' + n).classList.add('active');
+                
+                document.querySelectorAll('.cp-step').forEach(s => s.classList.remove('active'));
+                document.getElementById('cp-step' + n).classList.add('active');
+                window.scrollTo(0, 0);
+            };
+
+            // 选择运单逻辑：从 sessionStorage 恢复上次选中状态（防止页面刷新后丢失）
+            window.cpSelectedWaybills = JSON.parse(sessionStorage.getItem('PortalSelectedWaybills') || '[]');
+            window.cpToggleWaybill = function(id) {
+                const container = document.getElementById('cp-wb-container');
+                const row = Array.from(container.children).find(el => el.querySelector('.cp-wb-chk').value === id);
+                if (!row) return;
+
+                const chk = row.querySelector('.cp-wb-chk');
+                chk.checked = !chk.checked;
+
+                if (chk.checked) {
+                    row.classList.add('selected');
+                    if(!window.cpSelectedWaybills.includes(id)) window.cpSelectedWaybills.push(id);
+                } else {
+                    row.classList.remove('selected');
+                    window.cpSelectedWaybills = window.cpSelectedWaybills.filter(wId => wId !== id);
+                }
+                // 持久化选中状态，防止页面reload后丢失
+                sessionStorage.setItem('PortalSelectedWaybills', JSON.stringify(window.cpSelectedWaybills));
+
+                // Recalculate
+                let total = 0;
+                document.querySelectorAll('.cp-wb-chk:checked').forEach(el => {
+                    total += parseFloat(el.getAttribute('data-amount') || 0);
+                });
+
+                const formatted = total.toLocaleString('zh-CN', {minimumFractionDigits:2});
+                document.getElementById('cp-selected-count').innerText = window.cpSelectedWaybills.length + " 笔";
+                document.getElementById('cp-selected-amount').innerText = "¥ " + formatted;
+                document.getElementById('cp-total-amount').innerText = "¥ " + formatted;
+                document.getElementById('cp-final-amount').innerText = "¥ " + formatted;
+
+                document.getElementById('cp-btn-to-pay').disabled = window.cpSelectedWaybills.length === 0;
+            };
+            // 页面恢复时：如有保存的选中运单，刷新 cp-final-amount 显示
+            if (window.cpSelectedWaybills.length > 0) {
+                setTimeout(() => {
+                    const _allWb = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+                    let _tot = 0;
+                    window.cpSelectedWaybills.forEach(sid => {
+                        const _w = _allWb.find(x => x.id === sid);
+                        if (_w) _tot += parseFloat((_w.totalAmount || _w.amount || '0').toString().replace(/,/g, '')) || 0;
+                    });
+                    const _fmt = _tot.toLocaleString('zh-CN', {minimumFractionDigits:2});
+                    ['cp-selected-count','cp-selected-amount','cp-total-amount','cp-final-amount'].forEach(elId => {
+                        const el = document.getElementById(elId);
+                        if (!el) return;
+                        if (elId === 'cp-selected-count') el.innerText = window.cpSelectedWaybills.length + " 笔";
+                        else el.innerText = "¥ " + _fmt;
+                    });
+                    const cpBtn = document.getElementById('cp-btn-to-pay');
+                    if (cpBtn) cpBtn.disabled = false;
+                    // 恢复勾选状态
+                    document.querySelectorAll('.cp-wb-chk').forEach(chk => {
+                        if (window.cpSelectedWaybills.includes(chk.value)) {
+                            chk.checked = true;
+                            const row = chk.closest('.cp-wb-row');
+                            if (row) row.classList.add('selected');
+                        }
+                    });
+                }, 0);
+            }
+
+            window.cpProceedToPayment = function() {
+                if (window.cpSelectedWaybills.length === 0) return alert("请选择要结算的运单");
+                window.cpGoToPage(3);
+            };
+
+            window.cpSetPayMethod = function(m) {
+                sessionStorage.setItem("PortalPayMethod", m);
+                loadContent('ReconCustomerPortal'); // Refresh to show active state
+                setTimeout(() => window.cpGoToPage(3), 50); // Jump back to page 3
+            };
+
+            window.cpHandleUpload = function(input) {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        sessionStorage.setItem("PortalReceiptFile", file.name);
+                        try { sessionStorage.setItem("PortalReceiptData", e.target.result); } catch(err) { /* 空间不足降级 */ }
+                        loadContent('ReconCustomerPortal');
+                        setTimeout(() => window.cpGoToPage(3), 50);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            window.cpSubmitFinal = function() {
+                const receipt = sessionStorage.getItem("PortalReceiptFile");
+                const receiptData = sessionStorage.getItem("PortalReceiptData") || '';
+                if (!receipt) {
+                    return alert("请上传付款回单凭证！");
+                }
+
+                // 创建结算单写入 ARStatements
+                let arList = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");
+                let waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+
+                const settlementId = "SET-" + new Date().getFullYear() + Math.floor(Math.random()*90000+10000);
+
+                // 以选中运单实际金额求和为准，不依赖可能因页面reload而重置的DOM元素
+                const selectedIds = window.cpSelectedWaybills.length > 0
+                    ? window.cpSelectedWaybills
+                    : JSON.parse(sessionStorage.getItem('PortalSelectedWaybills') || '[]');
+
+                if (!selectedIds.length) {
+                    return alert("没有选中任何运单，请返回第二步重新选择。");
+                }
+
+                const calcTotal = selectedIds.reduce((s, id) => {
+                    const w = waybills.find(x => x.id === id);
+                    return s + (w ? parseFloat((w.totalAmount || w.amount || '0').toString().replace(/,/g, '')) : 0);
+                }, 0);
+                const totalAmount = calcTotal.toFixed(2);
+
+                // 获取第一条运单以提取客户信息
+                const firstWb = waybills.find(w => w.id === selectedIds[0]);
+                const clientName = firstWb ? (firstWb.client || firstWb.customerName || "未知客户") : "未知客户";
+                const period = new Date().toISOString().slice(0, 7);
+
+                arList.unshift({
+                    id: settlementId,
+                    client: clientName,
+                    period: period,
+                    amount: totalAmount,
+                    verified: '0.00',
+                    unverified: totalAmount,
+                    status: '未核销',
+                    receiptFile: receipt,
+                    receiptData: receiptData,
+                    fromSettlement: true,
+                    waybillIds: selectedIds  // 额外保存运单ID列表，便于后续核销
+                });
+
+                // 更新运单状态
+                selectedIds.forEach(id => {
+                    const w = waybills.find(x => x.id === id);
+                    if (w) {
+                        w.arSettlementId = settlementId;
+                        w.status = '待核销';
+                    }
+                });
+
+                sessionStorage.setItem("ARStatements", JSON.stringify(arList));
+                sessionStorage.setItem("BizWaybills", JSON.stringify(waybills));
+
+                // 清除临时状态
+                sessionStorage.removeItem("PortalReceiptFile");
+                sessionStorage.removeItem("PortalReceiptData");
+                sessionStorage.removeItem("PortalSelectedWaybills");
+                window.cpSelectedWaybills = [];
+
+                alert("✅ 支付提交成功！结算单号：" + settlementId + "\n已推送至财务系统（应收核销），等待人工核销。");
+                window.cpGoToPage(1);
+            };
+        }, 50);
     }
 
     // =========================================================================
@@ -5915,10 +6258,33 @@ function loadContent(moduleCode, element = null) {
             sessionStorage.setItem('BizWaybills', JSON.stringify(wb));
         };
 
+        // 回单图片预览
+        window.previewARReceipt = function(arId) {
+            const arList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+            const ar = arList.find(a => a.id === arId);
+            if (!ar || !ar.receiptFile) return;
+            if (ar.receiptData && ar.receiptData.startsWith('data:')) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+                overlay.innerHTML = `
+                    <div style="background:#fff;border-radius:10px;padding:20px;max-width:92%;max-height:92vh;overflow:auto;position:relative;min-width:320px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <span style="font-weight:bold;font-size:14px;color:#2c3e50;">📎 ${ar.receiptFile}</span>
+                            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">×</button>
+                        </div>
+                        <img src="${ar.receiptData}" style="max-width:100%;display:block;border-radius:4px;">
+                    </div>`;
+                document.body.appendChild(overlay);
+            } else {
+                alert('回单文件：' + ar.receiptFile + '\n（该记录上传前使用旧版本，图片数据未保存）');
+            }
+        };
+
         // 查看运单明细弹窗
         window.openARWODetail = function(arId) {
             const wb = JSON.parse(sessionStorage.getItem('BizWaybills')||'[]');
-            const rows = wb.filter(w=>w.reconId===arId);
+            // 支持对账单ID (reconId) 或 结算单ID (arSettlementId)
+            const rows = wb.filter(w => w.reconId === arId || w.arSettlementId === arId);
             const modal = document.getElementById('arwo-detail-modal');
             document.getElementById('arwo-detail-title').textContent = arId;
             const tbody = document.getElementById('arwo-detail-tbody');
@@ -5926,7 +6292,7 @@ function loadContent(moduleCode, element = null) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px;">暂无运单数据</td></tr>';
             } else {
                 tbody.innerHTML = rows.map((w,i)=>{
-                    const isWO = w.writeOffStatus==='已核销';
+                    const isWO = w.writeOffStatus==='已核销' || w.status === '已核销';
                     const badge = isWO
                         ? '<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>'
                         : '<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>';
@@ -5939,13 +6305,13 @@ function loadContent(moduleCode, element = null) {
             document.getElementById('arwo-detail-modal').style.display='none';
         };
 
-        // 只显示对账单级别（RC开头），按 fromSettlement 或 settledWaybills 过滤
-        const settledReconIds = new Set(allWaybills.filter(w=>w.settlementStatus==='已结算').map(w=>w.reconId).filter(Boolean));
-        // 去重：同一 reconId 取最新（fromSettlement优先）
+        // 显示对账单(RC)或结算单(SET)
+        const settledReconIds = new Set(allWaybills.filter(w=>w.settlementStatus==='已结算' || w.arSettlementId).map(w=>w.reconId || w.arSettlementId).filter(Boolean));
+        // 去重：同一 ID 取最新
         const reconMap = {};
         arList.forEach(ar => {
             const id = ar.id || '';
-            if (!id.startsWith('RC')) return; // 只保留对账单级别
+            if (!id.startsWith('RC') && !id.startsWith('SET')) return; // 支持 RC 和 SET
             if (!reconMap[id] || ar.fromSettlement) reconMap[id] = ar;
         });
         const settledAR = Object.values(reconMap).filter(ar =>
@@ -5953,13 +6319,14 @@ function loadContent(moduleCode, element = null) {
         );
 
         // 金额自动修正：若 ARStatements 中 amount=0，从关联运单重算并回写
+        // 同时支持 reconId（RC对账单）和 arSettlementId（SET结算单）两种关联方式
         {
             let needSave = false;
             const arStoreList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
             settledAR.forEach(ar => {
                 const storedAmt = parseFloat((ar.amount||'0').toString().replace(/,/g,''));
                 if (storedAmt === 0) {
-                    const relWb = allWaybills.filter(w => w.reconId === ar.id);
+                    const relWb = allWaybills.filter(w => w.reconId === ar.id || w.arSettlementId === ar.id);
                     const calcAmt = relWb.reduce((s,w) => s + parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0), 0);
                     if (calcAmt > 0) {
                         ar.amount    = calcAmt.toFixed(2);
@@ -5995,26 +6362,35 @@ function loadContent(moduleCode, element = null) {
         const outputInvoices = JSON.parse(sessionStorage.getItem('OutputInvoices')  || '[]');
 
         const tableRows = pageData.length===0
-            ? `<tr><td colspan="10" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【运单结算】中完成结算，结算后账款自动进入此列表。</td></tr>`
+            ? `<tr><td colspan="11" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【运单结算】中完成结算，结算后账款自动进入此列表。</td></tr>`
             : pageData.map(ar=>{
-                const relWb      = allWaybills.filter(w => w.reconId === ar.id);
+                // 核心修复：这里必须同时支持 reconId 和 arSettlementId
+                const relWb      = allWaybills.filter(w => w.reconId === ar.id || w.arSettlementId === ar.id);
                 const relWbCount = relWb.length;
+                
                 // 以运单实际金额为准，避免 ARStatements 存储错误
                 const wbTotal  = relWb.reduce((s,w)=>s+parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0),0);
                 const storedAmt= parseFloat((ar.amount||'0').toString().replace(/,/g,''))||0;
                 const amt      = storedAmt > 0 ? storedAmt : wbTotal;
+                
                 const isWO     = ar.status === '已核销' || ar.status === '已结算';
                 const ver      = isWO ? amt : parseFloat((ar.verified||'0').toString().replace(/,/g,''))||0;
                 const unv      = isWO ? 0  : Math.max(amt - ver, 0);
 
+                // 尝试修正客户名称 (如果存储的是未知客户)
+                let finalClient = ar.client;
+                if ((!finalClient || finalClient === '未知客户') && relWbCount > 0) {
+                    finalClient = relWb[0].client || relWb[0].customerName || ar.client;
+                }
+
                 // 查找关联收款单和发票（传给弹窗）
                 const relRcv = rcvList.find(r =>
                     r.status === '已审核' &&
-                    (r.customer === ar.client || (Array.isArray(r.details) && r.details.some(d => d.waybillNo === ar.id)))
+                    (r.customer === finalClient || (Array.isArray(r.details) && r.details.some(d => d.waybillNo === ar.id)))
                 );
                 const relInv = outputInvoices.find(inv =>
                     (Array.isArray(inv.waybillIds) && inv.waybillIds.includes(ar.id)) ||
-                    (inv.client === ar.client && inv.status !== '已核销')
+                    (inv.client === finalClient && inv.status !== '已核销')
                 );
                 const rcvIdEnc = relRcv ? encodeURIComponent(relRcv.id) : '';
                 const invNoEnc = relInv ? encodeURIComponent(relInv.no||'') : '';
@@ -6024,7 +6400,10 @@ function loadContent(moduleCode, element = null) {
                     : `<span style="color:#e67e22;font-size:11px;">未开票</span>`;
                 const rcvBadge = relRcv
                     ? `<span style="color:#27ae60;font-size:11px;">💰 ${relRcv.id}</span>`
-                    : `<span style="color:#aaa;font-size:11px;">无收款单</span>`;
+                    : '';
+                const receiptBadge = ar.receiptFile
+                    ? `${rcvBadge ? '<br>' : ''}<a href="#" onclick="window.previewARReceipt('${ar.id}')" style="color:#16a34a;font-size:11px;text-decoration:underline;display:inline-block;">📎 回单</a>`
+                    : '';
 
                 const statusBadge = isWO
                     ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>`
@@ -6042,9 +6421,10 @@ function loadContent(moduleCode, element = null) {
                     <td style="text-align:right;font-weight:bold;">¥${_woFmt(amt)}</td>
                     <td style="text-align:right;color:#27ae60;">¥${_woFmt(ver)}</td>
                     <td style="text-align:right;color:#e74c3c;font-weight:bold;">¥${_woFmt(unv)}</td>
-                    <td style="font-size:11px;">${invBadge} ${rcvBadge}</td>
-                    <td>${statusBadge}</td>
-                    <td>${actionBtn}</td>
+                    <td style="font-size:11px;">${invBadge}</td>
+                    <td style="font-size:11px;">${rcvBadge}${receiptBadge}</td>
+                    <td style="text-align:center;">${statusBadge}</td>
+                    <td style="text-align:center;">${actionBtn}</td>
                 </tr>`;
             }).join('');
 
@@ -6081,7 +6461,7 @@ function loadContent(moduleCode, element = null) {
             </h3>
             <table class="data-table">
                 <thead><tr>
-                    <th>对账单号</th><th>客户</th><th>账期</th><th>运单数</th><th>应收金额</th><th>已核销</th><th>未核销余额</th><th>发票/收款状态</th><th>核销状态</th><th>操作</th>
+                    <th>对账单号</th><th>客户</th><th>账期</th><th style="text-align:center;">运单数</th><th style="text-align:right;">应收金额</th><th style="text-align:right;">已核销</th><th style="text-align:right;">未核销余额</th><th>发票状态</th><th>收款单</th><th style="text-align:center;">核销状态</th><th style="text-align:center;">操作</th>
                 </tr></thead>
                 <tbody>${tableRows}</tbody>
             </table>
@@ -6089,7 +6469,7 @@ function loadContent(moduleCode, element = null) {
 
             <!-- 运单明细弹窗 -->
             <div id="arwo-detail-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-                <div style="background:#fff;border-radius:10px;padding:24px;width:90%;max-width:800px;max-height:80vh;overflow-y:auto;">
+                <div style="background:#fff;border-radius:10px;padding:28px;width:96%;max-width:1200px;max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h3 style="margin:0;font-size:15px;">对账单运单明细：<span id="arwo-detail-title" style="color:#2980b9;"></span></h3>
                         <button onclick="closeARWODetail()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">×</button>
