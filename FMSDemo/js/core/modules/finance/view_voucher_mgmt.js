@@ -1342,12 +1342,12 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                 totalDebit  += parseFloat(debitVal)  || 0;
                 totalCredit += parseFloat(creditVal) || 0;
                 const rowStyle = v.isRed ? 'color:red;' : '';
+                const subjectCell = [code, name].filter(s => s && s !== '-').join(' ') || '-';
                 linesHTML += `
                 <tr style="${rowStyle}">
                     <td style="padding:0 8px;">${rawSummary}</td>
-                    <td style="padding:0 8px;">${name || '-'}</td>
-                    <td style="padding:0 8px;text-align:center;">${code || '-'}</td>
-                    <td style="text-align:center;">${auxDisplay || '-'}</td>
+                    <td style="padding:0 8px;">${subjectCell}</td>
+                    <td style="padding:4px 8px;white-space:normal;word-break:break-all;">${auxDisplay || '-'}</td>
                     <td class="money-grid-bg">${debitVal}</td>
                     <td class="money-grid-bg">${creditVal}</td>
                 </tr>`;
@@ -1368,9 +1368,8 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                     <thead>
                         <tr>
                             <th rowspan="2" style="width:15%;">摘 要</th>
-                            <th rowspan="2" style="width:15%;">总账科目</th>
-                            <th rowspan="2" style="width:15%;">明细科目</th>
-                            <th rowspan="2" style="width:15%;">辅助项</th>
+                            <th rowspan="2" style="width:25%;">科目名称</th>
+                            <th rowspan="2" style="width:20%;">辅助项</th>
                             <th style="width:20%;">借 方 金 额</th>
                             <th style="width:20%;">贷 方 金 额</th>
                         </tr>
@@ -1382,7 +1381,7 @@ window.VM_MODULES['FinanceVoucherAudit'] = function(contentArea, contentHTML, mo
                     <tbody>
                         ${linesHTML}
                         <tr style="${v.isRed ? 'color:red;' : ''}">
-                            <td colspan="3" style="text-align:left;padding-left:20px;font-weight:bold;">合　　计</td>
+                            <td colspan="2" style="text-align:left;padding-left:20px;font-weight:bold;">合　　计</td>
                             <td></td>
                             <td class="money-grid-bg"><span style="float:left;font-size:12px;margin-top:3px;margin-left:5px;">¥</span>${fmt(totalDebit)}</td>
                             <td class="money-grid-bg"><span style="float:left;font-size:12px;margin-top:3px;margin-left:5px;">¥</span>${fmt(totalCredit)}</td>

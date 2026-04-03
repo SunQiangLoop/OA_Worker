@@ -2031,7 +2031,7 @@ window._AUX_GLOBAL_DEFAULTS = {
         { code: "S04", name: "存货D", remark: "", enabled: true }
     ],
     cashflow: [
-        { code: "CF01", name: "一、经营活动产生的现金流量", remark: "大类标题", enabled: true },
+        { code: "CF01", name: "经营活动产生的现金流量", remark: "大类标题", enabled: true },
         { code: "CF02", name: "销售商品、提供劳务收到的现金", remark: "经营流入", enabled: true },
         { code: "CF03", name: "收到的税费返还", remark: "经营流入", enabled: true },
         { code: "CF04", name: "收到其他与经营活动有关的现金", remark: "经营流入", enabled: true },
@@ -2042,7 +2042,7 @@ window._AUX_GLOBAL_DEFAULTS = {
         { code: "CF09", name: "支付其他与经营活动有关的现金", remark: "经营流出", enabled: true },
         { code: "CF10", name: "经营活动现金流出小计", remark: "小计", enabled: true },
         { code: "CF11", name: "经营活动产生的现金流量净额", remark: "净额", enabled: true },
-        { code: "CF12", name: "二、投资活动产生的现金流量", remark: "大类标题", enabled: true },
+        { code: "CF12", name: "投资活动产生的现金流量", remark: "大类标题", enabled: true },
         { code: "CF13", name: "收回投资收到的现金", remark: "投资流入", enabled: true },
         { code: "CF14", name: "取得投资收益收到的现金", remark: "投资流入", enabled: true },
         { code: "CF15", name: "处置固定资产、无形资产和其他长期资产收回的现金净额", remark: "投资流入", enabled: true },
