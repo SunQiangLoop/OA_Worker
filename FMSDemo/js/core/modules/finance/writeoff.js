@@ -269,28 +269,27 @@ window.openARWriteOffModal = function (arId, client, unverified, rcvIdEnc, invNo
         hint.style.display = 'none';
     }
 
-    // 填充同客户同账期的待核销AR列表（运单批量选择）
-    const currentPeriod = ar.period || '';
-    const pendingARs = arList.filter(a => {
-        const unv = parseFloat((a.unverified || a.amount || '0').toString().replace(/,/g, '')) || 0;
-        const samePeriod = !currentPeriod || !a.period || a.period === currentPeriod || a.id === arId;
-        return a.client === client && unv > 0 && samePeriod;
-    });
+    // 显示该对账单（RC）对应的客户付款记录（SET）
+    const allStmts = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+    const rcSets = allStmts.filter(a => a.fromSettlement === true && a.reconId === arId && !a.applied);
     const waybillSection = document.getElementById('wo-waybill-section');
     const waybillList = document.getElementById('wo-waybill-list');
-    if (pendingARs.length > 0) {
+    if (rcSets.length > 0) {
         waybillSection.style.display = 'block';
-        waybillList.innerHTML = pendingARs.map(a => {
-            const unv = parseFloat((a.unverified || a.amount || '0').toString().replace(/,/g, '')) || 0;
-            const checked = a.id === arId ? ' checked' : '';
+        const wbLabel = waybillSection.querySelector('label');
+        if (wbLabel) {
+            wbLabel.innerHTML = '选择本次核销的付款记录 <span style="font-weight:normal;color:#7f8c8d;font-size:12px;">（勾选客户提交的付款，金额自动合计）</span>';
+        }
+        waybillList.innerHTML = rcSets.map(s => {
+            const amt = parseFloat((s.amount || '0').toString().replace(/,/g, '')) || 0;
             return `<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #eee;cursor:pointer;font-size:13px;">
-                <input type="checkbox" value="${a.id}" data-amount="${unv.toFixed(2)}"${checked} onchange="window.onWoWaybillChange()">
-                <span style="font-family:monospace;color:#2980b9;flex:1;">${a.id}</span>
-                <span style="color:#7f8c8d;">${a.period || ''}</span>
-                <span style="color:#e74c3c;font-weight:bold;">¥${unv.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
+                <input type="checkbox" value="${s.id}" data-amount="${amt.toFixed(2)}" checked onchange="window.onWoWaybillChange()">
+                <span style="font-family:monospace;color:#27ae60;flex:1;">${s.id}</span>
+                <span style="color:#7f8c8d;">${s.period || ''}</span>
+                <span style="color:#2980b9;font-weight:bold;">¥${amt.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
+                ${s.receiptFile ? `<span style="color:#27ae60;font-size:11px;margin-left:4px;">📎 ${s.receiptFile}</span>` : ''}
             </label>`;
         }).join('');
-        // 初始化合计
         window.onWoWaybillChange();
     } else {
         waybillSection.style.display = 'none';
@@ -493,6 +492,29 @@ window.confirmWriteOff = function () {
     woList.unshift(woRecord);
     sessionStorage.setItem('WriteOffRecords', JSON.stringify(woList));
 
+    // 更新 CustomerRecons RC对账单状态（部分核销/已核销）
+    if (type === 'AR') {
+        const rcId = primaryBillId;
+        let recons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+        const rcEntry = recons.find(r => r.id === rcId);
+        if (rcEntry) {
+            const allWOsNow = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
+            const totalApplied = allWOsNow.filter(w => w.billId === rcId)
+                .reduce((s, w) => s + parseFloat(w.writeOffAmount || '0'), 0);
+            const rcTotal = parseFloat((rcEntry.amount || '0').toString().replace(/[¥,\s]/g, '')) || 0;
+            rcEntry.status = totalApplied >= rcTotal - 0.005 ? '已核销' : '部分核销';
+            sessionStorage.setItem('CustomerRecons', JSON.stringify(recons));
+        }
+        // 标记已核销的SET付款记录
+        let arStmts = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
+        let stmtChanged = false;
+        selectedArIds.forEach(setId => {
+            const s = arStmts.find(a => a.id === setId);
+            if (s) { s.applied = true; stmtChanged = true; }
+        });
+        if (stmtChanged) sessionStorage.setItem('ARStatements', JSON.stringify(arStmts));
+    }
+
     // 更新应收账款台账（按比例分配到各AR，或各自按全额写销）
     if (type === 'AR' && selectedArIds.length > 0) {
         if (selectedArIds.length === 1) {
@@ -522,16 +544,29 @@ window.confirmWriteOff = function () {
 
     // 更新 BizWaybills 核销状态
     if (type === 'AR' && selectedArIds.length > 0) {
+        const rcId = primaryBillId;
         let waybills = JSON.parse(sessionStorage.getItem('BizWaybills') || '[]');
         let wbChanged = false;
-        selectedArIds.forEach(arId => {
+        // 标记 SET 关联运单（arSettlementId 匹配）
+        selectedArIds.forEach(setId => {
             waybills.forEach(w => {
-                if (w.reconId === arId || w.arSettlementId === arId) {
+                if (w.arSettlementId === setId) {
                     w.writeOffStatus = '已核销';
                     wbChanged = true;
                 }
             });
         });
+        // 若 RC 已全额核销，同时标记所有 RC 运单
+        const reconsList = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+        const rcRec = reconsList.find(r => r.id === rcId);
+        if (rcRec && rcRec.status === '已核销') {
+            waybills.forEach(w => {
+                if (w.reconId === rcId) {
+                    w.writeOffStatus = '已核销';
+                    wbChanged = true;
+                }
+            });
+        }
         if (wbChanged) sessionStorage.setItem('BizWaybills', JSON.stringify(waybills));
     }
 

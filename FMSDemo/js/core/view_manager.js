@@ -4277,18 +4277,26 @@ function loadContent(moduleCode, element = null) {
         const allWaybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
 
         // === Step 1 Data ===
-        const pendingRecons = recons.filter(r => ["已发送对账单", "待客户确认", "客户已确认", "客户打回"].includes(r.status));
+        const pendingRecons = recons.filter(r => ["已发送对账单", "待客户确认", "客户已确认", "客户打回", "部分核销", "已核销"].includes(r.status));
         const step1Rows = pendingRecons.map(r => {
             const isPending = r.status === "已发送对账单" || r.status === "待客户确认";
-            const statusHtml = isPending 
+            const isPartial = r.status === "部分核销";
+            const isFullySettled = r.status === "已核销";
+            const statusHtml = isPending
                 ? `<span style="background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">待确认</span>`
                 : r.status === "客户打回"
                 ? `<span style="background:#f1f5f9; color:#64748b; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; font-style:italic;">已驳回</span>`
+                : isPartial
+                ? `<span style="background:#fff7ed; color:#c2410c; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">部分结算</span>`
+                : isFullySettled
+                ? `<span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">已结算</span>`
                 : `<span style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700;">已确认</span>`;
 
             const actionHtml = isPending
                 ? `<button class="btn-cp-primary" style="padding:8px 16px; font-size:13px;" onclick="window.cpConfirmRecon('${r.id}')">核对无误</button>
                    <button style="margin-left:8px; padding:8px 16px; border:1px solid #e2e8f0; background:#fff; border-radius:10px; font-size:13px; color:#ef4444; cursor:pointer;" onclick="window.cpRejectRecon('${r.id}')">驳回</button>`
+                : isPartial
+                ? `<button class="btn-cp-primary" style="padding:8px 16px; font-size:13px; background:#f97316;" onclick="window.cpGoToPage(2)">继续支付余款</button>`
                 : `<span style="color:#2563eb; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="window.viewReconDetailsFromPortal('${r.id}')">查看明细</span>`;
 
             return `
@@ -4304,7 +4312,7 @@ function loadContent(moduleCode, element = null) {
         const step1Html = step1Rows || `<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">暂无待处理对账单</td></tr>`;
 
         // === Step 2 Data ===
-        const confirmedReconIds = recons.filter(r => r.status === "客户已确认" || r.status === "已结算").map(r => r.id);
+        const confirmedReconIds = recons.filter(r => r.status === "客户已确认" || r.status === "已结算" || r.status === "部分核销").map(r => r.id);
         const unsettledWaybills = allWaybills.filter(w => confirmedReconIds.includes(w.reconId) && !w.arSettlementId);
         
         const step2Rows = unsettledWaybills.map(w => `
@@ -4665,10 +4673,12 @@ function loadContent(moduleCode, element = null) {
                 // 获取第一条运单以提取客户信息
                 const firstWb = waybills.find(w => w.id === selectedIds[0]);
                 const clientName = firstWb ? (firstWb.client || firstWb.customerName || "未知客户") : "未知客户";
+                const parentReconId = firstWb ? (firstWb.reconId || '') : '';
                 const period = new Date().toISOString().slice(0, 7);
 
                 arList.unshift({
                     id: settlementId,
+                    reconId: parentReconId,
                     client: clientName,
                     period: period,
                     amount: totalAmount,
@@ -6322,41 +6332,48 @@ function loadContent(moduleCode, element = null) {
             document.getElementById('arwo-detail-modal').style.display='none';
         };
 
-        // 显示对账单(RC)或结算单(SET)
-        const settledReconIds = new Set(allWaybills.filter(w=>w.settlementStatus==='已结算' || w.arSettlementId).map(w=>w.reconId || w.arSettlementId).filter(Boolean));
-        // 去重：同一 ID 取最新
-        const reconMap = {};
-        arList.forEach(ar => {
-            const id = ar.id || '';
-            if (!id.startsWith('RC') && !id.startsWith('SET')) return; // 支持 RC 和 SET
-            if (!reconMap[id] || ar.fromSettlement) reconMap[id] = ar;
-        });
-        const settledAR = Object.values(reconMap).filter(ar =>
-            settledReconIds.has(ar.id) || ar.fromSettlement === true
-        );
+        // 以 CustomerRecons（客户已确认的对账单）为主数据源
+        const allRecons = JSON.parse(sessionStorage.getItem('CustomerRecons') || '[]');
+        const woRecords = JSON.parse(sessionStorage.getItem('WriteOffRecords') || '[]');
 
-        // 金额自动修正：若 ARStatements 中 amount=0，从关联运单重算并回写
-        // 同时支持 reconId（RC对账单）和 arSettlementId（SET结算单）两种关联方式
-        {
-            let needSave = false;
-            const arStoreList = JSON.parse(sessionStorage.getItem('ARStatements') || '[]');
-            settledAR.forEach(ar => {
-                const storedAmt = parseFloat((ar.amount||'0').toString().replace(/,/g,''));
-                if (storedAmt === 0) {
-                    const relWb = allWaybills.filter(w => w.reconId === ar.id || w.arSettlementId === ar.id);
-                    const calcAmt = relWb.reduce((s,w) => s + parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0), 0);
-                    if (calcAmt > 0) {
-                        ar.amount    = calcAmt.toFixed(2);
-                        const _doneStatus = ar.status === '已核销' || ar.status === '已结算';
-                ar.unverified= _doneStatus ? '0.00' : calcAmt.toFixed(2);
-                        // 同步回写原始列表
-                        const orig = arStoreList.find(x => x.id === ar.id);
-                        if (orig) { orig.amount = ar.amount; orig.unverified = ar.unverified; needSave = true; }
+        // 显示客户已确认的对账单（含各种核销状态）
+        const settledAR = allRecons
+            .filter(r => r.status === '客户已确认' || r.status === '部分核销' || r.status === '已核销')
+            .map(rc => {
+                // 已核销金额：优先从WriteOffRecords累加；兼容旧数据时从运单writeOffStatus推算
+                const appliedWOs = woRecords.filter(w => w.billId === rc.id);
+                let appliedAmt = Math.round(appliedWOs.reduce((s, w) => s + parseFloat(w.writeOffAmount || '0'), 0) * 100) / 100;
+                if (appliedAmt === 0) {
+                    // 兼容旧数据：WriteOffRecords未记录RC级别时，从已核销运单金额反推
+                    const writtenOffWbs = allWaybills.filter(w => w.reconId === rc.id && w.writeOffStatus === '已核销');
+                    if (writtenOffWbs.length > 0) {
+                        appliedAmt = Math.round(writtenOffWbs.reduce((s, w) => s + (parseFloat((w.totalAmount || w.amount || '0').toString().replace(/,/g, '')) || 0), 0) * 100) / 100;
                     }
                 }
+                const totalAmt   = parseFloat((rc.amount || '0').toString().replace(/[¥,\s]/g, '')) || 0;
+                const remaining  = Math.max(Math.round((totalAmt - appliedAmt) * 100) / 100, 0);
+                const woStatus   = remaining <= 0 && totalAmt > 0 ? '已核销'
+                                 : appliedAmt > 0 ? '部分核销' : '未核销';
+                // 关联的SET付款记录（客户提交的部分付款）
+                const relSets = arList.filter(a => a.fromSettlement && a.reconId === rc.id);
+                // 收集所有有回单的SET，生成回单链接HTML（支持多次上传）
+                const receiptSets = relSets.filter(s => s.receiptFile);
+                const receiptSetsHtml = receiptSets.length > 0
+                    ? receiptSets.map((s, idx) =>
+                        `<a href="#" onclick="window.previewARReceipt('${s.id}')" style="color:#16a34a;font-size:11px;text-decoration:underline;display:inline-block;margin-right:3px;">📎 回单${receiptSets.length > 1 ? (idx + 1) : ''}</a>`
+                    ).join('')
+                    : '';
+                return {
+                    id: rc.id,
+                    client: rc.client,
+                    period: rc.period,
+                    amount: totalAmt.toFixed(2),
+                    verified: appliedAmt.toFixed(2),
+                    unverified: remaining.toFixed(2),
+                    status: woStatus,
+                    receiptSetsHtml,
+                };
             });
-            if (needSave) sessionStorage.setItem('ARStatements', JSON.stringify(arStoreList));
-        }
 
         // 分页
         if (!window._arWoPage)     window._arWoPage = 1;
@@ -6369,38 +6386,26 @@ function loadContent(moduleCode, element = null) {
         const curPage = Math.min(window._arWoPage, pages);
         const pageData= settledAR.slice((curPage-1)*window._arWoPageSize, curPage*window._arWoPageSize);
 
-        const totalUnver = settledAR.reduce((s,ar) => {
-            const isWO = ar.status === '已核销' || ar.status === '已结算';
-            return s + (isWO ? 0 : parseFloat((ar.unverified||ar.amount||'0').toString().replace(/,/g,'')||0));
-        }, 0);
-        const doneCount  = settledAR.filter(ar=>ar.status==='已核销'||ar.status==='已结算').length;
+        const totalUnver = settledAR.reduce((s,ar) => s + parseFloat(ar.unverified || '0'), 0);
+        const doneCount  = settledAR.filter(ar => ar.status === '已核销' || ar.status === '部分核销').length;
 
         const rcvList        = JSON.parse(sessionStorage.getItem('ReceiptVouchers') || '[]');
         const outputInvoices = JSON.parse(sessionStorage.getItem('OutputInvoices')  || '[]');
 
         const tableRows = pageData.length===0
-            ? `<tr><td colspan="11" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【运单结算】中完成结算，结算后账款自动进入此列表。</td></tr>`
+            ? `<tr><td colspan="11" style="text-align:center;color:#aaa;padding:30px;">暂无记录。请先在【客户对账】中发送对账单，待客户确认后账款将自动进入此列表。</td></tr>`
             : pageData.map(ar=>{
-                // 核心修复：这里必须同时支持 reconId 和 arSettlementId
-                const relWb      = allWaybills.filter(w => w.reconId === ar.id || w.arSettlementId === ar.id);
+                // RC对账单关联的所有运单（按reconId匹配）
+                const relWb      = allWaybills.filter(w => w.reconId === ar.id);
                 const relWbCount = relWb.length;
-                
-                // 以运单实际金额为准，避免 ARStatements 存储错误
-                const wbTotal  = relWb.reduce((s,w)=>s+parseFloat((w.totalAmount||w.amount||'0').toString().replace(/,/g,'')||0),0);
-                const storedAmt= parseFloat((ar.amount||'0').toString().replace(/,/g,''))||0;
-                const amt      = storedAmt > 0 ? storedAmt : wbTotal;
-                
-                const isWO     = ar.status === '已核销' || ar.status === '已结算';
-                const ver      = isWO ? amt : parseFloat((ar.verified||'0').toString().replace(/,/g,''))||0;
-                const unv      = isWO ? 0  : Math.max(amt - ver, 0);
+                const amt        = parseFloat(ar.amount || '0');
+                const ver        = parseFloat(ar.verified || '0');
+                const unv        = parseFloat(ar.unverified || '0');
+                const isWO       = ar.status === '已核销';
+                const isPartial  = ar.status === '部分核销';
+                const finalClient = ar.client;
 
-                // 尝试修正客户名称 (如果存储的是未知客户)
-                let finalClient = ar.client;
-                if ((!finalClient || finalClient === '未知客户') && relWbCount > 0) {
-                    finalClient = relWb[0].client || relWb[0].customerName || ar.client;
-                }
-
-                // 查找关联收款单和发票（传给弹窗）
+                // 查找关联收款单和发票
                 const relRcv = rcvList.find(r =>
                     r.status === '已审核' &&
                     (r.customer === finalClient || (Array.isArray(r.details) && r.details.some(d => d.waybillNo === ar.id)))
@@ -6418,13 +6423,13 @@ function loadContent(moduleCode, element = null) {
                 const rcvBadge = relRcv
                     ? `<span style="color:#27ae60;font-size:11px;">💰 ${relRcv.id}</span>`
                     : '';
-                const receiptBadge = ar.receiptFile
-                    ? `${rcvBadge ? '<br>' : ''}<a href="#" onclick="window.previewARReceipt('${ar.id}')" style="color:#16a34a;font-size:11px;text-decoration:underline;display:inline-block;">📎 回单</a>`
+                const receiptBadge = ar.receiptSetsHtml
+                    ? `${rcvBadge ? '<br>' : ''}${ar.receiptSetsHtml}`
                     : '';
 
                 const statusBadge = isWO
                     ? `<span style="background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">已核销</span>`
-                    : (ver > 0
+                    : (isPartial
                         ? `<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">部分核销</span>`
                         : `<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">未核销</span>`);
                 const actionBtn = isWO
