@@ -12607,114 +12607,385 @@ function loadContent(moduleCode, element = null) {
     // 90. 客户档案 (BaseCustomer) - [支持新增字段 & 数据持久化]
     // =========================================================================
     else if (moduleCode === "BaseCustomer") {
-        // 1. 定义默认数据 (写死在代码里的老数据)
-        const defaultCustomers = [
-            {
-                id: "CUST-8812",
-                name: "张三 (个人)",
-                taxId: "-",
-                type: "现结",
-                limit: "0.00",
-                days: "0",
-                status: "正常",
-            },
-            {
-                id: "CUST-9001",
-                name: "风险贸易商贸",
-                taxId: "91310000MA3...",
-                type: "月结",
-                limit: "50,000.00",
-                days: "60",
-                status: "已冻结",
-            },
+        // ── 演示种子数据 ──
+        const BC_DEFAULTS = [
+            { id:'KH-0001', code:'KH001', name:'上海远通物流有限公司',     nature:'客户',   billingCustomer:'是', department:'销售一部', manager:'李明', archiveDate:'2025-03-10', balance:'125,000.00',  disabled:false, position:'主要客户' },
+            { id:'KH-0002', code:'KH002', name:'北京华泰货运代理有限公司', nature:'客户',   billingCustomer:'是', department:'销售二部', manager:'王芳', archiveDate:'2025-04-22', balance:'88,500.00',   disabled:false, position:'重点客户' },
+            { id:'KH-0003', code:'KH003', name:'广州跨境电商科技有限公司', nature:'客户',   billingCustomer:'否', department:'销售一部', manager:'张强', archiveDate:'2025-06-01', balance:'32,800.00',   disabled:false, position:'普通客户' },
+            { id:'GY-0001', code:'GY001', name:'中铁快运股份有限公司',     nature:'供应商', billingCustomer:'否', department:'采购部',   manager:'陈磊', archiveDate:'2025-01-15', balance:'-45,000.00',  disabled:false, position:''        },
+            { id:'GY-0002', code:'GY002', name:'顺丰速运有限公司',         nature:'供应商', billingCustomer:'否', department:'采购部',   manager:'赵雪', archiveDate:'2025-02-20', balance:'-18,200.00',  disabled:true,  position:''        },
         ];
 
-        // 2. 读取新增数据 (从 SessionStorage 读取刚才添加的)
-        const addedCustomers = JSON.parse(
-            sessionStorage.getItem("AddedCustomers") || "[]"
-        );
+        window.bcGetData = function() {
+            const s = sessionStorage.getItem('ContactUnits');
+            if (s) { try { return JSON.parse(s); } catch(e) {} }
+            sessionStorage.setItem('ContactUnits', JSON.stringify(BC_DEFAULTS));
+            return JSON.parse(JSON.stringify(BC_DEFAULTS));
+        };
+        window.bcSaveData = function(data) { sessionStorage.setItem('ContactUnits', JSON.stringify(data)); };
 
-        // 3. 合并数据 (新数据排在前面)
-        const allCustomers = [...addedCustomers, ...defaultCustomers];
+        window.bcRender = function() {
+            const data = window.bcGetData();
+            const searchEl = document.getElementById('bc-search-input');
+            const kw = searchEl ? searchEl.value.trim().toLowerCase() : '';
+            const filtered = kw ? data.filter(u => u.code.toLowerCase().includes(kw) || u.name.toLowerCase().includes(kw)) : data;
+            const tbody = document.getElementById('bc-tbody');
+            if (!tbody) return;
+            const sel = window._bcSelectedId || null;
+            const chk = window._bcChecked || new Set();
+            tbody.innerHTML = filtered.length === 0
+                ? `<tr><td colspan="12" style="text-align:center;padding:50px;color:#bbb;font-size:13px;">暂无数据</td></tr>`
+                : filtered.map((u, i) => {
+                    const isSel = sel === u.id;
+                    const bg = isSel ? '#dbeafe' : (i % 2 === 0 ? '#fff' : '#fafbfc');
+                    const balNum = parseFloat(u.balance.replace(/,/g,'')) || 0;
+                    return `<tr data-id="${u.id}" onclick="window.bcSelectRow('${u.id}')"
+                        style="cursor:pointer;background:${bg};">
+                        <td style="text-align:center;padding:5px 6px;color:#999;font-size:12px;border-right:1px solid #eef0f3;">${i+1}</td>
+                        <td style="text-align:center;padding:5px 4px;border-right:1px solid #eef0f3;">
+                            <input type="checkbox" ${chk.has(u.id)?'checked':''} onclick="event.stopPropagation();window.bcToggleChk('${u.id}',this.checked)">
+                        </td>
+                        <td style="padding:5px 10px;border-right:1px solid #eef0f3;font-family:monospace;color:#1d4ed8;font-size:12px;">${u.code}</td>
+                        <td style="padding:5px 10px;border-right:1px solid #eef0f3;font-size:13px;font-weight:500;${u.disabled?'color:#bbb;text-decoration:line-through;':''}">${u.name}</td>
+                        <td style="text-align:center;padding:5px 8px;border-right:1px solid #eef0f3;">
+                            <span style="background:${u.nature==='客户'?'#dbeafe':u.nature==='供应商'?'#dcfce7':'#f3e8ff'};color:${u.nature==='客户'?'#1e40af':u.nature==='供应商'?'#166534':'#7e22ce'};padding:2px 8px;border-radius:3px;font-size:11px;">${u.nature}</span>
+                        </td>
+                        <td style="text-align:center;padding:5px 8px;border-right:1px solid #eef0f3;font-size:12px;">${u.billingCustomer}</td>
+                        <td style="padding:5px 10px;border-right:1px solid #eef0f3;font-size:12px;color:#555;">${u.department}</td>
+                        <td style="padding:5px 10px;border-right:1px solid #eef0f3;font-size:12px;color:#555;">${u.manager}</td>
+                        <td style="text-align:center;padding:5px 8px;border-right:1px solid #eef0f3;font-size:12px;color:#999;">${u.archiveDate}</td>
+                        <td style="text-align:right;padding:5px 12px;border-right:1px solid #eef0f3;font-family:monospace;font-size:12px;${balNum<0?'color:#ef4444;':'color:#333;'}">${u.balance}</td>
+                        <td style="text-align:center;padding:5px 8px;border-right:1px solid #eef0f3;">
+                            <input type="checkbox" ${u.disabled?'checked':''} title="${u.disabled?'已停用':'正常'}" onclick="event.stopPropagation();window.bcToggleDisabled('${u.id}',this.checked)">
+                        </td>
+                        <td style="padding:5px 10px;font-size:12px;color:#888;">${u.position}</td>
+                    </tr>`;
+                }).join('');
+            const countEl = document.getElementById('bc-count');
+            if (countEl) countEl.textContent = `共 ${filtered.length} 条记录`;
+            const allChk = document.getElementById('bc-chk-all');
+            if (allChk) {
+                allChk.checked = chk.size > 0 && chk.size === filtered.length;
+                allChk.indeterminate = chk.size > 0 && chk.size < filtered.length;
+            }
+        };
 
-        // 4. 动态生成表格 HTML
-        const rowsHTML = allCustomers
-            .map((c) => {
-                // 样式处理
-                const typeBadge =
-                    c.type === "现结"
-                        ? '<span style="background:#f6ffed; color:#52c41a; padding:2px 6px; border-radius:4px; font-size:12px;">现结</span>'
-                        : '<span style="background:#e6f7ff; color:#1890ff; padding:2px 6px; border-radius:4px; font-size:12px;">月结</span>';
+        window.bcSelectRow = function(id) { window._bcSelectedId = id; window.bcRender(); };
 
-                const statusHtml =
-                    c.status === "正常"
-                        ? '<span style="color: #27ae60;">正常</span>'
-                        : '<span style="color: #e74c3c; font-weight:bold;">已冻结</span>';
+        window.bcToggleChk = function(id, checked) {
+            window._bcChecked = window._bcChecked || new Set();
+            checked ? window._bcChecked.add(id) : window._bcChecked.delete(id);
+            window.bcRender();
+        };
+        window.bcToggleAll = function(checked) {
+            const data = window.bcGetData();
+            window._bcChecked = new Set();
+            if (checked) data.forEach(u => window._bcChecked.add(u.id));
+            window.bcRender();
+        };
+        window.bcToggleDisabled = function(id, disabled) {
+            const data = window.bcGetData();
+            const u = data.find(x => x.id === id);
+            if (u) { u.disabled = disabled; window.bcSaveData(data); window.bcRender(); }
+        };
 
-                const rowStyle =
-                    c.status === "已冻结" ? "background-color: #fff1f0;" : "";
+        window.bcOpenModal = function(mode, id) {
+            const modal = document.getElementById('bc-modal');
+            if (!modal) return;
+            const data = window.bcGetData();
+            const u = id ? data.find(x => x.id === id) : null;
+            document.getElementById('bc-modal-title').textContent = mode === 'edit' ? '修改往来单位' : '新增往来单位';
+            document.getElementById('bc-f-code').value       = u ? u.code : '';
+            document.getElementById('bc-f-name').value       = u ? u.name : '';
+            document.getElementById('bc-f-nature').value     = u ? u.nature : '客户';
+            document.getElementById('bc-f-billing').value    = u ? u.billingCustomer : '否';
+            document.getElementById('bc-f-dept').value       = u ? u.department : '';
+            document.getElementById('bc-f-manager').value    = u ? u.manager : '';
+            document.getElementById('bc-f-date').value       = u ? u.archiveDate : new Date().toISOString().slice(0,10);
+            document.getElementById('bc-f-balance').value    = u ? u.balance : '0.00';
+            document.getElementById('bc-f-position').value   = u ? u.position : '';
+            document.getElementById('bc-f-disabled').checked = u ? u.disabled : false;
+            modal.dataset.mode   = mode;
+            modal.dataset.editId = id || '';
+            modal.style.display  = 'flex';
+            setTimeout(() => document.getElementById('bc-f-code').focus(), 50);
+        };
+        window.bcCloseModal = function() {
+            const m = document.getElementById('bc-modal');
+            if (m) m.style.display = 'none';
+        };
+        window.bcSaveModal = function() {
+            const modal = document.getElementById('bc-modal');
+            if (!modal) return;
+            const code = document.getElementById('bc-f-code').value.trim();
+            const name = document.getElementById('bc-f-name').value.trim();
+            if (!code || !name) { alert('往来单位编码和名称为必填项'); return; }
+            const data = window.bcGetData();
+            const mode = modal.dataset.mode;
+            const editId = modal.dataset.editId;
+            if (mode === 'add') {
+                if (data.some(u => u.code === code)) { alert('编码「' + code + '」已存在，请使用不同编码'); return; }
+                data.unshift({
+                    id: 'CU-' + String(Date.now()).slice(-6), code, name,
+                    nature:          document.getElementById('bc-f-nature').value,
+                    billingCustomer: document.getElementById('bc-f-billing').value,
+                    department:      document.getElementById('bc-f-dept').value.trim(),
+                    manager:         document.getElementById('bc-f-manager').value.trim(),
+                    archiveDate:     document.getElementById('bc-f-date').value,
+                    balance:         document.getElementById('bc-f-balance').value.trim() || '0.00',
+                    disabled:        document.getElementById('bc-f-disabled').checked,
+                    position:        document.getElementById('bc-f-position').value.trim(),
+                });
+            } else {
+                const u = data.find(x => x.id === editId);
+                if (!u) return;
+                u.code = code; u.name = name;
+                u.nature          = document.getElementById('bc-f-nature').value;
+                u.billingCustomer = document.getElementById('bc-f-billing').value;
+                u.department      = document.getElementById('bc-f-dept').value.trim();
+                u.manager         = document.getElementById('bc-f-manager').value.trim();
+                u.archiveDate     = document.getElementById('bc-f-date').value;
+                u.balance         = document.getElementById('bc-f-balance').value.trim() || '0.00';
+                u.disabled        = document.getElementById('bc-f-disabled').checked;
+                u.position        = document.getElementById('bc-f-position').value.trim();
+            }
+            window.bcSaveData(data);
+            window.bcCloseModal();
+            window.bcRender();
+        };
 
-                // 冻结按钮逻辑
-                const freezeAction =
-                    c.status === "正常"
-                        ? `<a href="javascript:void(0)" onclick="toggleFreeze(this, '${c.id}', '${c.name}')" style="color:#e74c3c;">冻结</a>`
-                        : `<a href="javascript:void(0)" onclick="toggleFreeze(this, '${c.id}', '${c.name}')" style="color:#3498db;">申请解冻</a>`;
+        window.bcDelete = function() {
+            const toDelete = new Set(window._bcChecked || new Set());
+            if (window._bcSelectedId) toDelete.add(window._bcSelectedId);
+            if (toDelete.size === 0) { alert('请先选择要删除的记录'); return; }
+            if (!confirm('确认删除选中的 ' + toDelete.size + ' 条记录？此操作不可恢复。')) return;
+            window.bcSaveData(window.bcGetData().filter(u => !toDelete.has(u.id)));
+            window._bcSelectedId = null;
+            window._bcChecked = new Set();
+            window.bcRender();
+        };
 
-                return `
-                        <tr style="${rowStyle}">
-                            <td>${c.id}</td>
-                            <td class="val-name">${c.name}</td>
-                            <td>${c.taxId}</td>
-                            <td>${typeBadge}</td>
-                            <td><strong>${c.limit}</strong></td>
-                            <td>${c.days}</td>
-                            <td>${statusHtml}</td>
-                            <td>
-                                <a href="javascript:void(0)" onclick="editCustomerInfo(this, '${c.id}')" style="color:#3498db;">修改资料</a> | 
-                                ${freezeAction}
-                            </td>
-                        </tr>
-                    `;
-            })
-            .join("");
+        window.bcCopy = function() {
+            const id = window._bcSelectedId;
+            if (!id) { alert('请先点击选中要复制的行'); return; }
+            const data = window.bcGetData();
+            const u = data.find(x => x.id === id);
+            if (!u) return;
+            data.unshift({...u, id:'CU-'+String(Date.now()).slice(-6), code:u.code+'_副本', name:u.name+'（副本）'});
+            window.bcSaveData(data);
+            window.bcRender();
+        };
+
+        window.bcToggleSearch = function() {
+            const bar = document.getElementById('bc-search-bar');
+            if (!bar) return;
+            if (bar.style.display === 'flex') {
+                bar.style.display = 'none';
+                document.getElementById('bc-search-input').value = '';
+                window.bcRender();
+            } else {
+                bar.style.display = 'flex';
+                setTimeout(() => document.getElementById('bc-search-input').focus(), 50);
+            }
+        };
+
+        window.bcExport = function() {
+            const data = window.bcGetData();
+            const hdr = ['往来单位编码','往来单位名称','性质','结算客户','分管部门','分管人员','建档日期','往来余额','停用','职位'];
+            const rows = data.map(u => [u.code,u.name,u.nature,u.billingCustomer,u.department,u.manager,u.archiveDate,u.balance,u.disabled?'是':'否',u.position]);
+            const csv = [hdr,...rows].map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'}));
+            a.download = '往来单位档案.csv'; a.click();
+        };
 
         contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input type="text" placeholder="客户编码 / 名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
-                            <select style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">客户类别</option>
-                                <option>企业客户</option>
-                            </select>
-                            <button class="btn-primary">查询</button>
-                        </div>
-                    </div>
-                    
-                    <div class="action-bar" style="margin-bottom: 15px;">
-                        <button class="btn-primary" style="background-color: #27ae60;" onclick="addCustomer()">+ 新增客户</button>
-                        <button class="btn-primary" style="background-color: #3498db;">同步 CRM 数据</button>
-                        <button class="btn-primary" style="background-color: #f39c12;">批量设置额度</button>
-                    </div>
+        <style>
+            .bc-wrap { background:#fff; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.10); border:1px solid #e2e8f0; overflow:hidden; height:calc(100vh - 120px); display:flex; flex-direction:column; }
+            .bc-toolbar { display:flex; align-items:center; padding:4px 8px 4px 0; border-bottom:1px solid #dde1e7; background:#f5f6f8; flex-shrink:0; gap:1px; }
+            .bc-toolbar-accent { width:4px; align-self:stretch; background:#1677ff; border-radius:0 2px 2px 0; margin-right:8px; flex-shrink:0; }
+            .bc-btn { background:none; border:none; color:#333; padding:5px 10px; font-size:13px; cursor:pointer; border-radius:3px; white-space:nowrap; position:relative; }
+            .bc-btn:hover { background:#e8eaf0; color:#1677ff; }
+            .bc-btn-sep { width:1px; height:18px; background:#dde1e7; margin:0 3px; align-self:center; flex-shrink:0; }
+            .bc-search-bar { background:#fffbeb; border-bottom:1px solid #dde1e7; padding:6px 16px; display:none; align-items:center; gap:8px; flex-shrink:0; }
+            .bc-search-input { border:1px solid #d1d5db; border-radius:4px; padding:5px 10px; font-size:13px; width:260px; outline:none; }
+            .bc-search-input:focus { border-color:#1677ff; box-shadow:0 0 0 2px rgba(22,119,255,.1); }
+            .bc-table-wrap { flex:1; overflow:auto; }
+            .bc-table { width:100%; border-collapse:collapse; font-size:13px; }
+            .bc-table thead tr { background:#f0f2f5; }
+            .bc-table th { padding:8px 10px; text-align:center; color:#4b5563; font-weight:600; font-size:12px; border-bottom:2px solid #dde1e7; border-right:1px solid #e2e8f0; white-space:nowrap; position:sticky; top:0; z-index:5; background:#f0f2f5; }
+            .bc-table td { border-bottom:1px solid #eef0f3; vertical-align:middle; white-space:nowrap; }
+            .bc-table tbody tr:hover td { background:#eff6ff !important; }
+            .bc-statusbar { border-top:1px solid #dde1e7; padding:5px 14px; background:#f5f6f8; font-size:12px; color:#888; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+            .bc-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9000; display:none; align-items:center; justify-content:center; }
+            .bc-modal-box { background:#fff; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,.18); width:580px; max-width:96vw; overflow:hidden; }
+            .bc-modal-hd { background:#1677ff; color:#fff; padding:13px 20px; font-size:15px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+            .bc-modal-hd-close { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; line-height:1; padding:0 4px; opacity:.8; }
+            .bc-modal-hd-close:hover { opacity:1; }
+            .bc-modal-body { padding:20px 24px; display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
+            .bc-field { display:flex; flex-direction:column; gap:4px; }
+            .bc-field.full { grid-column:1/-1; }
+            .bc-field label { font-size:12px; color:#6b7280; font-weight:500; }
+            .bc-field input, .bc-field select { border:1px solid #d1d5db; border-radius:4px; padding:7px 10px; font-size:13px; outline:none; color:#333; }
+            .bc-field input:focus, .bc-field select:focus { border-color:#1677ff; box-shadow:0 0 0 2px rgba(22,119,255,.12); }
+            .bc-modal-ft { padding:14px 20px; border-top:1px solid #f0f0f0; display:flex; justify-content:flex-end; gap:10px; }
+            .bc-modal-ft .btn-cancel  { padding:7px 22px; border-radius:5px; font-size:13px; cursor:pointer; background:#fff; border:1px solid #d1d5db; color:#555; }
+            .bc-modal-ft .btn-cancel:hover  { background:#f5f5f5; }
+            .bc-modal-ft .btn-confirm { padding:7px 22px; border-radius:5px; font-size:13px; cursor:pointer; background:#1677ff; border:1px solid #1677ff; color:#fff; }
+            .bc-modal-ft .btn-confirm:hover { background:#0958d9; }
+            .bc-dd { position:relative; display:inline-flex; }
+            .bc-dd-menu { position:absolute; top:calc(100% + 2px); left:0; background:#fff; border:1px solid #dde1e7; border-radius:5px; box-shadow:0 4px 12px rgba(0,0,0,.12); z-index:200; min-width:130px; display:none; padding:4px 0; }
+            .bc-dd-menu.open { display:block; }
+            .bc-dd-item { padding:8px 16px; font-size:13px; color:#333; cursor:pointer; }
+            .bc-dd-item:hover { background:#f0f5ff; color:#1677ff; }
+        </style>
 
-                    <h3>客户列表</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>客户编码</th>
-                                <th>客户名称</th>
-                                <th>纳税人识别号</th>
-                                <th>结算方式</th>
-                                <th>信用额度 (RMB)</th>
-                                <th>账期 (天)</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHTML}
-                        </tbody>
-                    </table>
-                `;
+        <div class="bc-wrap">
+            <div class="bc-toolbar">
+                <div class="bc-toolbar-accent"></div>
+                <button class="bc-btn" onclick="window.bcOpenModal('add')">新增</button>
+                <button class="bc-btn" onclick="(function(){if(!window._bcSelectedId){alert('请先点击选中一行');return;}window.bcOpenModal('edit',window._bcSelectedId);})()">修改</button>
+                <button class="bc-btn" onclick="window.bcDelete()">删除</button>
+                <button class="bc-btn" onclick="alert('请先勾选记录后使用批量修改')">批量修改</button>
+                <button class="bc-btn" onclick="window.bcCopy()">复制</button>
+                <div class="bc-btn-sep"></div>
+                <button class="bc-btn" onclick="window.bcToggleSearch()">查找</button>
+                <button class="bc-btn" onclick="alert('栏目配置功能开发中')">栏目</button>
+                <div class="bc-btn-sep"></div>
+                <div class="bc-dd" id="bc-dd-print">
+                    <button class="bc-btn" onclick="document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.toggle('open')">打印 ▾</button>
+                    <div class="bc-dd-menu">
+                        <div class="bc-dd-item" onclick="window.print();document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.remove('open')">打印列表</div>
+                        <div class="bc-dd-item" onclick="alert('PDF导出功能开发中');document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.remove('open')">导出PDF</div>
+                    </div>
+                </div>
+                <div class="bc-dd" id="bc-dd-import">
+                    <button class="bc-btn" onclick="document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.toggle('open')">导入 ▾</button>
+                    <div class="bc-dd-menu">
+                        <div class="bc-dd-item" onclick="alert('Excel导入功能开发中');document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.remove('open')">从Excel导入</div>
+                        <div class="bc-dd-item" onclick="alert('CSV导入功能开发中');document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.remove('open')">从CSV导入</div>
+                    </div>
+                </div>
+                <button class="bc-btn" onclick="window.bcExport()">导出</button>
+                <div class="bc-btn-sep"></div>
+                <button class="bc-btn" onclick="alert('并户功能：合并两个往来单位记录，功能开发中')">并户</button>
+                <button class="bc-btn" onclick="loadContent('Dashboard')">退出</button>
+            </div>
+
+            <div class="bc-search-bar" id="bc-search-bar">
+                <span style="font-size:12px;color:#92400e;font-weight:500;">查找：</span>
+                <input class="bc-search-input" id="bc-search-input" type="text" placeholder="输入往来单位编码或名称..." oninput="window.bcRender()">
+                <span onclick="document.getElementById('bc-search-input').value='';window.bcRender();" style="font-size:12px;color:#999;cursor:pointer;padding:2px 6px;border-radius:3px;" title="清除">✕</span>
+                <span onclick="window.bcToggleSearch()" style="font-size:12px;color:#999;cursor:pointer;padding:2px 8px;border-radius:3px;border:1px solid #e5e7eb;background:#fff;" title="关闭">关闭</span>
+            </div>
+
+            <div class="bc-table-wrap" onclick="document.querySelectorAll('.bc-dd-menu').forEach(m=>m.classList.remove('open'))">
+                <table class="bc-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">序号</th>
+                            <th style="width:36px;"><input type="checkbox" id="bc-chk-all" onchange="window.bcToggleAll(this.checked)" title="全选"></th>
+                            <th style="min-width:100px;">往来单位编码</th>
+                            <th style="min-width:200px;text-align:left;padding-left:10px;">往来单位名称</th>
+                            <th style="width:72px;">性质</th>
+                            <th style="width:70px;">结算客户</th>
+                            <th style="min-width:88px;">分管部门</th>
+                            <th style="min-width:75px;">分管人员</th>
+                            <th style="width:90px;">建档日期</th>
+                            <th style="width:110px;text-align:right;padding-right:12px;">往来余额</th>
+                            <th style="width:46px;">停用</th>
+                            <th style="min-width:80px;">职位</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bc-tbody">
+                        <tr><td colspan="12" style="text-align:center;padding:50px;color:#bbb;">正在加载...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bc-statusbar">
+                <span id="bc-count">共 0 条记录</span>
+                <span style="color:#b0b8c9;">双击行可快速修改 · 单击行高亮选中 · 勾选框可多选</span>
+            </div>
+        </div>
+
+        <!-- 新增 / 修改 弹窗 -->
+        <div class="bc-modal-overlay" id="bc-modal" onclick="if(event.target===this)window.bcCloseModal()">
+            <div class="bc-modal-box">
+                <div class="bc-modal-hd">
+                    <span id="bc-modal-title">新增往来单位</span>
+                    <button class="bc-modal-hd-close" onclick="window.bcCloseModal()">×</button>
+                </div>
+                <div class="bc-modal-body">
+                    <div class="bc-field">
+                        <label>往来单位编码 <span style="color:#ef4444;">*</span></label>
+                        <input id="bc-f-code" type="text" placeholder="如 KH001">
+                    </div>
+                    <div class="bc-field">
+                        <label>往来单位名称 <span style="color:#ef4444;">*</span></label>
+                        <input id="bc-f-name" type="text" placeholder="单位全称">
+                    </div>
+                    <div class="bc-field">
+                        <label>性质</label>
+                        <select id="bc-f-nature">
+                            <option>客户</option><option>供应商</option><option>内部单位</option><option>其他</option>
+                        </select>
+                    </div>
+                    <div class="bc-field">
+                        <label>结算客户</label>
+                        <select id="bc-f-billing"><option>否</option><option>是</option></select>
+                    </div>
+                    <div class="bc-field">
+                        <label>分管部门</label>
+                        <input id="bc-f-dept" type="text" placeholder="如 销售一部">
+                    </div>
+                    <div class="bc-field">
+                        <label>分管人员</label>
+                        <input id="bc-f-manager" type="text" placeholder="负责人姓名">
+                    </div>
+                    <div class="bc-field">
+                        <label>建档日期</label>
+                        <input id="bc-f-date" type="date">
+                    </div>
+                    <div class="bc-field">
+                        <label>往来余额</label>
+                        <input id="bc-f-balance" type="text" placeholder="0.00">
+                    </div>
+                    <div class="bc-field">
+                        <label>职位</label>
+                        <input id="bc-f-position" type="text" placeholder="如 主要客户">
+                    </div>
+                    <div class="bc-field" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px;">
+                        <input id="bc-f-disabled" type="checkbox" style="width:16px;height:16px;cursor:pointer;">
+                        <label for="bc-f-disabled" style="font-size:13px;color:#555;cursor:pointer;font-weight:normal;">停用此往来单位</label>
+                    </div>
+                </div>
+                <div class="bc-modal-ft">
+                    <button class="btn-cancel" onclick="window.bcCloseModal()">取消</button>
+                    <button class="btn-confirm" onclick="window.bcSaveModal()">保存</button>
+                </div>
+            </div>
+        </div>
+        `;
+
+        setTimeout(() => {
+            window._bcSelectedId = null;
+            window._bcChecked    = new Set();
+            const tbody = document.getElementById('bc-tbody');
+            if (tbody) {
+                tbody.addEventListener('dblclick', e => {
+                    const row = e.target.closest('tr[data-id]');
+                    if (row) window.bcOpenModal('edit', row.dataset.id);
+                });
+            }
+            // 点击页面其他区域关闭下拉
+            document.addEventListener('click', function bcOutsideClick(e) {
+                if (!e.target.closest('.bc-dd')) {
+                    document.querySelectorAll('.bc-dd-menu').forEach(m => m.classList.remove('open'));
+                }
+            }, { once: false, capture: false });
+            window.bcRender();
+        }, 0);
     }
 
     // --------------------------------------------------------------------------

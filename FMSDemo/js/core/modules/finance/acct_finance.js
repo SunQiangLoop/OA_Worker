@@ -1999,9 +1999,12 @@ window._AUX_GLOBAL_DEFAULTS = {
         { code: "012", name: "市场推广部", remark: "", enabled: true }
     ],
     customer: [
-        { code: "001", name: "客户1", remark: "", enabled: true },
-        { code: "002", name: "客户2", remark: "", enabled: true },
-        { code: "003", name: "客户3", remark: "", enabled: true }
+        { code: "001", name: "上海远通物流有限公司", remark: "", enabled: true },
+        { code: "002", name: "北京华泰货运代理有限公司", remark: "", enabled: true },
+        { code: "003", name: "广州跨境电商科技有限公司", remark: "", enabled: true },
+        { code: "004", name: "中铁快运股份有限公司", remark: "", enabled: true },
+        { code: "005", name: "顺丰速运有限公司", remark: "", enabled: true }
+
     ],
     vendor: [
         { code: "V01", name: "供应商1", remark: "", enabled: true },

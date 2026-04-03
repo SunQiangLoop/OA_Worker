@@ -2472,7 +2472,7 @@ ${vouchersHTML}
                 <div class="va-sep"></div>
                 <button class="va-btn voucher-center__action" onclick="exportSelectedVouchers()" disabled>导出</button>
                 <button class="va-btn voucher-center__action" style="color:#e67e22;border-color:#e67e22;"
-                    onclick="pushSelectedVouchersToExternal()" disabled title="将选中凭证推送到外账帐套">📤 推送至外账</button>
+                    onclick="pushSelectedVouchersToExternal()" disabled title="将选中凭证推送到外账帐套">推送</button>
                 <button class="va-btn voucher-center__action" onclick="printSelectedVouchers()" disabled title="打印选中凭证">🖨</button>
             </div>
             <!-- 筛选区 -->
