@@ -78,27 +78,38 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             .ve-detail-title { font-size:14px; font-weight:600; }
             .ve-detail-actions { display:flex; gap:8px; }
             .ve-entry-table-wrap { overflow-x:auto; }
-            .ve-entry-table { width:100%; border-collapse:collapse; border:1px solid #e0e0e0; }
+            .ve-entry-table { width:100%; min-width:900px; border-collapse:collapse; border:1px solid #e0e0e0; }
             .ve-entry-table th,.ve-entry-table td { border:1px solid #e0e0e0; padding:7px 10px; text-align:left; font-size:13px; }
             .ve-entry-table th { background:#fafafa; font-weight:600; color:#555; white-space:nowrap; }
             .ve-entry-table td { vertical-align:middle; }
-            .ve-col-seq { width:50px; text-align:center; color:#888; }
-            .ve-col-summary { min-width:150px; }
-            .ve-col-subject { min-width:180px; }
-            .ve-col-auxiliary { width:140px; }
+            .ve-col-seq { width:36px; text-align:center; padding:0 !important; }
+            .ve-seq-cell { display:flex; align-items:center; justify-content:center; height:100%; min-height:30px; cursor:pointer; user-select:none; }
+            .ve-seq-num  { font-size:12px; color:#aaa; }
+            .ve-seq-gear { display:none; font-size:15px; color:#666; }
+            .ve-seq-cell:hover .ve-seq-num  { display:none; }
+            .ve-seq-cell:hover .ve-seq-gear { display:inline; }
+            .ve-col-summary { min-width:140px; }
+            .ve-col-subject { min-width:160px; }
+            .ve-col-auxiliary { width:160px; }
+            .ve-aux-trigger { width:100%; text-align:left; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
+            .ve-aux-trigger:hover { background:#f0f5ff; border-radius:2px; }
+            .ve-aux-trigger.has-value { color:#1890ff; }
+            .ve-row-menu-item { padding:7px 16px; font-size:13px; color:#333; cursor:pointer; white-space:nowrap; }
+            .ve-row-menu-item:hover { background:#f0f5ff; color:#1890ff; }
+            .ve-row-menu-danger { color:#ff4d4f; }
+            .ve-row-menu-danger:hover { background:#fff1f0; color:#ff4d4f; }
+            .ve-row-menu-sep { height:1px; background:#f0f0f0; margin:3px 0; }
             .ve-col-amount { width:110px; }
-            .ve-col-op { width:50px; text-align:center; }
             .ve-entry-table tbody tr:hover { background:#fafafa; }
+            .ve-entry-table tbody tr.ve-row-checked { background:#e6f7ff !important; }
             .ve-total-row td { background:#fafafa; font-weight:600; }
             .ve-total-label { text-align:right; color:#555; }
             .ve-entry-input { width:100%; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; }
             .ve-entry-input:focus { outline:1px solid #40a9ff; border-radius:2px; }
-            .ve-entry-select { border:none; background:transparent; font-size:13px; color:#333; width:100%; }
-            .ve-entry-select:focus { outline:none; }
+            .ve-entry-select { border:1px solid #e8e8e8; background:#fff; font-size:12px; color:#333; width:100%; border-radius:3px; padding:2px; }
+            .ve-entry-select:focus { outline:none; border-color:#40a9ff; }
             .ve-amount-input { width:100%; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; text-align:right; }
             .ve-amount-input:focus { outline:1px solid #40a9ff; border-radius:2px; }
-            .ve-btn-delete-row { display:inline-block; width:20px; height:20px; border:1px solid #d9d9d9; border-radius:50%; text-align:center; line-height:18px; font-size:14px; cursor:pointer; color:#999; }
-            .ve-btn-delete-row:hover { border-color:#ff4d4f; color:#ff4d4f; background:#fff1f0; }
             .ve-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:900; align-items:center; justify-content:center; }
             .ve-modal-overlay.show { display:flex; }
             .ve-modal { background:#fff; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.18); display:flex; flex-direction:column; max-height:80vh; }
@@ -187,7 +198,7 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                     </div>
                     <div class="ve-form-field">
                         <label>凭证号</label>
-                        <input type="text" class="ve-input-sm ve-input-readonly" id="veVoucherNo" readonly>
+                        <input type="text" class="ve-input-xs" id="veVoucherNo" maxlength="4" placeholder="0001" style="width:72px;font-family:monospace;letter-spacing:1px;" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
                     </div>
                     <div class="ve-form-field">
                         <label>附件数</label>
@@ -198,22 +209,18 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 <div>
                     <div class="ve-detail-header">
                         <span class="ve-detail-title">分录明细</span>
-                        <div class="ve-detail-actions">
-                            <button class="ve-btn ve-btn-default" onclick="veAddRow()">+ 新增行</button>
-                            <button class="ve-btn ve-btn-default" onclick="veDeleteEmptyRows()">删除空行</button>
-                        </div>
+                        <div class="ve-detail-actions"></div>
                     </div>
                     <div class="ve-entry-table-wrap">
                         <table class="ve-entry-table">
                             <thead>
                                 <tr>
-                                    <th class="ve-col-seq">序号</th>
+                                    <th class="ve-col-seq" style="font-size:12px;color:#888;">序号</th>
                                     <th class="ve-col-summary">摘要</th>
                                     <th class="ve-col-subject">科目名称</th>
                                     <th class="ve-col-auxiliary">辅助核算项目</th>
                                     <th class="ve-col-amount">借方金额</th>
                                     <th class="ve-col-amount">贷方金额</th>
-                                    <th class="ve-col-op">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="veEntryBody"></tbody>
@@ -222,7 +229,6 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                                     <td colspan="4" class="ve-total-label">合计</td>
                                     <td class="ve-col-amount" style="text-align:right;" id="veTotalDebit">0.00</td>
                                     <td class="ve-col-amount" style="text-align:right;" id="veTotalCredit">0.00</td>
-                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -367,11 +373,12 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
 
         setTimeout(function () {
             // ── 状态变量 ──
-            window.veRows = [
-                { id: 1, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
-                { id: 2, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
-            ];
-            window.veNextId = 3;
+            window.veRows = [];
+            for (var _vi = 1; _vi <= 10; _vi++) {
+                window.veRows.push({ id: _vi, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 });
+            }
+            window.veNextId = 11;
+            window.veCheckedSet = new Set();
             window.veSelectedCommonIdx = -1;
             window.veCommonVouchers = [
                 { seq:1,  code:'1001', name:'现金销售',               type:'转账凭证', attach:'-', category:'销售' },
@@ -392,34 +399,55 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             window.veFilteredVouchers = window.veCommonVouchers.slice();
             window.veConfirmCallback = null;
 
+            // ── 构建多选辅助核算选项 ──
+            window.veBuildAuxMulti = function(auxString, currentAux) {
+                var labels = window.parseAuxLabels ? window.parseAuxLabels(auxString) : [];
+                if (!labels.length) return '<option value="">无辅助核算</option>';
+                var html = '';
+                labels.forEach(function(label) {
+                    var key = window.mapAuxLabelToKey ? window.mapAuxLabelToKey(label) : null;
+                    if (!key) return;
+                    var list = window.getAuxiliaryDataByKey ? window.getAuxiliaryDataByKey(key).filter(function(i) { return i.enabled !== false; }) : [];
+                    if (!list.length) return;
+                    html += '<optgroup label="' + label + '">';
+                    list.forEach(function(item) {
+                        var val = key + '|||' + item.code + '|||' + item.name;
+                        var sel = (currentAux || []).indexOf(val) >= 0 ? ' selected' : '';
+                        html += '<option value="' + val + '"' + sel + '>' + item.code + ' ' + item.name + '</option>';
+                    });
+                    html += '</optgroup>';
+                });
+                return html || '<option value="">无</option>';
+            };
+
             // ── 渲染分录表格 ──
             window.veRenderEntryTable = function () {
                 var tbody = document.getElementById('veEntryBody');
                 if (!tbody) return;
                 var html = '';
+                var chkSet = window.veCheckedSet || new Set();
                 window.veRows.forEach(function (row, idx) {
+                    var rowId = row.id;
+                    var isChecked = chkSet.has(rowId);
+                    // 规范化 auxiliary 为数组
+                    var currentAux = Array.isArray(row.auxiliary) ? row.auxiliary
+                        : (row.auxiliary && row.auxiliary !== '无' && row.auxiliary !== '' ? [row.auxiliary] : []);
                     // 根据已选科目动态构建辅助核算选项
-                    var auxOptionsHtml = '';
                     var subjectCode = (row.subject || '').split(' ')[0];
-                    if (subjectCode && window.buildAuxOptions && window.parseAuxLabels) {
-                        var subjectObj = (window._veSubjectList || []).find(function(s) { return s.code === subjectCode; });
-                        if (subjectObj && subjectObj.aux) {
-                            var labels = window.parseAuxLabels(subjectObj.aux);
-                            auxOptionsHtml = window.buildAuxOptions(labels);
-                        }
-                    }
-                    if (!auxOptionsHtml) auxOptionsHtml = '<option value="">无</option>';
-                    // 恢复已选值
-                    if (row.auxiliary && row.auxiliary !== '无' && row.auxiliary !== '') {
-                        auxOptionsHtml = auxOptionsHtml.replace(
-                            'value="' + row.auxiliary + '"',
-                            'value="' + row.auxiliary + '" selected'
-                        );
-                    }
+                    var subjectObj = subjectCode ? (window._veSubjectList || []).find(function(s) { return s.code === subjectCode; }) : null;
+                    var auxHtml = subjectObj && subjectObj.aux
+                        ? window.veBuildAuxMulti(subjectObj.aux, currentAux)
+                        : '<option value="">无</option>';
                     var sumVal = (row.summary || '').replace(/"/g, '&quot;');
                     var subjVal = (row.subject || '').replace(/"/g, '&quot;');
-                    html += '<tr>' +
-                        '<td class="ve-col-seq">' + (idx + 1) + '</td>' +
+                    html +=
+                        '<tr id="veRow_' + rowId + '" class="' + (isChecked ? 've-row-checked' : '') + '">' +
+                        '<td class="ve-col-seq">' +
+                        '<div class="ve-seq-cell" onclick="veShowRowMenu(event,' + idx + ')">' +
+                        '<span class="ve-seq-num">' + (idx + 1) + '</span>' +
+                        '<span class="ve-seq-gear">&#9881;</span>' +
+                        '</div>' +
+                        '</td>' +
                         '<td class="ve-col-summary">' +
                             '<input class="ve-entry-input" type="text" id="veSumInput_' + idx + '" placeholder="输入摘要" value="' + sumVal + '" autocomplete="off"' +
                             ' oninput="window.veRows[' + idx + '].summary=this.value;veShowSummaryAC(' + idx + ',this.value,false)"' +
@@ -432,33 +460,209 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                             ' onfocus="veShowSubjectAC(' + idx + ',this.value,true)"' +
                             ' onblur="setTimeout(function(){veHideAC(\'veSubjAC\')},200)">' +
                         '</td>' +
-                        '<td class="ve-col-auxiliary"><select class="ve-entry-select" id="veAuxSel_' + idx + '" onchange="window.veRows[' + idx + '].auxiliary=this.value">' + auxOptionsHtml + '</select></td>' +
+                        '<td class="ve-col-auxiliary">' +
+                            '<button class="ve-aux-trigger' + (currentAux.length ? ' has-value' : '') + '" id="veAuxBtn_' + idx + '" onclick="veShowAuxAC(' + idx + ',this)">' +
+                            veGetAuxDisplayText(currentAux) +
+                            '</button>' +
+                        '</td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.debit || 0) + '" oninput="window.veRows[' + idx + '].debit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.credit || 0) + '" oninput="window.veRows[' + idx + '].credit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
-                        '<td class="ve-col-op"><span class="ve-btn-delete-row" title="删除本行" onclick="veDeleteRow(' + idx + ')">&#8722;</span></td>' +
                     '</tr>';
                 });
                 tbody.innerHTML = html;
                 veUpdateTotals();
+                // 同步全选框状态
+                var allChk = document.getElementById('veChkAll');
+                if (allChk) {
+                    allChk.checked = chkSet.size > 0 && chkSet.size === window.veRows.length;
+                    allChk.indeterminate = chkSet.size > 0 && chkSet.size < window.veRows.length;
+                }
             };
+
+            // ── 辅助核算显示文本 ──
+            function veGetAuxDisplayText(auxArr) {
+                if (!auxArr || !auxArr.length) return '请选择...';
+                var names = auxArr.map(function(v) {
+                    if (v && v.indexOf('|||') !== -1) { var p = v.split('|||'); return p[2] || p[1]; }
+                    return v || '';
+                }).filter(Boolean);
+                if (!names.length) return '请选择...';
+                return names.length === 1 ? names[0] : '已选 ' + names.length + ' 项';
+            }
 
             // ── 自定义 Autocomplete（共享浮层，position:fixed 避免被overflow裁剪）──
             (function() {
-                // 创建两个共享浮层挂到 body
-                function ensureLayer(id) {
+                function ensureLayer(id, extraStyle) {
                     var el = document.getElementById(id);
                     if (!el) {
                         el = document.createElement('div');
                         el.id = id;
                         el.className = 've-ac-dropdown';
-                        el.style.cssText = 'position:fixed;z-index:99999;display:none;min-width:240px;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #d9d9d9;border-radius:3px;box-shadow:0 4px 16px rgba(0,0,0,0.18);';
+                        el.style.cssText = extraStyle || 'position:fixed;z-index:99999;display:none;min-width:240px;max-height:280px;overflow-y:auto;background:#fff;border:1px solid #d9d9d9;border-radius:3px;box-shadow:0 4px 16px rgba(0,0,0,0.18);';
                         document.body.appendChild(el);
                     }
                     return el;
                 }
                 ensureLayer('veSubjAC');
                 ensureLayer('veSumAC');
+                ensureLayer('veAuxAC', 'position:fixed;z-index:99999;display:none;min-width:220px;max-height:320px;overflow-y:auto;background:#fff;border:1px solid #d9d9d9;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,0.15);');
+                ensureLayer('veRowMenuAC', 'position:fixed;z-index:99999;display:none;min-width:88px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:4px 0;');
             })();
+
+            // ── 辅助核算浮层操作 ──
+            window._veAuxIdx = -1;
+
+            window.veShowAuxAC = function(idx, triggerEl) {
+                var dropdown = document.getElementById('veAuxAC');
+                if (!dropdown) return;
+                if (dropdown.style.display !== 'none' && window._veAuxIdx === idx) {
+                    dropdown.style.display = 'none'; window._veAuxIdx = -1; return;
+                }
+                window._veAuxIdx = idx;
+                var row = window.veRows[idx];
+                if (!row) { dropdown.style.display = 'none'; return; }
+                var currentAux = Array.isArray(row.auxiliary) ? row.auxiliary : [];
+                var subjectCode = (row.subject || '').split(' ')[0];
+                var subjectObj = subjectCode ? (window._veSubjectList || []).find(function(s) { return s.code === subjectCode; }) : null;
+                if (!subjectObj || !subjectObj.aux) {
+                    dropdown.innerHTML = '<div style="padding:14px 16px;color:#bbb;font-size:13px;">该科目无辅助核算配置</div>';
+                } else {
+                    var labels = window.parseAuxLabels ? window.parseAuxLabels(subjectObj.aux) : [];
+                    if (!labels.length) {
+                        dropdown.innerHTML = '<div style="padding:14px 16px;color:#bbb;font-size:13px;">无辅助核算项</div>';
+                    } else {
+                        var html = '<div style="padding:8px 12px 6px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">' +
+                            '<span style="font-size:12px;color:#888;font-weight:600;">辅助核算</span>' +
+                            '<span style="font-size:12px;color:#1890ff;cursor:pointer;" onmousedown="event.preventDefault();window.veRows[' + idx + '].auxiliary=[];veUpdateAuxBtn(' + idx + ')">清除全部</span>' +
+                            '</div>';
+                        labels.forEach(function(label) {
+                            var key = window.mapAuxLabelToKey ? window.mapAuxLabelToKey(label) : null;
+                            if (!key) return;
+                            var list = window.getAuxiliaryDataByKey ? window.getAuxiliaryDataByKey(key).filter(function(i) { return i.enabled !== false; }) : [];
+                            if (!list.length) return;
+                            html += '<div style="padding:5px 12px 2px;font-size:11px;color:#aaa;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">' + label + '</div>';
+                            list.forEach(function(item) {
+                                var val = key + '|||' + item.code + '|||' + item.name;
+                                var chk = currentAux.indexOf(val) >= 0 ? ' checked' : '';
+                                html += '<label style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;" ' +
+                                    'onmouseover="this.style.background=\'#f0f5ff\'" onmouseout="this.style.background=\'\'">' +
+                                    '<input type="checkbox" value="' + val + '"' + chk + ' onchange="veToggleAuxItem(' + idx + ',this.value,this.checked)">' +
+                                    '<span style="color:#666;font-size:12px;font-family:monospace;">' + item.code + '</span>' +
+                                    '<span style="color:#333;">' + item.name + '</span>' +
+                                    '</label>';
+                            });
+                        });
+                        dropdown.innerHTML = html;
+                    }
+                }
+                var rect = triggerEl.getBoundingClientRect();
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.top  = (rect.bottom + 2) + 'px';
+                dropdown.style.minWidth = Math.max(rect.width, 220) + 'px';
+                dropdown.style.display = 'block';
+            };
+
+            window.veHideAuxAC = function() {
+                var el = document.getElementById('veAuxAC');
+                if (el) el.style.display = 'none';
+                window._veAuxIdx = -1;
+            };
+
+            // ── 行右键菜单 ──
+            window._veRowMenuIdx = -1;
+
+            window.veShowRowMenu = function(e, idx) {
+                e.stopPropagation();
+                var dropdown = document.getElementById('veRowMenuAC');
+                if (!dropdown) return;
+                if (dropdown.style.display !== 'none' && window._veRowMenuIdx === idx) {
+                    dropdown.style.display = 'none'; window._veRowMenuIdx = -1; return;
+                }
+                window._veRowMenuIdx = idx;
+                dropdown.innerHTML =
+                    '<div class="ve-row-menu-item" onmousedown="event.preventDefault();veRowAddBelow(' + idx + ');veHideRowMenu()">增行</div>' +
+                    '<div class="ve-row-menu-item" onmousedown="event.preventDefault();veRowInsertBelow(' + idx + ');veHideRowMenu()">插行</div>' +
+                    '<div class="ve-row-menu-item" onmousedown="event.preventDefault();veRowCopyToNextEmpty(' + idx + ');veHideRowMenu()">复制行</div>' +
+                    '<div class="ve-row-menu-sep"></div>' +
+                    '<div class="ve-row-menu-item ve-row-menu-danger" onmousedown="event.preventDefault();veRowDelete(' + idx + ');veHideRowMenu()">删行</div>';
+                var rect = e.currentTarget.getBoundingClientRect();
+                dropdown.style.left = (rect.right + 4) + 'px';
+                dropdown.style.top  = rect.top + 'px';
+                dropdown.style.display = 'block';
+            };
+
+            window.veHideRowMenu = function() {
+                var el = document.getElementById('veRowMenuAC');
+                if (el) el.style.display = 'none';
+                window._veRowMenuIdx = -1;
+            };
+
+            // 增行：在末尾追加一条空白行
+            window.veRowAddBelow = function(idx) {
+                window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 });
+                veRenderEntryTable();
+            };
+
+            // 插行：在当前行下方插入一条空白行（原有内容下移）
+            window.veRowInsertBelow = function(idx) {
+                var newRow = { id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 };
+                window.veRows.splice(idx + 1, 0, newRow);
+                veRenderEntryTable();
+            };
+
+            window.veRowCopyToNextEmpty = function(idx) {
+                var src = window.veRows[idx];
+                if (!src) return;
+                // 找当前行之后第一个空白行（摘要/科目/借贷均为空）
+                for (var i = idx + 1; i < window.veRows.length; i++) {
+                    var r = window.veRows[i];
+                    if (!r.summary && !r.subject && r.debit === 0 && r.credit === 0) {
+                        r.summary   = src.summary;
+                        r.subject   = src.subject;
+                        r.auxiliary = (src.auxiliary || []).slice();
+                        r.debit     = src.debit;
+                        r.credit    = src.credit;
+                        veRenderEntryTable();
+                        veShowToast('已复制到第 ' + (i + 1) + ' 行', 'success');
+                        return;
+                    }
+                }
+                // 下方无空行，在当前行后直接插入
+                var newRow = { id: window.veNextId++, summary: src.summary, subject: src.subject, auxiliary: (src.auxiliary || []).slice(), debit: src.debit, credit: src.credit };
+                window.veRows.splice(idx + 1, 0, newRow);
+                veRenderEntryTable();
+                veShowToast('下方无空行，已在当前行后新增', 'success');
+            };
+
+            window.veRowDelete = function(idx) {
+                window.veRows.splice(idx, 1);
+                if (window.veRows.length === 0) {
+                    window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 });
+                }
+                if (window.veCheckedSet) window.veCheckedSet.clear();
+                veRenderEntryTable();
+            };
+
+            window.veToggleAuxItem = function(idx, val, checked) {
+                var row = window.veRows[idx];
+                if (!row) return;
+                if (!Array.isArray(row.auxiliary)) row.auxiliary = [];
+                var pos = row.auxiliary.indexOf(val);
+                if (checked && pos === -1) row.auxiliary.push(val);
+                else if (!checked && pos !== -1) row.auxiliary.splice(pos, 1);
+                veUpdateAuxBtn(idx);
+            };
+
+            window.veUpdateAuxBtn = function(idx) {
+                var row = window.veRows[idx];
+                if (!row) return;
+                var btn = document.getElementById('veAuxBtn_' + idx);
+                if (!btn) return;
+                var auxArr = Array.isArray(row.auxiliary) ? row.auxiliary : [];
+                btn.textContent = veGetAuxDisplayText(auxArr);
+                if (auxArr.length) btn.classList.add('has-value');
+                else btn.classList.remove('has-value');
+            };
 
             window.veHideAC = function(id) {
                 var el = document.getElementById(id);
@@ -506,19 +710,18 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
 
             window.veSelectSubject = function(idx, val) {
                 window.veRows[idx].subject = val;
-                window.veRows[idx].auxiliary = '';
+                window.veRows[idx].auxiliary = [];
                 var input = document.getElementById('veSubjInput_' + idx);
                 if (input) { input.value = val; input.focus(); }
                 veHideAC('veSubjAC');
-                // 根据新选科目刷新辅助核算下拉
+                // 根据新选科目刷新辅助核算多选下拉
                 var auxSel = document.getElementById('veAuxSel_' + idx);
-                if (auxSel && window.buildAuxOptions && window.parseAuxLabels) {
+                if (auxSel) {
                     var code = val.split(' ')[0];
                     var subj = (window._veSubjectList || []).find(function(s) { return s.code === code; });
-                    var newHtml = (subj && subj.aux)
-                        ? window.buildAuxOptions(window.parseAuxLabels(subj.aux))
+                    auxSel.innerHTML = (subj && subj.aux && window.veBuildAuxMulti)
+                        ? window.veBuildAuxMulti(subj.aux, [])
                         : '<option value="">无</option>';
-                    auxSel.innerHTML = newHtml;
                 }
             };
 
@@ -557,8 +760,17 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             document.addEventListener('mousedown', function(e) {
                 var sAC = document.getElementById('veSubjAC');
                 var mAC = document.getElementById('veSumAC');
+                var aAC = document.getElementById('veAuxAC');
                 if (sAC && !sAC.contains(e.target)) veHideAC('veSubjAC');
                 if (mAC && !mAC.contains(e.target)) veHideAC('veSumAC');
+                // 辅助核算浮层：点击触发按钮本身由 veShowAuxAC 处理 toggle，其他区域关闭
+                if (aAC && !aAC.contains(e.target) && !(e.target.classList && e.target.classList.contains('ve-aux-trigger'))) {
+                    window.veHideAuxAC();
+                }
+                var rMC = document.getElementById('veRowMenuAC');
+                if (rMC && !rMC.contains(e.target) && !(e.target.closest && e.target.closest('.ve-seq-cell'))) {
+                    window.veHideRowMenu && window.veHideRowMenu();
+                }
             }, true);
 
             window.veUpdateTotals = function () {
@@ -571,14 +783,63 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             };
 
             window.veAddRow = function () {
-                window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 });
+                window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 });
                 veRenderEntryTable();
             };
 
-            window.veDeleteRow = function (idx) {
-                if (window.veRows.length <= 2) { veShowToast('至少保留2行分录', 'warning'); return; }
-                window.veRows.splice(idx, 1);
+            // ── 复选框操作 ──
+            window.veToggleRowCheck = function(rowId, checked) {
+                window.veCheckedSet = window.veCheckedSet || new Set();
+                if (checked) window.veCheckedSet.add(rowId);
+                else window.veCheckedSet.delete(rowId);
+                var row = document.getElementById('veRow_' + rowId);
+                if (row) { if (checked) row.classList.add('ve-row-checked'); else row.classList.remove('ve-row-checked'); }
+                var allChk = document.getElementById('veChkAll');
+                if (allChk) {
+                    allChk.checked = window.veCheckedSet.size === window.veRows.length && window.veRows.length > 0;
+                    allChk.indeterminate = window.veCheckedSet.size > 0 && window.veCheckedSet.size < window.veRows.length;
+                }
+            };
+
+            window.veToggleAllCheck = function(checked) {
+                window.veCheckedSet = new Set();
+                if (checked) window.veRows.forEach(function(r) { window.veCheckedSet.add(r.id); });
                 veRenderEntryTable();
+            };
+
+            window.veClearCheckedRows = function() {
+                if (!window.veCheckedSet || window.veCheckedSet.size === 0) { veShowToast('请先勾选要清空的行', 'warning'); return; }
+                window.veRows = window.veRows.filter(function(r) { return !window.veCheckedSet.has(r.id); });
+                if (window.veRows.length < 2) {
+                    while (window.veRows.length < 2) window.veRows.push({ id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 });
+                }
+                window.veCheckedSet.clear();
+                veRenderEntryTable();
+                veShowToast('已清空选中行', 'success');
+            };
+
+            window.veInsertBelowChecked = function() {
+                if (!window.veCheckedSet || window.veCheckedSet.size === 0) { veAddRow(); return; }
+                var lastIdx = -1;
+                window.veRows.forEach(function(r, i) { if (window.veCheckedSet.has(r.id)) lastIdx = i; });
+                if (lastIdx === -1) { veAddRow(); return; }
+                var src = window.veRows[lastIdx];
+                var newRow = { id: window.veNextId++, summary: src.summary, subject: src.subject, auxiliary: (src.auxiliary || []).slice(), debit: 0, credit: 0 };
+                window.veRows.splice(lastIdx + 1, 0, newRow);
+                window.veCheckedSet.clear();
+                veRenderEntryTable();
+                veShowToast('已在选中行下方插入一行（复制摘要/科目）', 'success');
+            };
+
+            window.veCopyCheckedRow = function() {
+                if (!window.veCheckedSet || window.veCheckedSet.size === 0) { veShowToast('请先勾选要复制的行', 'warning'); return; }
+                var toCopy = window.veRows.filter(function(r) { return window.veCheckedSet.has(r.id); });
+                toCopy.forEach(function(r) {
+                    window.veRows.push({ id: window.veNextId++, summary: r.summary, subject: r.subject, auxiliary: (r.auxiliary || []).slice(), debit: r.debit, credit: r.credit });
+                });
+                window.veCheckedSet.clear();
+                veRenderEntryTable();
+                veShowToast('已复制 ' + toCopy.length + ' 行到末尾', 'success');
             };
 
             window.veDeleteEmptyRows = function () {
@@ -587,38 +848,38 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 if (filtered.length >= 2) {
                     window.veRows = filtered;
                 } else if (filtered.length === 1) {
-                    window.veRows = filtered.concat([{ id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }]);
+                    window.veRows = filtered.concat([{ id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 }]);
                 } else {
                     window.veRows = [
-                        { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
-                        { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
+                        { id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 },
+                        { id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 }
                     ];
                 }
                 var deleted = before - window.veRows.length;
+                window.veCheckedSet.clear();
                 veRenderEntryTable();
                 veShowToast(deleted > 0 ? ('已删除 ' + deleted + ' 行空白分录') : '没有可删除的空白行', deleted > 0 ? 'success' : 'warning');
             };
 
-            // ── 凭证号生成 ──
-            window.veGenerateNextId = function (word) {
+            // ── 凭证号生成（纯四位数字，不带前缀）──
+            window.veGenerateNextId = function () {
                 var existing = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
-                var prefix = word + '-';
                 var maxNum = 0;
                 existing.forEach(function (v) {
-                    if (v.id && v.id.indexOf(prefix) === 0) {
-                        var num = parseInt(v.id.slice(prefix.length)) || 0;
-                        if (num > maxNum) maxNum = num;
-                    }
+                    // 兼容旧格式 "转-0001" 和新格式 "0001"
+                    var numStr = (v.id || '').replace(/^[^\d]*/, '').replace(/\D/g, '');
+                    var num = parseInt(numStr) || 0;
+                    if (num > maxNum) maxNum = num;
                 });
                 var s = String(maxNum + 1);
                 while (s.length < 4) s = '0' + s;
-                return prefix + s;
+                return s;
             };
 
             window.veUpdateVoucherNo = function () {
-                var word = (document.getElementById('veVoucherWord') || {}).value || '转';
                 var el = document.getElementById('veVoucherNo');
-                if (el) el.value = veGenerateNextId(word);
+                if (el && !el.value) el.value = veGenerateNextId();
+                var word = (document.getElementById('veVoucherWord') || {}).value || '转';
                 var titleEl = document.getElementById('veVoucherTitle');
                 if (titleEl) {
                     var typeMap = { '收': '收款凭证', '付': '付款凭证', '转': '转账凭证' };
@@ -644,9 +905,12 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             // ── 重置表单 ──
             window.veResetForm = function () {
                 window.veRows = [
-                    { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 },
-                    { id: window.veNextId++, summary: '', subject: '', auxiliary: '无', debit: 0, credit: 0 }
+                    { id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 },
+                    { id: window.veNextId++, summary: '', subject: '', auxiliary: [], debit: 0, credit: 0 }
                 ];
+                window.veCheckedSet = new Set();
+                var noEl = document.getElementById('veVoucherNo');
+                if (noEl) noEl.value = '';  // 清空后重新自动生成
                 veRenderEntryTable();
                 veUpdateVoucherNo();
             };
@@ -668,25 +932,31 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
 
             // 核心保存逻辑（不弹 Toast）
             window.veSaveVoucher = function () {
-                var word  = (document.getElementById('veVoucherWord')  || {}).value || '转';
-                var date  = (document.getElementById('veDateInput')    || {}).value || new Date().toISOString().split('T')[0];
+                var word   = (document.getElementById('veVoucherWord')  || {}).value || '转';
+                var date   = (document.getElementById('veDateInput')    || {}).value || new Date().toISOString().split('T')[0];
                 var attach = parseInt((document.getElementById('veAttachCount') || {}).value) || 0;
-                var voucherId = veGenerateNextId(word);
+                // 凭证号：优先用输入框中用户填写的值，否则自动生成
+                var noEl   = document.getElementById('veVoucherNo');
+                var noVal  = (noEl ? noEl.value : '').replace(/\D/g, '');
+                if (!noVal) noVal = veGenerateNextId();
+                while (noVal.length < 4) noVal = '0' + noVal;
+                var voucherId = noVal;
                 var totalDebit = 0;
                 var lines = window.veRows.map(function (r) {
                     totalDebit += r.debit;
-                    // 解析辅助核算值 "auxType|||auxCode|||auxName"
-                    var auxType = '', auxCode = '', auxName = '', auxDisplay = '';
-                    var auxVal = r.auxiliary || '';
-                    if (auxVal && auxVal.indexOf('|||') !== -1) {
-                        var parts = auxVal.split('|||');
-                        auxType = parts[0] || '';
-                        auxCode = parts[1] || '';
-                        auxName = parts[2] || '';
-                        auxDisplay = auxName || auxCode;
-                    } else if (auxVal && auxVal !== '无') {
-                        auxDisplay = auxVal;
-                    }
+                    // 规范化 auxiliary 为数组
+                    var auxArr = Array.isArray(r.auxiliary) ? r.auxiliary
+                        : (r.auxiliary && r.auxiliary !== '无' && r.auxiliary !== '' ? [r.auxiliary] : []);
+                    var auxType = '', auxCode = '', auxName = '';
+                    var auxDisplayArr = auxArr.filter(function(v) { return v && v !== '无'; }).map(function(v) {
+                        if (v.indexOf('|||') !== -1) {
+                            var p = v.split('|||');
+                            if (!auxType) { auxType = p[0]||''; auxCode = p[1]||''; auxName = p[2]||''; }
+                            return p[2] || p[1] || '';
+                        }
+                        return v;
+                    });
+                    var auxDisplay = auxDisplayArr.join(', ');
                     return {
                         summary: r.summary, subject: r.subject, account: r.subject,
                         auxiliary: auxDisplay, aux: auxDisplay,
@@ -707,7 +977,6 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var existing = JSON.parse(sessionStorage.getItem('ManualVouchers') || '[]');
                 existing.push(voucher);
                 sessionStorage.setItem('ManualVouchers', JSON.stringify(existing));
-                var noEl = document.getElementById('veVoucherNo');
                 if (noEl) noEl.value = voucherId;
                 return voucherId;
             };
