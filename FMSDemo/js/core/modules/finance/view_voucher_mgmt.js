@@ -940,9 +940,12 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var noVal  = (noEl ? noEl.value : '').replace(/\D/g, '');
                 if (!noVal) noVal = veGenerateNextId();
                 while (noVal.length < 4) noVal = '0' + noVal;
-                var voucherId = noVal;
+                var voucherId = word + '-' + noVal;   // 保留凭证字前缀，如"转-0006"
                 var totalDebit = 0;
-                var lines = window.veRows.map(function (r) {
+                // 只保存有实际内容的分录行（摘要/科目/金额任一非空）
+                var lines = window.veRows.filter(function(r) {
+                    return (r.summary && r.summary.trim()) || (r.subject && r.subject.trim()) || r.debit !== 0 || r.credit !== 0;
+                }).map(function (r) {
                     totalDebit += r.debit;
                     // 规范化 auxiliary 为数组
                     var auxArr = Array.isArray(r.auxiliary) ? r.auxiliary
@@ -2504,9 +2507,10 @@ ${vouchersHTML}
             const { code, name } = parseAccount(line.account || line.subject);
             const auxCode = line.auxCode || "";
             const auxName = line.auxName || "";
-            const aux = auxCode || auxName
-                ? [auxCode, auxName].filter(Boolean).join(" ")
-                : (line.aux || line.auxiliary || "-");
+            // 优先使用完整多选结果（保存时用 ', ' 拼接），降级到单条 auxCode+auxName
+            const aux = (line.aux || line.auxiliary)
+                || ([auxCode, auxName].filter(Boolean).join(" "))
+                || "-";
             const summary = line.summary || line.digest || v.summary || "-";
             const auditUser = v.auditUser || (["已审核", "已记账"].includes(v.status) ? "系统审核" : "-");
             const maker = v.user || "system";
