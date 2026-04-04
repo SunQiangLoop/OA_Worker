@@ -718,204 +718,235 @@ function loadContent(moduleCode, element = null) {
 
         contentHTML = `
         <style>
-            .ws { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; color:#1a2332; }
-
-            /* ---- 顶部标题行 ---- */
-            .ws-topbar { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #e8ecef; }
-            .ws-topbar__left { display:flex; align-items:baseline; gap:14px; }
-            .ws-topbar__title { font-size:20px; font-weight:700; color:#2c3e50; letter-spacing:-0.3px; }
-            .ws-topbar__meta { font-size:13px; color:#95a5a6; }
-            .ws-topbar__period { font-size:12px; color:#7f8c8d; background:#f0f4f8; border:1px solid #dde3ea; padding:3px 10px; border-radius:12px; }
-
-            /* ---- KPI 卡片行 ---- */
-            .ws-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
-            .ws-kpi-card { background:#fff; border:1px solid #e4e8ed; border-radius:8px; padding:16px 18px; border-left:4px solid transparent; }
-            .ws-kpi-label { font-size:11px; color:#95a5a6; margin-bottom:8px; letter-spacing:0.4px; text-transform:uppercase; }
-            .ws-kpi-value { font-size:22px; font-weight:700; color:#1a2332; line-height:1; margin-bottom:8px; font-variant-numeric:tabular-nums; }
-            .ws-kpi-value sup { font-size:12px; font-weight:400; color:#95a5a6; margin-right:2px; }
-            .ws-kpi-footer { font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:10px; }
-            .ws-kpi-footer--up   { background:#eafaf1; color:#1e8449; }
-            .ws-kpi-footer--down { background:#fdf0ee; color:#c0392b; }
-            .ws-kpi-footer--safe { background:#eaf3fb; color:#2471a3; }
-            .ws-kpi-footer--warn { background:#fef9e7; color:#d68910; }
-
-            /* ---- 主体两列 ---- */
-            .ws-body { display:flex; gap:16px; align-items:flex-start; }
-            .ws-nav-panel { flex:1; min-width:0; }
-            .ws-aside { width:278px; flex-shrink:0; }
-
-            /* ---- 流程图面板 ---- */
-            .ws-flow-panel { background:#fff; border:1px solid #e4e8ed; border-radius:8px; padding:16px 20px; margin-bottom:14px; }
-            .ws-flow-section-label { font-size:11px; font-weight:700; color:#95a5a6; margin-bottom:14px; display:flex; align-items:center; gap:7px; letter-spacing:0.6px; text-transform:uppercase; }
-            .ws-flow-section-label::before { content:''; display:inline-block; width:3px; height:11px; border-radius:2px; background:currentColor; flex-shrink:0; }
-            .ws-flow-row { display:flex; align-items:flex-start; flex-wrap:wrap; gap:0; }
-            .ws-flow-node { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; padding:7px 10px; border-radius:10px; transition:background 0.15s; min-width:62px; }
-            .ws-flow-node:hover:not(.ws-flow-node--gray) { background:#f0f7ff; }
-            .ws-flow-node:hover:not(.ws-flow-node--gray) .ws-flow-name { color:#2980b9; }
-            .ws-flow-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; flex-shrink:0; }
-            .ws-flow-name { font-size:11px; color:#4a5568; text-align:center; white-space:nowrap; font-weight:500; line-height:1.3; }
-            .ws-flow-conn { padding-top:30px; display:flex; align-items:center; width:30px; flex-shrink:0; }
-            .ws-flow-conn::before { content:''; flex:1; height:2px; background:#d5dce3; }
-            .ws-flow-conn::after { content:''; width:0; height:0; border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:6px solid #d5dce3; }
-            .ws-flow-node--gray { cursor:not-allowed; }
-            .ws-flow-node--gray .ws-flow-icon { background:#f2f3f5 !important; color:#c8ccd0 !important; }
-            .ws-flow-node--gray .ws-flow-name { color:#c8ccd0; }
-
-            /* ---- 右侧面板 ---- */
-            .ws-aside-card { background:#fff; border:1px solid #e4e8ed; border-radius:8px; overflow:hidden; margin-bottom:14px; }
-            .ws-aside-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #edf1f5; background:#f8fafb; }
-            .ws-aside-head__title { font-size:13px; font-weight:700; color:#2c3e50; }
-            .ws-aside-head__count { font-size:11px; color:#95a5a6; }
-
+            .fmd { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; color:#1a2332; }
+            /* 顶部标题行 */
+            .fmd-topbar { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #e8ecef; }
+            .fmd-topbar__title { font-size:20px; font-weight:700; color:#2c3e50; letter-spacing:-0.3px; }
+            .fmd-topbar__meta  { font-size:13px; color:#95a5a6; margin-left:12px; }
+            .fmd-topbar__period{ font-size:12px; color:#7f8c8d; background:#f0f4f8; border:1px solid #dde3ea; padding:3px 10px; border-radius:12px; }
+            /* KPI 卡片 */
+            .fmd-kpi-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+            .fmd-kpi-card { background:#fff; border:1px solid #e4e8ed; border-radius:12px; padding:20px 22px; position:relative; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+            .fmd-kpi-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; }
+            .fmd-kpi-card--blue::before  { background:#3b82f6; }
+            .fmd-kpi-card--red::before   { background:#e74c3c; }
+            .fmd-kpi-card--green::before { background:#10b981; }
+            .fmd-kpi-card--orange::before{ background:#f59e0b; }
+            .fmd-kpi-label { font-size:13px; color:#8a9bb0; margin-bottom:10px; }
+            .fmd-kpi-value { font-size:28px; font-weight:700; color:#1a2332; margin-bottom:10px; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+            .fmd-kpi-value .sym { font-size:17px; font-weight:500; margin-right:1px; }
+            .fmd-kpi-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; }
+            .fmd-kpi-badge--up   { background:#eafaf1; color:#1e8449; }
+            .fmd-kpi-badge--down { background:#fdf0ee; color:#c0392b; }
+            .fmd-kpi-badge--safe { background:#eaf3fb; color:#2471a3; }
+            .fmd-kpi-badge--warn { background:#fef9e7; color:#d68910; }
+            /* 主体布局 */
+            .fmd-body { display:flex; gap:14px; align-items:flex-start; }
+            .fmd-main { flex:1; min-width:0; }
+            .fmd-aside { width:272px; flex-shrink:0; }
+            /* 卡片通用 */
+            .fmd-section { background:#fff; border:1px solid #e4e8ed; border-radius:12px; padding:20px 22px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+            .fmd-section-title { font-size:15px; font-weight:700; color:#1a2332; margin-bottom:4px; }
+            .fmd-chart-ylab { font-size:12px; color:#8a9bb0; margin-bottom:10px; }
+            .fmd-legend { display:flex; gap:16px; align-items:center; justify-content:flex-end; }
+            .fmd-legend-item { display:flex; align-items:center; gap:5px; font-size:12px; color:#555; }
+            .fmd-legend-line { width:22px; height:2.5px; border-radius:2px; }
+            .fmd-legend-rect { width:12px; height:12px; border-radius:3px; }
+            /* 现金流量预测 */
+            .fmd-forecast-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+            .fmd-forecast-card { background:#f7f9fc; border-radius:10px; padding:16px 18px; }
+            .fmd-forecast-icon  { font-size:18px; margin-bottom:6px; }
+            .fmd-forecast-label { font-size:12px; color:#8a9bb0; margin-bottom:6px; }
+            .fmd-forecast-value { font-size:20px; font-weight:700; color:#1a2332; letter-spacing:-0.3px; }
+            .fmd-forecast-arr   { font-size:14px; margin-left:5px; }
+            .fmd-forecast-arr--up   { color:#1e8449; }
+            .fmd-forecast-arr--down { color:#c0392b; }
+            /* 右侧面板 */
+            .fmd-aside-card { background:#fff; border:1px solid #e4e8ed; border-radius:8px; overflow:hidden; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+            .fmd-aside-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #edf1f5; background:#f8fafb; }
+            .fmd-aside-head__title { font-size:13px; font-weight:700; color:#2c3e50; }
+            .fmd-aside-head__count { font-size:11px; color:#95a5a6; }
             /* 待办列表 */
-            .ws-todo-item { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; border-left:3px solid transparent; transition:background 0.14s; }
-            .ws-todo-item:hover { background:#f5f8fa; }
-            .ws-todo-item--red   { border-left-color:#e74c3c; }
-            .ws-todo-item--amber { border-left-color:#e67e22; }
-            .ws-todo-item--blue  { border-left-color:#3498db; }
-            .ws-todo-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-            .ws-todo-item--red   .ws-todo-dot { background:#e74c3c; }
-            .ws-todo-item--amber .ws-todo-dot { background:#e67e22; }
-            .ws-todo-item--blue  .ws-todo-dot { background:#3498db; }
-            .ws-todo-body { flex:1; min-width:0; }
-            .ws-todo-name { font-size:13px; font-weight:600; color:#2c3e50; margin-bottom:2px; }
-            .ws-todo-meta { font-size:11px; color:#95a5a6; }
-            .ws-todo-arrow { color:#dde3ea; font-size:12px; transition:color 0.14s; }
-            .ws-todo-item:hover .ws-todo-arrow { color:#3498db; }
-
+            .fmd-todo-item { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; border-left:3px solid transparent; transition:background 0.14s; }
+            .fmd-todo-item:hover { background:#f5f8fa; }
+            .fmd-todo-item--red   { border-left-color:#e74c3c; }
+            .fmd-todo-item--amber { border-left-color:#e67e22; }
+            .fmd-todo-item--blue  { border-left-color:#3498db; }
+            .fmd-todo-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+            .fmd-todo-item--red   .fmd-todo-dot { background:#e74c3c; }
+            .fmd-todo-item--amber .fmd-todo-dot { background:#e67e22; }
+            .fmd-todo-item--blue  .fmd-todo-dot { background:#3498db; }
+            .fmd-todo-body { flex:1; min-width:0; }
+            .fmd-todo-name { font-size:13px; font-weight:600; color:#2c3e50; margin-bottom:2px; }
+            .fmd-todo-meta { font-size:11px; color:#95a5a6; }
+            .fmd-todo-arrow { color:#dde3ea; font-size:12px; transition:color 0.14s; }
+            .fmd-todo-item:hover .fmd-todo-arrow { color:#3498db; }
             /* 账期进度 */
-            .ws-progress-list { padding:14px 16px; display:flex; flex-direction:column; gap:11px; }
-            .ws-prog-row { display:flex; align-items:center; gap:10px; }
-            .ws-prog-label { font-size:12px; color:#7f8c8d; width:60px; flex-shrink:0; }
-            .ws-prog-track { flex:1; height:5px; background:#edf1f5; border-radius:3px; overflow:hidden; }
-            .ws-prog-bar { height:100%; border-radius:3px; transition:width 0.5s ease; }
-            .ws-prog-val { font-size:12px; font-weight:600; color:#34495e; width:38px; text-align:right; font-variant-numeric:tabular-nums; }
+            .fmd-prog-list { padding:14px 16px; display:flex; flex-direction:column; gap:11px; }
+            .fmd-prog-row  { display:flex; align-items:center; gap:10px; }
+            .fmd-prog-label{ font-size:12px; color:#7f8c8d; width:60px; flex-shrink:0; }
+            .fmd-prog-track{ flex:1; height:5px; background:#edf1f5; border-radius:3px; overflow:hidden; }
+            .fmd-prog-bar  { height:100%; border-radius:3px; }
+            .fmd-prog-val  { font-size:12px; font-weight:600; color:#34495e; width:34px; text-align:right; }
         </style>
 
-        <div class="ws">
+        <div class="fmd">
 
             <!-- 顶部标题行 -->
-            <div class="ws-topbar">
-                <div class="ws-topbar__left">
-                    <span class="ws-topbar__title">财务工作台</span>
-                    <span class="ws-topbar__meta">${dateStr} · ${weekStr}</span>
+            <div class="fmd-topbar">
+                <div style="display:flex;align-items:baseline;gap:12px;">
+                    <span class="fmd-topbar__title">财务工作台</span>
+                    <span class="fmd-topbar__meta">${dateStr} · ${weekStr}</span>
                 </div>
-                <span class="ws-topbar__period">${now.getFullYear()} 财年 · Q${quarter} · 第 ${weekNum} 周</span>
+                <span class="fmd-topbar__period">${now.getFullYear()} 财年 · Q${quarter} · 第 ${weekNum} 周</span>
             </div>
 
-            <!-- KPI 指标卡 -->
-            <div class="ws-kpi-row">
-                <div class="ws-kpi-card" style="border-left-color:#3b82f6">
-                    <div class="ws-kpi-label">本月预估营收</div>
-                    <div class="ws-kpi-value"><sup>¥</sup>1,285,400</div>
-                    <span class="ws-kpi-footer ws-kpi-footer--up">▲ 12.5% 较上月</span>
+            <!-- KPI 卡片 -->
+            <div class="fmd-kpi-row">
+                <div class="fmd-kpi-card fmd-kpi-card--blue">
+                    <div class="fmd-kpi-label">本月预估营收</div>
+                    <div class="fmd-kpi-value"><span class="sym">¥</span>1,285,400</div>
+                    <span class="fmd-kpi-badge fmd-kpi-badge--up">▲ 12.5% 较上月</span>
                 </div>
-                <div class="ws-kpi-card" style="border-left-color:#e74c3c">
-                    <div class="ws-kpi-label">待付运费总额</div>
-                    <div class="ws-kpi-value"><sup>¥</sup>432,100</div>
-                    <span class="ws-kpi-footer ws-kpi-footer--down">▼ 5.2% 较上月</span>
+                <div class="fmd-kpi-card fmd-kpi-card--red">
+                    <div class="fmd-kpi-label">待付运费总额</div>
+                    <div class="fmd-kpi-value"><span class="sym">¥</span>432,100</div>
+                    <span class="fmd-kpi-badge fmd-kpi-badge--down">▼ 5.2% 较上月</span>
                 </div>
-                <div class="ws-kpi-card" style="border-left-color:#10b981">
-                    <div class="ws-kpi-label">当前资金池余额</div>
-                    <div class="ws-kpi-value"><sup>¥</sup>892,000</div>
-                    <span class="ws-kpi-footer ws-kpi-footer--safe">◆ 安全范围内</span>
-                </div>
-                <div class="ws-kpi-card" style="border-left-color:#f59e0b">
-                    <div class="ws-kpi-label">本月待处理单据</div>
-                    <div class="ws-kpi-value">128 <sup>笔</sup></div>
-                    <span class="ws-kpi-footer ws-kpi-footer--warn">⚡ 需关注</span>
+                <div class="fmd-kpi-card fmd-kpi-card--green">
+                    <div class="fmd-kpi-label">当前资金池余额</div>
+                    <div class="fmd-kpi-value"><span class="sym">¥</span>892,000</div>
+                    <span class="fmd-kpi-badge fmd-kpi-badge--safe">◆ 安全范围内</span>
                 </div>
             </div>
 
             <!-- 主体 -->
-            <div class="ws-body">
+            <div class="fmd-body">
 
-                <!-- 左侧流程图 -->
-                <div class="ws-nav-panel">
+                <!-- 左侧：图表区 -->
+                <div class="fmd-main">
 
+                    <!-- 资金流量趋势 -->
+                    <div class="fmd-section">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+                            <div>
+                                <div class="fmd-section-title">资金流量趋势</div>
+                                <div class="fmd-chart-ylab">金额（¥）</div>
+                            </div>
+                            <div class="fmd-legend">
+                                <div class="fmd-legend-item"><div class="fmd-legend-line" style="background:#4a90d9;"></div> 收入</div>
+                                <div class="fmd-legend-item"><div class="fmd-legend-line" style="background:#8b2020;"></div> 支出/A/P</div>
+                                <div class="fmd-legend-item"><div class="fmd-legend-rect" style="background:#4caf82;opacity:0.85;"></div> 现款金池余额</div>
+                            </div>
+                        </div>
+                        <div style="position:relative;width:100%;">
+                            <canvas id="fmdCashChart" style="display:block;width:100%;"></canvas>
+                        </div>
+                    </div>
 
+                    <!-- 现金流量预测 -->
+                    <div class="fmd-section">
+                        <div class="fmd-section-title">现金流量预测</div>
+                        <div class="fmd-forecast-row">
+                            <div class="fmd-forecast-card">
+                                <div class="fmd-forecast-icon">💰</div>
+                                <div class="fmd-forecast-label">预计本月入账</div>
+                                <div class="fmd-forecast-value">¥ 150,000<span class="fmd-forecast-arr fmd-forecast-arr--up">↑</span></div>
+                            </div>
+                            <div class="fmd-forecast-card">
+                                <div class="fmd-forecast-icon">💸</div>
+                                <div class="fmd-forecast-label">预计本月支出</div>
+                                <div class="fmd-forecast-value">¥ 90,000<span class="fmd-forecast-arr fmd-forecast-arr--down">↓</span></div>
+                            </div>
+                            <div class="fmd-forecast-card">
+                                <div class="fmd-forecast-icon">💵</div>
+                                <div class="fmd-forecast-label">预计本月末余额</div>
+                                <div class="fmd-forecast-value">¥ 952,000<span class="fmd-forecast-arr fmd-forecast-arr--down">↓</span></div>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
                 <!-- 右侧面板 -->
-                <div class="ws-aside">
+                <div class="fmd-aside">
 
                     <!-- 今日待办 -->
-                    <div class="ws-aside-card">
-                        <div class="ws-aside-head">
-                            <span class="ws-aside-head__title">今日待办</span>
-                            <span class="ws-aside-head__count">5 项</span>
+                    <div class="fmd-aside-card">
+                        <div class="fmd-aside-head">
+                            <span class="fmd-aside-head__title">今日待办</span>
+                            <span class="fmd-aside-head__count">5 项</span>
                         </div>
                         <div>
-                            <div class="ws-todo-item ws-todo-item--red" onclick="loadContent('FinanceVoucherAudit')">
-                                <div class="ws-todo-dot"></div>
-                                <div class="ws-todo-body">
-                                    <div class="ws-todo-name">凭证待审核</div>
-                                    <div class="ws-todo-meta">7 笔 · 最早提交 08:12</div>
+                            <div class="fmd-todo-item fmd-todo-item--red" onclick="loadContent('FinanceVoucherAudit')">
+                                <div class="fmd-todo-dot"></div>
+                                <div class="fmd-todo-body">
+                                    <div class="fmd-todo-name">凭证待审核</div>
+                                    <div class="fmd-todo-meta">7 笔 · 最早提交 08:12</div>
                                 </div>
-                                <span class="ws-todo-arrow">›</span>
+                                <span class="fmd-todo-arrow">›</span>
                             </div>
-                            <div class="ws-todo-item ws-todo-item--amber" onclick="loadContent('PeriodEndClose')">
-                                <div class="ws-todo-dot"></div>
-                                <div class="ws-todo-body">
-                                    <div class="ws-todo-name">2月月末结账</div>
-                                    <div class="ws-todo-meta">试算差额 ¥320 · 未结清</div>
+                            <div class="fmd-todo-item fmd-todo-item--amber" onclick="loadContent('PeriodEndClose')">
+                                <div class="fmd-todo-dot"></div>
+                                <div class="fmd-todo-body">
+                                    <div class="fmd-todo-name">2月月末结账</div>
+                                    <div class="fmd-todo-meta">试算差额 ¥320 · 未结清</div>
                                 </div>
-                                <span class="ws-todo-arrow">›</span>
+                                <span class="fmd-todo-arrow">›</span>
                             </div>
-                            <div class="ws-todo-item ws-todo-item--amber" onclick="loadContent('ReconCustomer')">
-                                <div class="ws-todo-dot"></div>
-                                <div class="ws-todo-body">
-                                    <div class="ws-todo-name">客户月度对账</div>
-                                    <div class="ws-todo-meta">3月对账单 · 截止 3/10</div>
+                            <div class="fmd-todo-item fmd-todo-item--amber" onclick="loadContent('ReconCustomer')">
+                                <div class="fmd-todo-dot"></div>
+                                <div class="fmd-todo-body">
+                                    <div class="fmd-todo-name">客户月度对账</div>
+                                    <div class="fmd-todo-meta">3月对账单 · 截止 3/10</div>
                                 </div>
-                                <span class="ws-todo-arrow">›</span>
+                                <span class="fmd-todo-arrow">›</span>
                             </div>
-                            <div class="ws-todo-item ws-todo-item--blue" onclick="loadContent('APTrunkBatchSettlement')">
-                                <div class="ws-todo-dot"></div>
-                                <div class="ws-todo-body">
-                                    <div class="ws-todo-name">干线批次结算</div>
-                                    <div class="ws-todo-meta">2 笔 · 2月份未结清</div>
+                            <div class="fmd-todo-item fmd-todo-item--blue" onclick="loadContent('APTrunkBatchSettlement')">
+                                <div class="fmd-todo-dot"></div>
+                                <div class="fmd-todo-body">
+                                    <div class="fmd-todo-name">干线批次结算</div>
+                                    <div class="fmd-todo-meta">2 笔 · 2月份未结清</div>
                                 </div>
-                                <span class="ws-todo-arrow">›</span>
+                                <span class="fmd-todo-arrow">›</span>
                             </div>
-                            <div class="ws-todo-item ws-todo-item--blue" onclick="loadContent('ExpenseDaily')">
-                                <div class="ws-todo-dot"></div>
-                                <div class="ws-todo-body">
-                                    <div class="ws-todo-name">费用报销审批</div>
-                                    <div class="ws-todo-meta">3 笔待批 · 合计 ¥4,800</div>
+                            <div class="fmd-todo-item fmd-todo-item--blue" onclick="loadContent('ExpenseDaily')">
+                                <div class="fmd-todo-dot"></div>
+                                <div class="fmd-todo-body">
+                                    <div class="fmd-todo-name">费用报销审批</div>
+                                    <div class="fmd-todo-meta">3 笔待批 · 合计 ¥4,800</div>
                                 </div>
-                                <span class="ws-todo-arrow">›</span>
+                                <span class="fmd-todo-arrow">›</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 2月账期进度 -->
-                    <div class="ws-aside-card">
-                        <div class="ws-aside-head">
-                            <span class="ws-aside-head__title">2月账期进度</span>
-                            <span class="ws-aside-head__count">结账中</span>
+                    <div class="fmd-aside-card">
+                        <div class="fmd-aside-head">
+                            <span class="fmd-aside-head__title">2月账期进度</span>
+                            <span class="fmd-aside-head__count">结账中</span>
                         </div>
-                        <div class="ws-progress-list">
-                            <div class="ws-prog-row">
-                                <span class="ws-prog-label">应收确认</span>
-                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:82%;background:#3498db"></div></div>
-                                <span class="ws-prog-val">82%</span>
+                        <div class="fmd-prog-list">
+                            <div class="fmd-prog-row">
+                                <span class="fmd-prog-label">应收确认</span>
+                                <div class="fmd-prog-track"><div class="fmd-prog-bar" style="width:82%;background:#3498db"></div></div>
+                                <span class="fmd-prog-val">82%</span>
                             </div>
-                            <div class="ws-prog-row">
-                                <span class="ws-prog-label">应付结算</span>
-                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:67%;background:#8e44ad"></div></div>
-                                <span class="ws-prog-val">67%</span>
+                            <div class="fmd-prog-row">
+                                <span class="fmd-prog-label">应付结算</span>
+                                <div class="fmd-prog-track"><div class="fmd-prog-bar" style="width:67%;background:#8e44ad"></div></div>
+                                <span class="fmd-prog-val">67%</span>
                             </div>
-                            <div class="ws-prog-row">
-                                <span class="ws-prog-label">凭证完成</span>
-                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:91%;background:#27ae60"></div></div>
-                                <span class="ws-prog-val">91%</span>
+                            <div class="fmd-prog-row">
+                                <span class="fmd-prog-label">凭证完成</span>
+                                <div class="fmd-prog-track"><div class="fmd-prog-bar" style="width:91%;background:#27ae60"></div></div>
+                                <span class="fmd-prog-val">91%</span>
                             </div>
-                            <div class="ws-prog-row">
-                                <span class="ws-prog-label">结账进度</span>
-                                <div class="ws-prog-track"><div class="ws-prog-bar" style="width:45%;background:#e67e22"></div></div>
-                                <span class="ws-prog-val">45%</span>
+                            <div class="fmd-prog-row">
+                                <span class="fmd-prog-label">结账进度</span>
+                                <div class="fmd-prog-track"><div class="fmd-prog-bar" style="width:45%;background:#e67e22"></div></div>
+                                <span class="fmd-prog-val">45%</span>
                             </div>
                         </div>
                     </div>
@@ -9398,23 +9429,47 @@ function loadContent(moduleCode, element = null) {
             </tr>`).join('');
 
         const allPermissions = [
-            { module: '凭证管理', perms: [
-                {code:'voucher.query',label:'凭证查询'},{code:'voucher.create',label:'凭证新增'},{code:'voucher.edit',label:'凭证修改'},
-                {code:'voucher.delete',label:'凭证删除'},{code:'voucher.audit',label:'凭证审核'},{code:'voucher.post',label:'凭证记账'},
-                {code:'voucher.void',label:'凭证作废'},{code:'voucher.unvoid',label:'取消作废'},{code:'voucher.mark_error',label:'凭证标错'},
-                {code:'voucher.unmark_error',label:'取消标错'},{code:'voucher.cashier_sign',label:'出纳签字'},{code:'voucher.cashier_unsign',label:'取消出纳签字'},
-                {code:'voucher.column_setting',label:'栏目设置'},{code:'voucher.export',label:'凭证导出'},{code:'voucher.print',label:'凭证打印'},
-                {code:'voucher.save_draft',label:'保存草稿'},{code:'voucher.submit',label:'提交凭证'},{code:'voucher.use_template',label:'引入常用凭证'}
+            { module: '凭证录入', perms: [
+                {code:'voucher.create',label:'新增凭证'},{code:'voucher.edit',label:'修改凭证'},
+                {code:'voucher.delete',label:'删除凭证'},{code:'voucher.save_draft',label:'保存草稿'},
+                {code:'voucher.use_template',label:'引入常用凭证'},{code:'voucher.print',label:'打印凭证'}
+            ]},
+            { module: '凭证审核', perms: [
+                {code:'voucher.query',label:'凭证查询'},{code:'voucher.audit',label:'审核凭证'},
+                {code:'voucher.unaudi',label:'取消审核'},{code:'voucher.post',label:'凭证记账'},
+                {code:'voucher.unpost',label:'取消记账'},{code:'voucher.void',label:'凭证作废'},
+                {code:'voucher.unvoid',label:'取消作废'},{code:'voucher.mark_error',label:'标注错误'},
+                {code:'voucher.unmark_error',label:'取消标错'},{code:'voucher.cashier_sign',label:'出纳签字'},
+                {code:'voucher.cashier_unsign',label:'取消出纳签字'},{code:'voucher.export',label:'导出凭证'},
+                {code:'voucher.column_setting',label:'栏目设置'}
+            ]},
+            { module: '账簿报表', perms: [
+                {code:'report.balance.query',label:'科目余额表查询'},{code:'report.detail.query',label:'科目明细账查询'},
+                {code:'report.summary.query',label:'科目汇总表查询'},{code:'report.ledger.query',label:'总账查询'},
+                {code:'report.aux.query',label:'辅助核算表查询'},{code:'report.export',label:'报表导出'},
+                {code:'report.print',label:'报表打印'}
+            ]},
+            { module: '期末结账', perms: [
+                {code:'closing.tax.accrue',label:'计提税金'},{code:'closing.profit.transfer',label:'结转损益'},
+                {code:'closing.month.close',label:'月末结账'},{code:'closing.month.unclose',label:'反结账'}
+            ]},
+            { module: '往来单位', perms: [
+                {code:'partner.query',label:'往来单位查询'},{code:'partner.create',label:'新增往来单位'},
+                {code:'partner.edit',label:'修改往来单位'},{code:'partner.delete',label:'删除往来单位'},
+                {code:'partner.export',label:'导出往来单位'}
             ]},
             { module: '权限管理', perms: [
-                {code:'permission.role.query',label:'角色查询'},{code:'permission.role.add',label:'角色新增'},{code:'permission.role.edit',label:'角色修改'},
-                {code:'permission.role.delete',label:'角色删除'},{code:'permission.role.assign',label:'配置权限'},{code:'permission.user.query',label:'用户查询'},
-                {code:'permission.user.add',label:'用户新增'},{code:'permission.user.edit',label:'用户修改'},{code:'permission.user.assign_role',label:'分配角色'},
-                {code:'permission.user.toggle_status',label:'启用/禁用用户'}
+                {code:'permission.role.query',label:'角色查询'},{code:'permission.role.add',label:'角色新增'},
+                {code:'permission.role.edit',label:'角色修改'},{code:'permission.role.delete',label:'角色删除'},
+                {code:'permission.role.assign',label:'配置权限'},{code:'permission.user.query',label:'用户查询'},
+                {code:'permission.user.add',label:'用户新增'},{code:'permission.user.edit',label:'用户修改'},
+                {code:'permission.user.assign_role',label:'分配角色'},{code:'permission.user.toggle_status',label:'启用/禁用用户'}
             ]},
             { module: '系统管理', perms: [
                 {code:'system.subject.manage',label:'科目设置'},{code:'system.summary.manage',label:'摘要设置'},
-                {code:'system.voucher_prefix.manage',label:'凭证字设置'},{code:'system.log.query',label:'系统日志查看'}
+                {code:'system.voucher_prefix.manage',label:'凭证字设置'},{code:'system.aux.manage',label:'辅助核算设置'},
+                {code:'system.params.manage',label:'基础参数设置'},{code:'system.company.manage',label:'帐套管理'},
+                {code:'system.log.query',label:'系统日志查看'}
             ]}
         ];
 
@@ -9428,7 +9483,7 @@ function loadContent(moduleCode, element = null) {
                     ${group.perms.map(p => `
                         <div style="display:flex;align-items:center;padding:3px 0;">
                             <input type="checkbox" class="perm-child-chk" data-code="${p.code}" style="margin-right:8px;cursor:pointer;">
-                            <span style="font-size:13px;color:#666;">${p.label} (${p.code})</span>
+                            <span style="font-size:13px;color:#666;">${p.label}</span>
                         </div>`).join('')}
                 </div>
             </div>`).join('');
@@ -14380,6 +14435,218 @@ function loadContent(moduleCode, element = null) {
 
     contentArea.innerHTML = contentHTML;
 
+    // Post-init: Dashboard — 动画折线图
+    if (moduleCode === "Dashboard") {
+        // 用 rAF 等待浏览器完成首次布局，确保 offsetWidth 可用
+        function _fmdInitChart() {
+            var canvas = document.getElementById('fmdCashChart');
+            if (!canvas) return;
+            var W = canvas.parentElement ? canvas.parentElement.offsetWidth : 0;
+            if (W < 10) { requestAnimationFrame(_fmdInitChart); return; }
+            _fmdDrawChart(canvas, W);
+        }
+        function _fmdDrawChart(canvas, W) {
+            var dpr = window.devicePixelRatio || 1;
+            var H = 290;
+            canvas.width  = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+            canvas.style.height = H + 'px';
+            var ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            var PAD = { top: 20, right: 96, bottom: 36, left: 82 };
+            var cW = W - PAD.left - PAD.right;
+            var cH = H - PAD.top  - PAD.bottom;
+
+            var xLabels = ['12月', '12月中', '12月末', '1月', '1月中', '2月初', '2月16日', '2月末'];
+            var yGrids  = [
+                { v: 1200000, l: '¥ 1,200,000' },
+                { v:  700000, l: '¥ 700,000' },
+                { v:  500000, l: '¥ 500,000' },
+                { v:  300000, l: '¥ 300,000' },
+                { v:       0, l: '¥ 0' }
+            ];
+            var YMAX = 1260000, YMIN = 0;
+
+            // 三条线的原始数据点
+            var dIncome   = [500000, 580000, 565000, 445000, 490000, 515000, 528000, 545000];
+            var dExpense  = [275000, 320000, 385000, 368000, 352000, 362000, 357000, 352000];
+            var dCash     = [385000, 478000, 568000, 648000, 892000, 855000, 872000, 892000];
+
+            // 标注点：[series, idx, label, offsetX, offsetY]
+            var annotations = [
+                { s: dCash,    i: 4, lbl: '¥ 892,000', ox: 6,  oy: -14 },
+                { s: dExpense, i: 4, lbl: '¥ 90,000',  ox: 6,  oy:  12 },
+                { s: dCash,    i: 7, lbl: '¥ 892,000', ox: 6,  oy: -12 },
+                { s: dIncome,  i: 7, lbl: '¥ 150,000', ox: 6,  oy:  -2 },
+                { s: dExpense, i: 7, lbl: '¥ 90,000',  ox: 6,  oy:  14 }
+            ];
+
+            function toX(i) { return PAD.left + (i / (xLabels.length - 1)) * cW; }
+            function toY(v) { return PAD.top  + cH - ((v - YMIN) / (YMAX - YMIN)) * cH; }
+
+            function getPts(data) {
+                return data.map(function(v, i){ return { x: toX(i), y: toY(v) }; });
+            }
+
+            // Catmull-Rom 平滑曲线路径
+            function buildPath(pts) {
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (var i = 0; i < pts.length - 1; i++) {
+                    var p0 = pts[Math.max(0, i - 1)];
+                    var p1 = pts[i];
+                    var p2 = pts[i + 1];
+                    var p3 = pts[Math.min(pts.length - 1, i + 2)];
+                    ctx.bezierCurveTo(
+                        p1.x + (p2.x - p0.x) / 6, p1.y + (p2.y - p0.y) / 6,
+                        p2.x - (p3.x - p1.x) / 6, p2.y - (p3.y - p1.y) / 6,
+                        p2.x, p2.y
+                    );
+                }
+            }
+
+            function drawFrame(progress) {
+                ctx.clearRect(0, 0, W, H);
+
+                // —— Y 轴标签 + 网格虚线 ——
+                ctx.font = '11px -apple-system,PingFang SC,Microsoft YaHei,sans-serif';
+                ctx.textAlign = 'right';
+                yGrids.forEach(function(g) {
+                    var y = toY(g.v);
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 5]);
+                    ctx.strokeStyle = '#dce4ec';
+                    ctx.lineWidth   = 1;
+                    ctx.moveTo(PAD.left, y);
+                    ctx.lineTo(PAD.left + cW, y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#9aacbc';
+                    ctx.fillText(g.l, PAD.left - 6, y + 4);
+                });
+
+                // —— X 轴标签 ——
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#9aacbc';
+                xLabels.forEach(function(lbl, i) {
+                    ctx.fillText(lbl, toX(i), H - 6);
+                });
+
+                // —— 裁剪区域：按进度从左到右展开 ——
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, PAD.left + cW * progress + 2, H);
+                ctx.clip();
+
+                var ptsCash   = getPts(dCash);
+                var ptsIncome = getPts(dIncome);
+                var ptsExp    = getPts(dExpense);
+
+                // 绿色填充（现款金池余额）
+                var gGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+                gGrad.addColorStop(0,   'rgba(76,175,130,0.42)');
+                gGrad.addColorStop(0.7, 'rgba(76,175,130,0.10)');
+                gGrad.addColorStop(1,   'rgba(76,175,130,0.02)');
+                ctx.beginPath();
+                buildPath(ptsCash);
+                ctx.lineTo(PAD.left + cW, PAD.top + cH);
+                ctx.lineTo(PAD.left, PAD.top + cH);
+                ctx.closePath();
+                ctx.fillStyle = gGrad;
+                ctx.fill();
+
+                // 蓝色填充（收入）
+                var bGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+                bGrad.addColorStop(0,   'rgba(74,144,217,0.30)');
+                bGrad.addColorStop(0.7, 'rgba(74,144,217,0.07)');
+                bGrad.addColorStop(1,   'rgba(74,144,217,0.01)');
+                ctx.beginPath();
+                buildPath(ptsIncome);
+                ctx.lineTo(PAD.left + cW, PAD.top + cH);
+                ctx.lineTo(PAD.left, PAD.top + cH);
+                ctx.closePath();
+                ctx.fillStyle = bGrad;
+                ctx.fill();
+
+                // 绿线
+                ctx.beginPath();
+                buildPath(ptsCash);
+                ctx.strokeStyle = '#4caf82';
+                ctx.lineWidth   = 2.5;
+                ctx.stroke();
+
+                // 蓝线
+                ctx.beginPath();
+                buildPath(ptsIncome);
+                ctx.strokeStyle = '#4a90d9';
+                ctx.lineWidth   = 2.5;
+                ctx.stroke();
+
+                // 深红线
+                ctx.beginPath();
+                buildPath(ptsExp);
+                ctx.strokeStyle = '#8b2020';
+                ctx.lineWidth   = 2.5;
+                ctx.stroke();
+
+                ctx.restore();
+
+                // —— 动画完成后绘制标注点和标签 ——
+                if (progress >= 0.99) {
+                    var dotCfg = [
+                        { pts: ptsCash,   i: 4, color: '#4caf82' },
+                        { pts: ptsExp,    i: 4, color: '#8b2020' },
+                        { pts: ptsCash,   i: 7, color: '#4caf82' },
+                        { pts: ptsIncome, i: 7, color: '#4a90d9' },
+                        { pts: ptsExp,    i: 7, color: '#8b2020' }
+                    ];
+                    dotCfg.forEach(function(d) {
+                        var pt = d.pts[d.i];
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff';
+                        ctx.fill();
+                        ctx.strokeStyle = d.color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    });
+
+                    // 标签文字
+                    ctx.font = 'bold 11px -apple-system,PingFang SC,Microsoft YaHei,sans-serif';
+                    annotations.forEach(function(a, idx) {
+                        var pts2 = getPts(a.s);
+                        var pt   = pts2[a.i];
+                        var tx   = pt.x + a.ox;
+                        var ty   = pt.y + a.oy;
+                        var textW = ctx.measureText(a.lbl).width + 10;
+                        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                        ctx.beginPath();
+                        ctx.roundRect
+                            ? ctx.roundRect(tx - 2, ty - 13, textW, 17, 3)
+                            : ctx.rect(tx - 2, ty - 13, textW, 17);
+                        ctx.fill();
+                        ctx.fillStyle = '#2c3e50';
+                        ctx.fillText(a.lbl, tx + 3, ty);
+                    });
+                }
+            }
+
+            // —— 动画驱动 ——
+            var startTime = null;
+            var DURATION  = 1200; // ms
+            function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+            function animate(ts) {
+                if (!startTime) startTime = ts;
+                var elapsed  = ts - startTime;
+                var progress = Math.min(1, elapsed / DURATION);
+                drawFrame(ease(progress));
+                if (progress < 1) requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(_fmdInitChart);
+    }
 
     if (moduleCode === "ExpenseDaily") {
         setTimeout(() => {
