@@ -1968,7 +1968,6 @@ function loadContent(moduleCode, element = null) {
         const fmtZ = n => (n||0).toLocaleString('en-US', { minimumFractionDigits: 2 });
 
         let rows = '';
-        let isFirst = true;
         const tot = { oD:0, oC:0, pD:0, pC:0, yD:0, yC:0, eD:0, eC:0 };
 
         allCodes.forEach(code => {
@@ -2002,15 +2001,11 @@ function loadContent(moduleCode, element = null) {
             tot.yD += yD;       tot.yC += yC;
             tot.eD += endBalD;  tot.eC += endBalC;
 
-            const rowBg = isFirst ? 'background:#fffff0;' : '';
-            const arrow = isFirst ? '<span style="margin-right:3px;color:#333;">▶</span>' : '';
-            isFirst = false;
-
-            rows += `<tr style="${rowBg}">
-                <td style="font-family:monospace;font-size:13px;padding-left:8px; cursor:pointer; color:#1890ff;" 
-                    onclick="if(window.openSubjectDetail) window.openSubjectDetail('${code}', '${name.replace(/'/g, "\\'")}'); event.stopPropagation();" 
+            rows += `<tr>
+                <td style="font-family:monospace;font-size:13px;padding-left:8px; cursor:pointer; color:#1890ff;"
+                    onclick="if(window.openSubjectDetail) window.openSubjectDetail('${code}', '${name.replace(/'/g, "\\'")}'); event.stopPropagation();"
                     title="点击查看明细账">
-                    ${arrow}${code}
+                    ${code}
                 </td>
                 <td style="cursor:pointer; color:#1890ff;" 
                     onclick="if(window.openSubjectDetail) window.openSubjectDetail('${code}', '${name.replace(/'/g, "\\'")}'); event.stopPropagation();"
@@ -2056,17 +2051,17 @@ function loadContent(moduleCode, element = null) {
 
             .sb-table-wrap { background:#fff; overflow:auto; max-height:720px; border-top:1px solid #e2e8f0; }
             .sb-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; color:#1f2937; }
-            .sb-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:10px 8px; text-align:center; font-weight:600; color:#475569; }
+            .sb-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:6px 8px; text-align:center; font-weight:600; color:#475569; font-size:12px; }
             .sb-table thead th:last-child { border-right:none; }
-            
-            .sb-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:10px 12px; white-space:nowrap; }
+
+            .sb-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:5px 10px; white-space:nowrap; font-size:13px; }
             .sb-table td:last-child { border-right:none; }
             .sb-table tbody tr:hover td { background:#f0f7ff !important; }
-            .sb-table tfoot td { position:sticky; bottom:0; background:#f8fafc; font-weight:700; color:#111827; border-top:2px solid #e2e8f0; padding:12px; }
-            
+            .sb-table tfoot td { position:sticky; bottom:0; background:#f8fafc; font-weight:700; color:#111827; border-top:2px solid #e2e8f0; padding:7px 10px; }
+
             .sb-col-code { font-family:monospace; font-size:13px; color:#3b82f6; cursor:pointer; font-weight:500; }
             .sb-col-name { color:#3b82f6; cursor:pointer; font-weight:500; }
-            .sb-num { text-align:right; font-variant-numeric:tabular-nums; min-width:110px; }
+            .sb-num { text-align:right; font-variant-numeric:tabular-nums; min-width:88px; }
             .sb-group-hdr { background:#f1f5f9; }
         </style>
 
@@ -11427,12 +11422,6 @@ function loadContent(moduleCode, element = null) {
             });
 
             runBal = initialBal;
-            tableRows += `<tr>
-                <td style="text-align:center; color:#999;">${rowIndex++}</td>
-                <td></td><td></td><td>期初余额</td><td></td><td></td>
-                <td style="text-align:center;">${runBal === 0 ? "平" : defaultDir}</td>
-                <td style="text-align:right;">${fmtBal(runBal)}</td>
-            </tr>`;
 
             const monthsInRange = allPeriods.filter(p => p >= sdPF && p <= sdPT);
             let ytdDebit = ytdDebitBefore;
@@ -11523,19 +11512,19 @@ function loadContent(moduleCode, element = null) {
 
                             .ledger-table-wrap { background:#fff; overflow:auto; max-height:720px; border-top:1px solid #e2e8f0; }
                             .ledger-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; color:#1f2937; table-layout:fixed; }
-                            .ledger-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:12px 8px; text-align:center; font-weight:600; color:#475569; }
+                            .ledger-table thead th { position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0; padding:6px 8px; text-align:center; font-weight:600; color:#475569; font-size:12px; }
                             .ledger-table thead th:last-child { border-right:none; }
 
-                            .ledger-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:10px 8px; height:40px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:#fff; }
+                            .ledger-table td { border-bottom:1px solid #eef2f7; border-right:1px solid #eef2f7; padding:4px 8px; height:30px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:#fff; font-size:13px; }
                             .ledger-table td:last-child { border-right:none; }
                             .ledger-table tr:hover td { background:#f8fafc; }
 
-                            .ledger-row-idx { text-align:center; color:#94a3b8; width:50px; }
-                            .ledger-row-date { text-align:center; width:110px; }
-                            .ledger-row-vno { text-align:center; width:100px; color:#3b82f6; cursor:pointer; }
+                            .ledger-row-idx { text-align:center; color:#94a3b8; width:40px; }
+                            .ledger-row-date { text-align:center; width:95px; }
+                            .ledger-row-vno { text-align:center; width:90px; color:#3b82f6; cursor:pointer; }
                             .ledger-row-summary { text-align:left; }
-                            .ledger-row-num { text-align:right; width:140px; font-variant-numeric:tabular-nums; }
-                            .ledger-row-dir { text-align:center; width:60px; }
+                            .ledger-row-num { text-align:right; width:110px; font-variant-numeric:tabular-nums; }
+                            .ledger-row-dir { text-align:center; width:50px; }
 
                             .row-month-total td { background:#e6f7ff !important; font-weight:500; }
                             .row-year-total td { background:#fff7e6 !important; font-weight:500; }
@@ -11554,9 +11543,11 @@ function loadContent(moduleCode, element = null) {
                             </div>
                             <div class="ledger-field">
                             <label>期间：</label>
-                            <span class="period-text">${periodLabel}</span>
+                            <select id="sd-pf-inline">${mkPOpts(sdPF)}</select>
+                            <span style="color:#cbd5e1;margin:0 4px;">至</span>
+                            <select id="sd-pt-inline">${mkPOpts(sdPT)}</select>
                             </div>
-                            <button class="ledger-btn-query" onclick="window.sdRepOpenFilter()">查询</button>
+                            <button class="ledger-btn-query" onclick="window.sdRepExecuteQuery()">查询</button>
                             </div>
 
                             <div class="ledger-table-wrap">
@@ -11580,23 +11571,6 @@ function loadContent(moduleCode, element = null) {
                             </div>
                             </div>
 
-                            <div id="sd-rep-filter-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
-                            <div style="background:#fff; padding:25px; border-radius:12px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
-                            <h3 style="margin-top:0; border-bottom:1px solid #f1f5f9; padding-bottom:12px; font-size:18px; font-weight:700; color:#111827;">查询条件</h3>
-                            <div style="margin-bottom:16px;">
-                            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:#475569;">开始期间</label>
-                            <select id="sd-pf-rep" style="width:100%; padding:8px 12px; border:1px solid #d7dde6; border-radius:6px; outline:none;">${mkPOpts(sdPF)}</select>
-                            </div>
-                            <div style="margin-bottom:24px;">
-                            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:#475569;">结束期间</label>
-                            <select id="sd-pt-rep" style="width:100%; padding:8px 12px; border:1px solid #d7dde6; border-radius:6px; outline:none;">${mkPOpts(sdPT)}</select>
-                            </div>
-                            <div style="display:flex; justify-content:flex-end; gap:12px;">
-                            <button onclick="document.getElementById('sd-rep-filter-modal').style.display='none'" style="padding:8px 20px; border:1px solid #d7dde6; background:#fff; color:#475569; border-radius:6px; cursor:pointer; font-size:14px; font-weight:500;">取消</button>
-                            <button onclick="window.sdRepExecuteQuery()" style="padding:8px 24px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600;">确定</button>
-                            </div>
-                            </div>
-                            </div>
                             `;
 
 
@@ -11606,12 +11580,9 @@ function loadContent(moduleCode, element = null) {
                 sessionStorage.setItem('CurrentSubjectCode', sel.value);
                 loadContent('AcctSubjectDetail');
             };
-            window.sdRepOpenFilter = function() {
-                document.getElementById('sd-rep-filter-modal').style.display = 'flex';
-            };
             window.sdRepExecuteQuery = function() {
-                sessionStorage.setItem('SDPeriodFrom', document.getElementById('sd-pf-rep').value);
-                sessionStorage.setItem('SDPeriodTo', document.getElementById('sd-pt-rep').value);
+                sessionStorage.setItem('SDPeriodFrom', document.getElementById('sd-pf-inline').value);
+                sessionStorage.setItem('SDPeriodTo',   document.getElementById('sd-pt-inline').value);
                 loadContent('AcctSubjectDetail');
             };
         }, 50);
