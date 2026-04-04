@@ -1691,8 +1691,7 @@ ${vouchersHTML}
         list.forEach(item => {
             if (!idSet.has(item.id)) return;
             item.cashierUser = currentUser;
-            item.bookkeeperUser = currentUser;
-            item.status = "已记账";
+            item.status = "已复核";
         });
         sessionStorage.setItem('ManualVouchers', JSON.stringify(list));
         window.closeCashierReviewModal();
@@ -2028,88 +2027,145 @@ ${vouchersHTML}
     window.openRelatedDocDrawer = function(trigger) {
         if (!trigger) return;
         const typeKey = trigger.dataset.docType || "";
-        const ids = (trigger.dataset.docIds || "")
-            .split(",")
-            .map((id) => id.trim())
-            .filter(Boolean);
+        const ids = (trigger.dataset.docIds || "").split(",").map(s => s.trim()).filter(Boolean);
         const voucherId = trigger.dataset.voucherId || "-";
-        const displayType = SOURCE_TYPE_LABELS[typeKey] || typeKey || "关联原单";
-        const waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
-        const vouchers = window.getManualVouchers
-            ? window.getManualVouchers()
-            : JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
-        const voucher = vouchers.find((item) => item.id === voucherId);
-        const summaryText = (voucher && (voucher.summary
-            || (voucher.lines && voucher.lines[0] && (voucher.lines[0].summary || voucher.lines[0].digest))
-            || "")) || "";
-        const summaryDriver = extractDriverFromSummary(summaryText);
-        const fallbackAmount = calcVoucherAmountFromLines(voucher);
-        const formatDocAmount = (value) => {
-            const num = parseFloat((value || "0").toString().replace(/,/g, ""));
-            if (!num) return "-";
-            return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        };
-        const rowsHtml = ids.length
-            ? ids.map((id) => {
-                const match = typeKey === "waybill"
-                    ? waybills.find((wb) => wb.id === id || wb.orderNo === id)
-                    : null;
-                const amount = match
-                    ? (match.totalAmount || match.freightAmount || match.amount || match.paidAmount)
-                    : fallbackAmount;
-                const driver = match
-                    ? (match.driver || match.driverName || match.driverInfo || "-")
-                    : (summaryDriver || "-");
-                return `
-                    <div class="source-doc-table__row">
-                        <span class="source-doc-table__id">${id}</span>
-                        <span class="source-doc-table__amount">${formatDocAmount(amount)}</span>
-                        <span class="source-doc-table__driver">${driver}</span>
-                    </div>
-                `;
-            }).join("")
-            : `<div class="source-doc-table__empty">暂无关联原单</div>`;
+        const displayType = SOURCE_TYPE_LABELS[typeKey] || typeKey || "关联单";
 
-        let drawer = document.getElementById("source-doc-drawer");
-        if (!drawer) {
-            drawer = document.createElement("div");
-            drawer.id = "source-doc-drawer";
-            drawer.className = "source-doc-drawer";
-            document.body.appendChild(drawer);
+        // ── 读取数据源 ──────────────────────────────────────────
+        const waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+        const settlements = JSON.parse(sessionStorage.getItem("SettlementRecords") || "[]");
+        const rcvList = JSON.parse(sessionStorage.getItem("ReceiptVouchers") || "[]");
+        const vouchers = window.getManualVouchers ? window.getManualVouchers()
+            : JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
+        const voucher = vouchers.find(item => item.id === voucherId);
+        const fallbackAmount = calcVoucherAmountFromLines(voucher);
+
+        const fmtAmt = (val) => {
+            const n = parseFloat((val || "0").toString().replace(/,/g, ""));
+            return isNaN(n) || n === 0 ? "-" : n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        // ── 收集明细行 ───────────────────────────────────────────
+        // 格式：[{no, date, route, amount, driver, status}]
+        let detailRows = [];
+
+        // 1. 对账单 SET-* / RCV-*：展开下属运单明细
+        const primaryId = ids[0] || "";
+        if (/^SET-/i.test(primaryId)) {
+            // 从 SettlementRecords 查找
+            const setRec = settlements.find(s => s.id === primaryId || s.settleNo === primaryId);
+            if (setRec && Array.isArray(setRec.details) && setRec.details.length) {
+                detailRows = setRec.details.map(d => ({
+                    no: d.waybillNo || d.id || "-",
+                    date: d.date || d.waybillDate || "-",
+                    route: d.route || d.destination || "-",
+                    amount: fmtAmt(d.amount || d.freightAmount || d.totalAmount),
+                    driver: d.driver || d.driverName || "-",
+                    status: d.status || "已结算"
+                }));
+            }
+            // 兜底：从 BizWaybills 中找 settlementId 匹配的
+            if (!detailRows.length) {
+                const matched = waybills.filter(wb =>
+                    wb.settlementId === primaryId || wb.settleNo === primaryId || wb.setId === primaryId
+                );
+                if (matched.length) {
+                    detailRows = matched.map(wb => ({
+                        no: wb.id || wb.orderNo || "-",
+                        date: wb.date || wb.shipDate || "-",
+                        route: (wb.origin || "") + (wb.destination ? " → " + wb.destination : ""),
+                        amount: fmtAmt(wb.totalAmount || wb.freightAmount || wb.amount),
+                        driver: wb.driver || wb.driverName || "-",
+                        status: wb.status || "-"
+                    }));
+                }
+            }
+        } else if (/^RCV-/i.test(primaryId)) {
+            const rcvRec = rcvList.find(r => r.id === primaryId);
+            if (rcvRec && Array.isArray(rcvRec.details) && rcvRec.details.length) {
+                detailRows = rcvRec.details.map(d => ({
+                    no: d.waybillNo || d.id || "-",
+                    date: d.date || "-",
+                    route: d.route || "-",
+                    amount: fmtAmt(d.amount || d.freightAmount),
+                    driver: d.driver || d.driverName || "-",
+                    status: d.status || "已收款"
+                }));
+            }
         }
-        drawer.innerHTML = `
-            <div class="source-doc-mask" onclick="closeRelatedDocDrawer()"></div>
-            <div class="source-doc-panel" role="dialog" aria-modal="true">
-                <div class="source-doc-panel__header">
+
+        // 2. 若仍无明细，直接展示 ids 列表（运单号直查）
+        if (!detailRows.length) {
+            detailRows = ids.map(id => {
+                const wb = waybills.find(w => w.id === id || w.orderNo === id);
+                return {
+                    no: id,
+                    date: wb ? (wb.date || wb.shipDate || "-") : "-",
+                    route: wb ? ((wb.origin || "") + (wb.destination ? " → " + wb.destination : "")) : "-",
+                    amount: fmtAmt(wb ? (wb.totalAmount || wb.freightAmount || wb.amount) : fallbackAmount),
+                    driver: wb ? (wb.driver || wb.driverName || "-") : "-",
+                    status: wb ? (wb.status || "-") : "-"
+                };
+            });
+        }
+
+        // ── 构建表格行 ────────────────────────────────────────────
+        const tbodyHtml = detailRows.length
+            ? detailRows.map((r, i) => `
+                <tr>
+                    <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+                    <td><a href="javascript:void(0)" style="color:#1d4ed8;text-decoration:none;">${r.no}</a></td>
+                    <td>${r.date}</td>
+                    <td>${r.route || "-"}</td>
+                    <td class="num">${r.amount}</td>
+                    <td>${r.driver}</td>
+                    <td>${r.status}</td>
+                </tr>`).join("")
+            : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">暂无关联明细</td></tr>`;
+
+        // ── 渲染居中弹窗 ──────────────────────────────────────────
+        let overlay = document.getElementById("sdoc-overlay");
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "sdoc-overlay";
+            overlay.className = "sdoc-overlay";
+            overlay.onclick = function(e) { if (e.target === overlay) window.closeRelatedDocDrawer(); };
+            document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = `
+            <div class="sdoc-box" role="dialog" aria-modal="true">
+                <div class="sdoc-hdr">
                     <div>
-                <div class="source-doc-panel__title">关联原单明细 (Associated Documents)</div>
-                <div class="source-doc-panel__sub">凭证号：${voucherId} · ${displayType}</div>
+                        <div class="sdoc-title">关联原单明细</div>
+                        <div class="sdoc-sub">凭证号：${voucherId} · ${displayType} · 共 ${detailRows.length} 条</div>
                     </div>
-                    <button class="source-doc-panel__close" onclick="closeRelatedDocDrawer()">关闭</button>
+                    <button class="sdoc-close" onclick="closeRelatedDocDrawer()">关闭</button>
                 </div>
-                <div class="source-doc-panel__body">
-                    <div class="source-doc-panel__section">
-                        <div class="source-doc-panel__label">原单清单</div>
-                        <div class="source-doc-table">
-                            <div class="source-doc-table__head">
-                                <span>原单号</span>
-                                <span class="source-doc-table__amount">金额</span>
-                                <span>相关人</span>
-                            </div>
-                            ${rowsHtml}
-                        </div>
-                    </div>
-                    <div class="source-doc-panel__hint">点击单号可跳转至对应业务单据详情（示意）。</div>
+                <div class="sdoc-body">
+                    <div class="sdoc-section-lbl">明细清单</div>
+                    <table class="sdoc-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">序号</th>
+                                <th>单号</th>
+                                <th style="width:90px;">日期</th>
+                                <th>线路/货物</th>
+                                <th class="num" style="width:100px;">金额</th>
+                                <th style="width:80px;">司机/相关人</th>
+                                <th style="width:70px;">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tbodyHtml}</tbody>
+                    </table>
+                    <div class="sdoc-hint">点击单号可跳转至对应业务单据详情（示意）。</div>
                 </div>
-            </div>
-        `;
-        requestAnimationFrame(() => drawer.classList.add("is-visible"));
+            </div>`;
+        overlay.classList.add("show");
     };
 
     window.closeRelatedDocDrawer = function() {
-        const drawer = document.getElementById("source-doc-drawer");
-        if (!drawer) return;
-        drawer.classList.remove("is-visible");
+        const el = document.getElementById("sdoc-overlay");
+        if (el) el.classList.remove("show");
     };
 
     const parseAccount = (text) => {
@@ -2318,16 +2374,20 @@ ${vouchersHTML}
             const status = normalized(v.status);
             if (!matchVoucherDocSearch(v)) return false;
             if (filter.tab === "pending") {
+                // 待审核
                 return status === "待审核";
             }
             if (filter.tab === "cashier") {
-                return (status === "已审核" || status === "已记账" || status === "已过账") && !v.cashierUser;
+                // 待出纳复核：新状态"待复核"，兼容旧数据（已审核且无cashierUser）
+                return status === "待复核" || (status === "已审核" && !v.cashierUser);
             }
             if (filter.tab === "post") {
-                return status === "已审核" && !!v.cashierUser;
+                // 待记账：新状态"已复核"/"待记账"，兼容旧数据（已审核且有cashierUser）
+                return status === "已复核" || status === "待记账" || (status === "已审核" && !!v.cashierUser);
             }
             if (filter.tab === "diff") {
-                return ["已驳回", "已冲销", "已作废"].includes(status);
+                // 差异凭证：已冲销、已作废
+                return ["已冲销", "已作废"].includes(status);
             }
             return true;
         });
@@ -2406,17 +2466,20 @@ ${vouchersHTML}
         if (!tbody || !pager) return;
 
         const renderStatus = (status) => {
-            const value = status || "待审核";
-            if (value === "已冲销" || value === "已作废") {
-                return `<span class="voucher-status is-void">已作废</span>`;
-            }
-            if (value === "已记账" || value === "已过账") {
-                return `<span class="voucher-status is-posted">已记账</span>`;
-            }
-            if (value === "已审核") {
-                return `<span class="voucher-status is-audited">已审核</span>`;
-            }
-            return `<span class="voucher-status is-pending">未审核</span>`;
+            const value = (status || "待审核").toString().trim();
+            const MAP = {
+                "待审核":  ["is-pending",   "待审核"],
+                "已审核":  ["is-audited",   "已审核"],
+                "待复核":  ["is-reviewing", "待复核"],
+                "已复核":  ["is-reviewed",  "已复核"],
+                "待记账":  ["is-to-post",   "待记账"],
+                "已记账":  ["is-posted",    "已记账"],
+                "已过账":  ["is-posted",    "已记账"],
+                "已冲销":  ["is-void",      "已冲销"],
+                "已作废":  ["is-void",      "已作废"],
+            };
+            const [cls, label] = MAP[value] || ["is-pending", value];
+            return `<span class="voucher-status ${cls}">${label}</span>`;
         };
 
         const SOURCE_DOC_ICONS = {
@@ -2511,11 +2574,10 @@ ${vouchersHTML}
                 || ([auxCode, auxName].filter(Boolean).join(" "))
                 || "-";
             const summary = line.summary || line.digest || v.summary || "-";
-            const auditUser = v.auditUser || (["已审核", "已记账"].includes(v.status) ? "系统审核" : "-");
+            const auditUser = v.auditUser || (["已审核", "已记账", "已复核", "待记账"].includes(v.status) ? "系统审核" : "-");
             const maker = v.user || "system";
             const statusTag = renderStatus(v.status);
             const relatedDocs = item.lineIndex === 0 ? buildRelatedDocsHtml(v) : "";
-
             return `
                 <tr>
                     <td style="text-align:center;">
@@ -2635,10 +2697,10 @@ ${vouchersHTML}
             .va-tab{padding:5px 14px;background:#f0f0f0;border:1px solid #ddd;border-bottom:none;border-radius:4px 4px 0 0;cursor:pointer;color:#666;font-size:12px;}
             .va-tab.is-active{background:#4a90e2;color:#fff;border-color:#4a90e2;}
             .va-tab:hover:not(.is-active){background:#e8e8e8;}
-            .va-tc{padding:10px 15px;overflow-x:auto;}
-            .va-table{width:100%;border-collapse:collapse;border:1px solid #ddd;background:#fff;font-size:12px;}
-            .va-table th,.va-table td{border:1px solid #ddd;padding:5px 7px;text-align:left;font-size:12px;}
-            .va-table th{background:#f0f0f0;font-weight:normal;color:#333;height:28px;}
+            .va-tc{padding:10px 15px;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 270px);}
+            .va-table{width:max-content;min-width:100%;border-collapse:collapse;border:1px solid #ddd;background:#fff;font-size:12px;}
+            .va-table th,.va-table td{border:1px solid #ddd;padding:5px 7px;text-align:left;font-size:12px;white-space:nowrap;}
+            .va-table th{background:#f0f0f0;font-weight:normal;color:#333;height:28px;white-space:nowrap;position:sticky;top:0;z-index:5;}
             .va-table td{height:26px;}
             .va-table tbody tr:hover{background:#f1f6fc;}
             .va-table tbody tr.selected{background:#fffca8;}
@@ -2651,18 +2713,18 @@ ${vouchersHTML}
             /* 栏目设置弹窗 */
             .va-dlg-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;justify-content:center;align-items:center;}
             .va-dlg-overlay.show{display:flex;}
-            .va-dlg-box{width:500px;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden;z-index:9999;}
+            .va-dlg-box{width:600px;max-height:90vh;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden;z-index:9999;}
             .va-dlg-hdr{height:32px;background:#f8f8f8;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;padding:0 10px;user-select:none;}
             .va-dlg-hdr .va-dlg-title{font-size:14px;font-weight:bold;color:#333;}
             .va-dlg-hdr .va-dlg-ctrl{display:flex;gap:8px;color:#666;font-size:16px;cursor:pointer;}
             .va-dlg-hdr .va-dlg-ctrl span:hover{color:#000;}
-            .va-dlg-body{padding:10px 15px;display:flex;flex-direction:column;gap:10px;}
+            .va-dlg-body{padding:10px 15px;display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;}
             .va-dlg-tb{display:flex;gap:5px;align-items:center;}
             .va-dlg-tb input[type="text"]{width:120px;height:22px;border:1px solid #a9a9a9;padding:0 4px;font-size:12px;}
             .va-sys-btn{height:22px;padding:0 10px;background:#f0f0f0;border:1px solid #a9a9a9;border-radius:2px;cursor:pointer;font-size:12px;color:#333;}
             .va-sys-btn:hover{background:#e8e8e8;}
             .va-grid{display:flex;gap:10px;align-items:flex-start;}
-            .va-col-wrap{width:420px;height:310px;border:1px solid #a9a9a9;overflow-y:auto;}
+            .va-col-wrap{width:480px;height:380px;border:1px solid #a9a9a9;overflow-y:auto;}
             .va-col-tbl{width:100%;border-collapse:collapse;table-layout:fixed;}
             .va-col-tbl th,.va-col-tbl td{border-right:1px solid #ddd;border-bottom:1px solid #ddd;height:28px;vertical-align:middle;text-align:center;font-size:12px;}
             .va-col-tbl th{background:#eaeaea;font-weight:normal;position:sticky;top:0;z-index:10;border-bottom:1px solid #a9a9a9;}
@@ -2682,11 +2744,14 @@ ${vouchersHTML}
             .va-dlg-ftr{border-top:1px solid #ddd;padding:10px 15px;display:flex;justify-content:flex-end;gap:8px;background:#fff;}
             .va-dlg-ftr .va-sys-btn{width:65px;height:26px;}
             /* 状态标签 */
-            .voucher-status{border-radius:3px;padding:1px 6px;font-size:11px;}
+            .voucher-status{border-radius:3px;padding:1px 6px;font-size:11px;white-space:nowrap;}
             .voucher-status.is-void{background:#fee2e2;color:#dc2626;}
             .voucher-status.is-posted{background:#dcfce7;color:#16a34a;}
             .voucher-status.is-audited{background:#dbeafe;color:#2563eb;}
             .voucher-status.is-pending{background:#fef9c3;color:#a16207;}
+            .voucher-status.is-reviewing{background:#fff7ed;color:#c2410c;}
+            .voucher-status.is-reviewed{background:#ecfeff;color:#0e7490;}
+            .voucher-status.is-to-post{background:#f5f3ff;color:#7c3aed;}
             /* 关联单 */
             .source-badge{display:inline-flex;align-items:center;gap:2px;padding:0 6px;height:18px;border:1px solid #d1d5db;border-radius:9px;cursor:pointer;font-size:11px;background:#fff;}
             .source-badge--waybill{border-color:#3b82f6;color:#1d4ed8;}
@@ -2695,29 +2760,23 @@ ${vouchersHTML}
             .source-badge--mixed,.source-badge--manual{border-color:#6b7280;color:#374151;}
             .voucher-link{color:#1d4ed8;text-decoration:none;}
             .voucher-link:hover{text-decoration:underline;}
-            /* 原单抽屉 */
-            .source-doc-drawer{position:fixed;inset:0;z-index:9900;pointer-events:none;}
-            .source-doc-drawer.is-visible{pointer-events:auto;}
-            .source-doc-mask{position:absolute;inset:0;background:rgba(15,23,42,.3);opacity:0;transition:opacity .2s;}
-            .source-doc-drawer.is-visible .source-doc-mask{opacity:1;}
-            .source-doc-panel{position:absolute;right:0;top:0;bottom:0;width:380px;background:#fff;border-left:1px solid #e2e8f0;box-shadow:-4px 0 16px rgba(15,23,42,.12);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;}
-            .source-doc-drawer.is-visible .source-doc-panel{transform:translateX(0);}
-            .source-doc-panel__header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0;}
-            .source-doc-panel__title{font-size:15px;font-weight:600;color:#0f172a;}
-            .source-doc-panel__sub{font-size:12px;color:#64748b;margin-top:3px;}
-            .source-doc-panel__close{padding:4px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#475569;}
-            .source-doc-panel__close:hover{background:#f1f5f9;}
-            .source-doc-panel__body{flex:1;overflow-y:auto;padding:16px 18px;}
-            .source-doc-panel__label{font-size:12px;color:#64748b;margin-bottom:8px;font-weight:600;}
-            .source-doc-table{border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;font-size:12px;}
-            .source-doc-table__head{display:flex;background:#f8fafc;padding:6px 10px;color:#64748b;border-bottom:1px solid #e2e8f0;}
-            .source-doc-table__row{display:flex;padding:7px 10px;border-bottom:1px solid #f1f5f9;}
-            .source-doc-table__row:last-child{border-bottom:none;}
-            .source-doc-table__id{flex:2;}
-            .source-doc-table__amount{flex:1.5;text-align:right;}
-            .source-doc-table__driver{flex:1.5;text-align:right;}
-            .source-doc-table__empty{padding:10px;color:#94a3b8;font-style:italic;text-align:center;}
-            .source-doc-panel__hint{font-size:11px;color:#94a3b8;margin-top:8px;}
+            /* 原单明细弹窗（居中） */
+            .sdoc-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9900;display:none;align-items:center;justify-content:center;}
+            .sdoc-overlay.show{display:flex;}
+            .sdoc-box{background:#fff;border-radius:10px;box-shadow:0 12px 40px rgba(15,23,42,.2);width:700px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+            .sdoc-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px;border-bottom:1px solid #e2e8f0;flex-shrink:0;}
+            .sdoc-title{font-size:15px;font-weight:700;color:#0f172a;}
+            .sdoc-sub{font-size:12px;color:#64748b;margin-top:4px;}
+            .sdoc-close{padding:4px 14px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#475569;flex-shrink:0;margin-top:2px;}
+            .sdoc-close:hover{background:#f1f5f9;}
+            .sdoc-body{flex:1;overflow-y:auto;padding:16px 20px;}
+            .sdoc-section-lbl{font-size:12px;color:#64748b;font-weight:700;margin-bottom:10px;}
+            .sdoc-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+            .sdoc-tbl th{background:#f8fafc;border:1px solid #e2e8f0;padding:7px 10px;color:#64748b;font-weight:600;text-align:left;white-space:nowrap;}
+            .sdoc-tbl td{border:1px solid #e2e8f0;padding:7px 10px;color:#334155;vertical-align:top;}
+            .sdoc-tbl tbody tr:hover{background:#f8fafc;}
+            .sdoc-tbl .num{text-align:right;}
+            .sdoc-hint{font-size:11px;color:#94a3b8;margin-top:10px;}
             .empty-row{text-align:center;color:#94a3b8;padding:20px;}
         </style>
         <div id="vaWrap" style="background:#fff;border:1px solid #ddd;border-radius:4px;">
@@ -2819,7 +2878,7 @@ ${vouchersHTML}
                             <th style="width:70px;">审核人</th>
                             <th style="width:70px;">制单人</th>
                             <th>摘要</th>
-                            <th style="width:60px;text-align:center;">业务明细</th>
+                            <th style="width:60px;text-align:center;">外部系统数据单号</th>
                             <th style="width:80px;">状态</th>
                             <th style="width:80px;">科目编码</th>
                             <th style="width:170px;">科目名称</th>
@@ -2879,9 +2938,24 @@ ${vouchersHTML}
                                     <tr><td>8</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">凭证总金额</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
                                     <tr><td>9</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">现金流量分配</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
                                     <tr><td>10</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">记账人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
-                                    <tr><td>11</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">审核人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>11</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">审核人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
                                     <tr><td>12</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">出纳</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
-                                    <tr><td>13</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">制单人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>13</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">制单人</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>14</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">打印次数</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>15</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">附件数</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>16</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">摘要</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>17</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">科目编码</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>18</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">科目名称</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>19</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">辅助项</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>20</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">计量单位</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>21</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">数量</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>22</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">单价</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>23</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">借方</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>24</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">贷方</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>25</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">来源类型备注</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>26</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td class="cname">来源类型</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr style="background:#f0f5ff;"><td>27</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">外部系统数据单号</td><td style="color:#2563eb;">明细</td><td>无排序</td><td><input type="checkbox"></td></tr>
+                                    <tr><td>28</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td class="cname">状态</td><td>表头</td><td>无排序</td><td><input type="checkbox"></td></tr>
                                 </tbody>
                             </table>
                         </div>
