@@ -890,29 +890,78 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                 .forEach(s => { if (s.code && s.name && !_subjFallbackMap[s.code]) _subjFallbackMap[s.code] = s.name; });
         } catch(e) {}
 
-        const buildSubjectRows = (list) => list.map((item) => {
-            const statusClass = item.status === "启用" ? "status-enabled" : "status-disabled";
-            const controlDirection = item.controlDirection || "否";
-            const displayName = item.name || _subjFallbackMap[item.code] || '';
-            return `
-                        <tr id="row-${item.code}" data-code="${item.code}" data-name="${displayName}" data-type="${item.type}">
-                            <td style="text-align:center;">
-                                <input type="checkbox" class="subject-select" data-code="${item.code}">
-                            </td>
-                            <td class="val-code"><strong>${item.code}</strong></td>
-                            <td class="val-name">${displayName}</td>
-                            <td>${item.type}</td>
-                            <td>${item.aux || "-"}</td>
-                            <td class="val-dir">${item.direction}</td>
-                            <td class="val-status">
-                                <span class="status-pill ${statusClass}">${item.status}</span>
-                            </td>
-                            <td class="val-remark" style="color:#777; font-size:12px;">${item.remark || "-"
-                }</td>
-                            <td class="val-control">${controlDirection}</td>
-                        </tr>
-                    `;
-        }).join("");
+        // ── 栏目定义（默认） ──
+        const COL_DEFS_DEFAULT = [
+            {key:'level',    name:'级次',         visible:true,  sort:'无排序'},
+            {key:'code',     name:'科目编码',      visible:true,  sort:'升序'},
+            {key:'name',     name:'科目名称',      visible:true,  sort:'无排序'},
+            {key:'type',     name:'科目类型',      visible:true,  sort:'无排序'},
+            {key:'mnem',     name:'助记码',        visible:false, sort:'无排序'},
+            {key:'dir',      name:'余额方向',      visible:true,  sort:'无排序'},
+            {key:'aux',      name:'辅助核算项',    visible:true,  sort:'无排序'},
+            {key:'qty_acc',  name:'数量核算',      visible:false, sort:'无排序'},
+            {key:'qty_unit', name:'数量单位',      visible:false, sort:'无排序'},
+            {key:'cash',     name:'现金科目',      visible:false, sort:'无排序'},
+            {key:'bank',     name:'银行科目',      visible:false, sort:'无排序'},
+            {key:'cash_eq',  name:'现金等价物科目', visible:false, sort:'无排序'},
+            {key:'sum_show', name:'汇总显示与打印', visible:false, sort:'无排序'},
+            {key:'sum_prt',  name:'汇总打印科目',  visible:false, sort:'无排序'},
+            {key:'page_fmt', name:'账页格式',      visible:false, sort:'无排序'},
+            {key:'disabled', name:'停用',          visible:false, sort:'无排序'},
+            {key:'ctrl_cat', name:'受控类别',      visible:false, sort:'无排序'},
+            {key:'ctrl_man', name:'受控科目可手工制单', visible:false, sort:'无排序'},
+        ];
+        if (!window._subjColDefs) {
+            window._subjColDefs = COL_DEFS_DEFAULT.map(c => Object.assign({}, c));
+        }
+
+        // ── 根据列定义获取单元格值 ──
+        const getColCell = (item, key, level, displayName) => {
+            const center = 'text-align:center;';
+            switch(key) {
+                case 'level':    return `<td style="${center}">${level}</td>`;
+                case 'code':     return `<td><span class="subj-code-link" onclick="editSubjectByCode('${item.code}')">${item.code}</span></td>`;
+                case 'name':     return `<td class="val-name">${displayName}</td>`;
+                case 'type':     return `<td>${item.type || '-'}</td>`;
+                case 'mnem':     return `<td>${item.mnemonic || '-'}</td>`;
+                case 'dir':      return `<td style="${center}">${item.direction || '-'}</td>`;
+                case 'aux':      return `<td>${item.aux || '-'}</td>`;
+                case 'disabled': return `<td style="${center}">${item.status === '停用' ? '<span class="status-dot-off">是</span>' : '-'}</td>`;
+                default:         return `<td style="${center}">-</td>`;
+            }
+        };
+
+        // ── 动态构建表头 ──
+        window.rebuildSubjectTableHead = function() {
+            const thead = document.querySelector('.subject-table thead tr');
+            if (!thead) return;
+            const vis = (window._subjColDefs || []).filter(c => c.visible);
+            thead.innerHTML = `
+                <th class="col-seq" style="width:44px;text-align:right;color:#bbb;font-weight:400;">序号</th>
+                <th style="width:36px;text-align:center;"><input type="checkbox" onclick="toggleAllSubjects(this.checked)"></th>
+                ${vis.map(c => {
+                    const w = {level:'width:50px;',code:'width:120px;',type:'width:80px;',dir:'width:80px;',aux:'width:140px;',disabled:'width:60px;'}[c.key] || '';
+                    const align = ['level','dir','disabled'].includes(c.key) ? 'text-align:center;' : '';
+                    return `<th style="${w}${align}">${c.name}</th>`;
+                }).join('')}`;
+        };
+
+        const buildSubjectRows = (list, globalStart = 0) => {
+            const vis = (window._subjColDefs || []).filter(c => c.visible);
+            return list.map((item, idx) => {
+                const isDisabled = item.status !== "启用";
+                const level = getSubjectLevelByCode(item.code);
+                const displayName = item.name || _subjFallbackMap[item.code] || '';
+                const rowClass = isDisabled ? "row-disabled" : "";
+                const cells = vis.map(c => getColCell(item, c.key, level, displayName)).join('');
+                return `
+                    <tr id="row-${item.code}" data-code="${item.code}" data-name="${displayName}" data-type="${item.type}" class="${rowClass}">
+                        <td class="col-seq">${globalStart + idx + 1}</td>
+                        <td style="text-align:center;"><input type="checkbox" class="subject-select" data-code="${item.code}" onchange="window.onSubjectRowCheck(this)"></td>
+                        ${cells}
+                    </tr>`;
+            }).join("");
+        };
 
         const typeOrder = ["资产", "负债", "权益", "成本", "损益"];
         const typeLabels = {
@@ -931,74 +980,62 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
         const level1Len = levelLengths[0] || 4;
         const level2Len = levelLengths[1] || (level1Len + 2);
 
-        const renderTreeLeaf = (item, levelClass) => `
-            <div class="subject-tree-leaf ${levelClass}">
-                <button type="button" class="subject-tree-link" data-prefix="${item.code}" data-type="${item.type}" onclick="event.stopPropagation(); filterSubjectTree('${item.code}', '${item.type}', this)">
-                    ${item.code} ${item.name}
+        // ── 树节点辅助函数 ──
+        const treeNodeHtml = (code, type, label, childrenHtml, defaultOpen = false) => `
+            <div class="subject-tree-node" data-open="${defaultOpen}">
+                <div class="subject-tree-row" onclick="window.toggleSubjNode(this.querySelector('.tree-caret'))">
+                    <span class="tree-caret" onclick="event.stopPropagation();window.toggleSubjNode(this)">${defaultOpen ? '▼' : '▷'}</span>
+                    <button type="button" class="subject-tree-link" data-prefix="${code}" data-type="${type}" onclick="event.stopPropagation();window.toggleSubjNode(this.closest('.subject-tree-row').querySelector('.tree-caret'));filterSubjectTree('${code}','${type}',this)">
+                        <span class="folder-icon${defaultOpen ? ' open' : ''}"></span>${label}
+                    </button>
+                </div>
+                <div class="tree-node-children" style="${defaultOpen ? '' : 'display:none;'}">
+                    ${childrenHtml}
+                </div>
+            </div>`;
+
+        const renderTreeLeaf = (item) => `
+            <div class="subject-tree-leaf">
+                <button type="button" class="subject-tree-link" data-prefix="${item.code}" data-type="${item.type}" onclick="filterSubjectTree('${item.code}','${item.type}',this)">
+                    <span style="color:#fa8c16;font-size:10px;margin-right:3px;vertical-align:middle;">●</span>${item.code} ${item.name}
                 </button>
-            </div>
-        `;
+            </div>`;
 
         const renderTreeLevel2 = (list, parent) => {
             const children = list.filter(it => it.code.startsWith(parent.code) && it.code.length > parent.code.length);
             const level2Nodes = children.filter(it => it.code.length <= level2Len);
             if (!level2Nodes.length) {
-                const leafNodes = children.length ? children.map(it => renderTreeLeaf(it, "level-2")).join("") : "";
-                return leafNodes ? `<div class="subject-tree-children">${leafNodes}</div>` : "";
+                return children.length ? children.map(it => renderTreeLeaf(it)).join("") : "";
             }
-            return `
-                <div class="subject-tree-children">
-                    ${level2Nodes.map(level2 => {
-                        const descendants = children.filter(it => it.code.startsWith(level2.code) && it.code.length > level2.code.length);
-                        const descendantHtml = descendants.length
-                            ? `<div class="subject-tree-children">${descendants.map(it => renderTreeLeaf(it, "level-3")).join("")}</div>`
-                            : "";
-                        return `
-                            <details class="subject-tree-section">
-                                <summary>
-                                    <span class="subject-tree-caret"></span>
-                                    <button type="button" class="subject-tree-link" data-prefix="${level2.code}" data-type="${level2.type}" onclick="event.stopPropagation(); filterSubjectTree('${level2.code}', '${level2.type}', this)">
-                                        ${level2.code} ${level2.name}
-                                    </button>
-                                </summary>
-                                ${descendantHtml}
-                            </details>
-                        `;
-                    }).join("")}
-                </div>
-            `;
+            return level2Nodes.map(level2 => {
+                const descendants = children.filter(it => it.code.startsWith(level2.code) && it.code.length > level2.code.length);
+                const descHtml = descendants.map(it => renderTreeLeaf(it)).join("");
+                return treeNodeHtml(level2.code, level2.type, `${level2.code} ${level2.name}`, descHtml, false);
+            }).join("");
         };
+
+        // 从实际科目编码第一位动态推断，兼容两种会计准则
+        const typeNumbers = {};
+        typeOrder.forEach(type => {
+            const list = storedAccounts.filter(it => it.type === type);
+            typeNumbers[type] = list.length > 0 ? (list[0].code || "").charAt(0) : "";
+        });
 
         const renderTreeByType = (type) => {
             const list = storedAccounts.filter(item => item.type === type);
             const level1Nodes = list.filter(item => item.code.length <= level1Len);
             if (!level1Nodes.length) return "";
-            return level1Nodes.map(level1 => `
-                <details class="subject-tree-section" open>
-                    <summary>
-                        <span class="subject-tree-caret"></span>
-                        <button type="button" class="subject-tree-link" data-prefix="${level1.code}" data-type="${level1.type}" onclick="event.stopPropagation(); filterSubjectTree('${level1.code}', '${level1.type}', this)">
-                            ${level1.code} ${level1.name}
-                        </button>
-                    </summary>
-                    ${renderTreeLevel2(list, level1)}
-                </details>
-            `).join("");
+            return level1Nodes.map(level1 =>
+                treeNodeHtml(level1.code, level1.type, `${level1.code} ${level1.name}`, renderTreeLevel2(list, level1), false)
+            ).join("");
         };
 
-        const subjectTreeHtml = typeOrder.map(type => `
-            <details class="subject-tree-section subject-tree-type" open>
-                <summary>
-                    <span class="subject-tree-caret"></span>
-                    <button type="button" class="subject-tree-link subject-tree-type-link" data-prefix="" data-type="${type}" onclick="event.stopPropagation(); filterSubjectTree('', '${type}', this)">
-                        ${typeLabels[type]}
-                    </button>
-                </summary>
-                <div class="subject-tree-children">
-                    ${renderTreeByType(type)}
-                </div>
-            </details>
-        `).join("");
+        const subjectTreeHtml = typeOrder.map(type =>
+            treeNodeHtml("", type,
+                `${typeNumbers[type] || ""} ${typeLabels[type]}`,
+                renderTreeByType(type),
+                false)
+        ).join("");
 
         window.filterSubjectTree = function (prefix, type, el) {
             window._subjectTreeFilterPrefix = prefix || "";
@@ -1053,8 +1090,8 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
             const tbody = document.getElementById("subject-table-body");
             if (tbody) {
                 tbody.innerHTML = slice.length
-                    ? buildSubjectRows(slice)
-                    : `<tr><td colspan="9" style="text-align:center; padding:20px;">暂无数据</td></tr>`;
+                    ? buildSubjectRows(slice, start)
+                    : `<tr><td colspan="8" style="text-align:center; padding:20px; color:#bbb;">暂无数据</td></tr>`;
             }
             if (typeof window.updateSubjectPagination === "function") {
                 window.updateSubjectPagination(list.length, nextPage, pageSize);
@@ -1096,13 +1133,6 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
         };
 
         contentHTML += `
-                    <div class="filter-area" style="background-color: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <input id="subject-search-input" type="text" placeholder="科目编码 / 名称" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px;" onkeyup="searchSubjects(event)">
-                            <button class="btn-primary" onclick="searchSubjects()">查询</button>
-                        </div>
-                    </div>
-
                     ${_dupCodes.length > 0 ? `
                     <div id="subj-dup-alert" style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;">
                         <span style="font-size:24px;line-height:1.3;flex-shrink:0;">⚠️</span>
@@ -1123,25 +1153,27 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                         </div>
                     </div>` : ''}
 
+                    <div class="subject-card">
                     <div class="subject-toolbar">
-                        <button class="btn-primary" onclick="addSubject()">+ 添加</button>
-                        <button class="btn-primary" onclick="addSubjectSameLevel()">+ 添加同级</button>
-                        <button class="btn-primary" onclick="addSubjectChild()">+ 添加下级</button>
-                        <button class="btn-primary" onclick="editSelectedSubject()">✎ 修改</button>
-                        <button class="btn-primary btn-danger" onclick="deleteSelectedSubjects()">🗑 删除</button>
-                        <button class="btn-primary btn-success" onclick="setSubjectStatusBulk('启用')">✔ 启用</button>
-                        <button class="btn-primary btn-warning" onclick="setSubjectStatusBulk('停用')">⛔ 禁用</button>
-                        <button class="btn-primary" onclick="triggerImportSubjects()">⬇ 导入</button>
-                        <button class="btn-primary" onclick="exportSubjectsToCSV()">⬆ 导出</button>
+                        <button class="btn-primary" onclick="addSubject()">新增</button>
+                        <button class="btn-primary" onclick="editSelectedSubject()">修改</button>
+                        <button class="btn-primary btn-danger" onclick="deleteSelectedSubjects()">删除</button>
+                        <button class="btn-primary" onclick="addSubjectSameLevel()">复制</button>
+                        <button class="btn-primary" onclick="window.openSubjectColSettings()">栏目</button>
+                        <span class="subject-toolbar-sep">|</span>
+                        <button class="btn-primary" onclick="triggerImportSubjects()">导入</button>
+                        <button class="btn-primary" onclick="exportSubjectsToCSV()">导出</button>
                         <input id="subject-import-input" type="file" accept=".csv" style="display:none;" onchange="importSubjectsFromCSV(this)">
+                        <span style="flex:1;"></span>
+                        <div style="display:flex;align-items:center;border:1px solid #ddd;border-radius:3px;overflow:hidden;">
+                            <input id="subject-search-input" type="text" placeholder="搜索科目编码/名称" style="padding:4px 10px;border:none;font-size:12px;width:180px;outline:none;" oninput="renderSubjectTablePage(1)">
+                        </div>
                     </div>
 
                     <div class="subject-layout">
                         <div class="subject-tree-panel">
-                            <div class="subject-tree-header">
-                                <button type="button" class="subject-tree-link subject-tree-root is-active" data-prefix="" data-type="" onclick="filterSubjectTree('', '', this)">会计科目</button>
-                            </div>
                             <div class="subject-tree-body">
+                                <button type="button" class="subject-tree-link subject-tree-root is-active" data-prefix="" data-type="" onclick="filterSubjectTree('', '', this)" style="padding:5px 12px;font-weight:600;">全部科目</button>
                                 ${subjectTreeHtml}
                             </div>
                         </div>
@@ -1149,26 +1181,79 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                             <div class="subject-table-wrap">
                                 <table class="data-table subject-table">
                                     <thead>
-                                        <tr>
-                                            <th style="width: 42px; text-align:center;">
-                                                <input type="checkbox" onclick="toggleAllSubjects(this.checked)">
-                                            </th>
-                                            <th style="width: 120px;">科目编码</th>
+                                        <tr id="subject-table-thead-row">
+                                            <th class="col-seq" style="width:44px;text-align:right;color:#bbb;font-weight:400;">序号</th>
+                                            <th style="width:36px;text-align:center;"><input type="checkbox" onclick="toggleAllSubjects(this.checked)"></th>
+                                            <th style="width:50px;text-align:center;">级次</th>
+                                            <th style="width:120px;">科目编码</th>
                                             <th>科目名称</th>
-                                            <th style="width: 90px;">科目类型</th>
-                                            <th style="width: 120px;">辅助核算</th>
-                                            <th style="width: 90px;">余额方向</th>
-                                            <th style="width: 90px;">状态</th>
-                                            <th>备注</th>
-                                            <th style="width: 110px;">控制发生方向</th>
+                                            <th style="width:80px;text-align:center;">科目类型</th>
+                                            <th style="width:80px;text-align:center;">余额方向</th>
+                                            <th style="width:140px;">辅助核算项</th>
                                         </tr>
                                     </thead>
                                     <tbody id="subject-table-body">
-                                        ${buildSubjectRows(storedAccounts.slice(0, 50))}
+                                        ${buildSubjectRows(storedAccounts.slice(0, 50), 0)}
                                     </tbody>
                                 </table>
                             </div>
                             <div class="subject-pagination" id="subject-pagination"></div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- 栏目设置弹窗 -->
+                    <div id="subjColModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10001;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:6px;width:560px;max-width:96vw;box-shadow:0 8px 32px rgba(0,0,0,.2);display:flex;flex-direction:column;max-height:90vh;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #e8e8e8;">
+                                <span style="font-size:15px;font-weight:600;">栏目设置</span>
+                                <div style="display:flex;gap:12px;align-items:center;">
+                                    <span style="color:#bbb;font-size:18px;cursor:pointer;" title="帮助">?</span>
+                                    <span style="color:#999;font-size:20px;cursor:pointer;line-height:1;" onclick="window.closeSubjectColSettings()">×</span>
+                                </div>
+                            </div>
+                            <div style="padding:12px 20px 6px;display:flex;gap:8px;align-items:center;">
+                                <input id="subjColSearch" type="text" placeholder="请输入栏目名称" style="padding:5px 10px;border:1px solid #d9d9d9;border-radius:3px;font-size:13px;width:200px;" oninput="window.filterSubjColList(this.value)">
+                                <button style="padding:5px 12px;border:1px solid #d9d9d9;background:#f5f5f5;border-radius:3px;cursor:pointer;font-size:13px;" onclick="window.locateSubjCol()">定位</button>
+                            </div>
+                            <div style="display:flex;flex:1;overflow:hidden;padding:0 20px 12px;">
+                                <!-- 左侧列表 -->
+                                <div style="flex:1;overflow-y:auto;border:1px solid #e0e0e0;border-radius:3px;">
+                                    <table style="width:100%;border-collapse:collapse;font-size:13px;" id="subjColTable">
+                                        <thead>
+                                            <tr style="background:#f5f5f5;">
+                                                <th style="padding:7px 6px;text-align:center;width:40px;border-bottom:1px solid #ddd;font-weight:600;">序号</th>
+                                                <th style="padding:7px 6px;text-align:center;width:52px;border-bottom:1px solid #ddd;font-weight:600;">显示<input type="checkbox" id="subjColCheckAll" onclick="window.toggleAllSubjCols(this.checked)" style="margin-left:3px;vertical-align:middle;"></th>
+                                                <th style="padding:7px 6px;text-align:center;width:52px;border-bottom:1px solid #ddd;font-weight:600;">固定列</th>
+                                                <th style="padding:7px 6px;border-bottom:1px solid #ddd;font-weight:600;">栏目名称</th>
+                                                <th style="padding:7px 6px;text-align:center;width:70px;border-bottom:1px solid #ddd;font-weight:600;">排序</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="subjColBody"></tbody>
+                                    </table>
+                                </div>
+                                <!-- 右侧移动按钮 -->
+                                <div style="display:flex;flex-direction:column;gap:6px;padding-left:10px;justify-content:center;">
+                                    <button class="col-move-btn" title="置顶" onclick="window.moveSubjCol('top')">⇈</button>
+                                    <button class="col-move-btn" title="上移" onclick="window.moveSubjCol('up')">↑</button>
+                                    <button class="col-move-btn" title="下移" onclick="window.moveSubjCol('down')">↓</button>
+                                    <button class="col-move-btn" title="置底" onclick="window.moveSubjCol('bottom')">⇊</button>
+                                </div>
+                            </div>
+                            <div style="padding:8px 20px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <button style="padding:5px 12px;border:1px solid #d9d9d9;background:#fff;border-radius:3px;cursor:pointer;font-size:13px;" onclick="window.resetSubjColDefs()">恢复默认</button>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <input id="subjColMoveTo" type="number" min="1" placeholder="移动到" style="width:80px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:3px;font-size:13px;">
+                                    <button style="padding:5px 12px;border:1px solid #d9d9d9;background:#fff;border-radius:3px;cursor:pointer;font-size:13px;" onclick="window.moveSubjColTo()">确定</button>
+                                </div>
+                            </div>
+                            <div style="padding:4px 20px 10px;"><span style="color:#ff4d4f;font-size:12px;">注:调整内容只应用于当前用户。</span></div>
+                            <div style="padding:10px 20px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:10px;">
+                                <button style="padding:6px 20px;border:1px solid #d9d9d9;background:#fff;border-radius:3px;cursor:pointer;font-size:13px;" onclick="window.applySubjectColSettings()">确定</button>
+                                <button style="padding:6px 20px;border:1px solid #d9d9d9;background:#fff;border-radius:3px;cursor:pointer;font-size:13px;" onclick="window.closeSubjectColSettings()">取消</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1232,6 +1317,166 @@ window.VM_MODULES['AcctSubject'] = function(contentArea, contentHTML, moduleCode
                         </div>
                     </div>
                 `;
+
+        // ── 树形展开/折叠 ──
+        window.toggleSubjNode = function(caret) {
+            if (!caret) return;
+            const node = caret.closest('.subject-tree-node');
+            if (!node) return;
+            const isOpen = node.dataset.open === 'true';
+            node.dataset.open = String(!isOpen);
+            const children = node.querySelector(':scope > .tree-node-children');
+            if (children) children.style.display = isOpen ? 'none' : '';
+            caret.textContent = isOpen ? '▷' : '▼';
+            const folderIco = node.querySelector(':scope > .subject-tree-row .folder-icon');
+            if (folderIco) {
+                if (isOpen) folderIco.classList.remove('open');
+                else folderIco.classList.add('open');
+            }
+        };
+
+        // ── 栏目设置弹窗 ──
+        var _subjColSelected = -1; // 当前选中的行索引
+
+        window.openSubjectColSettings = function() {
+            const modal = document.getElementById('subjColModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            window._subjColTemp = (window._subjColDefs || []).map(c => Object.assign({}, c));
+            _subjColSelected = -1;
+            window.renderSubjColBody();
+        };
+
+        window.closeSubjectColSettings = function() {
+            const modal = document.getElementById('subjColModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        window.renderSubjColBody = function(filter) {
+            const tbody = document.getElementById('subjColBody');
+            if (!tbody || !window._subjColTemp) return;
+            const q = (filter || '').trim().toLowerCase();
+            tbody.innerHTML = window._subjColTemp.map((col, idx) => {
+                if (q && !col.name.toLowerCase().includes(q)) return '';
+                const isSelected = idx === _subjColSelected;
+                return `<tr style="background:${isSelected ? '#e8f3ff' : (idx % 2 === 0 ? '#fff' : '#fafafa')};cursor:pointer;" onclick="window.selectSubjColRow(${idx}, this)">
+                    <td style="text-align:center;padding:6px 4px;border-bottom:1px solid #f0f0f0;">${idx + 1}</td>
+                    <td style="text-align:center;padding:6px 4px;border-bottom:1px solid #f0f0f0;"><input type="checkbox" ${col.visible ? 'checked' : ''} onchange="window._subjColTemp[${idx}].visible=this.checked;window.renderSubjColBody()"></td>
+                    <td style="text-align:center;padding:6px 4px;border-bottom:1px solid #f0f0f0;"><input type="checkbox" ${col.pinned ? 'checked' : ''} onchange="window._subjColTemp[${idx}].pinned=this.checked"></td>
+                    <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;">${col.name}</td>
+                    <td style="text-align:center;padding:6px 4px;border-bottom:1px solid #f0f0f0;color:#888;font-size:12px;">${col.sort}</td>
+                </tr>`;
+            }).join('');
+        };
+
+        window.selectSubjColRow = function(idx, tr) {
+            _subjColSelected = idx;
+            window.renderSubjColBody();
+        };
+
+        window.filterSubjColList = function(val) {
+            window.renderSubjColBody(val);
+        };
+
+        window.locateSubjCol = function() {
+            const q = (document.getElementById('subjColSearch').value || '').trim().toLowerCase();
+            if (!q || !window._subjColTemp) return;
+            const idx = window._subjColTemp.findIndex(c => c.name.toLowerCase().includes(q));
+            if (idx >= 0) {
+                _subjColSelected = idx;
+                window.renderSubjColBody();
+                const rows = document.querySelectorAll('#subjColBody tr');
+                if (rows[idx]) rows[idx].scrollIntoView({ block: 'nearest' });
+            }
+        };
+
+        window.toggleAllSubjCols = function(checked) {
+            if (!window._subjColTemp) return;
+            window._subjColTemp.forEach(c => c.visible = checked);
+            window.renderSubjColBody();
+        };
+
+        window.moveSubjCol = function(dir) {
+            if (!window._subjColTemp || _subjColSelected < 0) return;
+            const arr = window._subjColTemp;
+            const i = _subjColSelected;
+            if (dir === 'top' && i > 0) { arr.unshift(arr.splice(i, 1)[0]); _subjColSelected = 0; }
+            else if (dir === 'up' && i > 0) { [arr[i-1], arr[i]] = [arr[i], arr[i-1]]; _subjColSelected = i - 1; }
+            else if (dir === 'down' && i < arr.length - 1) { [arr[i], arr[i+1]] = [arr[i+1], arr[i]]; _subjColSelected = i + 1; }
+            else if (dir === 'bottom' && i < arr.length - 1) { arr.push(arr.splice(i, 1)[0]); _subjColSelected = arr.length - 1; }
+            window.renderSubjColBody();
+        };
+
+        window.moveSubjColTo = function() {
+            if (!window._subjColTemp || _subjColSelected < 0) return;
+            const input = document.getElementById('subjColMoveTo');
+            const target = parseInt(input ? input.value : '', 10) - 1;
+            if (isNaN(target) || target < 0 || target >= window._subjColTemp.length) return;
+            const arr = window._subjColTemp;
+            const [item] = arr.splice(_subjColSelected, 1);
+            arr.splice(target, 0, item);
+            _subjColSelected = target;
+            window.renderSubjColBody();
+        };
+
+        window.resetSubjColDefs = function() {
+            const COL_DEFAULT = [
+                {key:'level',    name:'级次',         visible:true,  pinned:false, sort:'无排序'},
+                {key:'code',     name:'科目编码',      visible:true,  pinned:false, sort:'升序'},
+                {key:'name',     name:'科目名称',      visible:true,  pinned:false, sort:'无排序'},
+                {key:'type',     name:'科目类型',      visible:true,  pinned:false, sort:'无排序'},
+                {key:'mnem',     name:'助记码',        visible:false, pinned:false, sort:'无排序'},
+                {key:'dir',      name:'余额方向',      visible:true,  pinned:false, sort:'无排序'},
+                {key:'aux',      name:'辅助核算项',    visible:true,  pinned:false, sort:'无排序'},
+                {key:'qty_acc',  name:'数量核算',      visible:false, pinned:false, sort:'无排序'},
+                {key:'qty_unit', name:'数量单位',      visible:false, pinned:false, sort:'无排序'},
+                {key:'cash',     name:'现金科目',      visible:false, pinned:false, sort:'无排序'},
+                {key:'bank',     name:'银行科目',      visible:false, pinned:false, sort:'无排序'},
+                {key:'cash_eq',  name:'现金等价物科目', visible:false, pinned:false, sort:'无排序'},
+                {key:'sum_show', name:'汇总显示与打印', visible:false, pinned:false, sort:'无排序'},
+                {key:'sum_prt',  name:'汇总打印科目',  visible:false, pinned:false, sort:'无排序'},
+                {key:'page_fmt', name:'账页格式',      visible:false, pinned:false, sort:'无排序'},
+                {key:'disabled', name:'停用',          visible:false, pinned:false, sort:'无排序'},
+                {key:'ctrl_cat', name:'受控类别',      visible:false, pinned:false, sort:'无排序'},
+                {key:'ctrl_man', name:'受控科目可手工制单', visible:false, pinned:false, sort:'无排序'},
+            ];
+            window._subjColTemp = COL_DEFAULT.map(c => Object.assign({}, c));
+            _subjColSelected = -1;
+            window.renderSubjColBody();
+        };
+
+        window.applySubjectColSettings = function() {
+            if (!window._subjColTemp) return;
+            window._subjColDefs = window._subjColTemp.map(c => Object.assign({}, c));
+            window.closeSubjectColSettings();
+            if (typeof window.rebuildSubjectTableHead === 'function') window.rebuildSubjectTableHead();
+            if (typeof window.renderSubjectTablePage === 'function') window.renderSubjectTablePage(1);
+        };
+
+        // 复选框选中时行高亮
+        window.onSubjectRowCheck = function(cb) {
+            const tr = cb.closest("tr");
+            if (!tr) return;
+            if (cb.checked) {
+                tr.classList.add("row-selected");
+            } else {
+                tr.classList.remove("row-selected");
+            }
+        };
+
+        // 通过编码打开编辑表单
+        window.editSubjectByCode = function(code) {
+            const subject = storedAccounts.find(s => s.code === code);
+            if (!subject) return;
+            // 勾选对应行并打开编辑
+            const row = document.getElementById("row-" + code);
+            if (row) {
+                document.querySelectorAll(".subject-select").forEach(cb => { cb.checked = false; cb.closest("tr").classList.remove("row-selected"); });
+                const cb = row.querySelector(".subject-select");
+                if (cb) { cb.checked = true; row.classList.add("row-selected"); }
+            }
+            if (typeof window.editSelectedSubject === "function") window.editSelectedSubject();
+        };
 
         setTimeout(() => {
             const prefix = window._subjectTreeFilterPrefix || "";

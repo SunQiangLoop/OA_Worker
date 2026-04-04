@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>期初余额录入 - 低保真原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            font-size: 13px;
+            background: #f0f2f5;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── 页头 ─── */
+        .page-header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .page-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .header-actions { display: flex; gap: 8px; }
+        .ob-btn {
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            color: #333;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .ob-btn:hover { background: #f5f5f5; border-color: #aaa; }
+
+        /* ─── 表格区 ─── */
+        .table-area {
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+        }
+        .table-card {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead {
+            background: #fafafa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        thead tr {
+            height: 40px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        th {
+            font-weight: 600;
+            color: #555;
+            border: none;
+            padding: 0;
+        }
+        th.col-code   { text-align: left;   padding-left: 16px;  width: 130px; }
+        th.col-level  { text-align: center;  width: 70px; }
+        th.col-name   { text-align: left;   padding-left: 16px; }
+        th.col-dir    { text-align: center;  width: 80px; }
+        th.col-open   { text-align: right;  padding-right: 16px; width: 160px; }
+        th.col-annual { text-align: right;  padding-right: 16px; width: 120px; }
+
+        tbody tr {
+            height: 46px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr.is-parent  { background: #fafafa; }
+        tbody tr:hover      { background: #f5faff; }
+
+        td { border: none; padding: 0; }
+        td.col-code {
+            padding-left: 16px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        td.col-level { text-align: center; }
+        td.col-dir   { text-align: center; }
+        td.col-open  { padding-right: 16px; }
+        td.col-annual {
+            padding-right: 16px;
+            text-align: right;
+            color: #bbb;
+            font-size: 13px;
+        }
+
+        /* 级次徽章 */
+        .level-badge {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .lv1 { background: #e6f0ff; color: #2c5fad; }
+        .lv2 { background: #e6fff0; color: #1a7a4a; }
+        .lv3 { background: #fff7e6; color: #a05a00; }
+        .lv4 { background: #f9f0ff; color: #6a1fa0; }
+
+        /* 方向标签 */
+        .dir-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+        .dir-debit  { background: #e6f7ff; color: #1890ff; }
+        .dir-credit { background: #fff1f0; color: #f5222d; }
+
+        /* 期初余额输入 */
+        .balance-input {
+            border: 1px solid #d9d9d9;
+            border-radius: 3px;
+            padding: 4px 8px;
+            width: 100%;
+            text-align: right;
+            font-size: 13px;
+            outline: none;
+        }
+        .balance-input:focus { border-color: #40a9ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+        .balance-input:disabled {
+            border-color: #e8e8e8;
+            background: #f5f5f5;
+            color: #bbb;
+            cursor: not-allowed;
+        }
+        .parent-tip {
+            font-size: 11px;
+            color: #bbb;
+            display: block;
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        /* ─── 底部状态栏 ─── */
+        .footer-bar {
+            background: #fff;
+            border-top: 1px solid #e8e8e8;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: monospace;
+            flex-shrink: 0;
+        }
+        .footer-totals { display: flex; gap: 30px; }
+        .footer-totals span.label { color: #666; }
+        .footer-totals span.amount { font-weight: bold; font-size: 16px; color: #333; }
+        .balance-status {
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .balance-ok   { background: #f6ffed; color: #52c41a; }
+        .balance-fail { background: #ffebee; color: #d32f2f; }
+
+        /* ─── confirm 弹窗 ─── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 6px;
+            padding: 28px 32px;
+            width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .modal-title  { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+        .modal-body   { color: #555; margin-bottom: 24px; font-size: 13px; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+
+<!-- ─── 页头 ─── -->
+<div class="page-header">
+    <div class="page-title">期初余额录入</div>
+    <div class="header-actions">
+        <button class="ob-btn" id="btn-import">导入</button>
+        <button class="ob-btn" id="btn-export">导出</button>
+        <button class="ob-btn" id="btn-save">保存</button>
+        <button class="ob-btn" id="btn-clear">清零</button>
+        <button class="ob-btn" id="btn-trial">试算平衡</button>
+    </div>
+</div>
+
+<!-- ─── 表格区 ─── -->
+<div class="table-area" id="table-area">
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-code">科目编码</th>
+                    <th class="col-level">科目级别</th>
+                    <th class="col-name">科目名称</th>
+                    <th class="col-dir">方向</th>
+                    <th class="col-open">期初余额</th>
+                    <th class="col-annual">年初余额</th>
+                </tr>
+            </thead>
+            <tbody id="ob-tbody">
+                <!-- 由 JS 渲染 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ─── 底部汇总栏 ─── -->
+<div class="footer-bar">
+    <div class="footer-totals">
+        <div>
+            <span class="label">资产总额(借)：</span>
+            <span class="amount" id="total-debit">0.00</span>
+        </div>
+        <div>
+            <span class="label">负债权益(贷)：</span>
+            <span class="amount" id="total-credit">0.00</span>
+        </div>
+    </div>
+    <div class="balance-status balance-fail" id="balance-status">
+        ⚠ 试算不平衡 | 差额: <span id="diff-amount">0.00</span>
+    </div>
+</div>
+
+<!-- ─── 清零确认弹窗 ─── -->
+<div class="modal-overlay" id="clear-modal">
+    <div class="modal-box">
+        <div class="modal-title">确认清零</div>
+        <div class="modal-body">确认将所有科目期初余额清零？此操作不可撤销。</div>
+        <div class="modal-footer">
+            <button class="ob-btn" id="modal-cancel">取消</button>
+            <button class="ob-btn" id="modal-confirm" style="background:#d32f2f;color:#fff;border-color:#d32f2f;">确认清零</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── 示例科目数据（与 MD 锁定清单 E 完全一致，11行）─────────────────────────
+const SUBJECTS = [
+    { code: '1001',   name: '库存现金',          dir: '借', isParent: false, balance: 0 },
+    { code: '1002',   name: '银行存款',           dir: '借', isParent: true,  balance: 0 },
+    { code: '100201', name: '银行存款-中国银行',  dir: '借', isParent: false, balance: 0, indent: 1 },
+    { code: '100202', name: '银行存款-南京银行',  dir: '借', isParent: false, balance: 0, indent: 1 },
+    { code: '100203', name: '银行存款-建设银行',  dir: '借', isParent: false, balance: 0, indent: 1 },
+    { code: '1012',   name: '其他货币资金',       dir: '借', isParent: true,  balance: 0 },
+    { code: '101201', name: '云链支付宝账户0676', dir: '借', isParent: false, balance: 0, indent: 1 },
+    { code: '101202', name: '云链微信',           dir: '借', isParent: false, balance: 0, indent: 1 },
+    { code: '1101',   name: '交易性金融资产',     dir: '借', isParent: false, balance: 0 },
+    { code: '1121',   name: '应收票据',           dir: '借', isParent: false, balance: 0 },
+    { code: '1122',   name: '应收账款',           dir: '借', isParent: false, balance: 0 },
+];
+
+// ─── 科目级次判断（依据编码长度，4→一级，6→二级）────────────────────────────
+function getLevel(code) {
+    if (code.length <= 4) return 1;
+    if (code.length <= 6) return 2;
+    if (code.length <= 8) return 3;
+    return 4;
+}
+
+function levelClass(lv) {
+    return ['lv1','lv2','lv3','lv4'][lv - 1] || 'lv4';
+}
+function levelLabel(lv) {
+    return ['一级','二级','三级','四级'][lv - 1] || `${lv}级`;
+}
+
+// ─── 汇总父科目余额 ──────────────────────────────────────────────────────────
+function syncParents() {
+    SUBJECTS.forEach(s => {
+        if (!s.isParent) return;
+        const children = SUBJECTS.filter(c => !c.isParent && c.code.startsWith(s.code) && c.code.length > s.code.length);
+        s.balance = children.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
+    });
+}
+
+// ─── 试算平衡 ──────────────────────────────────────────────────────────────
+function calcTrial() {
+    let debit = 0, credit = 0;
+    SUBJECTS.forEach(s => {
+        if (s.isParent) return;
+        const v = parseFloat(s.balance) || 0;
+        if (s.dir === '借') debit += v;
+        else credit += v;
+    });
+
+    const fmt = n => n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('total-debit').textContent  = fmt(debit);
+    document.getElementById('total-credit').textContent = fmt(credit);
+
+    const diff = debit - credit;
+    const statusEl = document.getElementById('balance-status');
+    if (Math.abs(diff) < 0.005) {
+        statusEl.className = 'balance-status balance-ok';
+        statusEl.textContent = '✅ 试算平衡';
+    } else {
+        statusEl.className = 'balance-status balance-fail';
+        statusEl.innerHTML = `⚠ 试算不平衡 | 差额: <span id="diff-amount">${fmt(Math.abs(diff))}</span>`;
+    }
+}
+
+// ─── 渲染表格 ──────────────────────────────────────────────────────────────
+function renderTable() {
+    syncParents();
+    const tbody = document.getElementById('ob-tbody');
+    let html = '';
+
+    SUBJECTS.forEach((s, idx) => {
+        const lv = getLevel(s.code);
+        const indent = (lv - 1) * 20 + 16;
+        const nameStyle = `padding-left:${indent}px;`;
+        const rowClass  = s.isParent ? ' is-parent' : '';
+        const balFmt    = parseFloat(s.balance || 0).toFixed(2);
+        const dirCls    = s.dir === '借' ? 'dir-debit' : 'dir-credit';
+
+        let balanceCell;
+        if (s.isParent) {
+            balanceCell = `
+                <input class="balance-input" type="number" value="${balFmt}" disabled>
+                <span class="parent-tip">汇总子科目</span>`;
+        } else {
+            balanceCell = `
+                <input class="balance-input" type="number" value="${s.balance || ''}" placeholder="0.00"
+                    data-idx="${idx}" oninput="onInput(this)">`;
+        }
+
+        html += `
+        <tr class="${rowClass}">
+            <td class="col-code">${s.code}</td>
+            <td class="col-level"><span class="level-badge ${levelClass(lv)}">${levelLabel(lv)}</span></td>
+            <td style="${nameStyle}">${s.isParent ? `<strong>${s.name}</strong>` : s.name}</td>
+            <td class="col-dir"><span class="dir-badge ${dirCls}">${s.dir}</span></td>
+            <td class="col-open">${balanceCell}</td>
+            <td class="col-annual">0.00</td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html;
+    calcTrial();
+}
+
+// ─── 输入事件 ────────────────────────────────────────────────────────────
+function onInput(el) {
+    const idx = parseInt(el.dataset.idx);
+    SUBJECTS[idx].balance = parseFloat(el.value) || 0;
+    syncParents();
+
+    // 刷新父科目禁用输入框
+    document.querySelectorAll('.balance-input[disabled]').forEach(ro => {
+        const tr       = ro.closest('tr');
+        const codeCell = tr ? tr.querySelector('td.col-code') : null;
+        if (!codeCell) return;
+        const code = codeCell.textContent.trim();
+        const sub  = SUBJECTS.find(s => s.code === code);
+        if (sub) ro.value = parseFloat(sub.balance || 0).toFixed(2);
+    });
+
+    calcTrial();
+}
+
+// ─── 工具栏按钮 ──────────────────────────────────────────────────────────
+document.getElementById('btn-import').onclick = () => {
+    alert('导入功能：请选择 Excel/CSV 文件导入期初余额数据。\n（当前版本为占位，功能待开发）');
+};
+
+document.getElementById('btn-export').onclick = () => {
+    const lines = ['科目编码\t科目名称\t方向\t期初余额'];
+    SUBJECTS.forEach(s => {
+        lines.push(`${s.code}\t${s.name}\t${s.dir}\t${parseFloat(s.balance||0).toFixed(2)}`);
+    });
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/tab-separated-values;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '期初余额.tsv';
+    a.click();
+};
+
+document.getElementById('btn-save').onclick = () => {
+    // 模拟保存
+    alert('期初余额已保存。');
+};
+
+document.getElementById('btn-trial').onclick = () => {
+    calcTrial();
+    document.querySelector('.footer-bar').scrollIntoView({ behavior: 'smooth' });
+};
+
+// 清零
+document.getElementById('btn-clear').onclick = () => {
+    document.getElementById('clear-modal').classList.add('show');
+};
+document.getElementById('modal-cancel').onclick = () => {
+    document.getElementById('clear-modal').classList.remove('show');
+};
+document.getElementById('modal-confirm').onclick = () => {
+    SUBJECTS.forEach(s => { s.balance = 0; });
+    renderTable();
+    document.getElementById('clear-modal').classList.remove('show');
+};
+document.getElementById('clear-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('clear-modal')) {
+        document.getElementById('clear-modal').classList.remove('show');
+    }
+});
+
+// ─── 初始渲染 ──────────────────────────────────────────────────────────
+renderTable();
+</script>
+</body>
+</html>
