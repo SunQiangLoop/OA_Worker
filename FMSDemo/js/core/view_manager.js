@@ -14437,10 +14437,16 @@ function loadContent(moduleCode, element = null) {
 
     // Post-init: Dashboard — 动画折线图
     if (moduleCode === "Dashboard") {
-        // 用 rAF 等待浏览器完成首次布局，确保 offsetWidth 可用
+        // 等待 startup-loader 隐藏 + 布局就绪后再启动图表动画
         function _fmdInitChart() {
             var canvas = document.getElementById('fmdCashChart');
             if (!canvas) return;
+            // 若 startup-loader 还在遮盖页面，延迟等待（避免动画在遮罩下悄悄跑完）
+            var loader = document.getElementById('startup-loader');
+            if (loader && !loader.classList.contains('is-hidden')) {
+                setTimeout(_fmdInitChart, 100);
+                return;
+            }
             var W = canvas.parentElement ? canvas.parentElement.offsetWidth : 0;
             if (W < 10) { requestAnimationFrame(_fmdInitChart); return; }
             _fmdDrawChart(canvas, W);

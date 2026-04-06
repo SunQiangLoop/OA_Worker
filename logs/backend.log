@@ -1503,3 +1503,17 @@ Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust
 2026/04/04 16:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:125
 [0m[33m[3.506ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
 [GIN] 2026/04/04 - 16:54:49 | 200 |   33.839209ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+
+2026/04/04 22:52:33 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:124
+[0m[33m[20.967ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL
+
+2026/04/04 22:52:33 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:125
+[0m[33m[4.403ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/04/04 - 22:52:33 | 200 |   34.837208ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+
+2026/04/04 22:52:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:124
+[0m[33m[4.837ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL
+
+2026/04/04 22:52:42 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:125
+[0m[33m[1.120ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/04/04 - 22:52:42 | 200 |    6.391208ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
