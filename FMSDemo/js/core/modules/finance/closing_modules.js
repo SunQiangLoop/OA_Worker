@@ -76,41 +76,68 @@
         let period = defaultPeriod;
 
         const STEPS = [
-            { key: 'autoTransfer', label: '自动转账', icon: '🔄', desc: '自定义计提/转账方案，批量生成凭证', url: 'AutoTransferTax' },
-            { key: 'amort',        label: '凭证摊销', icon: '📉', desc: '根据预摊销计划，自动生成本期摊销凭证', url: '#' },
-            { key: 'accrue',       label: '凭证预提', icon: '📋', desc: '执行月度预提方案，计提本期各项费用', url: '#' },
-            { key: 'adjust',       label: '账务调整', icon: '🔀', desc: '期末往来对冲、重分类、坏账准备计提', url: '#' },
-            { key: 'profit',       label: '结转损益', icon: '⚖️', desc: '将损益科目余额结转至本年利润科目', url: 'ClosingWizardProfit' },
-            { key: 'close',        label: '总账结账', icon: '🔒', desc: '完成最终结账，锁定本期账务数据', url: 'ClosingWizardClose' },
+            { key: 'autoTransfer', label: '自动转账', icon: '<i class="fa-solid fa-arrows-rotate"></i>',  desc: '按自定义计提/转账方案，批量处理内部往来及成本归集', url: 'AutoTransferTax' },
+            { key: 'amort',        label: '凭证摊销', icon: '<i class="fa-solid fa-chart-pie"></i>',      desc: '根据预摊销计划，自动生成本期待摊费用、无形资产摊销凭证', url: '#' },
+            { key: 'accrue',       label: '凭证预提', icon: '<i class="fa-solid fa-calendar-plus"></i>',  desc: '执行月度预提方案，自动计算并计提本期各项未结费用', url: '#' },
+            { key: 'adjust',       label: '账务调整', icon: '<i class="fa-solid fa-pen-ruler"></i>',      desc: '期末往来对冲、科目重分类、坏账准备计提等手工调整', url: '#' },
+            { key: 'profit',       label: '结转损益', icon: '<i class="fa-solid fa-scale-balanced"></i>', desc: '将损益类科目余额一键结转至"本年利润"，清洗损益账', url: 'ClosingWizardProfit' },
+            { key: 'close',        label: '总账结账', icon: '<i class="fa-solid fa-lock"></i>',           desc: '最终结锁当期数据，结转余额至下期。结账后将不可逆转', url: 'ClosingWizardClose' },
         ];
 
         function renderCards(p) {
-            return STEPS.map(s => {
+            return STEPS.map((s, i) => {
                 const isDone = getStepDone(p, s.key);
-                const isWip = s.url === '#';
+                const isWip  = s.url === '#';
+                const isFinal = s.key === 'close';
+                const stepNo  = isFinal ? 'FINAL' : `STEP ${String(i + 1).padStart(2, '0')}`;
                 const clickAttr = isWip
                     ? `onclick="alert('「${s.label}」功能正在建设中，敬请期待。')"`
                     : `onclick="loadContent('${s.url}')"`;
-                const cardStyle = isWip
-                    ? 'background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:default; opacity:0.75;'
-                    : 'background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:25px; cursor:pointer;';
-                const btnStyle = isWip
-                    ? 'background:#a0aec0; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:not-allowed;'
-                    : `background:${isDone?'#48bb78':'#3182ce'}; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;`;
-                const btnLabel = isWip ? '开发中' : (isDone ? '查看 →' : '进入 →');
+
+                let badge, btnCls, btnLabel;
+                if (isWip) {
+                    badge    = `<span class="pec-badge pec-badge-wip">建设中</span>`;
+                    btnCls   = 'pec-btn pec-btn-disabled';
+                    btnLabel = '开发中';
+                } else if (isFinal) {
+                    badge    = `<span class="pec-badge pec-badge-final">${isDone ? '已完成' : '最终审核'}</span>`;
+                    btnCls   = 'pec-btn pec-btn-final';
+                    btnLabel = isDone ? '查看 →' : '开始结账';
+                } else {
+                    badge    = isDone
+                        ? `<span class="pec-badge pec-badge-done">已完成</span>`
+                        : `<span class="pec-badge pec-badge-ready">已就绪</span>`;
+                    btnCls   = isDone ? 'pec-btn pec-btn-done' : 'pec-btn pec-btn-active';
+                    btnLabel = isDone ? '查看 →' : '进入 →';
+                }
+
+                const cardCls = ['pec-card',
+                    isFinal ? 'pec-card-dark' : '',
+                    isWip   ? 'pec-card-wip'  : ''
+                ].filter(Boolean).join(' ');
+
                 return `
-                <div style="${cardStyle}" ${clickAttr}>
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                        <div style="font-size:36px; margin-bottom:15px;">${s.icon}</div>
-                        ${isWip ? '<span style="font-size:11px;background:#e2e8f0;color:#718096;padding:2px 8px;border-radius:10px;height:fit-content;">建设中</span>' : ''}
-                    </div>
-                    <h3 style="font-size:17px; margin-bottom:10px;">${s.label}</h3>
-                    <p style="font-size:13px; color:#718096; line-height:1.5;">${s.desc}</p>
-                    <div style="margin-top:20px; text-align:right;">
-                        <button style="${btnStyle}" ${isWip ? 'disabled' : ''}>${btnLabel}</button>
+                <div class="${cardCls}" data-key="${s.key}" ${clickAttr}>
+                    <div class="pec-step-no">${stepNo}</div>
+                    <div class="pec-icon">${s.icon}</div>
+                    <h3 class="pec-card-title">${s.label}</h3>
+                    <p class="pec-card-desc">${s.desc}</p>
+                    <div class="pec-footer">
+                        ${badge}
+                        <button class="${btnCls}" ${isWip ? 'disabled' : ''}>${btnLabel}</button>
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        // 动态注入 Font Awesome（与原型保持一致）
+        if (!document.getElementById('pec-fa-link')) {
+            const _fa = document.createElement('link');
+            _fa.id = 'pec-fa-link';
+            _fa.rel = 'stylesheet';
+            _fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
+            _fa.crossOrigin = 'anonymous';
+            document.head.appendChild(_fa);
         }
 
         const periodOpts = periods.map(p =>
@@ -118,24 +145,91 @@
         ).join('');
 
         contentArea.innerHTML = `
-        <div style="padding:30px; max-width:1200px; margin:0 auto; font-family:sans-serif;">
-            <div style="background:#fff; border-radius:12px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:30px; display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="font-size:20px; font-weight:800; border-left:5px solid #3182ce; padding-left:15px;">期末结账工作台</h2>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:13px; color:#718096;">会计期间：</span>
-                    <select id="pec-period-sel" onchange="window.pecChangePeriod(this.value)"
-                        style="background:#3182ce; color:#fff; padding:5px 12px; border-radius:20px; font-size:13px; font-weight:700; border:none; cursor:pointer; appearance:none; -webkit-appearance:none;">
-                        ${periodOpts}
-                    </select>
+        <style>
+            .pec-wrap { padding:28px; background:#f0f4f8; min-height:100%; }
+            .pec-header { max-width:1100px; margin:0 auto 28px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px; }
+            .pec-main-title { font-size:26px; font-weight:800; color:#1e293b; line-height:1.2; }
+            .pec-subtitle { font-size:13px; color:#64748b; margin-top:6px; }
+            .pec-period-val { font-weight:700; color:#2563eb; font-family:monospace; }
+            .pec-header-right { display:flex; align-items:center; gap:18px; }
+            .pec-legend { display:flex; gap:14px; font-size:12px; color:#64748b; }
+            .pec-legend-item { display:flex; align-items:center; gap:5px; }
+            .pec-legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+            .pec-period-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#64748b; }
+            .pec-period-sel { background:#2563eb; color:#fff; padding:5px 14px; border-radius:20px; font-size:13px; font-weight:700; border:none; cursor:pointer; appearance:none; -webkit-appearance:none; }
+
+            .pec-grid { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+
+            .pec-card { background:#fff; border:1px solid #e2e8f0; border-radius:18px; padding:24px; position:relative; overflow:hidden; cursor:pointer; transition:transform .25s ease,box-shadow .25s ease; }
+            .pec-card:not(.pec-card-wip):hover { transform:translateY(-5px); box-shadow:0 12px 28px -6px rgba(0,0,0,.12); }
+            .pec-card-wip { cursor:default; }
+            .pec-card-dark { background:#fff; border-color:#fbbf24; border-width:2px; }
+            .pec-card-dark:hover { box-shadow:0 12px 28px -6px rgba(251,191,36,.2); }
+
+            .pec-step-no { position:absolute; top:14px; right:14px; font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; background:#f1f5f9; color:#94a3b8; padding:2px 8px; border-radius:4px; }
+
+            .pec-icon { width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:22px; transition:background .2s,color .2s; }
+            .pec-card[data-key=autoTransfer] .pec-icon { background:#eff6ff; color:#3b82f6; }
+            .pec-card[data-key=amort]        .pec-icon { background:#ecfeff; color:#06b6d4; }
+            .pec-card[data-key=accrue]       .pec-icon { background:#eef2ff; color:#6366f1; }
+            .pec-card[data-key=adjust]       .pec-icon { background:#fffbeb; color:#f59e0b; }
+            .pec-card[data-key=profit]       .pec-icon { background:#ecfdf5; color:#10b981; }
+            .pec-card[data-key=close]        .pec-icon { background:#334155; color:#fbbf24; }
+            .pec-card[data-key=autoTransfer]:not(.pec-card-wip):hover .pec-icon { background:#3b82f6; color:#fff; }
+            .pec-card[data-key=amort]:not(.pec-card-wip):hover        .pec-icon { background:#06b6d4; color:#fff; }
+            .pec-card[data-key=accrue]:not(.pec-card-wip):hover       .pec-icon { background:#6366f1; color:#fff; }
+            .pec-card[data-key=adjust]:not(.pec-card-wip):hover       .pec-icon { background:#f59e0b; color:#fff; }
+            .pec-card[data-key=profit]:not(.pec-card-wip):hover       .pec-icon { background:#10b981; color:#fff; }
+            .pec-card[data-key=close]:hover                           .pec-icon { background:#fbbf24; color:#1e293b; }
+
+            .pec-card-title { font-size:16px; font-weight:700; color:#1e293b; margin-bottom:8px; }
+            .pec-card-desc { font-size:12px; color:#64748b; line-height:1.75; margin-bottom:18px; min-height:54px; }
+
+            .pec-footer { display:flex; justify-content:space-between; align-items:center; }
+
+            .pec-badge { font-size:11px; font-weight:500; padding:3px 10px; border-radius:4px; }
+            .pec-badge-wip   { background:#f1f5f9; color:#94a3b8; }
+            .pec-badge-ready { background:#dcfce7; color:#16a34a; }
+            .pec-badge-done  { background:#dbeafe; color:#2563eb; }
+            .pec-badge-final { background:rgba(251,191,36,.15); color:#fbbf24; }
+
+            .pec-btn { padding:6px 20px; border-radius:8px; font-size:13px; font-weight:700; border:none; cursor:pointer; transition:background .15s; }
+            .pec-btn-active   { background:#2563eb; color:#fff; box-shadow:0 4px 12px rgba(37,99,235,.25); }
+            .pec-btn-active:hover { background:#1d4ed8; }
+            .pec-btn-done     { background:#16a34a; color:#fff; }
+            .pec-btn-done:hover { background:#15803d; }
+            .pec-btn-final    { background:#fbbf24; color:#1e293b; box-shadow:0 4px 12px rgba(251,191,36,.25); }
+            .pec-btn-final:hover { background:#f59e0b; }
+            .pec-btn-disabled { background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+
+            .pec-infobar { max-width:1100px; margin:20px auto 0; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:14px 18px; display:flex; align-items:flex-start; gap:10px; font-size:12px; color:#1e40af; line-height:1.75; }
+        </style>
+        <div class="pec-wrap">
+            <div class="pec-header">
+                <div>
+                    <div class="pec-main-title">期末处理工作台</div>
+                    <div class="pec-subtitle">当前待处理会计期间：<span class="pec-period-val" id="pec-period-display">${period}</span></div>
+                </div>
+                <div class="pec-header-right">
+                    <div class="pec-legend">
+                        <div class="pec-legend-item"><span class="pec-legend-dot" style="background:#3b82f6"></span>核心流程</div>
+                        <div class="pec-legend-item"><span class="pec-legend-dot" style="background:#cbd5e1"></span>辅助工具</div>
+                    </div>
+                    <div class="pec-period-row">
+                        <span>切换期间：</span>
+                        <select id="pec-period-sel" class="pec-period-sel" onchange="window.pecChangePeriod(this.value)">
+                            ${periodOpts}
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div id="pec-cards" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px;">
-                ${renderCards(period)}
-            </div>
+            <div id="pec-cards" class="pec-grid">${renderCards(period)}</div>
         </div>`;
 
         window.pecChangePeriod = function(val) {
             lsSet('QM_CurrentPeriod', val);
+            const display = document.getElementById('pec-period-display');
+            if (display) display.textContent = val;
             const cards = document.getElementById('pec-cards');
             if (cards) cards.innerHTML = renderCards(val);
         };
