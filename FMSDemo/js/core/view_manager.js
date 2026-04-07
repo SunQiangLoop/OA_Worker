@@ -12638,8 +12638,7 @@ function loadContent(moduleCode, element = null) {
             { id:'KH-0001', code:'KH001', name:'上海远通物流有限公司',     nature:'客户',   billingCustomer:'是', department:'销售一部', manager:'李明', archiveDate:'2025-03-10', balance:'125,000.00',  disabled:false, position:'主要客户' },
             { id:'KH-0002', code:'KH002', name:'北京华泰货运代理有限公司', nature:'客户',   billingCustomer:'是', department:'销售二部', manager:'王芳', archiveDate:'2025-04-22', balance:'88,500.00',   disabled:false, position:'重点客户' },
             { id:'KH-0003', code:'KH003', name:'广州跨境电商科技有限公司', nature:'客户',   billingCustomer:'否', department:'销售一部', manager:'张强', archiveDate:'2025-06-01', balance:'32,800.00',   disabled:false, position:'普通客户' },
-            { id:'GY-0001', code:'GY001', name:'中铁快运股份有限公司',     nature:'供应商', billingCustomer:'否', department:'采购部',   manager:'陈磊', archiveDate:'2025-01-15', balance:'-45,000.00',  disabled:false, position:''        },
-            { id:'GY-0002', code:'GY002', name:'顺丰速运有限公司',         nature:'供应商', billingCustomer:'否', department:'采购部',   manager:'赵雪', archiveDate:'2025-02-20', balance:'-18,200.00',  disabled:true,  position:''        },
+            { id:'GY-0001', code:'GY001', name:'中铁快运股份有限公司',     nature:'供应商', billingCustomer:'否', department:'采购部',   manager:'陈磊', archiveDate:'2025-01-15', balance:'-45,000.00',  disabled:false, position:''        }, 
         ];
 
         window.bcGetData = function() {
@@ -12872,30 +12871,10 @@ function loadContent(moduleCode, element = null) {
                 <button class="bc-btn" onclick="window.bcOpenModal('add')">新增</button>
                 <button class="bc-btn" onclick="(function(){if(!window._bcSelectedId){alert('请先点击选中一行');return;}window.bcOpenModal('edit',window._bcSelectedId);})()">修改</button>
                 <button class="bc-btn" onclick="window.bcDelete()">删除</button>
-                <button class="bc-btn" onclick="alert('请先勾选记录后使用批量修改')">批量修改</button>
-                <button class="bc-btn" onclick="window.bcCopy()">复制</button>
-                <div class="bc-btn-sep"></div>
-                <button class="bc-btn" onclick="window.bcToggleSearch()">查找</button>
-                <button class="bc-btn" onclick="alert('栏目配置功能开发中')">栏目</button>
-                <div class="bc-btn-sep"></div>
-                <div class="bc-dd" id="bc-dd-print">
-                    <button class="bc-btn" onclick="document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.toggle('open')">打印 ▾</button>
-                    <div class="bc-dd-menu">
-                        <div class="bc-dd-item" onclick="window.print();document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.remove('open')">打印列表</div>
-                        <div class="bc-dd-item" onclick="alert('PDF导出功能开发中');document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.remove('open')">导出PDF</div>
-                    </div>
-                </div>
-                <div class="bc-dd" id="bc-dd-import">
-                    <button class="bc-btn" onclick="document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.toggle('open')">导入 ▾</button>
-                    <div class="bc-dd-menu">
-                        <div class="bc-dd-item" onclick="alert('Excel导入功能开发中');document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.remove('open')">从Excel导入</div>
-                        <div class="bc-dd-item" onclick="alert('CSV导入功能开发中');document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.remove('open')">从CSV导入</div>
-                    </div>
-                </div>
+                    <button class="bc-btn" onclick="document.getElementById('bc-dd-print').querySelector('.bc-dd-menu').classList.toggle('open')">打印</button>
+                    <button class="bc-btn" onclick="document.getElementById('bc-dd-import').querySelector('.bc-dd-menu').classList.toggle('open')">导入</button>
                 <button class="bc-btn" onclick="window.bcExport()">导出</button>
-                <div class="bc-btn-sep"></div>
-                <button class="bc-btn" onclick="alert('并户功能：合并两个往来单位记录，功能开发中')">并户</button>
-                <button class="bc-btn" onclick="loadContent('Dashboard')">退出</button>
+                <button class="bc-btn" onclick="window.bcToggleSearch()">查找</button>
             </div>
 
             <div class="bc-search-bar" id="bc-search-bar">

@@ -141,8 +141,7 @@
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('BaseCustomer', this)">客户档案</div>
             </div>
-            <!-- 以下内容待开发，暂时不删除 -->
-            <!-- <div class="menu-group-title">人事中心</div>
+            <div class="menu-group-title">人事中心</div>
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">人事管理</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('HREmployee', this)">员工花名册</div>
@@ -152,12 +151,15 @@
                 <div class="sub-menu-item" onclick="loadContent('HRSalary', this)">薪酬核算与发放</div>
                 <div class="sub-menu-item" onclick="loadContent('HRSalaryConfig', this)">薪酬规则配置</div>
             </div>
+
+            <div class="menu-group-title">固定资产</div>
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">固定资产管理</div>
             <div class="sub-menu">
-                <div class="sub-menu-item" onclick="loadContent('AssetCard', this)">资产卡片</div>
-                <div class="sub-menu-item" onclick="loadContent('AssetDepreciation', this)">折旧计算</div>
-                <div class="sub-menu-item" onclick="loadContent('AssetChange', this)">资产变动</div>
-            </div> -->
+                <div class="sub-menu-item" onclick="loadContent('AssetList', this)">资产台账</div>
+                <div class="sub-menu-item" onclick="loadContent('AssetRegister', this)">资产登记</div>
+                <div class="sub-menu-item" onclick="loadContent('AssetDepreciation', this)">折旧管理</div>
+                <div class="sub-menu-item" onclick="loadContent('AssetApproval', this)">审批中心</div>
+            </div>
             
             <div class="menu-group-title">设置</div>
             <div class="menu-item" onclick="loadContent('AccountingStandardSetting', this)">基础设置</div>
@@ -188,8 +190,6 @@
     <script src="js/core/accounting_engine.js"></script>
     <script src="js/core/view_manager.js"></script>
     <script src="js/data/voucher_seed_20260131.js"></script>
-    <script src="js/core/modules/asset/asset_depr.js"></script>
-    <script src="js/core/modules/asset/asset_card.js"></script>
     <script src="js/core/modules/finance/settlement.js"></script>
     <script src="js/core/modules/finance/voucher.js"></script>
     <script src="js/core/modules/finance/invoice.js"></script>
@@ -207,6 +207,7 @@
     <script src="js/core/modules/ops/view_waybill.js"></script>
     <script src="js/core/modules/asset/asset_card.js"></script>
     <script src="js/core/modules/asset/asset_depr.js"></script>
+    <script src="js/core/modules/asset/asset_approval.js"></script>
     <script src="js/core/modules/hr/employee.js"></script>
     <script src="js/core/modules/hr/salary.js"></script>
     <script src="js/core/modules/hr/config.js"></script>

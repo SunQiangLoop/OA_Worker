@@ -2478,7 +2478,6 @@ window.VM_MODULES['AcctAuxiliary'] = function(contentArea, contentHTML, moduleCo
             if (btn && btn.classList) btn.classList.add("is-active");
             document.getElementById("aux-search-input").value = "";
             window.renderAuxiliaryList();
-            window.renderAuxiliaryGuide();
         };
 
         window.searchAuxiliary = function (event) {
@@ -2599,7 +2598,6 @@ window.VM_MODULES['AcctAuxiliary'] = function(contentArea, contentHTML, moduleCo
                                 <button class="btn-primary">导出</button>
                             </div>
                         </div>
-                        <div class="aux-guide" id="aux-guide"></div>
                         <div class="aux-quick-add" id="aux-quick-add">
                             <input id="aux-code-input" type="text" placeholder="编码">
                             <input id="aux-name-input" type="text" placeholder="名称">
@@ -2626,7 +2624,6 @@ window.VM_MODULES['AcctAuxiliary'] = function(contentArea, contentHTML, moduleCo
 
         setTimeout(() => {
             window.renderAuxiliaryList();
-            window.renderAuxiliaryGuide();
         }, 0);
 
     contentArea.innerHTML = contentHTML;

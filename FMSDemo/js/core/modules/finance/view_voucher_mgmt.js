@@ -91,9 +91,11 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
             .ve-col-summary { min-width:140px; }
             .ve-col-subject { min-width:160px; }
             .ve-col-auxiliary { width:160px; }
-            .ve-aux-trigger { width:100%; text-align:left; border:none; background:transparent; font-size:13px; padding:2px 4px; color:#333; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
-            .ve-aux-trigger:hover { background:#f0f5ff; border-radius:2px; }
-            .ve-aux-trigger.has-value { color:#1890ff; }
+            .ve-aux-trigger { width:100%; text-align:left; border:1px solid transparent; border-radius:3px; background:transparent; font-size:13px; padding:2px 6px; color:#333; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
+            .ve-aux-trigger:hover { background:#f0f5ff; }
+            .ve-aux-trigger.has-value { color:#1890ff; border-color:transparent; }
+            .ve-aux-trigger.needs-aux { color:#d97706; border:1px dashed #fcd34d; background:#fffbeb; font-weight:500; }
+            .ve-aux-trigger.needs-aux:hover { background:#fff3cd; }
             .ve-row-menu-item { padding:7px 16px; font-size:13px; color:#333; cursor:pointer; white-space:nowrap; }
             .ve-row-menu-item:hover { background:#f0f5ff; color:#1890ff; }
             .ve-row-menu-danger { color:#ff4d4f; }
@@ -460,10 +462,12 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                             ' onfocus="veShowSubjectAC(' + idx + ',this.value,true)"' +
                             ' onblur="setTimeout(function(){veHideAC(\'veSubjAC\')},200)">' +
                         '</td>' +
-                        '<td class="ve-col-auxiliary">' +
-                            '<button class="ve-aux-trigger' + (currentAux.length ? ' has-value' : '') + '" id="veAuxBtn_' + idx + '" onclick="veShowAuxAC(' + idx + ',this)">' +
-                            veGetAuxDisplayText(currentAux) +
-                            '</button>' +
+                        '<td class="ve-col-auxiliary">' + (function(){
+                            var hasAuxCfg = subjectObj && subjectObj.aux && subjectObj.aux !== '无' && subjectObj.aux.trim() !== '';
+                            var btnCls = currentAux.length ? ' has-value' : (hasAuxCfg ? ' needs-aux' : '');
+                            var btnTxt = currentAux.length ? veGetAuxDisplayText(currentAux) : (hasAuxCfg ? '⚑ 需选辅助项' : '请选择...');
+                            return '<button class="ve-aux-trigger' + btnCls + '" id="veAuxBtn_' + idx + '" onclick="veShowAuxAC(' + idx + ',this)">' + btnTxt + '</button>';
+                        })() +
                         '</td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.debit || 0) + '" oninput="window.veRows[' + idx + '].debit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
                         '<td class="ve-col-amount"><input class="ve-amount-input" type="number" step="0.01" min="0" value="' + (row.credit || 0) + '" oninput="window.veRows[' + idx + '].credit=parseFloat(this.value)||0;veUpdateTotals()"></td>' +
@@ -659,9 +663,19 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var btn = document.getElementById('veAuxBtn_' + idx);
                 if (!btn) return;
                 var auxArr = Array.isArray(row.auxiliary) ? row.auxiliary : [];
-                btn.textContent = veGetAuxDisplayText(auxArr);
-                if (auxArr.length) btn.classList.add('has-value');
-                else btn.classList.remove('has-value');
+                if (auxArr.length) {
+                    btn.textContent = veGetAuxDisplayText(auxArr);
+                    btn.classList.add('has-value');
+                    btn.classList.remove('needs-aux');
+                } else {
+                    // 检查该科目是否有辅助核算配置
+                    var subjCode = (row.subject || '').split(' ')[0];
+                    var subjObj = subjCode ? (window._veSubjectList || []).find(function(s){ return s.code === subjCode; }) : null;
+                    var hasAuxCfg = subjObj && subjObj.aux && subjObj.aux !== '无' && subjObj.aux.trim() !== '';
+                    btn.textContent = hasAuxCfg ? '⚑ 需选辅助项' : '请选择...';
+                    btn.classList.remove('has-value');
+                    btn.classList.toggle('needs-aux', !!hasAuxCfg);
+                }
             };
 
             window.veHideAC = function(id) {
@@ -714,14 +728,15 @@ window.VM_MODULES['VoucherEntryReview'] = function(contentArea, contentHTML, mod
                 var input = document.getElementById('veSubjInput_' + idx);
                 if (input) { input.value = val; input.focus(); }
                 veHideAC('veSubjAC');
-                // 根据新选科目刷新辅助核算多选下拉
-                var auxSel = document.getElementById('veAuxSel_' + idx);
-                if (auxSel) {
-                    var code = val.split(' ')[0];
-                    var subj = (window._veSubjectList || []).find(function(s) { return s.code === code; });
-                    auxSel.innerHTML = (subj && subj.aux && window.veBuildAuxMulti)
-                        ? window.veBuildAuxMulti(subj.aux, [])
-                        : '<option value="">无</option>';
+                // 根据新选科目刷新辅助核算按钮状态
+                var code = val.split(' ')[0];
+                var subj = (window._veSubjectList || []).find(function(s) { return s.code === code; });
+                var hasAuxCfg = subj && subj.aux && subj.aux !== '无' && subj.aux.trim() !== '';
+                var btn = document.getElementById('veAuxBtn_' + idx);
+                if (btn) {
+                    btn.textContent = hasAuxCfg ? '⚑ 需选辅助项' : '请选择...';
+                    btn.classList.remove('has-value');
+                    btn.classList.toggle('needs-aux', !!hasAuxCfg);
                 }
             };
 
