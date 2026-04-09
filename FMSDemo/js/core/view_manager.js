@@ -152,6 +152,12 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "5403", name: "税金及附加", type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
         { code: "5601", name: "销售费用",       type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
         { code: "5602", name: "管理费用",       type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
+            { code: "560201", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560202", name: "管理费用-差旅",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560203", name: "管理费用-通讯",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560204", name: "管理费用-培训",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560205", name: "管理费用-招待",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+
         { code: "5603", name: "财务费用",       type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
         { code: "5701", name: "资产减值损失",   type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
         { code: "5801", name: "营业外支出",     type: "损益", direction: "借", aux: "无",         status: "启用", remark: "非经营性支出" },
@@ -251,6 +257,11 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "6403", name: "税金及附加",     type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
         { code: "6601", name: "销售费用",           type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
         { code: "6602", name: "管理费用",           type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
+            { code: "660201", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660202", name: "管理费用-差旅",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660203", name: "管理费用-通讯",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660204", name: "管理费用-培训",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660205", name: "管理费用-招待",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
         { code: "6603", name: "财务费用",           type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
         { code: "6701", name: "资产减值损失",       type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
         { code: "6711", name: "营业外支出",         type: "损益", direction: "借", aux: "无",         status: "启用", remark: "非经营性支出" },
@@ -14329,7 +14340,7 @@ function loadContent(moduleCode, element = null) {
                         entries: [
                             { dir: '借', subjectCode: '1122',   subjectName: '应收账款',     summary: '确认应收债权', amountType: 'gross', usePaymentMethod: false },
                             { dir: '贷', subjectCode: '5001',   subjectName: '主营业务收入', summary: '确认运输收入', amountType: 'net',   usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '2221',   subjectName: '应交税费',     summary: '确认销项税额', amountType: 'tax',   usePaymentMethod: false }
+                            { dir: '贷', subjectCode: '22210107',   subjectName: '应交税费-应交增值税',     summary: '确认销项税额', amountType: 'tax',   usePaymentMethod: false }
                         ]
                     },
                     '测试应付': {
@@ -16405,14 +16416,19 @@ function loadContent(moduleCode, element = null) {
         const getVoucherId = window.generateSequentialVoucherId || ((word) => `${word || "付"}-${Date.now()}`);
         const voucherId = getVoucherId("付");
         const amount = Number(item.amount) || 0;
-        const expenseSubjectMap = {
-            "办公费": { code: "6601-01", name: "管理费用-办公" },
-            "差旅费": { code: "6601-02", name: "管理费用-差旅" },
-            "业务招待费": { code: "6602-01", name: "销售费用-招待" },
-            "通讯费": { code: "6601-03", name: "管理费用-通讯" },
-            "培训费": { code: "6601-04", name: "管理费用-培训" }
-        };
-        const expenseSubject = expenseSubjectMap[item.expense_type] || { code: "6601", name: "管理费用" };
+        // 从科目表动态匹配费用科目，不使用写死的科目编码
+        const _allSubjs = JSON.parse(sessionStorage.getItem("AcctSubjects") || "[]");
+        const _kwMap = { "办公费": "办公", "差旅费": "差旅", "业务招待费": "招待", "通讯费": "通讯", "培训费": "培训" };
+        const _kw = _kwMap[item.expense_type];
+        let expenseSubject = null;
+        if (_kw) {
+            // 优先匹配管理费用(6602)明细科目
+            expenseSubject = _allSubjs.find(s => s.code.length > 4 && s.code.startsWith("6602") && s.name.includes(_kw) && s.status !== "禁用");
+            // 兜底：全科目表搜索
+            if (!expenseSubject) expenseSubject = _allSubjs.find(s => s.name.includes(_kw) && s.status !== "禁用");
+        }
+        // 最终兜底：管理费用父科目
+        if (!expenseSubject) expenseSubject = _allSubjs.find(s => s.code === "6602") || { code: "6602", name: "管理费用" };
         const paySubject = paymentMethod === "现金"
             ? { code: "1001", name: "库存现金" }
             : { code: "1002", name: "银行存款" };

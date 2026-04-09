@@ -2047,9 +2047,10 @@ ${vouchersHTML}
         const displayType = SOURCE_TYPE_LABELS[typeKey] || typeKey || "关联单";
 
         // ── 读取数据源 ──────────────────────────────────────────
-        const waybills = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
-        const settlements = JSON.parse(sessionStorage.getItem("SettlementRecords") || "[]");
-        const rcvList = JSON.parse(sessionStorage.getItem("ReceiptVouchers") || "[]");
+        const waybills    = JSON.parse(sessionStorage.getItem("BizWaybills") || "[]");
+        const arStatements = JSON.parse(sessionStorage.getItem("ARStatements") || "[]");   // SET-* 结算单
+        const recons      = JSON.parse(sessionStorage.getItem("CustomerRecons") || "[]");  // RC-* 对账单
+        const rcvList     = JSON.parse(sessionStorage.getItem("ReceiptVouchers") || "[]");
         const vouchers = window.getManualVouchers ? window.getManualVouchers()
             : JSON.parse(sessionStorage.getItem("ManualVouchers") || "[]");
         const voucher = vouchers.find(item => item.id === voucherId);
@@ -2060,41 +2061,67 @@ ${vouchersHTML}
             return isNaN(n) || n === 0 ? "-" : n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
-        // ── 收集明细行 ───────────────────────────────────────────
-        // 格式：[{no, date, route, amount, driver, status}]
-        let detailRows = [];
+        // 将运单ID数组展开为明细行（通用）
+        const wbIdsToRows = (wbIds) => wbIds.map(wbId => {
+            const wb = waybills.find(w => w.id === wbId || w.orderNo === wbId);
+            return {
+                no:     wbId,
+                date:   wb ? (wb.date || wb.shipDate || "-") : "-",
+                route:  wb ? ((wb.origin || "") + (wb.destination ? " → " + wb.destination : "")) : "-",
+                amount: fmtAmt(wb ? (wb.totalAmount || wb.freightAmount || wb.amount) : "0"),
+                driver: wb ? (wb.driver || wb.driverName || "-") : "-",
+                status: wb ? (wb.status || "-") : "-"
+            };
+        });
 
-        // 1. 对账单 SET-* / RCV-*：展开下属运单明细
+        // ── 收集明细行 ───────────────────────────────────────────
+        let detailRows = [];
         const primaryId = ids[0] || "";
+
+        // 1. SET-* 结算单：从 ARStatements 展开运单
         if (/^SET-/i.test(primaryId)) {
-            // 从 SettlementRecords 查找
-            const setRec = settlements.find(s => s.id === primaryId || s.settleNo === primaryId);
-            if (setRec && Array.isArray(setRec.details) && setRec.details.length) {
-                detailRows = setRec.details.map(d => ({
-                    no: d.waybillNo || d.id || "-",
-                    date: d.date || d.waybillDate || "-",
-                    route: d.route || d.destination || "-",
-                    amount: fmtAmt(d.amount || d.freightAmount || d.totalAmount),
-                    driver: d.driver || d.driverName || "-",
-                    status: d.status || "已结算"
-                }));
-            }
-            // 兜底：从 BizWaybills 中找 settlementId 匹配的
-            if (!detailRows.length) {
-                const matched = waybills.filter(wb =>
-                    wb.settlementId === primaryId || wb.settleNo === primaryId || wb.setId === primaryId
-                );
-                if (matched.length) {
-                    detailRows = matched.map(wb => ({
-                        no: wb.id || wb.orderNo || "-",
-                        date: wb.date || wb.shipDate || "-",
-                        route: (wb.origin || "") + (wb.destination ? " → " + wb.destination : ""),
-                        amount: fmtAmt(wb.totalAmount || wb.freightAmount || wb.amount),
-                        driver: wb.driver || wb.driverName || "-",
-                        status: wb.status || "-"
+            const setRec = arStatements.find(s => s.id === primaryId);
+            if (setRec) {
+                // 优先用 waybillIds 直接展开
+                if (Array.isArray(setRec.waybillIds) && setRec.waybillIds.length) {
+                    detailRows = wbIdsToRows(setRec.waybillIds);
+                }
+                // 其次用 details（旧格式兼容）
+                if (!detailRows.length && Array.isArray(setRec.details) && setRec.details.length) {
+                    detailRows = setRec.details.map(d => ({
+                        no: d.waybillNo || d.id || "-",
+                        date: d.date || d.waybillDate || "-",
+                        route: d.route || d.destination || "-",
+                        amount: fmtAmt(d.amount || d.freightAmount || d.totalAmount),
+                        driver: d.driver || d.driverName || "-",
+                        status: d.status || "已结算"
                     }));
                 }
             }
+            // 兜底：从 BizWaybills 中按 arSettlementId 匹配
+            if (!detailRows.length) {
+                const matched = waybills.filter(wb =>
+                    wb.arSettlementId === primaryId || wb.settlementId === primaryId || wb.setId === primaryId
+                );
+                if (matched.length) detailRows = wbIdsToRows(matched.map(w => w.id));
+            }
+
+        // 2. RC-* 对账单：从 CustomerRecons → BizWaybills 展开运单
+        } else if (/^RC/i.test(primaryId)) {
+            const rcRec = recons.find(r => r.id === primaryId);
+            if (rcRec) {
+                // 先看 waybillIds
+                if (Array.isArray(rcRec.waybillIds) && rcRec.waybillIds.length) {
+                    detailRows = wbIdsToRows(rcRec.waybillIds);
+                }
+                // 再按 reconId 从 BizWaybills 查
+                if (!detailRows.length) {
+                    const matched = waybills.filter(wb => wb.reconId === primaryId);
+                    if (matched.length) detailRows = wbIdsToRows(matched.map(w => w.id));
+                }
+            }
+
+        // 3. RCV-* 收款单
         } else if (/^RCV-/i.test(primaryId)) {
             const rcvRec = rcvList.find(r => r.id === primaryId);
             if (rcvRec && Array.isArray(rcvRec.details) && rcvRec.details.length) {
@@ -2109,14 +2136,14 @@ ${vouchersHTML}
             }
         }
 
-        // 2. 若仍无明细，直接展示 ids 列表（运单号直查）
+        // 4. 最终兜底：ids 列表直接用运单号查
         if (!detailRows.length) {
             detailRows = ids.map(id => {
                 const wb = waybills.find(w => w.id === id || w.orderNo === id);
                 return {
-                    no: id,
-                    date: wb ? (wb.date || wb.shipDate || "-") : "-",
-                    route: wb ? ((wb.origin || "") + (wb.destination ? " → " + wb.destination : "")) : "-",
+                    no:     id,
+                    date:   wb ? (wb.date || wb.shipDate || "-") : "-",
+                    route:  wb ? ((wb.origin || "") + (wb.destination ? " → " + wb.destination : "")) : "-",
                     amount: fmtAmt(wb ? (wb.totalAmount || wb.freightAmount || wb.amount) : fallbackAmount),
                     driver: wb ? (wb.driver || wb.driverName || "-") : "-",
                     status: wb ? (wb.status || "-") : "-"

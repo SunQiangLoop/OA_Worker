@@ -55,7 +55,12 @@
                 <div class="sub-menu-item" onclick="loadContent('ReconDiffHandle', this)">对账差异处理</div>
             </div>
 
-            <div class="menu-item" onclick="loadContent('ReconCustomerPortal', this)">客户对账</div>
+            <div class="menu-item collapsed" onclick="toggleSubMenu(this)">客户对账</div>
+            <div class="sub-menu">
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomerPortal', this); setTimeout(function(){window.cpGoToPage&&window.cpGoToPage(1);},150)">对账确认</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomerPortal', this); setTimeout(function(){window.cpGoToPage&&window.cpGoToPage(2);},150)">合并结算</div>
+                <div class="sub-menu-item" onclick="loadContent('ReconCustomerPortal', this); setTimeout(function(){window.cpGoToPage&&window.cpGoToPage(3);},150)">支付核销</div>
+            </div>
             <div class="menu-item collapsed" onclick="toggleSubMenu(this)">应收管理</div>
             <div class="sub-menu">
                 <div class="sub-menu-item" onclick="loadContent('ARCollectionVerify', this)">运单结算</div>
