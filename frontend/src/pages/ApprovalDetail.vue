@@ -5,9 +5,11 @@ import StatusPill from '../components/StatusPill.vue'
 import PriorityPill from '../components/PriorityPill.vue'
 import FlowStepper from '../components/FlowStepper.vue'
 import { approvalApi } from '../services/api'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 const approval = ref(null)
 const loading = ref(false)
@@ -22,11 +24,48 @@ const approvalTypes = {
   other: '其他',
 }
 
+// 工作流步骤与角色映射
+const stepRoleMap = {
+  dept_approve: 'dept_manager',
+  finance_approve: 'finance',
+  gm_approve: 'gm',
+}
+
+const stepLabelMap = {
+  dept_approve: '部门经理',
+  finance_approve: '财务',
+  gm_approve: '总经理',
+}
+
+// 步骤推进顺序
+const nextStepMap = {
+  dept_approve: 'finance_approve',
+  finance_approve: 'gm_approve',
+  gm_approve: 'completed',
+}
+
+// 解析审批记录
+const approvalRecords = computed(() => {
+  if (!approval.value?.approval_records) return []
+  try {
+    return JSON.parse(approval.value.approval_records)
+  } catch {
+    return []
+  }
+})
+
 async function fetchApproval() {
   loading.value = true
   error.value = ''
   try {
     approval.value = await approvalApi.get(route.params.id)
+    if (!approval.value.current_step) {
+      if (approval.value.status === 'approved') {
+        approval.value.current_step = 'completed'
+      } else {
+        approval.value.current_step = 'dept_approve'
+      }
+    }
   } catch {
     error.value = '加载审批详情失败'
   } finally {
@@ -48,11 +87,47 @@ function parseDescription(desc) {
 
 const detailInfo = computed(() => parseDescription(approval.value?.description || ''))
 
+const canApprove = computed(() => {
+  if (!approval.value) return false
+  const status = approval.value.status
+  const step = approval.value.current_step
+  if (status === 'approved' || status === 'rejected') return false
+  const requiredRole = stepRoleMap[step]
+  return auth.currentRole === requiredRole
+})
+
+const canRevoke = computed(() => {
+  if (!approval.value) return false
+  return auth.currentRole === 'applicant' && approval.value.status === 'pending'
+})
+
+const requiredRoleLabel = computed(() => {
+  if (!approval.value) return ''
+  return stepLabelMap[approval.value.current_step] || ''
+})
+
 async function handleApprove() {
   if (!approval.value) return
   updating.value = true
+  error.value = ''
   try {
-    await approvalApi.approve(approval.value.id, { comment: comment.value })
+    const step = approval.value.current_step
+    const nextStep = nextStepMap[step]
+    if (nextStep === 'completed') {
+      await approvalApi.update(approval.value.id, {
+        status: 'approved',
+        current_step: 'completed',
+        comment: comment.value,
+        role: auth.currentRole,
+      })
+    } else {
+      await approvalApi.update(approval.value.id, {
+        status: 'reviewing',
+        current_step: nextStep,
+        comment: comment.value,
+        role: auth.currentRole,
+      })
+    }
     comment.value = ''
     await fetchApproval()
   } catch {
@@ -65,12 +140,17 @@ async function handleApprove() {
 async function handleReject() {
   if (!approval.value) return
   if (!comment.value) {
-    error.value = '拒绝时请填写理由'
+    error.value = '驳回时请填写理由'
     return
   }
   updating.value = true
+  error.value = ''
   try {
-    await approvalApi.reject(approval.value.id, { comment: comment.value })
+    await approvalApi.update(approval.value.id, {
+      status: 'rejected',
+      comment: comment.value,
+      role: auth.currentRole,
+    })
     comment.value = ''
     await fetchApproval()
   } catch {
@@ -83,8 +163,13 @@ async function handleReject() {
 async function handleRevoke() {
   if (!approval.value) return
   updating.value = true
+  error.value = ''
   try {
-    await approvalApi.revoke(approval.value.id)
+    await approvalApi.update(approval.value.id, {
+      status: 'pending',
+      current_step: 'dept_approve',
+      role: auth.currentRole,
+    })
     await fetchApproval()
   } catch {
     error.value = '撤回操作失败'
@@ -93,13 +178,29 @@ async function handleRevoke() {
   }
 }
 
-const canApprove = computed(() => {
-  return approval.value?.status === 'pending' || approval.value?.status === 'reviewing'
-})
+function recordTitle(record) {
+  if (record.action === 'submit') return '审批发起'
+  if (record.action === 'completed') return '审批完成'
+  const label = record.role_label || stepLabelMap[record.step] || ''
+  if (record.action === 'approve') return `${label}审批 · 已通过`
+  if (record.action === 'reject') return `${label}审批 · 已驳回`
+  return label
+}
 
-const canRevoke = computed(() => {
-  return approval.value?.status === 'pending'
-})
+function recordDesc(record) {
+  if (record.action === 'submit') return `${record.time} · 系统自动生成`
+  if (record.action === 'completed') return record.time
+  // 优先显示审批意见，没有意见则显示默认文字
+  if (record.comment) return record.comment
+  if (record.action === 'approve') return `${record.role_label || ''}已审批通过`
+  if (record.action === 'reject') return `${record.role_label || ''}已驳回`
+  return ''
+}
+
+function recordDotClass(record) {
+  if (record.action === 'reject') return 'error'
+  return 'done'
+}
 
 watch(
   () => route.params.id,
@@ -160,7 +261,7 @@ onMounted(fetchApproval)
           </div>
           <div class="panel-divider"></div>
           <div class="section-title">审批进度</div>
-          <FlowStepper :current="approval.status" />
+          <FlowStepper :current="approval.status" :currentStep="approval.current_step" />
         </div>
       </section>
 
@@ -187,7 +288,7 @@ onMounted(fetchApproval)
             </div>
             <div class="device-field">
               <span>审批流程</span>
-              <div class="device-chip">发起 → 审批 → 完成</div>
+              <div class="device-chip">发起 → 部门经理审批 → 财务审核 → 总经理审批 → 完成</div>
             </div>
           </div>
         </div>
@@ -202,55 +303,82 @@ onMounted(fetchApproval)
             <div class="muted">当前状态</div>
             <StatusPill :status="approval.status" />
           </div>
-          <label class="field">
+
+          <div class="role-hint" v-if="approval.status !== 'approved' && approval.status !== 'rejected'">
+            <div class="role-hint-label">当前等待</div>
+            <div class="role-hint-value">{{ requiredRoleLabel }} 审批</div>
+            <div class="role-hint-tip" v-if="!canApprove">
+              请切换到「{{ requiredRoleLabel }}」角色进行审批
+            </div>
+          </div>
+
+          <label class="field" v-if="canApprove || canRevoke">
             <span>审批意见</span>
-            <textarea v-model="comment" rows="3" placeholder="输入审批意见（拒绝时必填）"></textarea>
+            <textarea v-model="comment" rows="3" placeholder="输入审批意见（驳回时必填）"></textarea>
           </label>
           <div class="action-row" v-if="canApprove">
             <button class="btn btn-primary" :disabled="updating" @click="handleApprove">
               {{ updating ? '处理中...' : '同意' }}
             </button>
             <button class="btn btn-danger" :disabled="updating" @click="handleReject">
-              {{ updating ? '处理中...' : '拒绝' }}
-            </button>
-            <button v-if="canRevoke" class="btn btn-ghost" :disabled="updating" @click="handleRevoke">
-              撤回
+              {{ updating ? '处理中...' : '驳回' }}
             </button>
           </div>
-          <div v-else-if="approval.status === 'approved'" class="status-badge success">审批已通过</div>
-          <div v-else-if="approval.status === 'rejected'" class="status-badge error">审批已拒绝</div>
+          <div class="action-row" v-if="canRevoke">
+            <button class="btn btn-ghost" :disabled="updating" @click="handleRevoke">
+              撤回申请
+            </button>
+          </div>
+          <div v-if="!canApprove && !canRevoke && (approval.status === 'pending' || approval.status === 'reviewing')" class="status-badge muted-badge">
+            等待{{ requiredRoleLabel }}审批中
+          </div>
+          <div v-if="approval.status === 'approved'" class="status-badge success">审批已通过</div>
+          <div v-if="approval.status === 'rejected'" class="status-badge error">审批已驳回</div>
 
           <div class="panel-divider"></div>
           <div class="section-title">审批记录</div>
           <div class="timeline">
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div>
-                <div class="timeline-title">审批发起</div>
-                <div class="muted">{{ approval.created_at?.slice(0, 16).replace('T', ' ') }} · 系统自动生成</div>
+            <template v-if="approvalRecords.length > 0">
+              <div class="timeline-item" v-for="(record, idx) in approvalRecords" :key="idx">
+                <div class="timeline-dot" :class="recordDotClass(record)"></div>
+                <div>
+                  <div class="timeline-title">{{ recordTitle(record) }}</div>
+                  <div class="muted">{{ recordDesc(record) }}</div>
+                </div>
               </div>
-            </div>
-            <div class="timeline-item" v-if="approval.status === 'reviewing'">
-              <div class="timeline-dot active"></div>
-              <div>
-                <div class="timeline-title">审批中</div>
-                <div class="muted">等待审批人处理</div>
+            </template>
+            <template v-else>
+              <div class="timeline-item">
+                <div class="timeline-dot done"></div>
+                <div>
+                  <div class="timeline-title">审批发起</div>
+                  <div class="muted">{{ approval.created_at?.slice(0, 16).replace('T', ' ') }} · 系统自动生成</div>
+                </div>
               </div>
-            </div>
-            <div class="timeline-item" v-if="approval.status === 'approved'">
-              <div class="timeline-dot done"></div>
-              <div>
-                <div class="timeline-title">审批通过</div>
-                <div class="muted">{{ approval.updated_at?.slice(0, 16).replace('T', ' ') }}</div>
+            </template>
+            <template v-if="approval.status !== 'approved' && approval.status !== 'rejected'">
+              <div class="timeline-item" v-if="approval.current_step === 'dept_approve'">
+                <div class="timeline-dot active"></div>
+                <div>
+                  <div class="timeline-title">部门经理审批</div>
+                  <div class="muted">等待部门经理处理</div>
+                </div>
               </div>
-            </div>
-            <div class="timeline-item" v-if="approval.status === 'rejected'">
-              <div class="timeline-dot error"></div>
-              <div>
-                <div class="timeline-title">审批拒绝</div>
-                <div class="muted">{{ approval.updated_at?.slice(0, 16).replace('T', ' ') }}</div>
+              <div class="timeline-item" v-if="approval.current_step === 'finance_approve'">
+                <div class="timeline-dot active"></div>
+                <div>
+                  <div class="timeline-title">财务审核</div>
+                  <div class="muted">等待财务处理</div>
+                </div>
               </div>
-            </div>
+              <div class="timeline-item" v-if="approval.current_step === 'gm_approve'">
+                <div class="timeline-dot active"></div>
+                <div>
+                  <div class="timeline-title">总经理审批</div>
+                  <div class="muted">等待总经理处理</div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </aside>

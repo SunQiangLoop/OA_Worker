@@ -94,6 +94,8 @@ type Ticket struct {
 	CreatedBy   uint   `gorm:"index" json:"created_by"`
 	AssigneeID  *uint  `gorm:"index" json:"assignee_id"`
 	// 审批扩展字段
-	Type   string  `gorm:"size:30;index;default:'other'" json:"type"` // expense/leave/purchase/other
-	Amount float64 `json:"amount"`                                    // 金额（报销用）
+	Type            string  `gorm:"size:30;index;default:'other'" json:"type"` // expense/leave/purchase/other
+	Amount          float64 `json:"amount"`                                    // 金额（报销用）
+	CurrentStep     string  `gorm:"size:30;default:'dept_approve'" json:"current_step"` // 当前审批步骤
+	ApprovalRecords string  `gorm:"type:text" json:"approval_records"`         // 审批记录 JSON
 }

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"example.com/oa-workorder/internal/middleware"
 	"example.com/oa-workorder/internal/models"
@@ -14,6 +16,29 @@ import (
 
 type TicketHandler struct {
 	DB *gorm.DB
+}
+
+// ApprovalRecord 审批记录条目
+type ApprovalRecord struct {
+	Step      string `json:"step"`
+	Role      string `json:"role"`
+	RoleLabel string `json:"role_label"`
+	Action    string `json:"action"`
+	Comment   string `json:"comment"`
+	Time      string `json:"time"`
+}
+
+var roleLabelMap = map[string]string{
+	"applicant":    "发起人",
+	"dept_manager": "部门经理",
+	"finance":      "财务",
+	"gm":           "总经理",
+}
+
+var stepLabelMap = map[string]string{
+	"dept_approve":    "部门经理审批",
+	"finance_approve": "财务审批",
+	"gm_approve":      "总经理审批",
 }
 
 type createTicketRequest struct {
@@ -37,15 +62,30 @@ func (h *TicketHandler) Create(c *gin.Context) {
 		return
 	}
 
+	// 初始化审批记录：发起
+	initRecords := []ApprovalRecord{
+		{
+			Step:      "start",
+			Role:      "applicant",
+			RoleLabel: "发起人",
+			Action:    "submit",
+			Comment:   "",
+			Time:      time.Now().Format("2006-01-02 15:04"),
+		},
+	}
+	recordsJSON, _ := json.Marshal(initRecords)
+
 	ticket := models.Ticket{
-		Title:       req.Title,
-		Description: req.Description,
-		Priority:    normalizePriority(req.Priority),
-		Status:      "pending",
-		CreatedBy:   uid,
-		AssigneeID:  req.AssigneeID,
-		Type:        normalizeType(req.Type),
-		Amount:      req.Amount,
+		Title:           req.Title,
+		Description:     req.Description,
+		Priority:        normalizePriority(req.Priority),
+		Status:          "pending",
+		CreatedBy:       uid,
+		AssigneeID:      req.AssigneeID,
+		Type:            normalizeType(req.Type),
+		Amount:          req.Amount,
+		CurrentStep:     "dept_approve",
+		ApprovalRecords: string(recordsJSON),
 	}
 	if err := h.DB.Create(&ticket).Error; err != nil {
 		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to create ticket")
@@ -99,6 +139,9 @@ type updateTicketRequest struct {
 	Priority    *string `json:"priority"`
 	Status      *string `json:"status"`
 	AssigneeID  *uint   `json:"assignee_id"`
+	CurrentStep *string `json:"current_step"`
+	Comment     *string `json:"comment"`
+	Role        *string `json:"role"`
 }
 
 // PublicList exposes a read-only list of approvals without auth (demo use).
@@ -141,6 +184,14 @@ func (h *TicketHandler) Update(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid payload")
 		return
 	}
+
+	// 先加载现有 ticket 以获取已有审批记录
+	var ticket models.Ticket
+	if err := h.DB.First(&ticket, id).Error; err != nil {
+		response.Error(c, http.StatusNotFound, "NOT_FOUND", "ticket not found")
+		return
+	}
+
 	updates := map[string]interface{}{}
 	if req.Title != nil {
 		updates["title"] = *req.Title
@@ -157,6 +208,88 @@ func (h *TicketHandler) Update(c *gin.Context) {
 	if req.AssigneeID != nil {
 		updates["assignee_id"] = req.AssigneeID
 	}
+	if req.CurrentStep != nil {
+		updates["current_step"] = *req.CurrentStep
+	}
+
+	// 如果有状态变更，追加审批记录
+	if req.Status != nil {
+		var records []ApprovalRecord
+		if ticket.ApprovalRecords != "" {
+			_ = json.Unmarshal([]byte(ticket.ApprovalRecords), &records)
+		}
+
+		newStatus := *req.Status
+		role := ""
+		if req.Role != nil {
+			role = *req.Role
+		}
+		commentText := ""
+		if req.Comment != nil {
+			commentText = *req.Comment
+		}
+		nowStr := time.Now().Format("2006-01-02 15:04")
+
+		switch newStatus {
+		case "reviewing":
+			// 当前步骤审批通过，推进到下一步
+			record := ApprovalRecord{
+				Step:      ticket.CurrentStep,
+				Role:      role,
+				RoleLabel: roleLabelMap[role],
+				Action:    "approve",
+				Comment:   commentText,
+				Time:      nowStr,
+			}
+			records = append(records, record)
+		case "approved":
+			// 最终审批通过
+			record := ApprovalRecord{
+				Step:      ticket.CurrentStep,
+				Role:      role,
+				RoleLabel: roleLabelMap[role],
+				Action:    "approve",
+				Comment:   commentText,
+				Time:      nowStr,
+			}
+			records = append(records, record)
+			// 追加完成记录
+			records = append(records, ApprovalRecord{
+				Step:      "completed",
+				Role:      "",
+				RoleLabel: "",
+				Action:    "completed",
+				Comment:   "",
+				Time:      nowStr,
+			})
+		case "rejected":
+			record := ApprovalRecord{
+				Step:      ticket.CurrentStep,
+				Role:      role,
+				RoleLabel: roleLabelMap[role],
+				Action:    "reject",
+				Comment:   commentText,
+				Time:      nowStr,
+			}
+			records = append(records, record)
+		case "pending":
+			// 撤回：重置审批记录，只保留发起记录
+			records = []ApprovalRecord{
+				{
+					Step:      "start",
+					Role:      "applicant",
+					RoleLabel: "发起人",
+					Action:    "submit",
+					Comment:   "",
+					Time:      ticket.CreatedAt.Format("2006-01-02 15:04"),
+				},
+			}
+		}
+
+		recordsJSON, _ := json.Marshal(records)
+		updates["approval_records"] = string(recordsJSON)
+	}
+
 	if len(updates) == 0 {
 		response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "no updates")
 		return

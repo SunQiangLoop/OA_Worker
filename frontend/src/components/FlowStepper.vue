@@ -2,16 +2,26 @@
 import { computed } from 'vue'
 const props = defineProps({
   current: { type: String, default: 'pending' },
+  currentStep: { type: String, default: 'dept_approve' },
 })
 
 const steps = [
-  { key: 'pending', label: '待审批' },
-  { key: 'reviewing', label: '审批中' },
-  { key: 'approved', label: '已通过' },
-  { key: 'rejected', label: '已拒绝' },
+  { key: 'start', label: '发起' },
+  { key: 'dept_approve', label: '部门经理审批' },
+  { key: 'finance_approve', label: '财务审核' },
+  { key: 'gm_approve', label: '总经理审批' },
+  { key: 'completed', label: '完成' },
 ]
 
-const currentIndex = computed(() => steps.findIndex((s) => s.key === props.current))
+const stepOrder = { start: 0, dept_approve: 1, finance_approve: 2, gm_approve: 3, completed: 4 }
+
+const currentIndex = computed(() => {
+  if (props.current === 'rejected') {
+    return stepOrder[props.currentStep] ?? 1
+  }
+  if (props.current === 'approved') return 4
+  return stepOrder[props.currentStep] ?? 1
+})
 </script>
 
 <template>
@@ -22,7 +32,8 @@ const currentIndex = computed(() => steps.findIndex((s) => s.key === props.curre
       class="flow-step"
       :class="{
         done: idx < currentIndex,
-        active: idx === currentIndex,
+        active: idx === currentIndex && current !== 'rejected',
+        error: idx === currentIndex && current === 'rejected',
       }"
     >
       <div class="flow-dot"></div>

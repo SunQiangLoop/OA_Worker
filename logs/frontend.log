@@ -3,6 +3,7 @@
 > vite --host 127.0.0.1 --port 44391
 
 
-  VITE v7.3.1  ready in 223 ms
+  VITE v7.3.1  ready in 150 ms
 
   ➜  Local:   http://127.0.0.1:44391/
+15:00:12 [vite] (client) hmr update /src/components/AppShell.vue

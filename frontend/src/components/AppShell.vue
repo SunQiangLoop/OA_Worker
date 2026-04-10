@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -8,6 +8,22 @@ const router = useRouter()
 const route = useRoute()
 
 const userLabel = computed(() => auth.user?.username || '未登录')
+const showRoleMenu = ref(false)
+
+function toggleRoleMenu() {
+  showRoleMenu.value = !showRoleMenu.value
+}
+
+function selectRole(roleKey) {
+  auth.switchRole(roleKey)
+  showRoleMenu.value = false
+}
+
+function closeRoleMenu(e) {
+  if (showRoleMenu.value) {
+    showRoleMenu.value = false
+  }
+}
 
 async function handleLogout() {
   await auth.logout()
@@ -18,6 +34,11 @@ onMounted(() => {
   if (auth.isAuthenticated && !auth.user) {
     auth.fetchMe()
   }
+  document.addEventListener('click', closeRoleMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeRoleMenu)
 })
 
 const navGroups = computed(() => {
@@ -27,13 +48,6 @@ const navGroups = computed(() => {
       items: [
         { name: '发起申请', to: '/approvals/apply' },
         { name: '审批中心', to: '/approvals' },
-        { name: '诊断效率', to: '/approvals?tab=insights' },
-      ],
-    },
-    {
-      title: '展示',
-      items: [
-        { name: '作品集', to: '/portfolio' },
       ],
     },
   ]
@@ -42,7 +56,6 @@ const navGroups = computed(() => {
       title: '管理后台',
       items: [
         { name: '组织架构', to: '/organization' },
-        { name: '作品管理', to: '/admin/works' },
       ],
     })
   }
@@ -112,6 +125,29 @@ function isActive(item) {
           </div>
         </div>
         <div class="topbar-actions">
+          <div class="role-switcher" @click.stop>
+            <button class="role-switcher-btn" @click="toggleRoleMenu" title="切换角色">
+              <span class="role-switcher-icon">&#8645;</span>
+              <span class="role-switcher-label">{{ auth.currentRoleInfo.label }}</span>
+            </button>
+            <div v-if="showRoleMenu" class="role-menu">
+              <div class="role-menu-title">切换审批角色</div>
+              <button
+                v-for="role in auth.workflowRoles"
+                :key="role.key"
+                class="role-menu-item"
+                :class="{ active: auth.currentRole === role.key }"
+                @click="selectRole(role.key)"
+              >
+                <span class="role-menu-dot" :class="'role-' + role.key"></span>
+                <div>
+                  <div class="role-menu-name">{{ role.label }}</div>
+                  <div class="role-menu-desc">{{ role.desc }}</div>
+                </div>
+                <span v-if="auth.currentRole === role.key" class="role-menu-check">&#10003;</span>
+              </button>
+            </div>
+          </div>
           <button class="icon-btn" type="button" aria-label="help">
             <span class="icon-help"></span>
           </button>
@@ -119,7 +155,7 @@ function isActive(item) {
             <span class="user-dot"></span>
             <div>
               <div class="user-name">{{ userLabel }}</div>
-              <div class="user-role">workflow admin</div>
+              <div class="user-role">{{ auth.currentRoleInfo.label }}</div>
             </div>
           </div>
           <button class="btn btn-ghost" type="button" @click="handleLogout">

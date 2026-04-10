@@ -16601,6 +16601,7 @@ function loadContent(moduleCode, element = null) {
                     reason: info.reason || ticket.description || "-",
                     oa_instance_id: ticket.id || null,
                     oa_status: rawStatus || "pending",
+                    oa_approval_records: ticket.approval_records || "",
                     current_node_name: currentNode,
                     payment_status: paymentStatus,
                     created_at: ticket.created_at || ""
@@ -16734,6 +16735,51 @@ function loadContent(moduleCode, element = null) {
         }
     };
 
+    // ── 构建审批签名单元格 ──
+    function buildSignCells(item) {
+        const slots = [
+            { role: 'applicant', label: '申请人' },
+            { role: 'dept_manager', label: '部门经理' },
+            { role: 'finance', label: '财务审核' },
+            { role: 'gm', label: '总经理' },
+        ];
+
+        let records = [];
+        try {
+            const raw = item.oa_approval_records || '';
+            if (raw) records = JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+
+        const recordMap = {};
+        records.forEach(r => {
+            if (r.role) recordMap[r.role] = r;
+        });
+
+        return slots.map(slot => {
+            const rec = recordMap[slot.role];
+            let content = '';
+            if (slot.role === 'applicant') {
+                const name = item.applicant || '';
+                const time = (rec && rec.time) || (item.created_at || '').slice(0, 10);
+                content = name
+                    ? `<div class="sign-name">${name}</div><div class="sign-time">${time}</div>`
+                    : '<div class="sign-line"></div>';
+            } else if (rec) {
+                const actionText = rec.action === 'approve' ? '已审批' : rec.action === 'reject' ? '已驳回' : '';
+                const icon = rec.action === 'approve' ? '✓' : rec.action === 'reject' ? '✗' : '';
+                const color = rec.action === 'approve' ? '#27ae60' : '#e74c3c';
+                // 审批意见
+                const commentHtml = rec.comment
+                    ? `<div class="sign-comment">${rec.comment}</div>`
+                    : '';
+                content = `<div class="sign-name" style="color:${color}">${icon} ${actionText}</div>${commentHtml}<div class="sign-time">${rec.time || ''}</div>`;
+            } else {
+                content = '<div class="sign-line"></div>';
+            }
+            return `<div class="sign-cell">${content}<div>${slot.label}</div></div>`;
+        }).join('');
+    }
+
     // ── 生成单张报销单打印 HTML ──
     function buildExpensePrintHTML(items) {
         const company = sessionStorage.getItem('CurrentAcctSetName') || '物流公司';
@@ -16783,12 +16829,8 @@ function loadContent(moduleCode, element = null) {
                     </tr>
                 </table>
                 <div class="print-sign">
-                    <div class="sign-cell"><div class="sign-line"></div><div>申请人</div></div>
-                    <div class="sign-cell"><div class="sign-line"></div><div>部门经理</div></div>
-                    <div class="sign-cell"><div class="sign-line"></div><div>财务审核</div></div>
-                    <div class="sign-cell"><div class="sign-line"></div><div>总经理</div></div>
+                    ${buildSignCells(item)}
                 </div>
-                <div class="print-footer">本单据一式两份，财务留存一份，申请人留存一份。</div>
             </div>`;
         }).join('<div class="page-break"></div>');
 
@@ -16808,6 +16850,9 @@ function loadContent(moduleCode, element = null) {
             .print-sign { display:flex; gap:0; border:1px solid #ccc; border-right:none; margin-bottom:12px; }
             .sign-cell { flex:1; border-right:1px solid #ccc; padding:10px 8px 6px; text-align:center; font-size:12px; color:#666; }
             .sign-line { height:36px; border-bottom:1px dashed #ccc; margin-bottom:6px; }
+            .sign-name { line-height:20px; font-size:13px; font-weight:600; margin-bottom:2px; }
+            .sign-comment { font-size:10px; color:#555; margin-bottom:2px; word-break:break-all; }
+            .sign-time { font-size:10px; color:#999; margin-bottom:4px; }
             .print-footer { text-align:center; font-size:11px; color:#999; padding-top:8px; border-top:1px dashed #ddd; }
             .page-break { page-break-after:always; }
             @media print {
