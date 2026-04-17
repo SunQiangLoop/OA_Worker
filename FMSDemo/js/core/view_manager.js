@@ -13574,6 +13574,134 @@ function loadContent(moduleCode, element = null) {
                 .engine-sidebar { width: 240px; }
                 .form-grid { grid-template-columns: 1fr; }
             }
+            /* ===== 自定义规则 ===== */
+            .custom-rule-add-btn {
+                display: block;
+                width: calc(100% - 16px);
+                margin: 6px 8px;
+                padding: 7px 10px;
+                border: 1px dashed #3b82f6;
+                color: #3b82f6;
+                background: #eff6ff;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                text-align: center;
+                transition: all 0.15s;
+                box-sizing: border-box;
+            }
+            .custom-rule-add-btn:hover { background: #dbeafe; border-color: #2563eb; }
+            .cust-del {
+                color: #dc2626;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 11px;
+                padding: 2px 5px;
+                border-radius: 4px;
+                opacity: 0;
+                transition: opacity 0.15s;
+                flex-shrink: 0;
+                line-height: 1;
+            }
+            .tree-node:hover .cust-del { opacity: 1; }
+            .tree-node.active .cust-del { opacity: 0.6; color: #fff; }
+            /* ===== 条件编辑器 ===== */
+            .cond-box {
+                background: #f8f9fa;
+                border: 1px solid #e5e7eb;
+                padding: 14px 16px;
+                border-radius: 8px;
+                margin-bottom: 16px;
+                min-height: 48px;
+            }
+            .cond-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .cond-row:last-child { margin-bottom: 0; }
+            .cond-logic {
+                font-size: 11px;
+                font-weight: 700;
+                width: 34px;
+                text-align: right;
+                flex-shrink: 0;
+            }
+            .cond-logic.is-if { color: #6b7280; }
+            .cond-logic.is-and { color: #3b82f6; }
+            .cond-row select {
+                flex: 1;
+                padding: 6px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 12px;
+                background: #fff;
+                outline: none;
+            }
+            .cond-row select:focus { border-color: #3b82f6; }
+            .btn-del-cond {
+                background: none;
+                border: none;
+                color: #dc2626;
+                cursor: pointer;
+                font-size: 13px;
+                padding: 3px 6px;
+                border-radius: 4px;
+                flex-shrink: 0;
+                line-height: 1;
+            }
+            .btn-del-cond:hover { background: #fee2e2; }
+            .section-title-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin: 20px 0 10px;
+            }
+            .section-title-bar .st-label {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1f2937;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .section-title-bar .st-label::before {
+                content: '';
+                display: inline-block;
+                width: 4px; height: 15px;
+                background: #3b82f6;
+                border-radius: 2px;
+            }
+            .form-row-3 {
+                display: grid;
+                grid-template-columns: 3fr 1fr 4fr;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+            .form-row-3 .form-item label {
+                display: block;
+                font-size: 12px;
+                color: #6b7280;
+                margin-bottom: 6px;
+                font-weight: 500;
+            }
+            .form-row-3 .form-item input {
+                width: 100%;
+                padding: 7px 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 13px;
+                outline: none;
+                box-sizing: border-box;
+                transition: border-color 0.2s;
+                background: #fff;
+            }
+            .form-row-3 .form-item input:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+            }
         </style>
 
         <!-- 顶部标题栏 -->
@@ -14059,6 +14187,34 @@ function loadContent(moduleCode, element = null) {
                     }
                 });
 
+                // ===== 自定义规则区 =====
+                var customRulesList = loadCustomRules();
+                var filteredCustom = filter
+                    ? customRulesList.filter(function(r) { return r.name && r.name.indexOf(filter) !== -1; })
+                    : customRulesList;
+                totalMatch += filteredCustom.length;
+
+                if (!filter || filteredCustom.length > 0) {
+                    var customItemsHtml = filteredCustom.map(function(r) {
+                        var displayText = filter
+                            ? r.name.replace(new RegExp(escapeReg(filter), 'g'), '<span class="search-highlight">' + filter + '</span>')
+                            : r.name;
+                        return '<div class="tree-node level-3" data-cust-id="' + r.id + '" onclick="loadCustomRuleEditor(\'' + r.id + '\', this)" style="justify-content:space-between;">' +
+                            '<span>&#x1F4C4; ' + displayText + '</span>' +
+                            '<button class="cust-del" onclick="event.stopPropagation(); deleteCustomRule(\'' + r.id + '\')">✕</button>' +
+                            '</div>';
+                    }).join('');
+                    var ccId = 'cat-custom-rules';
+                    html += '<div class="tree-node level-1" onclick="toggleCat(\'' + ccId + '\', this)">' +
+                        '<span>自定义规则</span>' +
+                        '<span class="engine-toggle-icon" id="icon-' + ccId + '">&#9660;</span>' +
+                        '</div>' +
+                        '<div id="' + ccId + '" class="engine-category">' +
+                        '<button class="custom-rule-add-btn" onclick="loadCustomRuleEditor(null, null)">+ 新建自定义规则</button>' +
+                        customItemsHtml +
+                        '</div>';
+                }
+
                 sidebar.innerHTML = html || '<div style="padding:20px; color:#9ca3af; font-size:13px; text-align:center;">没有找到匹配项</div>';
 
                 var countEl = document.getElementById('searchResultCount');
@@ -14093,6 +14249,308 @@ function loadContent(moduleCode, element = null) {
                 var inp = document.getElementById('treeSearchInput');
                 if (inp) inp.value = '';
                 renderEngineTree('');
+            };
+
+            // ============================================================
+            // 自定义规则 - 数据存取与编辑器
+            // ============================================================
+            var CUSTOM_RULES_STORE_KEY = 'CustomEngineRules';
+
+            function loadCustomRules() {
+                try { return JSON.parse(localStorage.getItem(CUSTOM_RULES_STORE_KEY) || '[]'); } catch(e) { return []; }
+            }
+            function saveCustomRules(rules) {
+                localStorage.setItem(CUSTOM_RULES_STORE_KEY, JSON.stringify(rules));
+            }
+
+            var COND_DIMENSIONS = {
+                "业务环节": ["运单", "干线", "送货", "短驳", "提货", "对账", "账户间交易", "账户管理"],
+                "费用类型": ["代收货款", "现付运费", "提货费", "送货费", "中转费", "垫付费", "手续费", "装卸费", "保价/保险费", "信息费", "利息", "罚款", "平台服务费"],
+                "操作角色": ["出发网点", "目的网点", "途径网点", "分拨中心", "总部", "客户", "承运商", "司机"],
+                "结算条款": ["现付", "到付", "月结", "回付", "欠付", "现返", "欠返", "无"],
+                "业务动作": ["挂账", "结算", "核销", "收款", "付款", "回收", "汇款", "到账", "发放", "对账确认", "充值", "提现"],
+                "支付渠道": ["现金", "银行转账", "微信/支付宝", "扫码聚合支付", "内部结算户", "无"],
+                "异动方向": ["无", "调增金额", "调减金额"],
+                "单据状态": ["正常", "已付", "未付", "异常"]
+            };
+
+            function collectCondRows() {
+                return Array.from(document.querySelectorAll('#custom-cond-box .cond-row')).map(function(row) {
+                    return {
+                        dimension: (row.querySelector('.cond-dim') || {}).value || '费用类型',
+                        operator:  (row.querySelector('.cond-op')  || {}).value || '=',
+                        value:     (row.querySelector('.cond-val') || {}).value || ''
+                    };
+                });
+            }
+
+            function collectEntryRowsCustom() {
+                return Array.from(document.querySelectorAll('#engine-entries-body tr')).filter(function(r) {
+                    return r.querySelector('.engine-dir');
+                }).map(function(row) {
+                    var subVal   = (row.querySelector('.engine-subject') || {}).value || '';
+                    var parts    = subVal.split('|||');
+                    var auxVal   = (row.querySelector('.engine-aux') || {}).value || '';
+                    var auxParts = (auxVal && auxVal.indexOf('|||') !== -1) ? auxVal.split('|||') : [];
+                    return {
+                        dir:         (row.querySelector('.engine-dir') || {}).value || '借',
+                        subjectCode: (parts[0] || '').trim(),
+                        subjectName: (parts[1] || '').trim(),
+                        auxType:     auxParts[0] || '',
+                        auxCode:     auxParts[1] || '',
+                        auxName:     auxParts[2] || '',
+                        summary:     ((row.querySelector('.engine-summary') || {}).value || '').trim(),
+                        usePaymentMethod: false
+                    };
+                });
+            }
+
+            window.loadCustomRuleEditor = function(ruleId, clickedEl) {
+                document.querySelectorAll('.tree-node').forEach(function(n) { n.classList.remove('active'); });
+                if (clickedEl) clickedEl.classList.add('active');
+
+                var isNew = !ruleId;
+                var rule;
+
+                if (isNew) {
+                    rule = {
+                        id: 'CUSTOM_' + Date.now(),
+                        name: '', priority: 100, remark: '',
+                        conditions: [],
+                        voucherWord: '转',
+                        entries: [
+                            { dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '' },
+                            { dir: '贷', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '' }
+                        ]
+                    };
+                    window._editingCustomRule = rule;
+                } else if (window._editingCustomRule && window._editingCustomRule.id === ruleId) {
+                    rule = window._editingCustomRule;
+                } else {
+                    var stored = loadCustomRules().filter(function(r) { return r.id === ruleId; })[0];
+                    if (!stored) { showToast('规则不存在', 'error'); return; }
+                    rule = JSON.parse(JSON.stringify(stored));
+                    window._editingCustomRule = rule;
+                }
+
+                var subjects = getSubjectOptions();
+                var wordOpts = getVoucherWordOptions(rule.voucherWord || '转');
+
+                // 构建条件行 HTML
+                var condRowsHtml = (rule.conditions && rule.conditions.length > 0)
+                    ? rule.conditions.map(function(cond, idx) {
+                        var dimOpts = Object.keys(COND_DIMENSIONS).map(function(k) {
+                            return '<option value="' + k + '"' + (k === cond.dimension ? ' selected' : '') + '>' + k + '</option>';
+                        }).join('');
+                        var valOpts = (COND_DIMENSIONS[cond.dimension] || []).map(function(v) {
+                            return '<option value="' + v + '"' + (v === cond.value ? ' selected' : '') + '>' + v + '</option>';
+                        }).join('');
+                        return '<div class="cond-row">' +
+                            '<span class="cond-logic ' + (idx === 0 ? 'is-if' : 'is-and') + '">' + (idx === 0 ? 'IF' : 'AND') + '</span>' +
+                            '<select class="cond-dim" onchange="onCondDimChange(this)">' + dimOpts + '</select>' +
+                            '<select class="cond-op" style="width:82px;flex:none;">' +
+                            '<option value="="'   + (cond.operator === '='   ? ' selected' : '') + '>等于</option>' +
+                            '<option value="!="'  + (cond.operator === '!='  ? ' selected' : '') + '>不等于</option>' +
+                            '<option value="in"'  + (cond.operator === 'in'  ? ' selected' : '') + '>包含于</option>' +
+                            '</select>' +
+                            '<select class="cond-val">' + valOpts + '</select>' +
+                            '<button class="btn-del-cond" onclick="removeCustomCondition(this, \'' + rule.id + '\')">✕</button>' +
+                            '</div>';
+                    }).join('')
+                    : '<p style="color:#9ca3af;font-size:13px;margin:4px 0;">暂无触发条件（不设条件则不触发本规则）</p>';
+
+                // 构建分录行 HTML
+                var entryRowsHtml = (rule.entries && rule.entries.length > 0)
+                    ? rule.entries.map(function(e, i) {
+                        var subjectOpts = subjects.map(function(s) {
+                            var v = s.code + '|||' + s.name;
+                            return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' ' + s.name + '</option>';
+                        }).join('');
+                        var auxSelectedVal = (e.auxType && e.auxCode) ? (e.auxType + '|||' + e.auxCode + '|||' + (e.auxName || '')) : '';
+                        var auxOpts = buildEngineAuxOptions(auxSelectedVal);
+                        return '<tr>' +
+                            '<td style="width:80px;"><select class="engine-dir">' +
+                            '<option value="借"' + (e.dir === '借' ? ' selected' : '') + '>借</option>' +
+                            '<option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option>' +
+                            '</select></td>' +
+                            '<td><select class="engine-subject"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
+                            '<td style="min-width:140px;"><select class="engine-aux" style="width:100%;padding:5px 6px;border:1px solid #dfe6e9;border-radius:4px;font-size:13px;">' + auxOpts + '</select></td>' +
+                            '<td><input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="摘要模板，如：{waybillNo}"></td>' +
+                            '<td style="width:70px;text-align:center;">' +
+                            '<button class="btn-remove" onclick="removeCustomEntry(' + i + ', \'' + rule.id + '\')">删除</button>' +
+                            '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af;">暂无分录，点击"添加分录"创建</td></tr>';
+
+                var html =
+                    '<div class="config-header">' +
+                        '<div>' +
+                            '<div class="config-title">' + (isNew ? '新建自定义规则' : (rule.name || '自定义规则')) + '</div>' +
+                            '<div class="config-meta">自定义会计引擎规则 &nbsp;/&nbsp; 灵活配置触发条件与分录模板</div>' +
+                        '</div>' +
+                        '<span class="config-badge" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">自定义类</span>' +
+                    '</div>' +
+                    '<div class="tip-box tip-info">&#x2139; 自定义规则：配置触发条件（IF）后，当业务满足条件时系统将按分录模板（THEN）自动生成凭证。</div>' +
+                    '<div class="form-row-3">' +
+                        '<div class="form-item"><label>规则名称 <span style="color:#dc2626;">*</span></label>' +
+                        '<input type="text" id="cust-rule-name" value="' + (rule.name || '').replace(/"/g, '&quot;') + '" placeholder="请输入规则名称"></div>' +
+                        '<div class="form-item"><label>优先级</label>' +
+                        '<input type="number" id="cust-rule-priority" value="' + (rule.priority || 100) + '" min="1" max="999"></div>' +
+                        '<div class="form-item"><label>业务场景备注</label>' +
+                        '<input type="text" id="cust-rule-remark" value="' + (rule.remark || '').replace(/"/g, '&quot;') + '" placeholder="描述该规则适用的业务场景"></div>' +
+                    '</div>' +
+                    '<div class="section-title-bar">' +
+                        '<span class="st-label">触发条件（IF）</span>' +
+                        '<button class="btn-add-entry" onclick="addCustomCondition(\'' + rule.id + '\')">+ 新增条件</button>' +
+                    '</div>' +
+                    '<div class="cond-box" id="custom-cond-box">' + condRowsHtml + '</div>' +
+                    '<div class="form-grid" style="max-width:420px;">' +
+                        '<div class="form-item"><label>凭证字</label>' +
+                        '<select id="engine-voucher-word">' + wordOpts + '</select></div>' +
+                        '<div></div>' +
+                    '</div>' +
+                    '<div class="entries-section">' +
+                        '<div class="entries-header">' +
+                            '<div class="entries-title">分录配置（THEN）</div>' +
+                            '<button class="btn-add-entry" onclick="addCustomEntry(\'' + rule.id + '\')">+ 添加分录</button>' +
+                        '</div>' +
+                        '<table class="entries-table">' +
+                        '<thead><tr><th>方向</th><th>会计科目</th><th>辅助核算项</th><th>摘要模板</th><th>操作</th></tr></thead>' +
+                        '<tbody id="engine-entries-body">' + entryRowsHtml + '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div class="action-bar">' +
+                        (isNew ? '' : '<button class="btn-reset" style="color:#dc2626;border-color:#fca5a5;background:#fff5f5;" onclick="deleteCustomRule(\'' + rule.id + '\')">删除规则</button>') +
+                        '<button class="btn-reset" onclick="resetCustomRule(\'' + rule.id + '\', ' + isNew + ')">重置</button>' +
+                        '<button style="padding:8px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;" onclick="testCustomRule(\'' + rule.id + '\')">▶ 测试(100元)</button>' +
+                        '<button class="btn-save" onclick="saveCustomRule(\'' + rule.id + '\', ' + isNew + ')">&#x2713; 保存规则</button>' +
+                    '</div>';
+
+                var contentArea = document.getElementById('engine-content-area');
+                if (contentArea) contentArea.innerHTML = html;
+            };
+
+            window.onCondDimChange = function(dimSelect) {
+                var row = dimSelect.parentElement;
+                var dim = dimSelect.value;
+                var vals = COND_DIMENSIONS[dim] || [];
+                var valSel = row.querySelector('.cond-val');
+                if (valSel) {
+                    valSel.innerHTML = vals.map(function(v) {
+                        return '<option value="' + v + '">' + v + '</option>';
+                    }).join('');
+                }
+            };
+
+            window.addCustomCondition = function(ruleId) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
+                window._editingCustomRule.conditions = collectCondRows();
+                window._editingCustomRule.entries    = collectEntryRowsCustom();
+                var firstDim = Object.keys(COND_DIMENSIONS)[0];
+                window._editingCustomRule.conditions.push({ dimension: firstDim, operator: '=', value: (COND_DIMENSIONS[firstDim] || [''])[0] });
+                window.loadCustomRuleEditor(ruleId, null);
+            };
+
+            window.removeCustomCondition = function(btn, ruleId) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
+                var rows = Array.from(document.querySelectorAll('#custom-cond-box .cond-row'));
+                var idx  = rows.indexOf(btn.parentElement);
+                if (idx === -1) return;
+                window._editingCustomRule.conditions = collectCondRows();
+                window._editingCustomRule.entries    = collectEntryRowsCustom();
+                window._editingCustomRule.conditions.splice(idx, 1);
+                window.loadCustomRuleEditor(ruleId, null);
+            };
+
+            window.addCustomEntry = function(ruleId) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
+                window._editingCustomRule.conditions = collectCondRows();
+                window._editingCustomRule.entries    = collectEntryRowsCustom();
+                window._editingCustomRule.entries.push({ dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '', usePaymentMethod: false });
+                window.loadCustomRuleEditor(ruleId, null);
+            };
+
+            window.removeCustomEntry = function(index, ruleId) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
+                window._editingCustomRule.conditions = collectCondRows();
+                window._editingCustomRule.entries    = collectEntryRowsCustom();
+                window._editingCustomRule.entries.splice(index, 1);
+                window.loadCustomRuleEditor(ruleId, null);
+            };
+
+            window.resetCustomRule = function(ruleId, isNew) {
+                window._editingCustomRule = null;
+                window.loadCustomRuleEditor(isNew ? null : ruleId, null);
+            };
+
+            window.saveCustomRule = function(ruleId, isNew) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) {
+                    showToast('编辑状态丢失，请重新打开规则', 'error'); return;
+                }
+                var nameEl     = document.getElementById('cust-rule-name');
+                var priorityEl = document.getElementById('cust-rule-priority');
+                var remarkEl   = document.getElementById('cust-rule-remark');
+                var wordEl     = document.getElementById('engine-voucher-word');
+
+                var name = nameEl ? nameEl.value.trim() : '';
+                if (!name) { showToast('规则名称不能为空', 'error'); return; }
+
+                var entries = collectEntryRowsCustom();
+                if (entries.length === 0) { showToast('请至少配置一条分录', 'error'); return; }
+                var invalid = entries.filter(function(e) { return !e.subjectCode || !e.subjectName; });
+                if (invalid.length > 0) { showToast('请为所有分录选择会计科目', 'error'); return; }
+
+                window._editingCustomRule.name       = name;
+                window._editingCustomRule.priority   = priorityEl ? (parseInt(priorityEl.value) || 100) : 100;
+                window._editingCustomRule.remark     = remarkEl ? remarkEl.value.trim() : '';
+                window._editingCustomRule.voucherWord = wordEl ? wordEl.value : '转';
+                window._editingCustomRule.conditions = collectCondRows();
+                window._editingCustomRule.entries    = entries;
+
+                var allRules = loadCustomRules();
+                var existIdx = -1;
+                for (var ri = 0; ri < allRules.length; ri++) {
+                    if (allRules[ri].id === ruleId) { existIdx = ri; break; }
+                }
+                if (isNew || existIdx === -1) allRules.push(window._editingCustomRule);
+                else allRules[existIdx] = window._editingCustomRule;
+                saveCustomRules(allRules);
+
+                showToast('自定义规则已保存', 'success');
+                var savedId = ruleId;
+                var searchVal = document.getElementById('treeSearchInput') ? document.getElementById('treeSearchInput').value : '';
+                renderEngineTree(searchVal);
+                window.loadCustomRuleEditor(savedId, null);
+                setTimeout(function() {
+                    document.querySelectorAll('.tree-node[data-cust-id="' + savedId + '"]').forEach(function(n) { n.classList.add('active'); });
+                }, 60);
+            };
+
+            window.deleteCustomRule = function(ruleId) {
+                if (!confirm('确定删除该自定义规则吗？此操作不可恢复。')) return;
+                saveCustomRules(loadCustomRules().filter(function(r) { return r.id !== ruleId; }));
+                window._editingCustomRule = null;
+                showToast('规则已删除', 'success');
+                renderEngineTree('');
+                var ca = document.getElementById('engine-content-area');
+                if (ca) ca.innerHTML = '<div class="empty-state"><div class="icon">&#x2699;&#xFE0F;</div><p>请在左侧选择具体的费用类型</p><small>以配置其会计分录生成规则</small></div>';
+            };
+
+            window.testCustomRule = function(ruleId) {
+                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) {
+                    showToast('请先配置分录后再测试', 'error'); return;
+                }
+                var entries = collectEntryRowsCustom();
+                if (entries.length === 0) { showToast('请先配置分录', 'error'); return; }
+                var lines = entries.map(function(e) {
+                    var label = e.subjectCode ? (e.subjectCode + ' ' + e.subjectName) : '（未选择科目）';
+                    return (e.dir === '借' ? '  借 ' : '  贷 ') + label + '  100.00';
+                }).join('\n');
+                var conds = window._editingCustomRule.conditions;
+                var condDesc = (conds && conds.length > 0)
+                    ? conds.map(function(c, i) { return (i === 0 ? 'IF ' : 'AND ') + c.dimension + ' ' + c.operator + ' ' + c.value; }).join('\n  ')
+                    : '（无条件，所有业务均触发）';
+                alert('✅ 自定义规则测试预览（金额 = 100元）\n\n触发条件：\n  ' + condDesc + '\n\n生成分录：\n' + lines);
             };
 
             // ============================================================
