@@ -138,20 +138,27 @@ var FA_CSS = `<style>
 
 /* 空状态 */
 .fa-empty{text-align:center;padding:40px;color:#9ca3af;font-size:13px}
+.fa-stat-card{background:#fff;border-radius:6px;border:1px solid #e5e7eb;padding:16px 20px}
+.fa-stat-label{font-size:12px;color:#6b7280;margin-bottom:6px}
+.fa-stat-value{font-size:22px;font-weight:700}
+.fa-stat-value.blue{color:#2563eb}
+.fa-stat-value.orange{color:#ea580c}
+.fa-stat-value.green{color:#16a34a}
+.fa-stat-value.red{color:#dc2626}
 </style>`;
 
 // ═══════════════════════════════════════════════════════
 // 种子数据（8条演示资产）
 // ═══════════════════════════════════════════════════════
 var FA_SEED = [
-    {id:1,code:'DZ-2026-0286',name:'MacBook Pro 16" M4',category:'电子设备',subCat:'笔记本电脑',brand:'Apple',model:'M4 Max 36GB/1TB',serialNo:'C02YN3JKLVCG',origVal:24999,accumDepr:0,dept:'研发部',user:'陈明',location:'A栋3楼-工位A12',status:'active',entryDate:'2026-04-03',deprMethod:'年限平均法',usefulLife:36,residualRate:5,supplier:'Apple Store 官方',invoiceNo:'SH-2026-88456',purchaseDate:'2026-03-28',warrantyEnd:'2027-03-28',remark:''},
-    {id:2,code:'DZ-2026-0285',name:'Dell U2723QE 显示器',category:'电子设备',subCat:'显示器',brand:'Dell',model:'U2723QE',serialNo:'MXP2TK3',origVal:4299,accumDepr:286,dept:'设计部',user:'张雪',location:'B栋2楼-工位B08',status:'idle',entryDate:'2026-03-30',deprMethod:'年限平均法',usefulLife:36,residualRate:5,supplier:'京东企业购',invoiceNo:'JD-2026-33901',purchaseDate:'2026-03-25',warrantyEnd:'2029-03-25',remark:''},
-    {id:3,code:'BG-2026-0145',name:'人体工学办公椅 Herman Miller',category:'办公家具',subCat:'座椅',brand:'Herman Miller',model:'Aeron B',serialNo:'',origVal:5200,accumDepr:347,dept:'行政部',user:'王芳',location:'A栋1楼-前台',status:'active',entryDate:'2026-04-02',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'官方旗舰店',invoiceNo:'HM-2026-0012',purchaseDate:'2026-03-30',warrantyEnd:'2028-03-30',remark:''},
-    {id:4,code:'SC-2026-0078',name:'激光切割机 LX-500',category:'生产设备',subCat:'加工设备',brand:'LX',model:'LX-500',serialNo:'LX500-88231',origVal:186000,accumDepr:15500,dept:'生产部',user:'李强',location:'C栋1楼-车间A',status:'active',entryDate:'2026-04-01',deprMethod:'年限平均法',usefulLife:120,residualRate:10,supplier:'联强机械',invoiceNo:'LQ-2026-0078',purchaseDate:'2026-03-20',warrantyEnd:'2027-03-20',remark:''},
-    {id:5,code:'CL-2026-0012',name:'丰田卡罗拉 2026款',category:'车辆',subCat:'轿车',brand:'丰田',model:'卡罗拉 2026',serialNo:'LSVNB4182P2051688',origVal:128800,accumDepr:23600,dept:'销售部',user:'赵刚',location:'地下车库-B2-066',status:'repair',entryDate:'2026-03-28',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'丰田4S店',invoiceNo:'TY-2026-0012',purchaseDate:'2026-03-15',warrantyEnd:'2028-03-15',remark:''},
-    {id:6,code:'DZ-2025-0198',name:'HP LaserJet Pro M404dn',category:'电子设备',subCat:'打印机',brand:'HP',model:'LaserJet Pro M404dn',serialNo:'VNB3K21094',origVal:2899,accumDepr:804,dept:'财务部',user:'',location:'A栋2楼-财务室',status:'active',entryDate:'2025-08-10',deprMethod:'年限平均法',usefulLife:36,residualRate:5,supplier:'京东企业购',invoiceNo:'JD-2025-88102',purchaseDate:'2025-08-05',warrantyEnd:'2027-08-05',remark:''},
-    {id:7,code:'BG-2023-0089',name:'实木会议桌 3.6m',category:'办公家具',subCat:'桌椅',brand:'曲美',model:'3.6m实木',serialNo:'',origVal:8600,accumDepr:3010,dept:'行政部',user:'',location:'A栋3楼-大会议室',status:'pending',entryDate:'2023-06-01',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'曲美家居',invoiceNo:'QM-2023-0089',purchaseDate:'2023-05-25',warrantyEnd:'2025-05-25',remark:'已超保修期，建议报废'},
-    {id:8,code:'SC-2024-0045',name:'数控铣床 VMC850',category:'生产设备',subCat:'加工设备',brand:'海德曼',model:'VMC850',serialNo:'VMC850-22045',origVal:320000,accumDepr:103200,dept:'生产部',user:'刘强',location:'C栋1楼-车间B',status:'active',entryDate:'2024-03-01',deprMethod:'年限平均法',usefulLife:120,residualRate:10,supplier:'海德曼数控',invoiceNo:'HDM-2024-0045',purchaseDate:'2024-02-20',warrantyEnd:'2025-02-20',remark:''}
+    {id:1,code:'FA-DZ-2026-0286',assetType:'fixed',name:'MacBook Pro 16" M4',category:'电子设备',subCat:'笔记本电脑',brand:'Apple',model:'M4 Max 36GB/1TB',serialNo:'C02YN3JKLVCG',origVal:24999,accumDepr:0,dept:'研发部',user:'陈明',location:'A栋3楼-工位A12',status:'active',entryDate:'2026-04-03',deprMethod:'年限平均法',usefulLife:36,residualRate:5,supplier:'Apple Store 官方',invoiceNo:'SH-2026-88456',purchaseDate:'2026-03-28',warrantyEnd:'2027-03-28',remark:''},
+    {id:2,code:'LT-DZ-2026-0285',assetType:'low',name:'Dell U2723QE 显示器',category:'电子设备',subCat:'显示器',brand:'Dell',model:'U2723QE',serialNo:'MXP2TK3',origVal:4299,accumDepr:0,dept:'设计部',user:'张雪',location:'B栋2楼-工位B08',status:'idle',entryDate:'2026-03-30',deprMethod:'不折旧',usefulLife:0,residualRate:0,supplier:'京东企业购',invoiceNo:'JD-2026-33901',purchaseDate:'2026-03-25',warrantyEnd:'2029-03-25',remark:'低值工具，已一次性记账'},
+    {id:3,code:'FA-BG-2026-0145',assetType:'fixed',name:'人体工学办公椅 Herman Miller',category:'办公家具',subCat:'座椅',brand:'Herman Miller',model:'Aeron B',serialNo:'',origVal:5200,accumDepr:347,dept:'行政部',user:'王芳',location:'A栋1楼-前台',status:'active',entryDate:'2026-04-02',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'官方旗舰店',invoiceNo:'HM-2026-0012',purchaseDate:'2026-03-30',warrantyEnd:'2028-03-30',remark:''},
+    {id:4,code:'FA-SC-2026-0078',assetType:'fixed',name:'激光切割机 LX-500',category:'生产设备',subCat:'加工设备',brand:'LX',model:'LX-500',serialNo:'LX500-88231',origVal:186000,accumDepr:15500,dept:'生产部',user:'李强',location:'C栋1楼-车间A',status:'active',entryDate:'2026-04-01',deprMethod:'年限平均法',usefulLife:120,residualRate:10,supplier:'联强机械',invoiceNo:'LQ-2026-0078',purchaseDate:'2026-03-20',warrantyEnd:'2027-03-20',remark:''},
+    {id:5,code:'FA-CL-2026-0012',assetType:'fixed',name:'丰田卡罗拉 2026款',category:'车辆',subCat:'轿车',brand:'丰田',model:'卡罗拉 2026',serialNo:'LSVNB4182P2051688',origVal:128800,accumDepr:23600,dept:'销售部',user:'赵刚',location:'地下车库-B2-066',status:'repair',entryDate:'2026-03-28',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'丰田4S店',invoiceNo:'TY-2026-0012',purchaseDate:'2026-03-15',warrantyEnd:'2028-03-15',remark:''},
+    {id:6,code:'LT-DZ-2025-0198',assetType:'low',name:'HP LaserJet Pro M404dn',category:'电子设备',subCat:'打印机',brand:'HP',model:'LaserJet Pro M404dn',serialNo:'VNB3K21094',origVal:2899,accumDepr:0,dept:'财务部',user:'',location:'A栋2楼-财务室',status:'active',entryDate:'2025-08-10',deprMethod:'不折旧',usefulLife:0,residualRate:0,supplier:'京东企业购',invoiceNo:'JD-2025-88102',purchaseDate:'2025-08-05',warrantyEnd:'2027-08-05',remark:'低值易耗品，台账持续跟踪'},
+    {id:7,code:'FA-BG-2023-0089',assetType:'fixed',name:'实木会议桌 3.6m',category:'办公家具',subCat:'桌椅',brand:'曲美',model:'3.6m实木',serialNo:'',origVal:8600,accumDepr:3010,dept:'行政部',user:'',location:'A栋3楼-大会议室',status:'pending',entryDate:'2023-06-01',deprMethod:'年限平均法',usefulLife:60,residualRate:5,supplier:'曲美家居',invoiceNo:'QM-2023-0089',purchaseDate:'2023-05-25',warrantyEnd:'2025-05-25',remark:'已超保修期，建议报废'},
+    {id:8,code:'FA-SC-2024-0045',assetType:'fixed',name:'数控铣床 VMC850',category:'生产设备',subCat:'加工设备',brand:'海德曼',model:'VMC850',serialNo:'VMC850-22045',origVal:320000,accumDepr:103200,dept:'生产部',user:'刘强',location:'C栋1楼-车间B',status:'active',entryDate:'2024-03-01',deprMethod:'年限平均法',usefulLife:120,residualRate:10,supplier:'海德曼数控',invoiceNo:'HDM-2024-0045',purchaseDate:'2024-02-20',warrantyEnd:'2025-02-20',remark:''}
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -159,18 +166,46 @@ var FA_SEED = [
 // ═══════════════════════════════════════════════════════
 function faGetList() {
     var raw = sessionStorage.getItem('FA_Assets');
-    if (raw) { try { return JSON.parse(raw); } catch(e) {} }
-    var seed = FA_SEED.map(function(a){ return Object.assign({}, a); });
+    if (raw) {
+        try {
+            return JSON.parse(raw).map(function(a){ return faNormalizeAsset(a); });
+        } catch(e) {}
+    }
+    var seed = FA_SEED.map(function(a){ return faNormalizeAsset(Object.assign({}, a)); });
     sessionStorage.setItem('FA_Assets', JSON.stringify(seed));
+    if (!sessionStorage.getItem('FA_AssetLogs')) {
+        sessionStorage.setItem('FA_AssetLogs', JSON.stringify(seed.map(function(a){
+            return {
+                assetId: a.id,
+                time: (a.entryDate || new Date().toISOString().slice(0,10)) + ' 09:00',
+                title: '资产登记',
+                desc: '新增' + (a.assetType === 'low' ? '低值易耗品/工具' : '固定资产') + '，编号：' + a.code + '，存放地点：' + (a.location || '—')
+            };
+        })));
+    }
     return seed;
 }
 function faSaveList(list) {
     sessionStorage.setItem('FA_Assets', JSON.stringify(list));
 }
+function faNormalizeAsset(a) {
+    var asset = Object.assign({}, a || {});
+    asset.assetType = asset.assetType || ((Number(asset.origVal || 0) >= 5000 && asset.deprMethod !== '不折旧') ? 'fixed' : 'low');
+    asset.category = asset.category || '电子设备';
+    asset.code = asset.code || faNextCode(asset.category, asset.assetType);
+    asset.accumDepr = asset.assetType === 'low' ? 0 : (Number(asset.accumDepr) || 0);
+    asset.deprMethod = asset.assetType === 'low' ? '不折旧' : (asset.deprMethod || '年限平均法');
+    asset.usefulLife = asset.assetType === 'low' ? 0 : (parseInt(asset.usefulLife, 10) || 36);
+    asset.residualRate = asset.assetType === 'low' ? 0 : (parseFloat(asset.residualRate) || 5);
+    asset.location = asset.location || '';
+    asset.status = asset.status || 'active';
+    return asset;
+}
 function faNetVal(a) {
     return Math.max(0, a.origVal - a.accumDepr);
 }
 function faMonthlyDepr(a) {
+    if (!a || a.assetType === 'low' || !a.usefulLife) return 0;
     return (a.origVal * (1 - a.residualRate / 100)) / a.usefulLife;
 }
 function faFmt(v) {
@@ -187,8 +222,9 @@ function faStatusBadge(status) {
     var m = FA_STATUS_MAP[status] || {label:status, cls:'fa-s-retired'};
     return '<span class="fa-badge ' + m.cls + '">' + m.label + '</span>';
 }
-function faNextCode(category) {
-    var prefix = {电子设备:'DZ', 办公家具:'BG', 生产设备:'SC', 车辆:'CL'}[category] || 'FA';
+function faNextCode(category, assetType) {
+    var prefix = {电子设备:'DZ', 办公家具:'BG', 生产设备:'SC', 车辆:'CL'}[category] || 'QT';
+    var typePrefix = assetType === 'low' ? 'LT' : 'FA';
     var year = new Date().getFullYear();
     var list = faGetList();
     var max = 0;
@@ -196,7 +232,22 @@ function faNextCode(category) {
         var m = a.code.match(/-(\d{4})$/);
         if (m) max = Math.max(max, parseInt(m[1], 10));
     });
-    return prefix + '-' + year + '-' + String(max + 1).padStart(4, '0');
+    return typePrefix + '-' + prefix + '-' + year + '-' + String(max + 1).padStart(4, '0');
+}
+function faGetLogs() {
+    var raw = sessionStorage.getItem('FA_AssetLogs');
+    if (raw) { try { return JSON.parse(raw); } catch(e) {} }
+    return [];
+}
+function faAddLog(assetId, title, desc) {
+    var logs = faGetLogs();
+    logs.unshift({
+        assetId: assetId,
+        time: new Date().toLocaleString('zh-CN', {hour12:false}).replace(/\//g,'-'),
+        title: title,
+        desc: desc
+    });
+    sessionStorage.setItem('FA_AssetLogs', JSON.stringify(logs));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -224,6 +275,7 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
         document.getElementById('faCatFilter').value = '';
         document.getElementById('faDeptFilter').value = '';
         document.getElementById('faStatusFilter').value = '';
+        document.getElementById('faTypeFilter').value = '';
         window._faListTab = 'all';
         document.querySelectorAll('.fa-tab').forEach(function(t){ t.classList.remove('active'); });
         var allTab = document.querySelector('.fa-tab[data-status="all"]');
@@ -245,11 +297,13 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
         var cat = document.getElementById('faCatFilter') ? document.getElementById('faCatFilter').value : '';
         var dept = document.getElementById('faDeptFilter') ? document.getElementById('faDeptFilter').value : '';
         var sf = document.getElementById('faStatusFilter') ? document.getElementById('faStatusFilter').value : '';
+        var type = document.getElementById('faTypeFilter') ? document.getElementById('faTypeFilter').value : '';
         var tabStatus = window._faListTab;
 
         var filtered = list.filter(function(a) {
             if (tabStatus && tabStatus !== 'all' && a.status !== tabStatus) return false;
             if (sf && a.status !== sf) return false;
+            if (type && a.assetType !== type) return false;
             if (cat && a.category !== cat) return false;
             if (dept && a.dept !== dept) return false;
             if (q && !(a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q) || (a.serialNo || '').toLowerCase().includes(q))) return false;
@@ -272,6 +326,7 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
                     '<td><input type="checkbox" class="fa-row-cb" data-id="' + a.id + '"></td>' +
                     '<td><button class="fa-link" onclick="faListGoDetail(' + a.id + ')">' + a.code + '</button></td>' +
                     '<td>' + a.name + '</td>' +
+                    '<td>' + (a.assetType === 'low' ? '<span class="fa-badge fa-s-idle">低值易耗品/工具</span>' : '<span class="fa-badge fa-s-active">固定资产</span>') + '</td>' +
                     '<td>' + a.category + (a.subCat ? '-' + a.subCat : '') + '</td>' +
                     '<td style="text-align:right">' + faFmt(a.origVal) + '</td>' +
                     '<td style="text-align:right">' + faFmt(net) + '</td>' +
@@ -325,6 +380,11 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
             <option value="">全部分类</option>
             <option>电子设备</option><option>办公家具</option><option>生产设备</option><option>车辆</option>
           </select>
+          <select id="faTypeFilter" class="fa-select">
+            <option value="">全部资产类型</option>
+            <option value="fixed">固定资产</option>
+            <option value="low">低值易耗品/工具</option>
+          </select>
           <select id="faDeptFilter" class="fa-select">
             <option value="">全部部门</option>
             <option>研发部</option><option>生产部</option><option>行政部</option>
@@ -339,6 +399,7 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
           <button class="fa-btn" onclick="faListReset()">重置</button>
           <div class="fa-filter-spacer"></div>
           <button class="fa-btn fa-btn-primary" onclick="loadContent('AssetRegister')">＋ 登记资产</button>
+          <button class="fa-btn" onclick="loadContent('AssetReport')">固定资产报表</button>
           <button class="fa-btn" onclick="alert('批量导入功能开发中')">批量导入</button>
           <button class="fa-btn" onclick="alert('导出功能开发中')">导出 Excel</button>
         </div>
@@ -358,7 +419,7 @@ window.VM_MODULES['AssetList'] = function(contentArea, contentHTML, moduleCode) 
           <table class="fa-table">
             <thead><tr>
               <th style="width:36px"><input type="checkbox" id="faSelectAll" onclick="document.querySelectorAll('.fa-row-cb').forEach(c=>c.checked=this.checked)"></th>
-              <th>资产编号 ↑</th><th>资产名称</th><th>分类</th>
+              <th>资产编号 ↑</th><th>资产名称</th><th>资产类型</th><th>分类</th>
               <th style="text-align:right">原值</th><th style="text-align:right">净值</th>
               <th>使用部门</th><th>使用人</th><th>存放地点</th>
               <th>状态</th><th>入账日期</th><th>操作</th>
@@ -381,7 +442,33 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
 
     window.faRegisterAutoCode = function() {
         var cat = document.getElementById('faRegCat').value;
-        document.getElementById('faRegCode').value = cat ? faNextCode(cat) : '';
+        var assetType = document.getElementById('faRegType').value || 'fixed';
+        document.getElementById('faRegCode').value = cat ? faNextCode(cat, assetType) : '';
+        window.faRegisterToggleType();
+    };
+    window.faRegisterToggleType = function() {
+        var assetType = document.getElementById('faRegType').value || 'fixed';
+        var deprMethod = document.getElementById('faRegDeprMethod');
+        var life = document.getElementById('faRegLife');
+        var residual = document.getElementById('faRegResidual');
+        var help = document.getElementById('faRegTypeHelp');
+        if (assetType === 'low') {
+            deprMethod.value = '不折旧';
+            deprMethod.disabled = true;
+            life.value = 0;
+            life.disabled = true;
+            residual.value = 0;
+            residual.disabled = true;
+            help.textContent = '低值易耗品与工具一次性记账，不参与折旧，仅做台账跟踪。';
+        } else {
+            deprMethod.disabled = false;
+            if (!life.value || Number(life.value) === 0) life.value = 36;
+            life.disabled = false;
+            residual.disabled = false;
+            if (deprMethod.value === '不折旧') deprMethod.value = '年限平均法';
+            if (Number(residual.value) === 0) residual.value = 5;
+            help.textContent = '固定资产纳入折旧管理，编号由系统自动生成。';
+        }
     };
     window.faRegisterReset = function() {
         document.getElementById('faRegForm').reset();
@@ -394,6 +481,7 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
         var entryDate = document.getElementById('faRegEntryDate').value;
         var dept = document.getElementById('faRegDept').value;
         var location = document.getElementById('faRegLocation').value.trim();
+        var assetType = document.getElementById('faRegType').value || 'fixed';
         var usefulLife = parseInt(document.getElementById('faRegLife').value) || 36;
         var residualRate = parseFloat(document.getElementById('faRegResidual').value) || 5;
 
@@ -402,9 +490,10 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
         }
         var list = faGetList();
         var maxId = list.reduce(function(m,a){ return Math.max(m,a.id); }, 0);
-        var newAsset = {
+        var newAsset = faNormalizeAsset({
             id: maxId + 1,
-            code: document.getElementById('faRegCode').value || faNextCode(cat),
+            code: document.getElementById('faRegCode').value || faNextCode(cat, assetType),
+            assetType: assetType,
             name: name || '草稿',
             category: cat, subCat: '',
             brand: document.getElementById('faRegBrand').value.trim(),
@@ -423,15 +512,16 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
             purchaseDate: document.getElementById('faRegPurchaseDate').value,
             warrantyEnd: document.getElementById('faRegWarranty').value,
             remark: document.getElementById('faRegRemark').value.trim()
-        };
+        });
         list.unshift(newAsset);
         faSaveList(list);
+        faAddLog(newAsset.id, '资产登记', '新增' + (newAsset.assetType === 'low' ? '低值易耗品/工具' : '固定资产') + '，编号：' + newAsset.code + '，存放地点：' + (newAsset.location || '—'));
         alert(isDraft ? '草稿已保存！' : '✅ 资产【' + newAsset.name + '】登记成功！\n资产编号：' + newAsset.code);
         loadContent('AssetList');
     };
 
     var today = new Date().toISOString().slice(0,10);
-    var initCode = faNextCode('电子设备');
+    var initCode = faNextCode('电子设备', 'fixed');
 
     contentHTML += FA_CSS + `
     <div class="fa-wrap">
@@ -455,11 +545,18 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
             <div class="fa-field">
               <label class="fa-flabel">资产编号</label>
               <input id="faRegCode" class="fa-finput" disabled value="${initCode}">
-              <div class="fa-help">系统自动生成，选择分类后更新</div>
+              <div class="fa-help" id="faRegTypeHelp">固定资产纳入折旧管理，编号由系统自动生成。</div>
             </div>
             <div class="fa-field">
               <label class="fa-flabel">资产名称 <span class="fa-req">*</span></label>
               <input id="faRegName" class="fa-finput" placeholder="如：ThinkPad X1 Carbon">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">资产类型 <span class="fa-req">*</span></label>
+              <select id="faRegType" class="fa-fselect" onchange="faRegisterAutoCode()">
+                <option value="fixed">固定资产</option>
+                <option value="low">低值易耗品/工具</option>
+              </select>
             </div>
             <div class="fa-field">
               <label class="fa-flabel">资产分类 <span class="fa-req">*</span></label>
@@ -503,7 +600,7 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
                 <option>双倍余额递减法</option>
                 <option>年数总和法</option>
                 <option>工作量法</option>
-                <option>一次性折旧</option>
+                <option>不折旧</option>
               </select>
             </div>
             <div class="fa-field">
@@ -599,6 +696,7 @@ window.VM_MODULES['AssetRegister'] = function(contentArea, contentHTML, moduleCo
       </div>
     </div>`;
 
+    setTimeout(function(){ window.faRegisterToggleType(); }, 0);
     contentArea.innerHTML = contentHTML;
 };
 
@@ -637,9 +735,17 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
             if (type === 'transfer') {
                 var newDept = document.getElementById('faTransferDept').value;
                 var newUser = document.getElementById('faTransferUser').value;
+                var newLocation = document.getElementById('faTransferLocation').value.trim();
+                var oldDept = asset.dept || '—';
+                var oldUser = asset.user || '—';
+                var oldLocation = asset.location || '—';
                 if (newDept) asset.dept = newDept;
                 if (newUser) asset.user = newUser;
+                if (newLocation) asset.location = newLocation;
+                faAddLog(asset.id, '资产调拨', '部门：' + oldDept + ' -> ' + (asset.dept || '—') + '；使用人：' + oldUser + ' -> ' + (asset.user || '—') + '；存放地点：' + oldLocation + ' -> ' + (asset.location || '—') + '。原因：' + reason);
             }
+            if (type === 'scrap') faAddLog(asset.id, '报废申请', '状态变更为待报废。原因：' + reason);
+            if (type === 'repair') faAddLog(asset.id, '送修申请', '资产状态变更为维修中。原因：' + reason);
             faSaveList(list);
         }
         window.faCloseActionModal();
@@ -661,6 +767,7 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
     var net = faNetVal(asset);
     var monthly = faMonthlyDepr(asset);
     var statusInfo = FA_STATUS_MAP[asset.status] || {label:asset.status, cls:'fa-s-retired'};
+    var logs = faGetLogs().filter(function(item){ return item.assetId === asset.id; });
 
     // 折旧明细（最近12个月 + 入账月）
     var deprRows = '';
@@ -729,9 +836,9 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
           <div class="fa-info-row"><span class="fa-info-lbl">累计折旧</span><span class="fa-info-val">${faFmt(asset.accumDepr)}</span></div>
           <div class="fa-info-row"><span class="fa-info-lbl">资产净值</span><span class="fa-info-val blue">${faFmt(net)}</span></div>
           <div class="fa-info-row"><span class="fa-info-lbl">折旧方法</span><span class="fa-info-val">${asset.deprMethod}</span></div>
-          <div class="fa-info-row"><span class="fa-info-lbl">预计使用</span><span class="fa-info-val">${asset.usefulLife} 个月（${Math.round(asset.usefulLife/12*10)/10} 年）</span></div>
-          <div class="fa-info-row"><span class="fa-info-lbl">月折旧额</span><span class="fa-info-val">${faFmt(monthly)}</span></div>
-          <div class="fa-info-row"><span class="fa-info-lbl">残值率</span><span class="fa-info-val">${asset.residualRate}%</span></div>
+          <div class="fa-info-row"><span class="fa-info-lbl">预计使用</span><span class="fa-info-val">${asset.assetType === 'low' ? '不计折旧，仅跟踪管理' : asset.usefulLife + ' 个月（' + (Math.round(asset.usefulLife/12*10)/10) + ' 年）'}</span></div>
+          <div class="fa-info-row"><span class="fa-info-lbl">月折旧额</span><span class="fa-info-val">${asset.assetType === 'low' ? '¥0.00' : faFmt(monthly)}</span></div>
+          <div class="fa-info-row"><span class="fa-info-lbl">残值率</span><span class="fa-info-val">${asset.assetType === 'low' ? '0%' : asset.residualRate + '%'}</span></div>
         </div>
         <div class="fa-info-card">
           <div class="fa-info-card-title">使用信息</div>
@@ -772,38 +879,16 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
         <!-- 变动记录时间线 -->
         <div id="faPanel_log" class="fa-sub-panel" style="padding:16px 20px">
           <div class="fa-timeline">
-            <div class="fa-tl-item">
-              <div class="fa-tl-dot filled"></div>
-              <div class="fa-tl-content">
-                <div class="fa-tl-time">${asset.entryDate} 14:30</div>
-                <div class="fa-tl-title">资产登记</div>
-                <div class="fa-tl-desc">新购入 ${asset.name}，分配给 ${asset.dept}${asset.user ? ' / ' + asset.user : ''} 使用，存放于 ${asset.location || '–'}</div>
-              </div>
-            </div>
-            <div class="fa-tl-item">
-              <div class="fa-tl-dot"></div>
-              <div class="fa-tl-content">
-                <div class="fa-tl-time">${asset.entryDate} 15:00</div>
-                <div class="fa-tl-title">标签打印</div>
-                <div class="fa-tl-desc">已打印资产标签，编号：${asset.code}</div>
-              </div>
-            </div>
-            ${asset.status === 'repair' ? `<div class="fa-tl-item">
-              <div class="fa-tl-dot"></div>
-              <div class="fa-tl-content">
-                <div class="fa-tl-time">送修中</div>
-                <div class="fa-tl-title">送修申请</div>
-                <div class="fa-tl-desc">资产已送修，等待返回</div>
-              </div>
-            </div>` : ''}
-            ${asset.status === 'pending' ? `<div class="fa-tl-item">
-              <div class="fa-tl-dot"></div>
-              <div class="fa-tl-content">
-                <div class="fa-tl-time">待处理</div>
-                <div class="fa-tl-title">报废申请</div>
-                <div class="fa-tl-desc">已提交报废申请，等待审批</div>
-              </div>
-            </div>` : ''}
+            ${logs.length ? logs.map(function(log, index){
+                return '<div class="fa-tl-item">' +
+                  '<div class="fa-tl-dot' + (index === 0 ? ' filled' : '') + '"></div>' +
+                  '<div class="fa-tl-content">' +
+                    '<div class="fa-tl-time">' + log.time + '</div>' +
+                    '<div class="fa-tl-title">' + log.title + '</div>' +
+                    '<div class="fa-tl-desc">' + log.desc + '</div>' +
+                  '</div>' +
+                '</div>';
+            }).join('') : '<div class="fa-empty">暂无变动记录</div>'}
           </div>
         </div>
       </div>
@@ -838,6 +923,10 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
                 <option>李强</option><option>赵刚</option><option>刘强</option>
               </select>
             </div>
+            <div class="fa-field fa-full">
+              <label class="fa-flabel">新存放地点</label>
+              <input id="faTransferLocation" class="fa-finput" placeholder="如：A栋3楼-工位A18">
+            </div>
           </div>
           <div class="fa-field">
             <label class="fa-flabel">操作原因 <span class="fa-req">*</span></label>
@@ -858,6 +947,102 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
             modal.addEventListener('click', function(e){ if(e.target===modal) window.faCloseActionModal(); });
         }
     }, 0);
+
+    contentArea.innerHTML = contentHTML;
+};
+
+// ═══════════════════════════════════════════════════════
+// 模块 4：AssetReport — 固定资产报表
+// ═══════════════════════════════════════════════════════
+window.VM_MODULES['AssetReport'] = function(contentArea, contentHTML) {
+    var list = faGetList();
+    var fixedList = list.filter(function(a){ return a.assetType !== 'low'; });
+    var lowList = list.filter(function(a){ return a.assetType === 'low'; });
+    var byCategory = {};
+    var byDept = {};
+    fixedList.forEach(function(a){
+        var cat = a.category || '未分类';
+        var dept = a.dept || '未分配部门';
+        if (!byCategory[cat]) byCategory[cat] = {count:0, origVal:0, accumDepr:0, netVal:0};
+        if (!byDept[dept]) byDept[dept] = {count:0, origVal:0, accumDepr:0, netVal:0};
+        byCategory[cat].count++;
+        byCategory[cat].origVal += Number(a.origVal || 0);
+        byCategory[cat].accumDepr += Number(a.accumDepr || 0);
+        byCategory[cat].netVal += faNetVal(a);
+        byDept[dept].count++;
+        byDept[dept].origVal += Number(a.origVal || 0);
+        byDept[dept].accumDepr += Number(a.accumDepr || 0);
+        byDept[dept].netVal += faNetVal(a);
+    });
+
+    function renderRows(mapObj) {
+        return Object.keys(mapObj).map(function(key){
+            var item = mapObj[key];
+            return '<tr>' +
+                '<td>' + key + '</td>' +
+                '<td style="text-align:right">' + item.count + '</td>' +
+                '<td style="text-align:right">' + faFmt(item.origVal) + '</td>' +
+                '<td style="text-align:right">' + faFmt(item.accumDepr) + '</td>' +
+                '<td style="text-align:right">' + faFmt(item.netVal) + '</td>' +
+            '</tr>';
+        }).join('') || '<tr><td colspan="5" class="fa-empty">暂无数据</td></tr>';
+    }
+
+    contentHTML += FA_CSS + `
+    <div class="fa-wrap">
+      <div class="fa-card">
+        <div class="fa-card-hdr">
+          <span class="fa-card-title">固定资产报表</span>
+          <div style="display:flex;gap:8px">
+            <button class="fa-btn" onclick="loadContent('AssetList')">返回台账</button>
+            <button class="fa-btn" onclick="alert('导出报表功能开发中')">导出 Excel</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px">
+          <div class="fa-stat-card"><div class="fa-stat-label">固定资产数量</div><div class="fa-stat-value blue">${fixedList.length}</div></div>
+          <div class="fa-stat-card"><div class="fa-stat-label">固定资产原值</div><div class="fa-stat-value orange">${faFmt(fixedList.reduce(function(sum,a){ return sum + Number(a.origVal || 0); }, 0)).replace('.00','')}</div></div>
+          <div class="fa-stat-card"><div class="fa-stat-label">累计折旧</div><div class="fa-stat-value green">${faFmt(fixedList.reduce(function(sum,a){ return sum + Number(a.accumDepr || 0); }, 0)).replace('.00','')}</div></div>
+          <div class="fa-stat-card"><div class="fa-stat-label">低值易耗品/工具</div><div class="fa-stat-value red">${lowList.length}</div></div>
+        </div>
+      </div>
+
+      <div class="fa-card">
+        <div class="fa-card-hdr"><span class="fa-card-title">按分类汇总</span></div>
+        <table class="fa-table">
+          <thead><tr><th>分类</th><th style="text-align:right">资产数</th><th style="text-align:right">原值</th><th style="text-align:right">累计折旧</th><th style="text-align:right">净值</th></tr></thead>
+          <tbody>${renderRows(byCategory)}</tbody>
+        </table>
+      </div>
+
+      <div class="fa-card">
+        <div class="fa-card-hdr"><span class="fa-card-title">按部门汇总</span></div>
+        <table class="fa-table">
+          <thead><tr><th>部门</th><th style="text-align:right">资产数</th><th style="text-align:right">原值</th><th style="text-align:right">累计折旧</th><th style="text-align:right">净值</th></tr></thead>
+          <tbody>${renderRows(byDept)}</tbody>
+        </table>
+      </div>
+
+      <div class="fa-card">
+        <div class="fa-card-hdr"><span class="fa-card-title">低值易耗品与工具跟踪清单</span></div>
+        <table class="fa-table">
+          <thead><tr><th>编号</th><th>名称</th><th>分类</th><th style="text-align:right">金额</th><th>部门</th><th>使用人</th><th>存放地点</th><th>状态</th></tr></thead>
+          <tbody>
+            ${lowList.map(function(a){
+                return '<tr>' +
+                  '<td>' + a.code + '</td>' +
+                  '<td>' + a.name + '</td>' +
+                  '<td>' + a.category + '</td>' +
+                  '<td style="text-align:right">' + faFmt(a.origVal) + '</td>' +
+                  '<td>' + (a.dept || '—') + '</td>' +
+                  '<td>' + (a.user || '—') + '</td>' +
+                  '<td>' + (a.location || '—') + '</td>' +
+                  '<td>' + faStatusBadge(a.status) + '</td>' +
+                '</tr>';
+            }).join('') || '<tr><td colspan="8" class="fa-empty">暂无低值易耗品与工具</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
 
     contentArea.innerHTML = contentHTML;
 };

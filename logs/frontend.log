@@ -3,10 +3,12 @@
 > vite --host 127.0.0.1 --port 44391
 
 
-  VITE v7.3.1  ready in 150 ms
+  VITE v7.3.1  ready in 186 ms
 
   ➜  Local:   http://127.0.0.1:44391/
-15:00:12 [vite] (client) hmr update /src/components/AppShell.vue
-15:32:17 [vite] (client) page reload index.html
-15:32:49 [vite] (client) page reload index.html
-15:32:54 [vite] (client) page reload index.html
+13:36:37 [vite] (client) hmr update /src/components/workflow/WorkflowAddNode.vue, /src/components/workflow/WorkflowAddNode.vue?vue&type=style&index=0&scoped=b03845dd&lang.css
+13:36:37 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue, /src/components/workflow/WorkflowNodeWrap.vue
+13:36:37 [vite] (client) hmr update /src/components/workflow/WorkflowNodeWrap.vue, /src/components/workflow/WorkflowNodeWrap.vue?vue&type=style&index=0&scoped=9bcbb8ee&lang.css
+13:36:37 [vite] (client) Pre-transform error: Failed to load url /src/components/workflow/WorkflowNodeWrap.vue (resolved id: /Users/sunqiang/Desktop/OA_Worker/frontend/src/components/workflow/WorkflowNodeWrap.vue) in /Users/sunqiang/Desktop/OA_Worker/frontend/src/pages/WorkflowBuilder.vue. Does the file exist?
+13:36:37 [vite] (client) Pre-transform error: Failed to load url /src/components/workflow/workflowUtils.js (resolved id: /Users/sunqiang/Desktop/OA_Worker/frontend/src/components/workflow/workflowUtils.js) in /Users/sunqiang/Desktop/OA_Worker/frontend/src/pages/WorkflowBuilder.vue. Does the file exist?
+13:40:56 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue

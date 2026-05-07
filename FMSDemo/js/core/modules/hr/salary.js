@@ -3,7 +3,9 @@
 // 1. 核心算薪逻辑 (修复版：内置默认标准，无需先保存配置)
 window.calculateMonthlySalary = function() {
     try {
-        const employees = JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
+        const employees = typeof window.getHREmployees === 'function'
+            ? window.getHREmployees()
+            : JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
         const month = '2025-11';
         
         // ============================================================
@@ -46,6 +48,9 @@ window.calculateMonthlySalary = function() {
         const calc = (base, rate) => parseFloat((base * (rate || 0)).toFixed(2));
 
         let payrollDetails = [];
+        let totalGrossPay = 0;
+        let totalPositionPay = 0;
+        let totalDeduction = 0;
         let totalNetPay = 0; 
         let totalCompanyCost = 0; 
 
@@ -54,6 +59,7 @@ window.calculateMonthlySalary = function() {
             if (e.status !== '在职') return;
 
             const baseSalary = parseFloat(e.salaryBase) || 0;
+            const positionSalary = parseFloat(e.positionSalary) || 0;
             
             // A. 绩效
             let kpiCoeff = 1.0;
@@ -71,7 +77,7 @@ window.calculateMonthlySalary = function() {
                  attTotal = (hourlyRate * 1.5 * att.overtime) - (dailyRate * att.personalLeave) - (dailyRate * 0.4 * att.sickLeave);
             }
 
-            const grossPay = baseSalary + actualPerf + attTotal;
+            const grossPay = baseSalary + positionSalary + actualPerf + attTotal;
 
             // C. 基数处理
             let rawSS = parseFloat(e.socialSecurityBase) || baseSalary;
@@ -108,7 +114,13 @@ window.calculateMonthlySalary = function() {
             // G. 存入明细 (含公司部分)
             payrollDetails.push({
                 id: e.id, name: e.name, dept: e.dept,
-                base: baseSalary, kpiBase: parseFloat(e.salaryPerformance) || 0, kpiRate: kpiCoeff, perfSalary: actualPerf,
+                position: e.position || '',
+                level: e.level || '',
+                base: baseSalary,
+                positionSalary: positionSalary,
+                kpiBase: parseFloat(e.salaryPerformance) || 0,
+                kpiRate: kpiCoeff,
+                perfSalary: actualPerf,
                 attAmount: attTotal,
                 gross: grossPay,
                 ssBase: baseSS, fundBase: baseFund,
@@ -128,6 +140,9 @@ window.calculateMonthlySalary = function() {
                 c_total: totalCompAdd
             });
             
+            totalGrossPay += grossPay;
+            totalPositionPay += positionSalary;
+            totalDeduction += (totalPersDed + tax);
             totalNetPay += netPay;
             totalCompanyCost += (grossPay + totalCompAdd);
         });
@@ -138,6 +153,9 @@ window.calculateMonthlySalary = function() {
             period: month,
             dept: '全公司',
             count: payrollDetails.length,
+            totalGrossAmount: totalGrossPay.toFixed(2),
+            totalPositionAmount: totalPositionPay.toFixed(2),
+            totalDeductionAmount: totalDeduction.toFixed(2),
             totalAmount: totalNetPay.toFixed(2),
             totalCost: totalCompanyCost.toFixed(2),
             status: '待发放',

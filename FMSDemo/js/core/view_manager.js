@@ -60,7 +60,6 @@ function getModuleName(code) {
         AccountingStandardSetting: "基础设置",
         FinanceOpeningBalance: "期初余额录入",
         Permission: "权限管理",
-        DriverProfileDetail: "司机档案详情",
         ARWriteOff: "应收核销",
         APWriteOff: "应付核销",
         ExpenseWriteOff: "报销核销",
@@ -8926,320 +8925,6 @@ function loadContent(moduleCode, element = null) {
                     `;
     }
 
-
-    // =========================================================================
-    // 60. 司机档案管理 (DriverProfile) - [运力中心核心]
-    // =========================================================================
-    else if (moduleCode === "DriverProfile") {
-        // 1. 初始化模拟数据 (包含资质、车型、评级)
-        let drivers = JSON.parse(sessionStorage.getItem('DriverList'));
-        if (!drivers || drivers.length === 0) {
-            drivers = [
-                {
-                    id: "DRV-2025001", name: "张伟", phone: "13811112222",
-                    plate: "沪A·B8899", carType: "17.5米 | 厢式",
-                    license: "A2", certStatus: "正常", expiryDate: "2026-05-20",
-                    bankCard: "建设银行 (尾号8899)", deposit: 5000.00,
-                    score: 4.9, status: "启用", tags: ["金牌司机", "干线专跑"]
-                },
-                {
-                    id: "DRV-2025002", name: "李强", phone: "13900009999",
-                    plate: "苏E·X7788", carType: "9.6米 | 高栏",
-                    license: "B2", certStatus: "即将过期", expiryDate: "2025-12-01",
-                    bankCard: "招商银行 (尾号1234)", deposit: 2000.00,
-                    score: 4.5, status: "启用", tags: ["短途王"]
-                },
-                {
-                    id: "DRV-2025003", name: "王建国", phone: "15066667777",
-                    plate: "浙B·C5566", carType: "4.2米 | 厢式",
-                    license: "C1", certStatus: "已过期", expiryDate: "2024-11-01",
-                    bankCard: "-", deposit: 0.00,
-                    score: 3.2, status: "黑名单", tags: ["多次货损", "投诉多"]
-                }
-            ];
-            sessionStorage.setItem('DriverList', JSON.stringify(drivers));
-        }
-
-        // 2. 渲染列表
-        const rows = drivers.map(d => {
-            // 状态与资质样式
-            let statusStyle = d.status === '启用' ? 'color:#27ae60; background:#f0f9f0;' : 'color:#e74c3c; background:#fff0f0;';
-
-            let certBadge = "";
-            if (d.certStatus === '正常') certBadge = `<span style="color:#27ae60">✔ 正常</span>`;
-            else if (d.certStatus === '即将过期') certBadge = `<span style="color:#f39c12; font-weight:bold;">⚠️ 30天内过期</span>`;
-            else certBadge = `<span style="color:#e74c3c; font-weight:bold;">🚫 已过期</span>`;
-
-            // 标签渲染
-            const tagHtml = d.tags.map(t => `<span style="font-size:10px; border:1px solid #ccc; padding:1px 4px; border-radius:3px; color:#666; margin-right:3px;">${t}</span>`).join('');
-
-            // 评分星星
-            const stars = "⭐".repeat(Math.floor(d.score));
-
-            return `
-            <tr>
-                <td>
-                    <div style="font-weight:bold; color:#2980b9; cursor:pointer;" onclick="viewDriverDetail('${d.id}')">${d.name}</div>
-                    <div style="font-size:12px; color:#666;">${d.phone}</div>
-                </td>
-                <td>
-                    <div style="font-weight:bold;">${d.plate}</div>
-                    <div style="font-size:12px; color:#999;">${d.carType}</div>
-                </td>
-                <td>
-                    <div>${d.license} 驾照</div>
-                    <div style="font-size:12px;">有效期至: ${d.expiryDate}</div>
-                </td>
-                <td>${certBadge}</td>
-                <td style="text-align:right;">
-                    <div>押金: <span style="font-weight:bold;">${d.deposit.toLocaleString()}</span></div>
-                    <div style="font-size:12px; color:#999;">${d.bankCard}</div>
-                </td>
-                <td>
-                    <div style="color:#f39c12;">${d.score} ${stars}</div>
-                    <div style="margin-top:2px;">${tagHtml}</div>
-                </td>
-                <td><span style="padding:2px 6px; border-radius:4px; font-size:12px; ${statusStyle}">${d.status}</span></td>
-                <td>
-                    <a href="javascript:void(0)" onclick="viewDriverDetail('${d.id}')" style="color:#3498db;">详情</a>
-                    <span style="color:#ddd">|</span>
-                    ${d.status === '黑名单'
-                    ? `<a href="javascript:void(0)" onclick="toggleDriverStatus('${d.id}')" style="color:#27ae60;">解禁</a>`
-                    : `<a href="javascript:void(0)" onclick="toggleDriverStatus('${d.id}')" style="color:#e74c3c;">拉黑</a>`
-                }
-                </td>
-            </tr>
-        `;
-        }).join('');
-
-        contentHTML += `
-        <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:20px;">
-            <div class="kpi-card" style="border-top: 4px solid #3498db;">
-                <div class="kpi-title">👨‍✈️ 注册司机总数</div>
-                <div class="kpi-value">3,420</div>
-                <div class="kpi-trend">本月新增 +45</div>
-            </div>
-            <div class="kpi-card" style="border-top: 4px solid #27ae60;">
-                <div class="kpi-title">✅ 活跃/接单中</div>
-                <div class="kpi-value" style="color:#27ae60;">1,208</div>
-                <div class="kpi-trend">运力利用率 35%</div>
-            </div>
-            <div class="kpi-card" style="border-top: 4px solid #f39c12;">
-                <div class="kpi-title">⚠️ 证件临期/过期</div>
-                <div class="kpi-value" style="color:#f39c12;">12</div>
-                <div class="kpi-trend">需立即介入审核</div>
-            </div>
-            <div class="kpi-card" style="border-top: 4px solid #e74c3c;">
-                <div class="kpi-title">🚫 黑名单/冻结</div>
-                <div class="kpi-value" style="color:#e74c3c;">5</div>
-                <div class="kpi-trend">严重违规拦截</div>
-            </div>
-        </div>
-
-        <div class="filter-area" style="background:white; padding:15px; margin-bottom:20px; border-radius:6px; display:flex; justify-content:space-between;">
-            <div style="display:flex; gap:10px;">
-                <input type="text" placeholder="姓名/手机号" style="padding:8px; border:1px solid #ccc; width:140px;">
-                <input type="text" placeholder="车牌号" style="padding:8px; border:1px solid #ccc; width:120px;">
-                <select style="padding:8px; border:1px solid #ccc;">
-                    <option>所有车型</option>
-                    <option>17.5米</option>
-                    <option>9.6米</option>
-                    <option>4.2米</option>
-                </select>
-                <select style="padding:8px; border:1px solid #ccc;">
-                    <option>所有状态</option>
-                    <option>正常</option>
-                    <option>临期预警</option>
-                    <option>黑名单</option>
-                </select>
-                <button class="btn-primary">查询</button>
-            </div>
-            <div>
-                
-                <button class="btn-primary" style="background:#27ae60;">+ 新增司机</button>
-            </div>
-        </div>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>司机信息</th>
-                    <th>主驾车辆</th>
-                    <th>资质/证件效期</th>
-                    <th>合规状态</th>
-                    <th style="text-align:right;">财务信息</th>
-                    <th>信用评分</th>
-                    <th>状态</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table>
-    `;
-    }
-
-    // =========================================================================
-    // 61. 司机详情页 (DriverProfileDetail) - [360度画像]
-    // =========================================================================
-    else if (moduleCode === "DriverProfileDetail") {
-        const driverId = window.g_currentDriverId || "DRV-2025001";
-        // 实际开发中根据ID从数据库取，这里模拟取第一条
-        const d = JSON.parse(sessionStorage.getItem('DriverList'))[0];
-
-        contentHTML += `
-        <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <button class="btn-primary" style="background:#95a5a6; padding:5px 15px;" onclick="loadContent('DriverProfile')"> < 返回列表</button>
-                <h2 style="display:inline-block; margin-left:15px; vertical-align:middle;">司机档案：<span style="color:#2980b9;">${d.name}</span> <span style="font-size:14px; color:#666; font-weight:normal;">(${d.phone})</span></h2>
-            </div>
-            <div>
-                 <button class="btn-primary" style="background:#e67e22;" onclick="alert('已发送更新证件通知短信')">🔔 催更证件</button>
-                 <button class="btn-primary">💾 保存修改</button>
-            </div>
-        </div>
-
-        <div style="display:flex; gap:20px; align-items:flex-start;">
-            
-            <div style="width:250px; background:white; padding:20px; border-radius:8px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                <div style="width:100px; height:100px; background:#eee; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:40px;">👨‍✈️</div>
-                <h3 style="margin:0;">${d.name}</h3>
-                <p style="color:#666; font-size:13px;">注册日期：2023-01-15</p>
-                <div style="margin:15px 0; border-top:1px solid #eee; border-bottom:1px solid #eee; padding:15px 0;">
-                    <div style="font-size:24px; color:#f39c12; font-weight:bold;">${d.score}</div>
-                    <div style="font-size:12px; color:#999;">综合评分 (5.0满分)</div>
-                </div>
-                <div style="text-align:left; font-size:13px; line-height:2;">
-                    <div>累计接单：<span style="float:right; font-weight:bold;">1,203 单</span></div>
-                    <div>准点率：<span style="float:right; font-weight:bold; color:#27ae60;">98.5%</span></div>
-                    <div>货损率：<span style="float:right; font-weight:bold;">0.01%</span></div>
-                </div>
-            </div>
-
-            <div style="flex:1; background:white; padding:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                
-                <div style="border-bottom:1px solid #eee; margin-bottom:20px; display:flex; gap:30px;">
-                    <div style="padding-bottom:10px; border-bottom:3px solid #3498db; color:#3498db; font-weight:bold; cursor:pointer;">基本信息</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">车辆绑定 (2)</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">收款账户</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">证件影像</div>
-                </div>
-
-                <h4 style="border-left:4px solid #3498db; padding-left:10px; margin-top:0;">👤 身份信息</h4>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px; margin-bottom:20px;">
-                    <div><label style="color:#999; font-size:12px;">身份证号</label><div style="font-weight:bold;">32010219800101XXXX</div></div>
-                    <div><label style="color:#999; font-size:12px;">驾驶证档案号</label><div style="font-weight:bold;">123456789012</div></div>
-                    <div><label style="color:#999; font-size:12px;">准驾车型</label><div style="font-weight:bold;">${d.license} (包含C1/B2)</div></div>
-                    <div><label style="color:#999; font-size:12px;">初次领证日期</label><div>2010-05-20 (驾龄15年)</div></div>
-                    <div><label style="color:#999; font-size:12px;">从业资格证号</label><div>320000001122</div></div>
-                    <div><label style="color:#999; font-size:12px;">证件有效期</label><div style="color:#27ae60;">${d.expiryDate}</div></div>
-                </div>
-
-                <h4 style="border-left:4px solid #f39c12; padding-left:10px;">🚚 常用车辆</h4>
-                <table class="data-table" style="margin-bottom:20px;">
-                    <thead><tr><th>车牌号</th><th>类型</th><th>载重</th><th>绑定时间</th><th>状态</th></tr></thead>
-                    <tbody>
-                        <tr><td>${d.plate}</td><td>${d.carType}</td><td>30吨</td><td>2023-01-15</td><td><span style="color:#27ae60">● 使用中</span></td></tr>
-                        <tr><td>苏E·88888</td><td>9.6米 高栏</td><td>18吨</td><td>2024-06-10</td><td><span style="color:#999">● 备用</span></td></tr>
-                    </tbody>
-                </table>
-
-                <h4 style="border-left:4px solid #27ae60; padding-left:10px;">💳 结算账户 (用于运费打款)</h4>
-                <div style="background:#f9f9f9; padding:15px; border-radius:6px; border:1px dashed #ccc;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span style="font-weight:bold;">中国建设银行 (储蓄卡)</span>
-                        <span style="color:#27ae60;">✅ 鉴权通过</span>
-                    </div>
-                    <div>卡号：6217 0000 8888 9999</div>
-                    <div>户名：张伟</div>
-                    <div>开户行：建行上海浦东支行</div>
-                </div>
-
-            </div>
-        </div>
-      `;
-    }
-
-    // =========================================================================
-    // 61. 司机详情页 (DriverProfileDetail) - [360度画像]
-    // =========================================================================
-    else if (moduleCode === "DriverList") {
-        const driverId = window.g_currentDriverId || "DRV-2025001";
-        // 实际开发中根据ID从数据库取，这里模拟取第一条
-        const d = JSON.parse(sessionStorage.getItem('DriverList'))[0];
-
-        contentHTML += `
-        <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <button class="btn-primary" style="background:#95a5a6; padding:5px 15px;" onclick="loadContent('DriverProfile')"> < 返回列表</button>
-                <h2 style="display:inline-block; margin-left:15px; vertical-align:middle;">司机档案：<span style="color:#2980b9;">${d.name}</span> <span style="font-size:14px; color:#666; font-weight:normal;">(${d.phone})</span></h2>
-            </div>
-            <div>
-                 <button class="btn-primary" style="background:#e67e22;" onclick="alert('已发送更新证件通知短信')">🔔 催更证件</button>
-                 <button class="btn-primary">💾 保存修改</button>
-            </div>
-        </div>
-
-        <div style="display:flex; gap:20px; align-items:flex-start;">
-            
-            <div style="width:250px; background:white; padding:20px; border-radius:8px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                <div style="width:100px; height:100px; background:#eee; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:40px;">👨‍✈️</div>
-                <h3 style="margin:0;">${d.name}</h3>
-                <p style="color:#666; font-size:13px;">注册日期：2023-01-15</p>
-                <div style="margin:15px 0; border-top:1px solid #eee; border-bottom:1px solid #eee; padding:15px 0;">
-                    <div style="font-size:24px; color:#f39c12; font-weight:bold;">${d.score}</div>
-                    <div style="font-size:12px; color:#999;">综合评分 (5.0满分)</div>
-                </div>
-                <div style="text-align:left; font-size:13px; line-height:2;">
-                    <div>累计接单：<span style="float:right; font-weight:bold;">1,203 单</span></div>
-                    <div>准点率：<span style="float:right; font-weight:bold; color:#27ae60;">98.5%</span></div>
-                    <div>货损率：<span style="float:right; font-weight:bold;">0.01%</span></div>
-                </div>
-            </div>
-
-            <div style="flex:1; background:white; padding:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-                
-                <div style="border-bottom:1px solid #eee; margin-bottom:20px; display:flex; gap:30px;">
-                    <div style="padding-bottom:10px; border-bottom:3px solid #3498db; color:#3498db; font-weight:bold; cursor:pointer;">基本信息</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">车辆绑定 (2)</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">收款账户</div>
-                    <div style="padding-bottom:10px; cursor:pointer; color:#666;">证件影像</div>
-                </div>
-
-                <h4 style="border-left:4px solid #3498db; padding-left:10px; margin-top:0;">👤 身份信息</h4>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px; margin-bottom:20px;">
-                    <div><label style="color:#999; font-size:12px;">身份证号</label><div style="font-weight:bold;">32010219800101XXXX</div></div>
-                    <div><label style="color:#999; font-size:12px;">驾驶证档案号</label><div style="font-weight:bold;">123456789012</div></div>
-                    <div><label style="color:#999; font-size:12px;">准驾车型</label><div style="font-weight:bold;">${d.license} (包含C1/B2)</div></div>
-                    <div><label style="color:#999; font-size:12px;">初次领证日期</label><div>2010-05-20 (驾龄15年)</div></div>
-                    <div><label style="color:#999; font-size:12px;">从业资格证号</label><div>320000001122</div></div>
-                    <div><label style="color:#999; font-size:12px;">证件有效期</label><div style="color:#27ae60;">${d.expiryDate}</div></div>
-                </div>
-
-                <h4 style="border-left:4px solid #f39c12; padding-left:10px;">🚚 常用车辆</h4>
-                <table class="data-table" style="margin-bottom:20px;">
-                    <thead><tr><th>车牌号</th><th>类型</th><th>载重</th><th>绑定时间</th><th>状态</th></tr></thead>
-                    <tbody>
-                        <tr><td>${d.plate}</td><td>${d.carType}</td><td>30吨</td><td>2023-01-15</td><td><span style="color:#27ae60">● 使用中</span></td></tr>
-                        <tr><td>苏E·88888</td><td>9.6米 高栏</td><td>18吨</td><td>2024-06-10</td><td><span style="color:#999">● 备用</span></td></tr>
-                    </tbody>
-                </table>
-
-                <h4 style="border-left:4px solid #27ae60; padding-left:10px;">💳 结算账户 (用于运费打款)</h4>
-                <div style="background:#f9f9f9; padding:15px; border-radius:6px; border:1px dashed #ccc;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span style="font-weight:bold;">中国建设银行 (储蓄卡)</span>
-                        <span style="color:#27ae60;">✅ 鉴权通过</span>
-                    </div>
-                    <div>卡号：6217 0000 8888 9999</div>
-                    <div>户名：张伟</div>
-                    <div>开户行：建行上海浦东支行</div>
-                </div>
-
-            </div>
-        </div>
-      `;
-    }
-
     // =========================================================================
     // 35. 折旧计算 (Asset Depreciation)
     // =========================================================================
@@ -11668,7 +11353,7 @@ function loadContent(moduleCode, element = null) {
                     name: "张三",
                     dept: "运输部",
                     position: "车队长",
-                    bankAccount: "6222021001...",
+                    bankAccount: "6222021001",
                     status: "在职",
                     salaryBase: 5000,
                 },
@@ -11720,7 +11405,6 @@ function loadContent(moduleCode, element = null) {
         contentHTML += `
                     <div class="action-bar" style="margin-bottom: 15px;">
                         <button class="btn-primary" style="background-color: #27ae60;" onclick="addEmployee()">+ 新增员工</button>
-                        <button class="btn-primary" style="background-color: #3498db;">同步钉钉/企微数据</button>
                     </div>
 
                     <table class="data-table">
@@ -14169,21 +13853,23 @@ function loadContent(moduleCode, element = null) {
                             }
 
                             if (!filter || subHasMatch) {
+                                var subCollapsed = !filter;
                                 catHtml += '<div class="tree-node level-2" onclick="toggleSub(\'' + subId + '\', this)">' +
                                     '<span>' + sub.name + '</span>' +
-                                    '<span class="engine-toggle-icon" id="icon-' + subId + '">&#9660;</span>' +
+                                    '<span class="engine-toggle-icon" id="icon-' + subId + '">' + (subCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
                                     '</div>' +
-                                    '<div id="' + subId + '" class="engine-subcategory">' + subHtml + '</div>';
+                                    '<div id="' + subId + '" class="engine-subcategory"' + (subCollapsed ? ' style="display:none;"' : '') + '>' + subHtml + '</div>';
                             }
                         });
                     }
 
                     if (!filter || catHasMatch) {
+                        var catCollapsed = !filter;
                         html += '<div class="tree-node level-1" onclick="toggleCat(\'' + catId + '\', this)">' +
                             '<span>' + cat.name + '</span>' +
-                            '<span class="engine-toggle-icon" id="icon-' + catId + '">&#9660;</span>' +
+                            '<span class="engine-toggle-icon" id="icon-' + catId + '">' + (catCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
                             '</div>' +
-                            '<div id="' + catId + '" class="engine-category">' + catHtml + '</div>';
+                            '<div id="' + catId + '" class="engine-category"' + (catCollapsed ? ' style="display:none;"' : '') + '>' + catHtml + '</div>';
                     }
                 });
 
@@ -14205,11 +13891,12 @@ function loadContent(moduleCode, element = null) {
                             '</div>';
                     }).join('');
                     var ccId = 'cat-custom-rules';
+                    var ccCollapsed = !filter;
                     html += '<div class="tree-node level-1" onclick="toggleCat(\'' + ccId + '\', this)">' +
                         '<span>自定义规则</span>' +
-                        '<span class="engine-toggle-icon" id="icon-' + ccId + '">&#9660;</span>' +
+                        '<span class="engine-toggle-icon" id="icon-' + ccId + '">' + (ccCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
                         '</div>' +
-                        '<div id="' + ccId + '" class="engine-category">' +
+                        '<div id="' + ccId + '" class="engine-category"' + (ccCollapsed ? ' style="display:none;"' : '') + '>' +
                         '<button class="custom-rule-add-btn" onclick="loadCustomRuleEditor(null, null)">+ 新建自定义规则</button>' +
                         customItemsHtml +
                         '</div>';
@@ -14288,18 +13975,14 @@ function loadContent(moduleCode, element = null) {
                 return Array.from(document.querySelectorAll('#engine-entries-body tr')).filter(function(r) {
                     return r.querySelector('.engine-dir');
                 }).map(function(row) {
-                    var subVal   = (row.querySelector('.engine-subject') || {}).value || '';
-                    var parts    = subVal.split('|||');
-                    var auxVal   = (row.querySelector('.engine-aux') || {}).value || '';
-                    var auxParts = (auxVal && auxVal.indexOf('|||') !== -1) ? auxVal.split('|||') : [];
+                    var subVal = (row.querySelector('.engine-subject') || {}).value || '';
+                    var parts  = subVal.split('|||');
                     return {
-                        dir:         (row.querySelector('.engine-dir') || {}).value || '借',
-                        subjectCode: (parts[0] || '').trim(),
-                        subjectName: (parts[1] || '').trim(),
-                        auxType:     auxParts[0] || '',
-                        auxCode:     auxParts[1] || '',
-                        auxName:     auxParts[2] || '',
-                        summary:     ((row.querySelector('.engine-summary') || {}).value || '').trim(),
+                        dir:           (row.querySelector('.engine-dir')     || {}).value || '借',
+                        subjectCode:   (parts[0] || '').trim(),
+                        subjectName:   (parts[1] || '').trim(),
+                        amountFormula: ((row.querySelector('.engine-formula') || {}).value || '').trim(),
+                        summary:       ((row.querySelector('.engine-summary') || {}).value || '').trim(),
                         usePaymentMethod: false
                     };
                 });
@@ -14315,12 +13998,12 @@ function loadContent(moduleCode, element = null) {
                 if (isNew) {
                     rule = {
                         id: 'CUSTOM_' + Date.now(),
-                        name: '', priority: 100, remark: '',
+                        name: '', priority: 100, remark: '', sourceSystem: 'TMS',
                         conditions: [],
                         voucherWord: '转',
                         entries: [
-                            { dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '' },
-                            { dir: '贷', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '' }
+                            { dir: '借', subjectCode: '', subjectName: '', amountFormula: '', summary: '' },
+                            { dir: '贷', subjectCode: '', subjectName: '', amountFormula: '', summary: '' }
                         ]
                     };
                     window._editingCustomRule = rule;
@@ -14336,89 +14019,111 @@ function loadContent(moduleCode, element = null) {
                 var subjects = getSubjectOptions();
                 var wordOpts = getVoucherWordOptions(rule.voucherWord || '转');
 
-                // 构建条件行 HTML
-                var condRowsHtml = (rule.conditions && rule.conditions.length > 0)
-                    ? rule.conditions.map(function(cond, idx) {
-                        var dimOpts = Object.keys(COND_DIMENSIONS).map(function(k) {
-                            return '<option value="' + k + '"' + (k === cond.dimension ? ' selected' : '') + '>' + k + '</option>';
-                        }).join('');
-                        var valOpts = (COND_DIMENSIONS[cond.dimension] || []).map(function(v) {
-                            return '<option value="' + v + '"' + (v === cond.value ? ' selected' : '') + '>' + v + '</option>';
-                        }).join('');
-                        return '<div class="cond-row">' +
-                            '<span class="cond-logic ' + (idx === 0 ? 'is-if' : 'is-and') + '">' + (idx === 0 ? 'IF' : 'AND') + '</span>' +
-                            '<select class="cond-dim" onchange="onCondDimChange(this)">' + dimOpts + '</select>' +
-                            '<select class="cond-op" style="width:82px;flex:none;">' +
-                            '<option value="="'   + (cond.operator === '='   ? ' selected' : '') + '>等于</option>' +
-                            '<option value="!="'  + (cond.operator === '!='  ? ' selected' : '') + '>不等于</option>' +
-                            '<option value="in"'  + (cond.operator === 'in'  ? ' selected' : '') + '>包含于</option>' +
-                            '</select>' +
-                            '<select class="cond-val">' + valOpts + '</select>' +
-                            '<button class="btn-del-cond" onclick="removeCustomCondition(this, \'' + rule.id + '\')">✕</button>' +
-                            '</div>';
-                    }).join('')
-                    : '<p style="color:#9ca3af;font-size:13px;margin:4px 0;">暂无触发条件（不设条件则不触发本规则）</p>';
+                // 构建条件行 HTML（新样式）
+                var condList = (rule.conditions && rule.conditions.length > 0) ? rule.conditions : [{ dimension: '业务环节', operator: '=', value: '' }];
+                var condRowsHtml = condList.map(function(cond, idx) {
+                    var isLast = idx === condList.length - 1;
+                    var dimOpts = Object.keys(COND_DIMENSIONS).map(function(k) {
+                        return '<option value="' + k + '"' + (k === cond.dimension ? ' selected' : '') + '>' + k + '</option>';
+                    }).join('');
+                    var vals = COND_DIMENSIONS[cond.dimension] || [];
+                    var valOpts = '<option value="">--请选择业务场景--</option>' + vals.map(function(v) {
+                        return '<option value="' + v + '"' + (v === cond.value ? ' selected' : '') + '>' + v + '</option>';
+                    }).join('');
+                    var badgeBg = idx === 0 ? '#16a34a' : '#3b82f6';
+                    var badgeLabel = idx === 0 ? 'IF' : 'AND';
+                    return '<div class="cond-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                        '<span style="background:' + badgeBg + ';color:#fff;border-radius:4px;padding:4px 9px;font-size:12px;font-weight:700;flex-shrink:0;min-width:36px;text-align:center;">' + badgeLabel + '</span>' +
+                        '<select class="cond-dim" onchange="onCondDimChange(this)" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' + dimOpts + '</select>' +
+                        '<select class="cond-op" style="width:88px;flex:none;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' +
+                        '<option value="="'  + (cond.operator === '='  ? ' selected' : '') + '>等于</option>' +
+                        '<option value="!="' + (cond.operator === '!=' ? ' selected' : '') + '>不等于</option>' +
+                        '<option value="in"' + (cond.operator === 'in' ? ' selected' : '') + '>包含于</option>' +
+                        '</select>' +
+                        '<select class="cond-val" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' + valOpts + '</select>' +
+                        (idx > 0 ? '<button class="btn-del-cond" onclick="removeCustomCondition(this, \'' + rule.id + '\')" style="width:28px;height:28px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#dc2626;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>' : '') +
+                        (isLast ? '<button onclick="addCustomCondition(\'' + rule.id + '\')" style="width:30px;height:30px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button>' : '') +
+                        '</div>';
+                }).join('');
 
-                // 构建分录行 HTML
+                // 构建分录行 HTML（新样式：替换辅助核算为金额计算公式）
                 var entryRowsHtml = (rule.entries && rule.entries.length > 0)
                     ? rule.entries.map(function(e, i) {
                         var subjectOpts = subjects.map(function(s) {
                             var v = s.code + '|||' + s.name;
-                            return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' ' + s.name + '</option>';
+                            return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' - ' + s.name + '</option>';
                         }).join('');
-                        var auxSelectedVal = (e.auxType && e.auxCode) ? (e.auxType + '|||' + e.auxCode + '|||' + (e.auxName || '')) : '';
-                        var auxOpts = buildEngineAuxOptions(auxSelectedVal);
-                        return '<tr>' +
-                            '<td style="width:80px;"><select class="engine-dir">' +
+                        return '<tr style="border-bottom:1px solid #f3f4f6;">' +
+                            '<td style="padding:8px 6px;width:80px;">' +
+                            '<select class="engine-dir" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' +
                             '<option value="借"' + (e.dir === '借' ? ' selected' : '') + '>借</option>' +
                             '<option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option>' +
                             '</select></td>' +
-                            '<td><select class="engine-subject"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
-                            '<td style="min-width:140px;"><select class="engine-aux" style="width:100%;padding:5px 6px;border:1px solid #dfe6e9;border-radius:4px;font-size:13px;">' + auxOpts + '</select></td>' +
-                            '<td><input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="摘要模板，如：{waybillNo}"></td>' +
-                            '<td style="width:70px;text-align:center;">' +
-                            '<button class="btn-remove" onclick="removeCustomEntry(' + i + ', \'' + rule.id + '\')">删除</button>' +
+                            '<td style="padding:8px 6px;">' +
+                            '<select class="engine-subject" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
+                            '<td style="padding:8px 6px;width:150px;">' +
+                            '<input type="text" class="engine-formula" value="' + (e.amountFormula || '').replace(/"/g, '&quot;') + '" placeholder="{base_salary}" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;"></td>' +
+                            '<td style="padding:8px 6px;">' +
+                            '<input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="{month}月工资 - {dept_name}" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;"></td>' +
+                            '<td style="padding:8px 6px;width:60px;text-align:center;">' +
+                            '<button onclick="removeCustomEntry(' + i + ', \'' + rule.id + '\')" style="padding:5px 12px;border:1px solid #fca5a5;background:#fff5f5;color:#dc2626;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;">删除</button>' +
                             '</td></tr>';
                     }).join('')
-                    : '<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af;">暂无分录，点击"添加分录"创建</td></tr>';
+                    : '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">暂无分录，点击下方按钮添加</td></tr>';
+
+                // 业务源系统下拉选项
+                var sourceOpts = [
+                    { val: 'TMS', label: '物流系统 (TMS)' },
+                    { val: 'HRM', label: '人事系统 (HRM)' },
+                    { val: 'ERP', label: '仓储系统 (WMS)' },
+                    { val: 'OA',  label: '审批系统 (OA)' },
+                    { val: 'CRM', label: '客户管理系统 (CRM)' }
+                ].map(function(o) {
+                    return '<option value="' + o.val + '"' + ((rule.sourceSystem || 'TMS') === o.val ? ' selected' : '') + '>' + o.label + '</option>';
+                }).join('');
+
+                var cardStyle = 'background:#fff;border-radius:10px;border:1px solid #e8eaf0;padding:22px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
+                var sectionHeadStyle = 'border-left:3px solid #2563eb;padding-left:10px;font-size:15px;font-weight:600;color:#1e293b;margin:0 0 18px 0;';
+                var labelStyle = 'display:block;font-size:12px;color:#64748b;margin-bottom:5px;';
+                var inputStyle = 'width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;background:#fff;';
 
                 var html =
-                    '<div class="config-header">' +
-                        '<div>' +
-                            '<div class="config-title">' + (isNew ? '新建自定义规则' : (rule.name || '自定义规则')) + '</div>' +
-                            '<div class="config-meta">自定义会计引擎规则 &nbsp;/&nbsp; 灵活配置触发条件与分录模板</div>' +
+                    // ── 基本信息 Card ──
+                    '<div style="' + cardStyle + '">' +
+                        '<p style="' + sectionHeadStyle + '">基本信息</p>' +
+                        '<div style="display:grid;grid-template-columns:220px 1fr 130px;gap:16px;margin-bottom:16px;">' +
+                            '<div><label style="' + labelStyle + '">业务源系统</label>' +
+                            '<select id="cust-rule-source" style="' + inputStyle + '">' + sourceOpts + '</select></div>' +
+                            '<div><label style="' + labelStyle + '">规则名称 <span style="color:#dc2626;">*</span></label>' +
+                            '<input type="text" id="cust-rule-name" value="' + (rule.name || '').replace(/"/g, '&quot;') + '" placeholder="例如：离职补偿金计提规则 / 运单签收收入确认" style="' + inputStyle + '"></div>' +
+                            '<div><label style="' + labelStyle + '">优先级</label>' +
+                            '<input type="number" id="cust-rule-priority" value="' + (rule.priority || 100) + '" min="1" max="999" style="' + inputStyle + '"></div>' +
                         '</div>' +
-                        '<span class="config-badge" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">自定义类</span>' +
+                        '<div><label style="' + labelStyle + '">场景备注</label>' +
+                        '<textarea id="cust-rule-remark" rows="3" placeholder="描述该规则适用的财务核算场景..." style="' + inputStyle + 'resize:vertical;font-family:inherit;">' + (rule.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>' +
                     '</div>' +
-                    '<div class="tip-box tip-info">&#x2139; 自定义规则：配置触发条件（IF）后，当业务满足条件时系统将按分录模板（THEN）自动生成凭证。</div>' +
-                    '<div class="form-row-3">' +
-                        '<div class="form-item"><label>规则名称 <span style="color:#dc2626;">*</span></label>' +
-                        '<input type="text" id="cust-rule-name" value="' + (rule.name || '').replace(/"/g, '&quot;') + '" placeholder="请输入规则名称"></div>' +
-                        '<div class="form-item"><label>优先级</label>' +
-                        '<input type="number" id="cust-rule-priority" value="' + (rule.priority || 100) + '" min="1" max="999"></div>' +
-                        '<div class="form-item"><label>业务场景备注</label>' +
-                        '<input type="text" id="cust-rule-remark" value="' + (rule.remark || '').replace(/"/g, '&quot;') + '" placeholder="描述该规则适用的业务场景"></div>' +
+                    // ── 触发条件 (IF) Card ──
+                    '<div style="' + cardStyle + '">' +
+                        '<p style="' + sectionHeadStyle + '">触发条件 (IF)</p>' +
+                        '<div id="custom-cond-box">' + condRowsHtml + '</div>' +
+                        '<p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">* 系统将解析业务报文，当满足上述条件时触发分录生成。</p>' +
                     '</div>' +
-                    '<div class="section-title-bar">' +
-                        '<span class="st-label">触发条件（IF）</span>' +
-                        '<button class="btn-add-entry" onclick="addCustomCondition(\'' + rule.id + '\')">+ 新增条件</button>' +
-                    '</div>' +
-                    '<div class="cond-box" id="custom-cond-box">' + condRowsHtml + '</div>' +
-                    '<div class="form-grid" style="max-width:420px;">' +
-                        '<div class="form-item"><label>凭证字</label>' +
-                        '<select id="engine-voucher-word">' + wordOpts + '</select></div>' +
-                        '<div></div>' +
-                    '</div>' +
-                    '<div class="entries-section">' +
-                        '<div class="entries-header">' +
-                            '<div class="entries-title">分录配置（THEN）</div>' +
-                            '<button class="btn-add-entry" onclick="addCustomEntry(\'' + rule.id + '\')">+ 添加分录</button>' +
-                        '</div>' +
-                        '<table class="entries-table">' +
-                        '<thead><tr><th>方向</th><th>会计科目</th><th>辅助核算项</th><th>摘要模板</th><th>操作</th></tr></thead>' +
+                    // ── 分录配置 (THEN) Card ──
+                    '<div style="' + cardStyle + '">' +
+                        '<p style="' + sectionHeadStyle + '">分录配置 (THEN)</p>' +
+                        '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+                        '<thead><tr style="border-bottom:1px solid #e5e7eb;">' +
+                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:80px;">方向</th>' +
+                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;">会计科目（科目编码 - 中文名称）</th>' +
+                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:150px;">金额计算公式</th>' +
+                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;">摘要模板</th>' +
+                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:60px;">操作</th>' +
+                        '</tr></thead>' +
                         '<tbody id="engine-entries-body">' + entryRowsHtml + '</tbody>' +
                         '</table>' +
+                        '<button onclick="addCustomEntry(\'' + rule.id + '\')" style="margin-top:14px;width:100%;padding:10px 0;border:1px dashed #93c5fd;background:#f0f7ff;color:#2563eb;border-radius:8px;cursor:pointer;font-size:13px;">+ 添加分录行</button>' +
                     '</div>' +
+                    // ── 操作区 ──
                     '<div class="action-bar">' +
                         (isNew ? '' : '<button class="btn-reset" style="color:#dc2626;border-color:#fca5a5;background:#fff5f5;" onclick="deleteCustomRule(\'' + rule.id + '\')">删除规则</button>') +
                         '<button class="btn-reset" onclick="resetCustomRule(\'' + rule.id + '\', ' + isNew + ')">重置</button>' +
@@ -14466,7 +14171,7 @@ function loadContent(moduleCode, element = null) {
                 if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
                 window._editingCustomRule.conditions = collectCondRows();
                 window._editingCustomRule.entries    = collectEntryRowsCustom();
-                window._editingCustomRule.entries.push({ dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '', usePaymentMethod: false });
+                window._editingCustomRule.entries.push({ dir: '借', subjectCode: '', subjectName: '', amountFormula: '', summary: '', usePaymentMethod: false });
                 window.loadCustomRuleEditor(ruleId, null);
             };
 
@@ -14500,10 +14205,12 @@ function loadContent(moduleCode, element = null) {
                 var invalid = entries.filter(function(e) { return !e.subjectCode || !e.subjectName; });
                 if (invalid.length > 0) { showToast('请为所有分录选择会计科目', 'error'); return; }
 
-                window._editingCustomRule.name       = name;
-                window._editingCustomRule.priority   = priorityEl ? (parseInt(priorityEl.value) || 100) : 100;
-                window._editingCustomRule.remark     = remarkEl ? remarkEl.value.trim() : '';
-                window._editingCustomRule.voucherWord = wordEl ? wordEl.value : '转';
+                var sourceEl = document.getElementById('cust-rule-source');
+                window._editingCustomRule.name         = name;
+                window._editingCustomRule.sourceSystem = sourceEl ? sourceEl.value : 'TMS';
+                window._editingCustomRule.priority     = priorityEl ? (parseInt(priorityEl.value) || 100) : 100;
+                window._editingCustomRule.remark       = remarkEl ? remarkEl.value.trim() : '';
+                window._editingCustomRule.voucherWord  = wordEl ? wordEl.value : '转';
                 window._editingCustomRule.conditions = collectCondRows();
                 window._editingCustomRule.entries    = entries;
 

@@ -2,7 +2,9 @@
 
 // 1. 初始化/加载绩效数据
 window.loadPerformanceData = function() {
-    const employees = JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
+    const employees = typeof window.getHREmployees === 'function'
+        ? window.getHREmployees()
+        : JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
     const month = '2025-11'; // 默认当前月
     
     // 读取已保存的分数 (Key格式: HR_KPI_2025-11)
@@ -21,6 +23,8 @@ window.loadPerformanceData = function() {
                 <td>${e.id}</td>
                 <td><strong>${e.name}</strong></td>
                 <td>${e.dept}</td>
+                <td>${e.position || '-'}</td>
+                <td>${e.level || '-'}</td>
                 <td>${e.salaryPerformance}</td>
                 <td>
                     <input type="number" class="kpi-input" data-id="${e.id}" value="${score}" 

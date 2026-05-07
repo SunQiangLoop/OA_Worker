@@ -3,7 +3,9 @@
 
 // 1. 加载考勤数据 (核心渲染函数)
 window.loadAttendanceData = function() {
-    const employees = JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
+    const employees = typeof window.getHREmployees === 'function'
+        ? window.getHREmployees()
+        : JSON.parse(sessionStorage.getItem('HREmployees') || "[]");
     const month = '2025-11'; // 默认当前月
 
     // A. 读取考勤记录
@@ -41,6 +43,8 @@ window.loadAttendanceData = function() {
                 <td>${e.id}</td>
                 <td><strong>${e.name}</strong></td>
                 <td>${e.dept}</td>
+                <td>${e.position || '-'}</td>
+                <td>${e.level || '-'}</td>
                 
                 <td>
                     <input type="number" class="att-input" data-id="${e.id}" data-field="personalLeave" 
@@ -69,7 +73,7 @@ window.loadAttendanceData = function() {
         `;
     }).join('');
     
-    return rows || '<tr><td colspan="7" style="text-align:center; padding:20px; color:#999;">暂无在职员工，请先去【员工花名册】添加人员。</td></tr>';
+    return rows || '<tr><td colspan="9" style="text-align:center; padding:20px; color:#999;">暂无在职员工，请先去【员工花名册】添加人员。</td></tr>';
 }
 
 // 2. 保存考勤数据 (修改后提交)

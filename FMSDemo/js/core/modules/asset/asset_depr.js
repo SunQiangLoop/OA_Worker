@@ -114,7 +114,7 @@ function _faSaveHistory(list) {
 }
 function _faDeprAssets(list) {
     // 应计提资产：在用/闲置/维修中（不含待报废/已报废）
-    return list.filter(function(a){ return ['active','idle','repair'].indexOf(a.status) >= 0; });
+    return list.filter(function(a){ return a.assetType !== 'low' && ['active','idle','repair'].indexOf(a.status) >= 0; });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -172,6 +172,7 @@ window.VM_MODULES['AssetDepreciation'] = function(contentArea) {
             var accumAfter = a.accumDepr + monthDepr;
             var netClose   = Math.max(0, a.origVal - accumAfter);
             return {
+                id: a.id,
                 code: a.code, name: a.name, category: a.category,
                 dept: a.dept, deprMethod: a.deprMethod || '年限平均法',
                 origVal: a.origVal, netOpen: netOpen,
@@ -239,7 +240,7 @@ window.VM_MODULES['AssetDepreciation'] = function(contentArea) {
             pageRows.forEach(function(r){
                 tbodyHtml +=
                     '<tr>' +
-                    '<td><button class="fa-link" onclick="window._faDetailId=\''+r.code+'\';loadContent(\'AssetDetail\')">'+r.code+'</button></td>' +
+                    '<td><button class="fa-link" onclick="window._faDetailId='+r.id+';loadContent(\'AssetDetail\')">'+r.code+'</button></td>' +
                     '<td>'+r.name+'</td>' +
                     '<td>'+r.category+'</td>' +
                     '<td>'+(r.dept||'—')+'</td>' +
