@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { workflowApi } from '../services/api'
 
 const router = useRouter()
 const keyword = ref('')
@@ -47,17 +48,32 @@ const recommended = [
   { name: '请假', icon: '🧑‍💼', color: '#2563eb' },
 ]
 
+// 从后端加载的模板列表
+const remoteTemplates = ref([])
+
+onMounted(async () => {
+  try {
+    const res = await workflowApi.listTemplates({ active: 'true' })
+    remoteTemplates.value = Array.isArray(res?.items) ? res.items : []
+  } catch {
+    remoteTemplates.value = []
+  }
+})
+
 const categories = computed(() => {
-  const raw = localStorage.getItem('oa_workflow_templates')
-  const templates = raw ? JSON.parse(raw) : []
   const merged = baseCategories.map((cat) => ({ ...cat, items: [...cat.items] }))
-  templates.forEach((tpl) => {
+  remoteTemplates.value.forEach((tpl) => {
     const target = merged.find((cat) => cat.name === tpl.category)
-    const item = { name: tpl.name, icon: tpl.icon || '¥', color: tpl.color || '#22c55e' }
+    const item = { name: tpl.name, icon: tpl.icon || '📋', color: tpl.color || '#6366f1', id: tpl.id }
     if (target) {
       if (!target.items.some((i) => i.name === item.name)) target.items.unshift(item)
     } else {
-      merged.unshift({ name: tpl.category || '其他', items: [item] })
+      const existing = merged.find((cat) => cat.name === (tpl.category || '其他'))
+      if (existing) {
+        if (!existing.items.some((i) => i.name === item.name)) existing.items.unshift(item)
+      } else {
+        merged.push({ name: tpl.category || '其他', items: [item] })
+      }
     }
   })
   return merged
@@ -94,7 +110,14 @@ watch(
 )
 
 function openApply(item) {
-  if (item?.name === '费用报销') {
+  if (!item) return
+  // 后端创建的自定义模板，跳到通用表单页
+  if (item.id) {
+    router.push(`/approvals/apply/template/${item.id}`)
+    return
+  }
+  // 内置审批
+  if (item.name === '费用报销') {
     router.push('/approvals/apply/expense')
   }
 }

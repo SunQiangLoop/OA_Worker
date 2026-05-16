@@ -34,6 +34,12 @@ const tokenStore = {
   },
 }
 
+function notifyAuthExpired() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('oa-auth-expired'))
+  }
+}
+
 api.interceptors.request.use((config) => {
   const token = tokenStore.getAccess()
   if (token) {
@@ -52,6 +58,7 @@ api.interceptors.response.use(
       const refreshToken = tokenStore.getRefresh()
       if (!refreshToken) {
         tokenStore.clear()
+        notifyAuthExpired()
         return Promise.reject(error)
       }
 
@@ -72,6 +79,7 @@ api.interceptors.response.use(
       } catch (err) {
         refreshPromise = null
         tokenStore.clear()
+        notifyAuthExpired()
         return Promise.reject(err)
       }
     }
@@ -181,6 +189,19 @@ export const workApi = {
   },
   previewUrl(slug) {
     return `${baseURL}/api/v1/works/${slug}/files/`
+  },
+}
+
+// 审批流程模板 API
+export const workflowApi = {
+  createTemplate(payload) {
+    return api.post('/api/v1/workflows/templates', payload).then(unwrap)
+  },
+  listTemplates(params) {
+    return api.get('/api/v1/workflows/templates', { params }).then(unwrap)
+  },
+  getTemplate(id) {
+    return api.get(`/api/v1/workflows/templates/${id}`).then(unwrap)
   },
 }
 

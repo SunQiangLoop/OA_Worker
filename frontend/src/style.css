@@ -59,7 +59,7 @@ button {
   cursor: pointer;
 }
 
-input,
+input:not([type='radio']):not([type='checkbox']),
 select,
 textarea {
   width: 100%;
@@ -71,11 +71,20 @@ textarea {
   font-size: 14px;
 }
 
+input[type='radio'],
+input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  vertical-align: middle;
+}
+
 textarea {
   resize: vertical;
 }
 
-input:focus-visible,
+input:not([type='radio']):not([type='checkbox']):focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 button:focus-visible {
@@ -3352,4 +3361,554 @@ button:focus-visible {
 .status-badge.muted-badge {
   background: #f3f4f6;
   color: var(--shell-muted);
+}
+
+/* ── WorkflowBuilder 新增样式 ───────────────────────────────────── */
+
+/* 基础设置底部按钮 */
+.app-shell .basic-footer,
+.app-shell .preview-footer,
+.app-shell .flow-footer,
+.app-shell .advanced-footer {
+  padding: 16px 0 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 指定成员子输入框 */
+.app-shell .sub-field {
+  margin-top: -8px;
+}
+.app-shell .sub-field input {
+  border-radius: var(--radius-sm);
+}
+
+/* 表单预览字段行（标题+删除按钮） */
+.app-shell .field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.app-shell .field-delete {
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.app-shell .phone-field:hover .field-delete {
+  opacity: 1;
+}
+.app-shell .field-delete:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+.app-shell .required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+/* 流程节点选中态 */
+.app-shell .flow-node-card.node-selected {
+  outline: 2px solid var(--shell-primary);
+  outline-offset: 2px;
+}
+
+/* 节点配置面板 */
+.app-shell .node-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.app-shell .config-section {
+  display: grid;
+  gap: 8px;
+}
+.app-shell .config-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--shell-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.app-shell .config-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.app-shell .config-options.vertical {
+  flex-direction: column;
+  gap: 6px;
+}
+.app-shell .config-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--shell-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.app-shell .config-option.active {
+  border-color: var(--shell-primary);
+  background: #eff6ff;
+  color: var(--shell-primary);
+}
+.app-shell .config-option input[type='radio'] {
+  accent-color: var(--shell-primary);
+}
+
+/* 高级设置可见范围选项 */
+.app-shell .visibility-options {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+.app-shell .visibility-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--shell-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.app-shell .visibility-option:has(input:checked) {
+  border-color: var(--shell-primary);
+  background: #eff6ff;
+}
+.app-shell .visibility-label {
+  font-size: 13px;
+  color: var(--shell-text);
+}
+
+/* 流程设计底部 */
+.app-shell .flow-footer {
+  padding-top: 8px;
+}
+
+/* ── 钉钉风格审批发起页 (ApprovalFormSubmit) ─────────────────────── */
+
+.app-shell .sf-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.app-shell .sf-card {
+  width: 100%;
+  max-width: 660px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--shell-border);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.07);
+  overflow: hidden;
+}
+
+/* 标题区 */
+.app-shell .sf-card-header {
+  padding: 24px 28px 0;
+}
+.app-shell .sf-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--shell-text);
+  margin: 0 0 6px;
+}
+.app-shell .sf-submitter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.app-shell .sf-submitter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--shell-primary);
+}
+.app-shell .sf-submitter-name {
+  font-size: 12px;
+}
+.app-shell .sf-divider {
+  height: 1px;
+  background: var(--shell-border);
+  margin: 0 -28px;
+}
+
+/* 表单字段 */
+.app-shell .sf-form {
+  padding: 20px 28px;
+  display: grid;
+  gap: 20px;
+}
+.app-shell .sf-field {
+  display: grid;
+  gap: 8px;
+}
+.app-shell .sf-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--shell-text);
+}
+.app-shell .sf-required {
+  color: #ef4444;
+  margin-right: 4px;
+}
+.app-shell .sf-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--shell-text);
+  background: #fff;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.app-shell .sf-input:focus {
+  border-color: var(--shell-primary);
+  outline: none;
+}
+.app-shell .sf-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--shell-text);
+  background: #fff;
+  resize: vertical;
+  min-height: 100px;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.app-shell .sf-textarea:focus {
+  border-color: var(--shell-primary);
+  outline: none;
+}
+.app-shell .sf-amount {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.app-shell .sf-amount-sym {
+  padding: 10px 10px 10px 12px;
+  color: var(--shell-muted);
+  font-size: 14px;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+}
+.app-shell .sf-amount-input {
+  border: none;
+  border-radius: 0;
+  flex: 1;
+}
+.app-shell .sf-amount-input:focus {
+  border-color: transparent;
+}
+.app-shell .sf-date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell .sf-date-range .sf-input { flex: 1; }
+.app-shell .sf-date-sep {
+  color: var(--shell-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.app-shell .sf-upload {
+  display: block;
+  cursor: pointer;
+}
+.app-shell .sf-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 18px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--shell-muted);
+  background: #fafafa;
+  transition: border-color 0.15s, color 0.15s;
+}
+.app-shell .sf-upload:hover .sf-upload-btn {
+  border-color: var(--shell-primary);
+  color: var(--shell-primary);
+}
+.app-shell .sf-explain {
+  font-size: 13px;
+  color: var(--shell-muted);
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+/* 流程节点 */
+.app-shell .sf-flow {
+  padding: 0 28px 20px;
+  border-top: 1px solid var(--shell-border);
+  margin-top: 4px;
+}
+.app-shell .sf-flow-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--shell-text);
+  padding: 16px 0 12px;
+}
+.app-shell .sf-flow-node {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.app-shell .sf-flow-dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  flex-shrink: 0;
+}
+.app-shell .sf-flow-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.app-shell .dot-approval { background: var(--shell-primary); }
+.app-shell .dot-cc       { background: #94a3b8; }
+.app-shell .sf-flow-line {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  background: #e5e7eb;
+  margin-top: 4px;
+}
+.app-shell .sf-flow-node-body {
+  flex: 1;
+  padding-bottom: 12px;
+}
+.app-shell .sf-flow-node-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--shell-border);
+  background: #fafafa;
+  gap: 12px;
+  transition: border-color 0.15s;
+}
+.app-shell .sf-flow-node-inner.active {
+  border-color: var(--shell-primary);
+  background: #eff6ff;
+}
+.app-shell .sf-flow-node-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.app-shell .sf-flow-node-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--shell-text);
+}
+.app-shell .sf-flow-node-sub {
+  font-size: 12px;
+  color: var(--shell-muted);
+}
+.app-shell .sf-flow-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell .sf-flow-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+.app-shell .sf-flow-plus {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+.app-shell .sf-flow-plus:hover {
+  border-color: var(--shell-primary);
+  color: var(--shell-primary);
+}
+
+/* 错误 & 底部操作 */
+.app-shell .sf-error {
+  margin: 0 28px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 13px;
+}
+.app-shell .sf-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1px solid var(--shell-border);
+}
+.app-shell .sf-submit-btn {
+  padding: 10px 32px;
+  border-radius: 8px;
+  background: var(--shell-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.app-shell .sf-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.app-shell .sf-submit-btn:hover:not(:disabled) { opacity: 0.88; }
+.app-shell .sf-draft-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--shell-text);
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.app-shell .sf-draft-btn:hover { border-color: var(--shell-primary); color: var(--shell-primary); }
+.app-shell .sf-sync-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--shell-muted);
+  cursor: pointer;
+  margin-left: auto;
+}
+.app-shell .sf-sync-check {
+  accent-color: var(--shell-primary);
+}
+.app-shell .sf-loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--shell-muted);
+  font-size: 14px;
+}
+
+/* ── 控件图标样式增强 ─────────────────────────────────────────────── */
+
+.app-shell .tool-icon {
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: -0.02em;
+}
+
+/* 通用审批表单页 */
+.app-shell .form-explain {
+  padding: 10px 14px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--shell-muted);
+  margin-bottom: 4px;
+}
+.app-shell .form-error {
+  color: #ef4444;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.app-shell .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--shell-border);
+  margin-top: 8px;
+}
+.app-shell .date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell .date-range input {
+  flex: 1;
+}
+.app-shell .date-sep {
+  color: var(--shell-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.app-shell .file-input {
+  padding: 8px 0;
+  border: none;
+  background: none;
+  width: auto;
+}
+.app-shell .page-loading,
+.app-shell .page-error {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--shell-muted);
+  font-size: 14px;
+}
+
+/* 审批流程预览列表 */
+.app-shell .flow-preview-list {
+  display: grid;
+  gap: 0;
+}
+.app-shell .flow-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--shell-border);
+  font-size: 14px;
+}
+.app-shell .flow-preview-item:last-child {
+  border-bottom: none;
+}
+.app-shell .flow-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.app-shell .start-dot { background: #22c55e; }
+.app-shell .end-dot   { background: #94a3b8; }
+.app-shell .approval-dot { background: #3b82f6; }
+.app-shell .cc-dot    { background: #f59e0b; }
+.app-shell .flow-node-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell .flow-node-name {
+  font-weight: 500;
+}
+.app-shell .flow-node-mode {
+  font-size: 12px;
 }

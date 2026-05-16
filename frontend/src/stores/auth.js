@@ -59,8 +59,12 @@ export const useAuthStore = defineStore('auth', {
     async fetchMe() {
       try {
         this.user = await authApi.me()
+        return this.user
       } catch {
         this.user = null
+        clearTokens()
+        this.accessToken = null
+        throw new Error('登录已失效')
       }
     },
     async logout() {

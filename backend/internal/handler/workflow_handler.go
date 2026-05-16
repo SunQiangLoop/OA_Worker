@@ -19,17 +19,25 @@ type WorkflowHandler struct {
 }
 
 type processNodeRequest struct {
-	NodeKey       string          `json:"node_key" binding:"required"`
-	NodeType      string          `json:"node_type" binding:"required"`
-	AssigneeRule  json.RawMessage `json:"assignee_rule"`
-	ConditionRule json.RawMessage `json:"condition_rule"`
-	NextNodeKey   string          `json:"next_node_key"`
+	NodeKey           string          `json:"node_key" binding:"required"`
+	NodeType          string          `json:"node_type" binding:"required"`
+	NodeName          string          `json:"node_name"`
+	ApproveMode       string          `json:"approve_mode"`
+	EmptyApproverRule string          `json:"empty_approver_rule"`
+	AssigneeRule      json.RawMessage `json:"assignee_rule"`
+	ConditionRule     json.RawMessage `json:"condition_rule"`
+	NextNodeKey       string          `json:"next_node_key"`
 }
 
 type createWorkflowTemplateRequest struct {
-	Name        string               `json:"name" binding:"required"`
-	Description string               `json:"description"`
-	Nodes       []processNodeRequest `json:"nodes" binding:"required"`
+	Name            string               `json:"name" binding:"required"`
+	Description     string               `json:"description"`
+	Category        string               `json:"category"`
+	SubmitterScope  string               `json:"submitter_scope"`
+	AdminType       string               `json:"admin_type"`
+	FormFields      json.RawMessage      `json:"form_fields"`
+	VisibilityScope string               `json:"visibility_scope"`
+	Nodes           []processNodeRequest `json:"nodes" binding:"required"`
 }
 
 func (h *WorkflowHandler) CreateTemplate(c *gin.Context) {
@@ -46,20 +54,42 @@ func (h *WorkflowHandler) CreateTemplate(c *gin.Context) {
 	nodes := make([]models.ProcessNode, 0, len(req.Nodes))
 	for _, n := range req.Nodes {
 		nodes = append(nodes, models.ProcessNode{
-			NodeKey:       n.NodeKey,
-			NodeType:      n.NodeType,
-			AssigneeRule:  n.AssigneeRule,
-			ConditionRule: n.ConditionRule,
-			NextNodeKey:   n.NextNodeKey,
+			NodeKey:           n.NodeKey,
+			NodeType:          n.NodeType,
+			NodeName:          n.NodeName,
+			ApproveMode:       n.ApproveMode,
+			EmptyApproverRule: n.EmptyApproverRule,
+			AssigneeRule:      n.AssigneeRule,
+			ConditionRule:     n.ConditionRule,
+			NextNodeKey:       n.NextNodeKey,
 		})
 	}
+
+	submitterScope := req.SubmitterScope
+	if submitterScope == "" {
+		submitterScope = "all"
+	}
+	adminType := req.AdminType
+	if adminType == "" {
+		adminType = "all_admin"
+	}
+	visibilityScope := req.VisibilityScope
+	if visibilityScope == "" {
+		visibilityScope = "all"
+	}
+
 	tpl := models.WorkflowTemplate{
-		Name:        req.Name,
-		Description: req.Description,
-		Version:     1,
-		IsActive:    true,
-		CreatedBy:   uid,
-		Nodes:       nodes,
+		Name:            req.Name,
+		Description:     req.Description,
+		Category:        req.Category,
+		SubmitterScope:  submitterScope,
+		AdminType:       adminType,
+		FormFields:      req.FormFields,
+		VisibilityScope: visibilityScope,
+		Version:         1,
+		IsActive:        true,
+		CreatedBy:       uid,
+		Nodes:           nodes,
 	}
 	if err := h.Svc.CreateTemplate(c.Request.Context(), &tpl); err != nil {
 		response.Error(c, http.StatusInternalServerError, "ERROR", "failed to create workflow template")

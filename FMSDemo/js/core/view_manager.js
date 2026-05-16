@@ -113,6 +113,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "2202", name: "应付账款",       type: "负债", direction: "贷", aux: "供应商/司机",status: "启用", remark: "承运商与供应商" },
         { code: "2203", name: "预收账款",       type: "负债", direction: "贷", aux: "客户",       status: "启用", remark: "客户预付货款" },
         { code: "2211", name: "应付职工薪酬",   type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
+            { code: "221101", name: "应付职工薪酬-应付职工工资",       type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
         { code: "2221", name: "应交税费",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222101", name: "应交税费-应交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210101", name: "应交增值税-进项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
@@ -151,11 +152,12 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "5403", name: "税金及附加", type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
         { code: "5601", name: "销售费用",       type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
         { code: "5602", name: "管理费用",       type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
-            { code: "560201", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560201", name: "管理费用-管理人员职工薪酬",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "560202", name: "管理费用-差旅",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "560203", name: "管理费用-通讯",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "560204", name: "管理费用-培训",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "560205", name: "管理费用-招待",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "560206", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
 
         { code: "5603", name: "财务费用",       type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
         { code: "5701", name: "资产减值损失",   type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
@@ -209,6 +211,7 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "2202", name: "应付账款",           type: "负债", direction: "贷", aux: "供应商/司机",status: "启用", remark: "承运商与供应商" },
         { code: "2203", name: "预收账款",           type: "负债", direction: "贷", aux: "客户",       status: "启用", remark: "客户预付货款" },
         { code: "2211", name: "应付职工薪酬",       type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
+            { code: "221101", name: "应付职工薪酬-应付职工工资",       type: "负债", direction: "贷", aux: "员工",       status: "启用", remark: "工资与福利" },
         { code: "2221", name: "应交税费",           type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
             { code: "222101", name: "应交税费-应交增值税",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
                 { code: "22210101", name: "应交增值税-进项税额",       type: "负债", direction: "贷", aux: "税种",       status: "启用", remark: "税费计提与缴纳" },
@@ -256,11 +259,13 @@ const ACCOUNTING_STANDARD_TEMPLATES = {
         { code: "6403", name: "税金及附加",     type: "损益", direction: "借", aux: "税种",       status: "启用", remark: "增值税附加税" },
         { code: "6601", name: "销售费用",           type: "损益", direction: "借", aux: "部门",       status: "启用", remark: "市场与销售费用" },
         { code: "6602", name: "管理费用",           type: "损益", direction: "借", aux: "部门/员工",  status: "启用", remark: "管理费用汇总" },
-            { code: "660201", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660201", name: "管理费用-管理人员职工薪酬",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "660202", name: "管理费用-差旅",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "660203", name: "管理费用-通讯",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "660204", name: "管理费用-培训",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
             { code: "660205", name: "管理费用-招待",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+            { code: "660206", name: "管理费用-办公",           type: "损益", direction: "借", aux: "部门/员工",       status: "启用", remark: "管理费用汇总" },
+
         { code: "6603", name: "财务费用",           type: "损益", direction: "借", aux: "银行账户",   status: "启用", remark: "利息与手续费" },
         { code: "6701", name: "资产减值损失",       type: "损益", direction: "借", aux: "无",         status: "启用", remark: "坏账等资产减值" },
         { code: "6711", name: "营业外支出",         type: "损益", direction: "借", aux: "无",         status: "启用", remark: "非经营性支出" },
@@ -12978,784 +12983,291 @@ function loadContent(moduleCode, element = null) {
     // [3.0 版本] 会计引擎配置 - 新版UI
     // =========================================================================
     else if (moduleCode === 'SettlementEngineConfig') {
-        var secWordMode = localStorage.getItem('VoucherWordMode') || 'spt';
         contentHTML += `
         <style>
-            * { box-sizing: border-box; }
-            /* ===== 顶部标题栏 ===== */
-            .page-header {
-                background: #fff;
-                border-bottom: 1px solid #e8e8e8;
-                padding: 14px 24px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            }
-            .page-header h1 { font-size: 18px; font-weight: 600; color: #1f2937; }
-            .page-header .breadcrumb { font-size: 13px; color: #6b7280; }
-            .page-header .breadcrumb span { color: #3b82f6; }
-            /* ===== 搜索栏 ===== */
-            .search-bar {
-                background: #fff;
-                padding: 12px 24px;
-                border-bottom: 1px solid #f0f0f0;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .search-bar input {
-                width: 260px;
-                padding: 7px 12px;
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                font-size: 13px;
-                outline: none;
-                transition: border-color 0.2s;
-            }
-            .search-bar input:focus { border-color: #3b82f6; }
-            .search-bar button {
-                padding: 7px 16px;
-                background: #3b82f6;
-                color: #fff;
-                border: none;
-                border-radius: 6px;
-                font-size: 13px;
-                cursor: pointer;
-            }
-            .search-bar button:hover { background: #2563eb; }
-            .search-result-count { font-size: 12px; color: #6b7280; }
-            /* ===== 主容器 ===== */
-            .page-body {
-                padding: 16px 24px;
-                height: calc(100vh - 185px);
-            }
-            .engine-container {
-                display: flex;
-                height: 100%;
-                border: 1px solid #e5e7eb;
-                border-radius: 10px;
-                background: #fff;
-                overflow: hidden;
-                box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            }
-            /* ===== 左侧树 ===== */
-            .engine-sidebar {
-                width: 300px;
-                min-width: 260px;
-                background: #f8f9fa;
-                border-right: 1px solid #e5e7eb;
-                overflow-y: auto;
-                padding: 10px 8px;
-                flex-shrink: 0;
-            }
-            .engine-sidebar::-webkit-scrollbar { width: 4px; }
-            .engine-sidebar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-            .tree-node {
-                cursor: pointer;
-                padding: 6px 10px;
-                border-radius: 6px;
-                font-size: 13px;
-                color: #374151;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 8px;
-                user-select: none;
-                transition: background 0.15s;
-            }
-            .tree-node:hover { background-color: #e9ecef; }
-            .tree-node.active { background-color: #3b82f6; color: #fff; }
-            .tree-node.active .engine-toggle-icon { color: #fff; }
-            .level-1 {
-                font-weight: 700;
-                margin-top: 8px;
-                font-size: 13px;
-                color: #1f2937;
-                background: #eef2ff;
-                border-radius: 6px;
-            }
-            .level-1:first-child { margin-top: 0; }
-            .level-2 { margin-left: 12px; font-weight: 600; color: #4b5563; margin-top: 2px; }
-            .level-3 {
-                font-weight: normal;
-                color: #374151;
-                font-size: 12px;
-                justify-content: flex-start;
-                gap: 6px;
-                border-left: 2px solid #e5e7eb;
-                margin-left: 28px;
-                padding-left: 8px;
-                border-radius: 0 4px 4px 0;
-            }
-            .engine-toggle-icon { color: #9ca3af; font-size: 11px; margin-left: auto; flex-shrink: 0; }
-            /* ===== 右侧内容 ===== */
-            .engine-content {
-                flex: 1;
-                padding: 24px;
-                overflow-y: auto;
-                background: #fff;
-            }
-            .engine-content::-webkit-scrollbar { width: 4px; }
-            .engine-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-            /* 空状态 */
-            .empty-state {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                color: #9ca3af;
-            }
-            .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
-            .empty-state p { font-size: 15px; margin-bottom: 6px; }
-            .empty-state small { font-size: 13px; }
-            /* ===== 配置面板 ===== */
-            .config-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 20px;
-                padding-bottom: 16px;
-                border-bottom: 1px solid #f0f2f5;
-            }
-            .config-title { font-size: 20px; font-weight: 700; color: #111827; }
-            .config-meta { margin-top: 6px; font-size: 12px; color: #6b7280; }
-            .config-badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; font-weight: 500; }
-            .badge-write-off { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
-            .badge-accrual { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
-            .tip-box { padding: 10px 14px; border-radius: 8px; font-size: 12px; line-height: 1.7; margin-bottom: 18px; }
-            .tip-box.tip-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-            .tip-box.tip-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-            .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
-            .form-item label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 6px; font-weight: 500; }
-            .form-item select,
-            .form-item input[type="text"] {
-                width: 100%;
-                padding: 8px 10px;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                font-size: 13px;
-                outline: none;
-                transition: border-color 0.2s;
-                background: #fff;
-            }
-            .form-item select:focus,
-            .form-item input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-            /* ===== 分录表格 ===== */
-            .entries-section { margin-top: 20px; }
-            .entries-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-            .entries-title { font-size: 15px; font-weight: 600; color: #1f2937; }
-            .btn-add-entry {
-                padding: 6px 14px;
-                border: 1px solid #3b82f6;
-                color: #3b82f6;
-                background: #fff;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 13px;
-                transition: all 0.15s;
-            }
-            .btn-add-entry:hover { background: #eff6ff; }
-            .entries-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                overflow: hidden;
-            }
-            .entries-table thead tr { background: #f9fafb; }
-            .entries-table th {
-                padding: 10px 12px;
-                text-align: left;
-                font-weight: 600;
-                color: #4b5563;
-                border-bottom: 1px solid #e5e7eb;
-                white-space: nowrap;
-            }
-            .entries-table td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-            .entries-table tbody tr:last-child td { border-bottom: none; }
-            .entries-table tbody tr:hover { background: #f9fafb; }
-            .entries-table select,
-            .entries-table input[type="text"] {
-                width: 100%;
-                padding: 6px 8px;
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                font-size: 12px;
-                background: #fff;
-                outline: none;
-            }
-            .entries-table select:focus,
-            .entries-table input:focus { border-color: #3b82f6; }
-            .badge-debit { color: #059669; font-weight: 700; }
-            .badge-credit { color: #dc2626; font-weight: 700; }
-            .btn-remove {
-                padding: 4px 10px;
-                border: 1px solid #fca5a5;
-                color: #dc2626;
-                background: #fff5f5;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 12px;
-                white-space: nowrap;
-            }
-            .btn-remove:hover { background: #fee2e2; }
-            /* ===== 操作按钮 ===== */
-            .action-bar {
-                margin-top: 24px;
-                display: flex;
-                justify-content: flex-end;
-                gap: 10px;
-                padding-top: 16px;
-                border-top: 1px solid #f0f2f5;
-            }
-            .btn-reset {
-                padding: 8px 18px;
-                border: 1px solid #d1d5db;
-                background: #f9fafb;
-                color: #374151;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 13px;
-            }
-            .btn-reset:hover { background: #f3f4f6; }
-            .btn-save {
-                padding: 8px 20px;
-                border: none;
-                background: #059669;
-                color: #fff;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 13px;
-                font-weight: 600;
-            }
-            .btn-save:hover { background: #047857; }
-            /* ===== 搜索高亮 ===== */
-            .search-highlight { background: #fef08a; border-radius: 2px; }
-            /* ===== Toast 提示 ===== */
-            .toast {
-                position: fixed;
-                top: 20px;
-                right: 24px;
-                padding: 12px 20px;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-                z-index: 9999;
-                display: none;
-                animation: toastSlideIn 0.3s ease;
-            }
-            .toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-            .toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-            @keyframes toastSlideIn {
-                from { opacity: 0; transform: translateX(20px); }
-                to { opacity: 1; transform: translateX(0); }
-            }
-            @media (max-width: 768px) {
-                .engine-sidebar { width: 240px; }
-                .form-grid { grid-template-columns: 1fr; }
-            }
-            /* ===== 自定义规则 ===== */
-            .custom-rule-add-btn {
-                display: block;
-                width: calc(100% - 16px);
-                margin: 6px 8px;
-                padding: 7px 10px;
-                border: 1px dashed #3b82f6;
-                color: #3b82f6;
-                background: #eff6ff;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 12px;
-                text-align: center;
-                transition: all 0.15s;
-                box-sizing: border-box;
-            }
-            .custom-rule-add-btn:hover { background: #dbeafe; border-color: #2563eb; }
-            .cust-del {
-                color: #dc2626;
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 11px;
-                padding: 2px 5px;
-                border-radius: 4px;
-                opacity: 0;
-                transition: opacity 0.15s;
-                flex-shrink: 0;
-                line-height: 1;
-            }
-            .tree-node:hover .cust-del { opacity: 1; }
-            .tree-node.active .cust-del { opacity: 0.6; color: #fff; }
-            /* ===== 条件编辑器 ===== */
-            .cond-box {
-                background: #f8f9fa;
-                border: 1px solid #e5e7eb;
-                padding: 14px 16px;
-                border-radius: 8px;
-                margin-bottom: 16px;
-                min-height: 48px;
-            }
-            .cond-row {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-            .cond-row:last-child { margin-bottom: 0; }
-            .cond-logic {
-                font-size: 11px;
-                font-weight: 700;
-                width: 34px;
-                text-align: right;
-                flex-shrink: 0;
-            }
-            .cond-logic.is-if { color: #6b7280; }
-            .cond-logic.is-and { color: #3b82f6; }
-            .cond-row select {
-                flex: 1;
-                padding: 6px 8px;
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                font-size: 12px;
-                background: #fff;
-                outline: none;
-            }
-            .cond-row select:focus { border-color: #3b82f6; }
-            .btn-del-cond {
-                background: none;
-                border: none;
-                color: #dc2626;
-                cursor: pointer;
-                font-size: 13px;
-                padding: 3px 6px;
-                border-radius: 4px;
-                flex-shrink: 0;
-                line-height: 1;
-            }
-            .btn-del-cond:hover { background: #fee2e2; }
-            .section-title-bar {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin: 20px 0 10px;
-            }
-            .section-title-bar .st-label {
-                font-size: 14px;
-                font-weight: 600;
-                color: #1f2937;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .section-title-bar .st-label::before {
-                content: '';
-                display: inline-block;
-                width: 4px; height: 15px;
-                background: #3b82f6;
-                border-radius: 2px;
-            }
-            .form-row-3 {
-                display: grid;
-                grid-template-columns: 3fr 1fr 4fr;
-                gap: 12px;
-                margin-bottom: 16px;
-            }
-            .form-row-3 .form-item label {
-                display: block;
-                font-size: 12px;
-                color: #6b7280;
-                margin-bottom: 6px;
-                font-weight: 500;
-            }
-            .form-row-3 .form-item input {
-                width: 100%;
-                padding: 7px 10px;
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                font-size: 13px;
-                outline: none;
-                box-sizing: border-box;
-                transition: border-color 0.2s;
-                background: #fff;
-            }
-            .form-row-3 .form-item input:focus {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+            .ae-page { padding: 20px 24px; background:#f6f8fb; min-height: calc(100vh - 96px); color:#1f2937; }
+            .ae-top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+            .ae-title h1 { margin:0; font-size:22px; font-weight:700; letter-spacing:0; color:#1f2937; }
+            .ae-title p { margin:4px 0 0; color:#667085; font-size:13px; }
+            .ae-btn { height:38px; padding:0 16px; border:1px solid #d5dce8; border-radius:6px; background:#fff; color:#344054; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; font-size:13px; min-width:96px; }
+            .ae-btn:hover { border-color:#aeb9c9; background:#fbfdff; }
+            .ae-btn.primary { background:#1677ff; border-color:#1677ff; color:#fff; }
+            .ae-btn.primary:hover { background:#0f68e8; }
+            .ae-btn.danger { color:#ff4d4f; border-color:#ffc9c9; background:#fffafa; }
+            .ae-btn.text { border:0; background:transparent; color:#1677ff; padding:0 4px; min-height:auto; min-width:auto; }
+            .ae-card { background:#fff; border:1px solid #e5eaf2; border-radius:10px; box-shadow:0 8px 22px rgba(15,23,42,.05); }
+            .ae-filter { padding:18px 20px; display:grid; grid-template-columns:repeat(4, 180px) auto auto; gap:12px; align-items:end; justify-content:start; margin-bottom:14px; }
+            .ae-page label { display:block; font-size:12px; font-weight:600; color:#6b7280; margin-bottom:6px; }
+            .ae-page input, .ae-page select, .ae-page textarea { width:100%; height:38px; min-height:38px; border:1px solid #d5dce8; border-radius:6px; background:#fff; color:#1f2937; padding:7px 10px; outline:none; font:inherit; line-height:20px; box-sizing:border-box; }
+            .ae-page textarea { min-height:66px; resize:vertical; }
+            .ae-page input:focus, .ae-page select:focus, .ae-page textarea:focus { border-color:#1677ff; box-shadow:0 0 0 3px rgba(22,119,255,.12); }
+            .ae-table-card { overflow:hidden; }
+            .ae-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+            .ae-table th, .ae-table td { border-bottom:1px solid #e5eaf2; padding:12px 14px; text-align:left; vertical-align:middle; }
+            .ae-table th { background:#f9fbfe; color:#475467; font-size:12px; font-weight:700; }
+            .ae-table td { color:#263445; font-size:13px; }
+            .ae-badge { display:inline-flex; align-items:center; min-height:24px; padding:0 8px; border-radius:999px; font-size:12px; font-weight:700; }
+            .ae-badge.on { background:#eafaf1; color:#118246; }
+            .ae-badge.draft { background:#fff7e8; color:#ad6800; }
+            .ae-badge.off { background:#f2f4f7; color:#667085; }
+            .ae-view { display:none; }
+            .ae-view.active { display:block; }
+            .ae-form-shell { background:#fff; border-radius:12px; padding:18px; box-shadow:0 8px 22px rgba(15,23,42,.05); border:1px solid #e5eaf2; }
+            .ae-section { border:1px solid #e5eaf2; border-radius:10px; padding:22px 24px; margin-bottom:16px; background:#fff; }
+            .ae-section-title { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; margin-bottom:18px; }
+            .ae-section-title::before { content:""; width:3px; height:22px; border-radius:3px; background:#1677ff; }
+            .ae-basic-grid { display:grid; grid-template-columns:220px minmax(520px, 820px); gap:14px 18px; align-items:end; max-width:1080px; }
+            .ae-wide { grid-column:1 / -1; }
+            .ae-required { color:#ff4d4f; margin-left:2px; }
+            .ae-if-row { display:grid; grid-template-columns:36px minmax(260px,520px) 90px minmax(260px,460px) 32px; gap:8px; align-items:center; max-width:1120px; margin-bottom:8px; }
+            .ae-if-label { height:24px; border-radius:5px; background:#15b05b; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; }
+            .ae-if-label.and { background:#64748b; }
+            .ae-plus { width:32px; height:32px; padding:0; border-radius:6px; font-size:18px; line-height:1; }
+            .ae-tip { margin-top:8px; color:#8a95a5; font-size:12px; }
+            .ae-entry-table th, .ae-entry-table td { padding:10px 6px; }
+            .ae-entry-table th:nth-child(1), .ae-entry-table td:nth-child(1) { width:60px; }
+            .ae-entry-table th:nth-child(2), .ae-entry-table td:nth-child(2) { width:32%; }
+            .ae-entry-table th:nth-child(3), .ae-entry-table td:nth-child(3) { width:24%; }
+            .ae-entry-table th:nth-child(4), .ae-entry-table td:nth-child(4) { width:24%; }
+            .ae-entry-table th:nth-child(5), .ae-entry-table td:nth-child(5) { width:88px; text-align:center; }
+            .ae-entry-table td select, .ae-entry-table td input { width:100%; box-sizing:border-box; }
+
+            .ae-entry-table td .ae-btn { min-height:40px; padding:0 12px; color:#ff4d4f; border-color:#ffb8b8; background:#fffafa; line-height:1.1; }
+            .ae-add-row { margin-top:14px; width:100%; height:40px; border:1px dashed #9cc7ff; background:#f1f7ff; color:#1677ff; border-radius:6px; cursor:pointer; font-weight:600; }
+            .ae-form-footer { display:none; }
+            .ae-muted { color:#667085; font-size:12px; }
+            .ae-toast { position:fixed; right:28px; top:24px; background:#101828; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,.18); display:none; z-index:9999; font-size:13px; }
+            #ae-form-view.active { position:fixed; inset:0; display:block; z-index:9000; background:rgba(15,23,42,.38); padding:30px 36px; overflow:auto; }
+            #ae-form-view .ae-top,
+            #ae-form-view .ae-form-shell { width:min(1420px, calc(100vw - 72px)); margin-left:auto; margin-right:auto; }
+            #ae-form-view .ae-top { background:#f6f8fb; border:1px solid #e5eaf2; border-bottom:0; border-radius:12px 12px 0 0; padding:18px 20px 12px; margin-bottom:0; }
+            #ae-form-view .ae-form-shell { border-radius:0 0 12px 12px; border-top:0; box-shadow:none; padding-bottom:24px; }
+            .ae-pagination { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-top:1px solid #e5eaf2; background:#fff; font-size:13px; color:#475467; }
+            .ae-pagination-right { display:flex; align-items:center; gap:8px; }
+            .ae-page-btn { min-width:32px; height:32px; padding:0 8px; border:1px solid #d0d5dd; background:#fff; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:#344054; font-weight:500; transition:all .2s; }
+            .ae-page-btn:hover:not(:disabled) { background:#f9fafb; border-color:#d0d5dd; }
+            .ae-page-btn.active { background:#eff6ff; border-color:#1677ff; color:#1677ff; }
+            .ae-page-btn:disabled { cursor:not-allowed; color:#d0d5dd; background:#f9fafb; }
+            
+            /* 只读模式样式 */
+            .ae-readonly-mode input,
+            .ae-readonly-mode select,
+            .ae-readonly-mode textarea {
+                pointer-events: none;
+                opacity: 0.7;
+                background-color: #f5f7fa;
             }
         </style>
 
-        <!-- 顶部标题栏 -->
-        <div class="page-header">
-            <div>
-                <h1>会计引擎配置</h1>
-                <div class="breadcrumb">会计核算 / 会计基础 / <span>会计引擎</span></div>
-            </div>
-            <div style="font-size:12px; color:#9ca3af;">当前账套：默认账套</div>
-        </div>
+        <div class="ae-page">
+            <section id="ae-list-view" class="ae-view active">
+                <div class="ae-card ae-filter">
+                    <div>
+                        <label>业务源系统</label>
+                        <select id="ae-filter-source">
+	                            <option value="">全部</option>
+	                            <option value="TMS">物流系统（TMS）</option>
+                                <option value="HRMS">人事系统（HRMS）</option>
+	                            <option value="OA">办公系统（OA）</option>
+	                            <option value="WMS">仓储管理系统（WMS）</option>
+	                            <option value="FA">固定资产（FA）</option>
+	                        </select>
+	                    </div>
+                    <div>
+                        <label>费用类型</label>
+                        <select id="ae-filter-fee">
+                            <option value="">全部</option>
+                            <option value="代收货款">代收货款</option>
+                            <option value="运费">运费</option>
+                            <option value="中转费">中转费</option>
+                            <option value="送货费">送货费</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>状态</label>
+	                        <select id="ae-filter-status">
+	                            <option value="">全部</option>
+	                            <option value="启用">启用</option>
+	                            <option value="未启用">未启用</option>
+	                            <option value="删除">删除</option>
+	                        </select>
+                    </div>
+	                    <div>
+	                        <label>规则名称</label>
+	                        <input id="ae-filter-keyword" placeholder="请输入规则名称">
+	                    </div>
+	                    <button class="ae-btn primary" id="ae-query-btn">查询</button>
+                        <button class="ae-btn primary" id="ae-new-template-btn">+ 新增模板</button>
+                </div>
 
-        <!-- 搜索栏 -->
-        <div class="search-bar">
-            <input type="text" id="treeSearchInput" placeholder="搜索费用类型，如：现付结算" oninput="filterEngineTree(this.value)">
-            <button onclick="filterEngineTree(document.getElementById('treeSearchInput').value)">搜索</button>
-            <span class="search-result-count" id="searchResultCount"></span>
-            <button onclick="clearSearch()" style="background:#6b7280; padding:7px 12px; border:none; color:#fff; border-radius:6px; font-size:13px; cursor:pointer;">清除</button>
-        </div>
+                <div class="ae-card ae-table-card">
+                    <table class="ae-table">
+                        <thead>
+                            <tr>
+                                <th style="width:140px;">规则编号</th>
+                                <th style="width:300px;">规则名称</th>
+                                <th style="width:130px;">业务源系统</th>
+                                <th style="width:180px;">触发条件</th>
+                                <th style="width:90px;">分录行数</th>
 
-        <!-- 主体 -->
-        <div class="page-body">
-            <div class="engine-container">
-                <div class="engine-sidebar" id="engine-sidebar"></div>
-                <div class="engine-content" id="engine-content-area">
-                    <div class="empty-state">
-                        <div class="icon">&#x2699;&#xFE0F;</div>
-                        <p>请在左侧选择具体的费用类型</p>
-                        <small>以配置其会计分录生成规则</small>
+                                <th style="width:90px;">状态</th>
+                                <th>操作</th>
+                                </tr>
+                                </thead>
+
+                        <tbody id="ae-template-tbody"></tbody>
+                    </table>
+                    <div class="ae-pagination" id="ae-pagination"></div>
+                </div>
+            </section>
+
+	            <section id="ae-form-view" class="ae-view">
+                <div class="ae-top">
+                    <div class="ae-title">
+                        <h1 id="ae-form-title">新增会计引擎模板</h1>
+                    </div>
+                    <div>
+	                        <button class="ae-btn" id="ae-back-btn">关闭</button>
+	                        <button class="ae-btn primary" id="ae-save-top-btn">保存模板</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Toast 提示 -->
-        <div class="toast" id="engine-toast"></div>
+                <div class="ae-form-shell">
+                    <div class="ae-section">
+                        <div class="ae-section-title">基本信息</div>
+                        <div class="ae-basic-grid">
+                            <div>
+                                <label>业务源系统</label>
+	                                <select id="ae-rule-source">
+	                                    <option value="TMS">物流系统</option>
+	                                    <option value="HRM">人事系统</option>
+	                                    <option value="WMS">仓储管理系统</option>
+	                                    <option value="FA">固定资产</option>
+	                                </select>
+                            </div>
+                            <div>
+                                <label>规则名称 <span class="ae-required">*</span></label>
+                                <input id="ae-rule-name" placeholder="例如：离职补偿金计提规则 / 运单签收收入确认">
+                            </div>
+                            <div class="ae-wide">
+                                <label>场景备注</label>
+                                <textarea id="ae-rule-remark" placeholder="描述该规则适用的财务核算场景..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ae-section">
+                        <div class="ae-section-title">触发条件 (IF)</div>
+                        <div id="ae-if-rows"></div>
+                    </div>
+
+                    <div class="ae-section">
+                        <div class="ae-section-title">分录配置 (THEN)</div>
+                        <table class="ae-table ae-entry-table">
+                            <thead>
+                                <tr>
+                                    <th>方向</th>
+                                    <th>会计科目（科目编码 - 中文名称）</th>
+                                    <th>辅助核算项</th>
+                                    <th>摘要模板</th>
+                                    <th>操作</th>
+                                    </tr>
+
+                            </thead>
+                            <tbody id="ae-entry-body"></tbody>
+                        </table>
+                        <button class="ae-add-row" id="ae-add-entry-btn">+ 添加分录行</button>
+                    </div>
+                </div>
+
+	            </section>
+        </div>
+        <div class="ae-toast" id="ae-toast">模板已保存</div>
         `;
 
         setTimeout(function() {
-            // ============================================================
-            // 一、ENGINE_DATA 数据结构
-            // ============================================================
-            var ENGINE_DATA = [
-                {
-                    name: "结算",
-                    children: [
-                        {
-                            name: "测试",
-                            items: ["测试应收", "测试应付", "测试内部报销"]
-                        },
-                        {
-                            name: "运单",
-                            items: [
-                                "现付结算","现返结算","网点中转现返结算","单票提货费已付结算","单票提货费未付结算",
-                                "欠付结算","欠返结算","网点中转欠返结算","月结结算","回付结算","货到打卡结算",
-                                "货款扣结算","税费结算","货款手续费结算","中转费结算","回扣结算","开单进仓费结算",
-                                "到站进仓费结算","员工中转费结算","总部代收货款结算","出发网点代收货款结算",
-                                "目的网点代收货款结算","途径网点代收货款结算","出发网点到付结算","途径网点到付结算",
-                                "目的网点到付结算","总部货款扣结算","总部货款手续费结算","单票送货费结算",
-                                "单票送货上楼费结算","单票送货装卸费结算","单票送货进仓费结算","出发网点垫付费已付结算",
-                                "出发网点垫付费未付结算","目的网点垫付费结算","途径网点垫付费结算","总部代收运费结算",
-                                "出发网点代收运费结算","目的网点代收运费结算","途径网点代收运费结算","总部垫付费结算",
-                                "网点中转费合计结算","发站单票装车费结算","发站单票其他费结算","到站单票卸车费结算",
-                                "到站单票其他费结算","发站落地中转费结算","到站落地中转费结算","发站落地中转费异动结算",
-                                "到站落地中转费异动结算","发站落地送货费结算","到站落地送货费结算","发站落地送货异动费结算",
-                                "到站落地送货费异动结算","发站平台服务费结算","到站平台服务费结算","平台增值费结算"
-                            ]
-                        },
-                        {
-                            name: "异动",
-                            items: [
-                                "现返异动增款结算","欠返异动增款结算","回扣异动增款结算","现付异动增款结算",
-                                "出发网点到付异动增款结算","途径网点到付异动增款结算","目的网点到付异动增款结算",
-                                "欠付异动增款结算","月结异动增款结算","回付异动增款结算","货款扣异动增款结算",
-                                "货到打卡异动增款结算","现返异动减款结算","欠返异动减款结算","回扣异动减款结算",
-                                "现付异动减款结算","出发网点到付异动减款结算","途径网点到付异动减款结算",
-                                "目的网点到付异动减款结算","欠付异动减款结算","月结异动减款结算","回付异动减款结算",
-                                "货款扣异动减款结算","货到打卡异动减款结算","总部代收货款异动结算","出发网点代收货款异动结算",
-                                "目的网点代收货款异动结算","途径网点代收货款异动结算","总部垫付费异动结算",
-                                "出发网点垫付费异动结算","目的网点垫付费异动结算","途径网点垫付费异动结算",
-                                "货款手续费异动结算","总部货款手续费异动结算"
-                            ]
-                        },
-                        {
-                            name: "干线",
-                            items: [
-                                "现付运输费结算","到付运输费结算","回付运输费结算","现付油卡费结算","整车保险费结算",
-                                "发站装车费结算","发站其它费结算","到站卸车费结算","到站其它费结算","整车信息费结算",
-                                "发站落地费结算","到站落地费结算","发站落货费结算","到站落货费结算","挂车使用费结算",
-                                "应付到付结算","应付现付结算","应付油卡结算","应付回付结算","应付保险费结算",
-                                "应收到付结算","应收现付结算","应收油卡结算","应收回付结算","应收其他结算","应收信息费结算"
-                            ]
-                        },
-                        {
-                            name: "送货",
-                            items: [
-                                "送货费结算","应付到付结算","应付现付结算","应付油卡结算","应付回付结算",
-                                "应收到付结算","应收现付结算","应收油卡结算","应收回付结算","应收其他结算"
-                            ]
-                        },
-                        {
-                            name: "短驳",
-                            items: [
-                                "短驳费结算","应付到付结算","应付现付结算","应付油卡结算","应付回付结算",
-                                "应收到付结算","应收现付结算","应收油卡结算","应收回付结算","应收其他结算"
-                            ]
-                        },
-                        {
-                            name: "应收结算",
-                            items: [
-                                "到付应收结算","代收货款应收结算","成本中转费应收结算","成本操作费应收结算",
-                                "成本送货费应收结算","成本保险费应收结算","成本回单费应收结算","成本标签费应收结算",
-                                "成本管理费应收结算","成本运单费应收结算","成本到付手续费应收结算","成本货款手续费应收结算",
-                                "货款手续费应收结算","成本返货费应收结算","核定外部中转费应收结算","核定内部中转费应收结算",
-                                "核定送货费应收结算","实际外部中转费应收结算","实际内部中转费应收结算","实际送货费应收结算",
-                                "短信费应收结算","货款扣应收结算","货款扣异动应收结算","网点中转费合计应收结算",
-                                "实际外部中转送货费应收结算","到付异动应收结算","代收货款异动应收结算","垫付费异动应收结算",
-                                "货款手续费异动应收结算","网点中转送货费应收结算","网点中转提货费应收结算","网点中转费应收结算",
-                                "网点中转装卸费应收结算","标准网点中转送货费应收结算","标准网点中转提货费应收结算",
-                                "标准网点中转费应收结算","标准网点中转装卸费应收结算","网点中转费异动应收结算",
-                                "网点中转送货费异动应收结算","控货费应收结算","改单费应收结算","配安费应收结算",
-                                "单票提货费应收结算","单票送货费应收结算","现付运输费应收结算","到付运输费应收结算"
-                            ]
-                        },
-                        {
-                            name: "应付结算",
-                            items: [
-                                "到付应付结算","代收货款应付结算","成本中转费应付结算","成本操作费应付结算",
-                                "成本送货费应付结算","成本保险费应付结算","成本回单费应付结算","成本标签费应付结算",
-                                "成本管理费应付结算","成本运单费应付结算","成本到付手续费应付结算","成本货款手续费应付结算",
-                                "货款手续费应付结算","成本返货费应付结算","核定外部中转费应付结算","核定内部中转费应付结算",
-                                "核定送货费应付结算","实际外部中转费应付结算","实际内部中转费应付结算","实际送货费应付结算",
-                                "短信费应付结算","货款扣应付结算","货款扣异动应付结算","网点中转费合计应付结算",
-                                "实际外部中转送货费应付结算","到付异动应付结算","代收货款异动应付结算","垫付费异动应付结算",
-                                "货款手续费异动应付结算","网点中转送货费应付结算","网点中转提货费应付结算","网点中转费应付结算",
-                                "网点中转装卸费应付结算","标准网点中转送货费应付结算","标准网点中转提货费应付结算",
-                                "标准网点中转费应付结算","标准网点中转装卸费应付结算","网点中转费异动应付结算",
-                                "网点中转送货费异动应付结算","控货费应付结算","改单费应付结算","配安费应付结算",
-                                "单票提货费应付结算","单票送货费应付结算","现付运输费应付结算","到付运输费应付结算"
-                            ]
-                        },
-                        {
-                            name: "提货",
-                            items: [
-                                "提货费结算","应付到付结算","应付现付结算","应付油卡结算","应付回付结算",
-                                "应收到付结算","应收现付结算","应收油卡结算","应收回付结算","应收其他结算"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: "核销",
-                    children: [
-                        {
-                            name: "测试",
-                            items: ["测试应收1", "测试应付1"]
-                        },
-                        {
-                            name: "运单",
-                            items: [
-                                "现付核销","现返核销","单票提货费已付核销","单票提货费未付核销","欠付核销","欠返核销",
-                                "到付核销","月结核销","回付核销","货到打卡核销","货款扣核销","代收货款回收",
-                                "代收货款汇款","代收货款到账","代收货款发放","到付汇款","到付到账","到付异动汇款",
-                                "到付异动到账","税费核销","配安费核销","货款手续费核销","中转费核销","回扣核销",
-                                "到站进仓费核销","垫付费回收","垫付费汇款","垫付费到账","垫付费已付发放","垫付费未付发放",
-                                "代收运费回收","代收运费汇款","代收运费到账","代收运费发放","单票送货费核销",
-                                "单票送货上楼费核销","单票送货装卸费核销","单票送货进仓费核销","网点中转费核销",
-                                "现返异动增款核销","欠返异动增款核销","回扣异动增款核销","现付异动增款核销",
-                                "到付异动增款核销","欠付异动增款核销","月结异动增款核销","回付异动增款核销",
-                                "货款扣异动增款核销","货到打卡异动增款核销","现返异动减款核销","欠返异动减款核销",
-                                "回扣异动减款核销","现付异动减款核销","到付异动减款核销","欠付异动减款核销",
-                                "月结异动减款核销","回付异动减款核销","货款扣异动减款核销","货到打卡异动减款核销",
-                                "发站单票装车费","发站单票其他费","到站单票卸车费","到站单票其他费","开单进仓费",
-                                "代收货款异动回收","代收货款异动发放","代收货款异动汇款","代收货款异动到账",
-                                "垫付费异动发放","货款手续费异动核销","发站落地中转费核销","到站落地中转费核销",
-                                "发站落地中转费异动核销","到站落地中转费异动核销","发站落地送货费核销","到站落地送货费核销",
-                                "发站落地送货异动费核销","到站落地送货费异动核销","发站平台服务费核销","到站平台服务费核销",
-                                "平台增值费核销"
-                            ]
-                        },
-                        {
-                            name: "干线",
-                            items: [
-                                "现付运输费核销","到付运输费核销","回付运输费核销","现付油卡费核销","整车保险费核销",
-                                "发站装车费核销","发站其它费核销","到站卸车费核销","到站其它费核销","整车信息费核销",
-                                "挂车使用费核销","发站落地费核销","到站落地费核销","发站落货费核销","到站落货费核销",
-                                "应付到付核销","应付现付核销","应付油卡核销","应付回付核销","应付保险费核销",
-                                "应收到付核销","应收现付核销","应收油卡核销","应收回付核销","应收其他核销","应收信息费核销",
-                                "司机定金收入核销","司机定金支出核销","现付运输费异动增款核销","现付运输费异动减款核销"
-                            ]
-                        },
-                        {
-                            name: "送货",
-                            items: [
-                                "送货费核销","司机定金收入核销","司机定金支出核销","送货费异动增款核销","送货费异动减款核销"
-                            ]
-                        },
-                        {
-                            name: "短驳",
-                            items: [
-                                "短驳费核销","网点对账核销","发站网点对账核销","到站网点对账核销"
-                            ]
-                        },
-                        {
-                            name: "提货",
-                            items: [
-                                "提货费核销","司机定金收入核销","司机定金支出核销","提货费异动增款核销","提货费异动减款核销"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: "账户核销",
-                    children: [
-                        {
-                            name: "账户收款（网点间交易）",
-                            items: [
-                                "到付出发网点收款","到付途径网点收款","货款出发网点收款","货款途径网点收款","货款总部收款",
-                                "成本中转费收款","成本操作费收款","成本送货费收款","异常罚款收款","成本保险费收款",
-                                "成本回单费收款","成本标签费收款","成本管理费收款","成本运单费收款","成本到付手续费收款",
-                                "成本货款手续费收款","货款手续费收款","成本返货费收款","核定外部中转费收款",
-                                "核定内部中转费收款","核定送货费收款","实际外部中转费收款","实际内部中转费收款",
-                                "实际送货费收款","货款扣收款","货款扣异动收款","网点中转费合计收款",
-                                "实际外部中转送货费收款","到付异动增款出发网点收款","到付异动增款途径网点收款",
-                                "到付异动增款目的网点收款","到付异动减款出发网点收款","到付异动减款途径网点收款",
-                                "到付异动减款目的网点收款","改单费收款","控货费收款","代收货款异动出发网点收款",
-                                "代收货款异动途径网点收款","代收货款异动目的网点收款","代收货款异动总部收款",
-                                "垫付费异动出发网点收款","垫付费异动途径网点收款","垫付费异动目的网点收款",
-                                "垫付费异动总部收款","货款手续费异动收款","网点中转送货费收款","网点中转提货费收款",
-                                "网点中转费收款","网点中转装卸费收款","标准网点中转送货费收款","标准网点中转提货费收款",
-                                "标准网点中转费收款","标准网点中转装卸费收款","网点中转费异动收款","网点中转送货费异动收款",
-                                "短信费收款","配安费收款","单票提货费收款","单票送货费收款","现付运输费收款","到付运输费收款"
-                            ]
-                        },
-                        {
-                            name: "账户扣款（网点间交易）",
-                            items: [
-                                "到付目的网点付款","到付途径网点付款","货款目的网点付款","货款途径网点付款","货款总部付款",
-                                "成本中转费付款","成本操作费付款","成本送货费付款","异常罚款付款","成本保险费付款",
-                                "成本回单费付款","成本标签费付款","成本管理费付款","成本运单费付款","成本到付手续费付款",
-                                "成本货款手续费付款","货款手续费付款","成本返货费付款","核定外部中转费付款",
-                                "核定内部中转费付款","核定送货费付款","实际外部中转费付款","实际内部中转费付款",
-                                "实际送货费付款","货款扣付款","货款扣异动付款","网点中转费合计付款",
-                                "实际外部中转送货费付款","到付异动增款目的网点付款","到付异动增款途径网点付款",
-                                "到付异动增款出发网点付款","到付异动减款目的网点付款","到付异动减款途径网点付款",
-                                "到付异动减款出发网点付款","改单费付款","控货费付款","代收货款异动出发网点付款",
-                                "代收货款异动途径网点付款","代收货款异动目的网点付款","代收货款异动总部付款",
-                                "垫付费异动出发网点付款","垫付费异动途径网点付款","垫付费异动目的网点付款",
-                                "垫付费异动总部付款","货款手续费异动付款","网点中转送货费付款","网点中转提货费付款",
-                                "网点中转费付款","网点中转装卸费付款","标准网点中转送货费付款","标准网点中转提货费付款",
-                                "标准网点中转费付款","标准网点中转装卸费付款","网点中转费异动付款","网点中转送货费异动付款",
-                                "短信费付款","配安费付款","单票提货费付款","单票送货费付款","现付运输费付款","到付运输费付款"
-                            ]
-                        },
-                        {
-                            name: "利息账户",
-                            items: ["利息收入","利息支出"]
-                        }
-                    ]
-                },
-                {
-                    name: "账户管理",
-                    children: [
-                        {
-                            name: "充值管理",
-                            items: ["账户充值","充值入金手续费","充值预收手续费","账户充值（自定义收支方式）"]
-                        },
-                        {
-                            name: "提现管理",
-                            items: ["账户提现","提现手续费"]
-                        },
-                        {
-                            name: "扫码收款",
-                            items: ["现付入金手续费","到付入金手续费","货款入金手续费","现付预收手续费","到付预收手续费","货款预收手续费"]
-                        },
-                        {
-                            name: "在线打款",
-                            items: ["在线打款","在线打款手续费"]
-                        }
-                    ]
-                },
-                {
-                    name: "在线账户管理",
-                    children: [
-                        {
-                            name: "充值管理",
-                            items: ["账户充值","充值入金手续费","充值预收手续费","后台充值","后台充值手续费"]
-                        },
-                        {
-                            name: "提现管理",
-                            items: ["账户提现","提现手续费","后台提现","后台提现手续费"]
-                        },
-                        {
-                            name: "扫码收款",
-                            items: ["现付入金手续费","到付入金手续费","货款入金手续费","现付预收手续费","到付预收手续费","货款预收手续费"]
-                        },
-                        {
-                            name: "收支方式",
-                            items: ["现付","到付","现返","代收货款","现付异动","到付异动","现返异动","代收货款异动"]
-                        },
-                        {
-                            name: "在线打款",
-                            items: ["在线打款","在线打款手续费","在线打款运输费"]
-                        }
-                    ]
-                }
-            ];
+            var CUSTOM_RULES_STORE_KEY = 'CustomEngineRules';
+            var RUNTIME_TEMPLATE_KEY = 'EngineVoucherTemplates';
+            var STANDALONE_TEMPLATE_KEY = 'EngineVoucherTemplates_standalone';
+            var editingRuleId = null;
+            var currentPage = 1;
+            var pageSize = 10;
 
-            // ============================================================
-            // 二、模板存储
-            // ============================================================
-            var ENGINE_TEMPLATE_KEY = "EngineVoucherTemplates_standalone";
-
-            function loadStore() {
-                try { return JSON.parse(localStorage.getItem(ENGINE_TEMPLATE_KEY) || "{}"); } catch(e) { return {}; }
-            }
-            function saveStore(store) {
-                localStorage.setItem(ENGINE_TEMPLATE_KEY, JSON.stringify(store));
-            }
-            function findCategory(itemName) {
-                for (var ci = 0; ci < ENGINE_DATA.length; ci++) {
-                    var cat = ENGINE_DATA[ci];
-                    if (!cat.children) continue;
-                    for (var si = 0; si < cat.children.length; si++) {
-                        var sub = cat.children[si];
-                        if (sub.items && sub.items.indexOf(itemName) !== -1) {
-                            return { category: cat.name, group: sub.name };
-                        }
-                    }
+            var CONDITION_SCHEMAS = {
+                TMS: {
+                    "业务环节": ["运单", "干线", "送货", "短驳", "提货", "对账", "账户间交易", "账户管理"],
+                    "费用类型": ["代收货款", "运费", "现付运费", "到付运费", "月结运费", "提货费", "送货费", "中转费", "垫付费", "手续费", "装卸费", "保险费", "信息费", "平台服务费"],
+                    "业务动作": ["挂账", "结算", "核销", "收款", "付款", "回收", "汇款", "到账", "发放", "对账确认", "充值", "提现"],
+                    "单据状态": ["正常", "已确认", "已签收", "已对账", "已结算", "已核销", "已付", "未付", "异常"],
+                    "结算对象": ["客户", "承运商", "司机", "出发网点", "目的网点", "途径网点", "总部"]
+                },
+                HRM: {
+                    "业务环节": ["薪酬核算", "社保公积金", "个税计提", "报销", "奖金", "离职补偿"],
+                    "费用类型": ["工资", "奖金", "社保公司部分", "社保个人部分", "公积金公司部分", "公积金个人部分", "个人所得税", "差旅报销", "日常报销", "离职补偿金"],
+                    "业务动作": ["计提", "发放", "代扣", "代缴", "报销审批通过", "付款", "冲销"],
+                    "单据状态": ["待核算", "已核算", "已审批", "已发放", "已付款", "已作废"],
+                    "结算对象": ["员工", "部门", "社保机构", "公积金中心", "税务机关"]
+                },
+                WMS: {
+                    "业务环节": ["采购入库", "销售出库", "调拨", "盘点", "损溢处理", "库存结转"],
+                    "费用类型": ["采购成本", "销售成本", "库存商品", "原材料", "包装物", "盘盈", "盘亏", "报损", "调拨差异"],
+                    "业务动作": ["入库确认", "出库确认", "成本结转", "盘点确认", "损溢审批", "调拨完成", "冲销"],
+                    "单据状态": ["待审核", "已审核", "已入库", "已出库", "已盘点", "已结转", "已作废"],
+                    "结算对象": ["供应商", "客户", "仓库", "货品", "批次", "项目"]
+                },
+                FA: {
+                    "业务环节": ["资产购置", "资产入账", "折旧计提", "资产调拨", "资产处置", "资产盘点"],
+                    "费用类型": ["固定资产原值", "累计折旧", "折旧费用", "资产清理", "处置收入", "处置损失", "减值准备"],
+                    "业务动作": ["购置确认", "验收入账", "折旧计提", "调拨确认", "处置审批", "盘点确认", "报废确认"],
+                    "单据状态": ["待验收", "已验收", "使用中", "已计提", "已调拨", "已处置", "已报废"],
+                    "结算对象": ["资产类别", "使用部门", "保管人", "供应商", "处置对象", "项目"]
                 }
-                return { category: "未分类", group: "-" };
+            };
+
+            function safeJson(raw, fallback) {
+                try { return JSON.parse(raw || ''); } catch(e) { return fallback; }
             }
-            function buildEmpty(itemName, info) {
-                var isWriteOff = info.category === '核销';
-                return {
-                    name: itemName,
-                    category: info.category,
-                    group: info.group,
-                    voucherWord: "转",
-                    remark: "",
-                    entries: isWriteOff
-                        ? [{ dir: "借", subjectCode: "", subjectName: "", summary: "", usePaymentMethod: false }]
-                        : [
-                            { dir: "借", subjectCode: "", subjectName: "", summary: "", usePaymentMethod: false },
-                            { dir: "贷", subjectCode: "", subjectName: "", summary: "", usePaymentMethod: false }
-                          ]
+            function loadCustomRules() {
+                return safeJson(localStorage.getItem(CUSTOM_RULES_STORE_KEY), []);
+            }
+            function saveCustomRules(rules) {
+                localStorage.setItem(CUSTOM_RULES_STORE_KEY, JSON.stringify(rules));
+            }
+            function loadObjectStore(key) {
+                return safeJson(localStorage.getItem(key), {});
+            }
+            function saveObjectStore(key, store) {
+                localStorage.setItem(key, JSON.stringify(store));
+                try { sessionStorage.setItem(key, JSON.stringify(store)); } catch(e) {}
+            }
+            function nowText() {
+                var d = new Date();
+                var pad = function(n) { return String(n).padStart(2, '0'); };
+                return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+                    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+                });
+            }
+            function sourceLabel(v) {
+                var map = {
+                    TMS: '物流系统',
+                    HRM: '人事系统',
+                    HRMS: '人事系统',
+                    WMS: '仓储系统',
+                    FA: '固定资产',
+                    FUND: '账户系统',
+                    INVOICE: '发票系统',
+                    OA: '审批系统'
                 };
+                return map[v] || v || '物流系统';
             }
-            function getTemplate(itemName) {
-                var store = loadStore();
-                var info = findCategory(itemName);
-                if (!store[itemName]) {
-                    store[itemName] = buildEmpty(itemName, info);
-                    saveStore(store);
-                }
-                return store[itemName];
-            }
-            function setTemplate(itemName, tpl) {
-                var store = loadStore();
-                store[itemName] = tpl;
-                saveStore(store);
-            }
-
-            // ============================================================
-            // 三、科目选项（整合SPA内读取逻辑）
-            // ============================================================
             function getSubjectOptions() {
                 var subjects = [];
                 try {
-                    var stored = JSON.parse(sessionStorage.getItem('AcctSubjects') || 'null');
-                    if (!stored) stored = JSON.parse(localStorage.getItem('AcctSubjects') || 'null');
+                    var stored = safeJson(sessionStorage.getItem('AcctSubjects'), null);
+                    if (!stored) stored = safeJson(localStorage.getItem('AcctSubjects'), null);
                     var std = localStorage.getItem('AccountingStandard') || 'enterprise';
                     var tplList = (window.ACCOUNTING_STANDARD_TEMPLATES && window.ACCOUNTING_STANDARD_TEMPLATES[std]) || [];
                     var map = new Map();
@@ -13764,822 +13276,462 @@ function loadContent(moduleCode, element = null) {
                     subjects = Array.from(map.values()).filter(function(s) { return s.status !== '停用'; });
                     subjects.sort(function(a, b) { return String(a.code).localeCompare(String(b.code)); });
                 } catch(e) {}
-                if (subjects.length > 0) {
-                    return subjects.map(function(s) { return { code: String(s.code || ''), name: String(s.name || '') }; });
-                }
-                // 内置示例科目（兜底）
+                if (subjects.length > 0) return subjects.map(function(s) { return { code: String(s.code || ''), name: String(s.name || '') }; });
                 return [
-                    { code: '1001', name: '库存现金' },
-                    { code: '1002', name: '银行存款' },
-                    { code: '1002.01', name: '银行存款-基本户' },
-                    { code: '1012', name: '其他货币资金' },
-                    { code: '1012.01', name: '其他货币资金-微信' },
-                    { code: '1012.02', name: '其他货币资金-支付宝' },
-                    { code: '1122', name: '应收账款' },
-                    { code: '1123', name: '预付账款' },
-                    { code: '2202', name: '应付账款' },
-                    { code: '2203', name: '预收账款' },
-                    { code: '2211', name: '应付职工薪酬' },
-                    { code: '2221', name: '应交税费' },
-                    { code: '222101', name: '应交税费-增值税' },
-                    { code: '6001', name: '主营业务收入' },
-                    { code: '6401', name: '主营业务成本' },
-                    { code: '6601', name: '销售费用' },
-                    { code: '6602', name: '管理费用' },
-                    { code: '6711', name: '营业外收入' },
-                    { code: '6801', name: '营业外支出' },
-                    { code: '5001', name: '生产成本' },
-                    { code: '5101', name: '制造费用' }
+                    { code:'1001', name:'库存现金' },
+                    { code:'100203', name:'银行存款-建设银行' },
+                    { code:'1002', name:'银行存款' },
+                    { code:'1122', name:'应收账款' },
+                    { code:'2202', name:'应付账款' },
+                    { code:'2241', name:'其他应付款' },
+                    { code:'6001', name:'主营业务收入' },
+                    { code:'6401', name:'主营业务成本' },
+                    { code:'6602', name:'管理费用' }
                 ];
             }
-
-            // ============================================================
-            // 四、凭证字选项（根据VoucherWordMode动态生成）
-            // ============================================================
-            function getVoucherWordOptions(selected) {
-                var wordMode = localStorage.getItem('VoucherWordMode') || 'spt';
-                var opts;
-                if (wordMode === 'ji') {
-                    opts = [{ v: '记', t: '记' }];
-                } else {
-                    opts = [
-                        { v: '转', t: '转' },
-                        { v: '收', t: '收' },
-                        { v: '付', t: '付' }
-                    ];
-                }
-                return opts.map(function(o) {
-                    return '<option value="' + o.v + '"' + (o.v === selected ? ' selected' : '') + '>' + o.t + '</option>';
+            function subjectOptionsHtml(selectedCode) {
+                return '<option value="">请选择科目</option>' + getSubjectOptions().map(function(s) {
+                    var v = s.code + '|||' + s.name;
+                    return '<option value="' + esc(v) + '"' + (String(selectedCode) === String(s.code) ? ' selected' : '') + '>' + esc(s.code + ' - ' + s.name) + '</option>';
                 }).join('');
             }
-
-            // ============================================================
-            // 五、渲染树形菜单
-            // ============================================================
-            function escapeReg(str) {
-                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            function normalizeRule(r) {
+                r = r || {};
+                var normalizedStatus = r.status || '未启用';
+                if (normalizedStatus === '已启用') normalizedStatus = '启用';
+                if (normalizedStatus === '已停用' || normalizedStatus === '草稿') normalizedStatus = '未启用';
+                return {
+                    id: r.id || ('CUSTOM_' + Date.now()),
+                    name: r.name || '',
+                    sourceSystem: r.sourceSystem || 'TMS',
+                    status: normalizedStatus,
+                    priority: r.priority || 100,
+                    remark: r.remark || '',
+                    conditions: Array.isArray(r.conditions) && r.conditions.length ? r.conditions : [defaultConditionForSource(r.sourceSystem || 'TMS')],
+                    voucherWord: r.voucherWord || '转',
+                    isSystem: !!r.isSystem,
+                    entries: (Array.isArray(r.entries) && r.entries.length ? r.entries : [
+                        { dir:'借', subjectCode:'', subjectName:'', assistant:'', summary:'{month}月工资 - {dept_name}', usePaymentMethod:false },
+                        { dir:'贷', subjectCode:'', subjectName:'', assistant:'', summary:'2/12', usePaymentMethod:false }
+                    ]).map(function(e) { return Object.assign({ assistant: '' }, e); }),
+                    updatedAt: r.updatedAt || nowText()
+                };
             }
+            function buildListRows() {
+                var systemTemplates = window.getSystemEngineTemplatesByStandard ? window.getSystemEngineTemplatesByStandard() : (window.SYSTEM_ENGINE_TEMPLATES || []);
+                var systemStatusMap = loadObjectStore('SystemEngineStatus') || {}; 
 
-            function renderEngineTree(filter) {
-                var sidebar = document.getElementById('engine-sidebar');
-                if (!sidebar) return;
-                var html = '';
-                var totalMatch = 0;
-
-                ENGINE_DATA.forEach(function(cat, ci) {
-                    var catId = 'cat-' + ci;
-                    var catHtml = '';
-                    var catHasMatch = false;
-
-                    if (cat.children) {
-                        cat.children.forEach(function(sub, si) {
-                            var subId = catId + '-sub-' + si;
-                            var subHtml = '';
-                            var subHasMatch = false;
-
-                            if (sub.items) {
-                                sub.items.forEach(function(item) {
-                                    if (filter) {
-                                        if (item.indexOf(filter) === -1) return;
-                                        totalMatch++;
-                                        subHasMatch = true;
-                                        catHasMatch = true;
-                                    }
-                                    var displayText = filter
-                                        ? item.replace(new RegExp(escapeReg(filter), 'g'), '<span class="search-highlight">' + filter + '</span>')
-                                        : item;
-                                    subHtml += '<div class="tree-node level-3" onclick="loadEngineConfig(\'' + item.replace(/'/g, "\\'") + '\', this)">&#x1F4C4; ' + displayText + '</div>';
-                                });
-                            }
-
-                            if (!filter || subHasMatch) {
-                                var subCollapsed = !filter;
-                                catHtml += '<div class="tree-node level-2" onclick="toggleSub(\'' + subId + '\', this)">' +
-                                    '<span>' + sub.name + '</span>' +
-                                    '<span class="engine-toggle-icon" id="icon-' + subId + '">' + (subCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
-                                    '</div>' +
-                                    '<div id="' + subId + '" class="engine-subcategory"' + (subCollapsed ? ' style="display:none;"' : '') + '>' + subHtml + '</div>';
-                            }
-                        });
-                    }
-
-                    if (!filter || catHasMatch) {
-                        var catCollapsed = !filter;
-                        html += '<div class="tree-node level-1" onclick="toggleCat(\'' + catId + '\', this)">' +
-                            '<span>' + cat.name + '</span>' +
-                            '<span class="engine-toggle-icon" id="icon-' + catId + '">' + (catCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
-                            '</div>' +
-                            '<div id="' + catId + '" class="engine-category"' + (catCollapsed ? ' style="display:none;"' : '') + '>' + catHtml + '</div>';
-                    }
-                });
-
-                // ===== 自定义规则区 =====
-                var customRulesList = loadCustomRules();
-                var filteredCustom = filter
-                    ? customRulesList.filter(function(r) { return r.name && r.name.indexOf(filter) !== -1; })
-                    : customRulesList;
-                totalMatch += filteredCustom.length;
-
-                if (!filter || filteredCustom.length > 0) {
-                    var customItemsHtml = filteredCustom.map(function(r) {
-                        var displayText = filter
-                            ? r.name.replace(new RegExp(escapeReg(filter), 'g'), '<span class="search-highlight">' + filter + '</span>')
-                            : r.name;
-                        return '<div class="tree-node level-3" data-cust-id="' + r.id + '" onclick="loadCustomRuleEditor(\'' + r.id + '\', this)" style="justify-content:space-between;">' +
-                            '<span>&#x1F4C4; ' + displayText + '</span>' +
-                            '<button class="cust-del" onclick="event.stopPropagation(); deleteCustomRule(\'' + r.id + '\')">✕</button>' +
-                            '</div>';
-                    }).join('');
-                    var ccId = 'cat-custom-rules';
-                    var ccCollapsed = !filter;
-                    html += '<div class="tree-node level-1" onclick="toggleCat(\'' + ccId + '\', this)">' +
-                        '<span>自定义规则</span>' +
-                        '<span class="engine-toggle-icon" id="icon-' + ccId + '">' + (ccCollapsed ? '&#9654;' : '&#9660;') + '</span>' +
-                        '</div>' +
-                        '<div id="' + ccId + '" class="engine-category"' + (ccCollapsed ? ' style="display:none;"' : '') + '>' +
-                        '<button class="custom-rule-add-btn" onclick="loadCustomRuleEditor(null, null)">+ 新建自定义规则</button>' +
-                        customItemsHtml +
-                        '</div>';
-                }
-
-                sidebar.innerHTML = html || '<div style="padding:20px; color:#9ca3af; font-size:13px; text-align:center;">没有找到匹配项</div>';
-
-                var countEl = document.getElementById('searchResultCount');
-                if (countEl) {
-                    countEl.textContent = filter ? ('共找到 ' + totalMatch + ' 项') : '';
-                }
-            }
-
-            window.toggleCat = function(id) {
-                var el = document.getElementById(id);
-                var icon = document.getElementById('icon-' + id);
-                if (!el) return;
-                var hidden = el.style.display === 'none';
-                el.style.display = hidden ? 'block' : 'none';
-                if (icon) icon.innerHTML = hidden ? '&#9660;' : '&#9654;';
-            };
-
-            window.toggleSub = function(id) {
-                var el = document.getElementById(id);
-                var icon = document.getElementById('icon-' + id);
-                if (!el) return;
-                var hidden = el.style.display === 'none';
-                el.style.display = hidden ? 'block' : 'none';
-                if (icon) icon.innerHTML = hidden ? '&#9660;' : '&#9654;';
-            };
-
-            window.filterEngineTree = function(val) {
-                renderEngineTree(val ? val.trim() : '');
-            };
-
-            window.clearSearch = function() {
-                var inp = document.getElementById('treeSearchInput');
-                if (inp) inp.value = '';
-                renderEngineTree('');
-            };
-
-            // ============================================================
-            // 自定义规则 - 数据存取与编辑器
-            // ============================================================
-            var CUSTOM_RULES_STORE_KEY = 'CustomEngineRules';
-
-            function loadCustomRules() {
-                try { return JSON.parse(localStorage.getItem(CUSTOM_RULES_STORE_KEY) || '[]'); } catch(e) { return []; }
-            }
-            function saveCustomRules(rules) {
-                localStorage.setItem(CUSTOM_RULES_STORE_KEY, JSON.stringify(rules));
-            }
-
-            var COND_DIMENSIONS = {
-                "业务环节": ["运单", "干线", "送货", "短驳", "提货", "对账", "账户间交易", "账户管理"],
-                "费用类型": ["代收货款", "现付运费", "提货费", "送货费", "中转费", "垫付费", "手续费", "装卸费", "保价/保险费", "信息费", "利息", "罚款", "平台服务费"],
-                "操作角色": ["出发网点", "目的网点", "途径网点", "分拨中心", "总部", "客户", "承运商", "司机"],
-                "结算条款": ["现付", "到付", "月结", "回付", "欠付", "现返", "欠返", "无"],
-                "业务动作": ["挂账", "结算", "核销", "收款", "付款", "回收", "汇款", "到账", "发放", "对账确认", "充值", "提现"],
-                "支付渠道": ["现金", "银行转账", "微信/支付宝", "扫码聚合支付", "内部结算户", "无"],
-                "异动方向": ["无", "调增金额", "调减金额"],
-                "单据状态": ["正常", "已付", "未付", "异常"]
-            };
-
-            function collectCondRows() {
-                return Array.from(document.querySelectorAll('#custom-cond-box .cond-row')).map(function(row) {
+                var rows = systemTemplates.map(function(t) {
+                    var statusInfo = systemStatusMap[t.id] || '启用';
                     return {
-                        dimension: (row.querySelector('.cond-dim') || {}).value || '费用类型',
-                        operator:  (row.querySelector('.cond-op')  || {}).value || '=',
-                        value:     (row.querySelector('.cond-val') || {}).value || ''
+                        id: t.id,
+                        code: t.code,
+                        name: t.name,
+                        sourceSystem: t.sourceSystem,
+                        triggerInfo: getConditionSummary(t.conditions),
+                        entriesCount: (t.entries || []).length,
+                        status: statusInfo,
+                        updatedAt: '-',
+                        type: 'system',
+                        isSystem: true
                     };
-                });
-            }
+                }).filter(function(r) { return r.status !== '已删除'; }); 
 
-            function collectEntryRowsCustom() {
-                return Array.from(document.querySelectorAll('#engine-entries-body tr')).filter(function(r) {
-                    return r.querySelector('.engine-dir');
-                }).map(function(row) {
-                    var subVal = (row.querySelector('.engine-subject') || {}).value || '';
-                    var parts  = subVal.split('|||');
+                var customRules = loadCustomRules().map(function(r) {
+                    r = normalizeRule(r);
+                    if (r.status === '删除') return null;
                     return {
-                        dir:           (row.querySelector('.engine-dir')     || {}).value || '借',
-                        subjectCode:   (parts[0] || '').trim(),
-                        subjectName:   (parts[1] || '').trim(),
-                        amountFormula: ((row.querySelector('.engine-formula') || {}).value || '').trim(),
-                        summary:       ((row.querySelector('.engine-summary') || {}).value || '').trim(),
-                        usePaymentMethod: false
+                        id: r.id,
+                        code: r.code || ('AE-' + String(r.id).replace(/\D/g, '').slice(-9)),
+                        name: r.name || '未命名规则',
+                        sourceSystem: r.sourceSystem || 'TMS',
+                        triggerInfo: getConditionSummary(r.conditions),
+                        entriesCount: (r.entries || []).length,
+                        status: r.status || '未启用',
+                        updatedAt: r.updatedAt || nowText(),
+                        type: 'custom',
+                        isSystem: false
                     };
-                });
+                }).filter(Boolean);
+
+                return rows.concat(customRules);
             }
 
-            window.loadCustomRuleEditor = function(ruleId, clickedEl) {
-                document.querySelectorAll('.tree-node').forEach(function(n) { n.classList.remove('active'); });
-                if (clickedEl) clickedEl.classList.add('active');
-
-                var isNew = !ruleId;
-                var rule;
-
-                if (isNew) {
-                    rule = {
-                        id: 'CUSTOM_' + Date.now(),
-                        name: '', priority: 100, remark: '', sourceSystem: 'TMS',
-                        conditions: [],
-                        voucherWord: '转',
-                        entries: [
-                            { dir: '借', subjectCode: '', subjectName: '', amountFormula: '', summary: '' },
-                            { dir: '贷', subjectCode: '', subjectName: '', amountFormula: '', summary: '' }
-                        ]
-                    };
-                    window._editingCustomRule = rule;
-                } else if (window._editingCustomRule && window._editingCustomRule.id === ruleId) {
-                    rule = window._editingCustomRule;
-                } else {
-                    var stored = loadCustomRules().filter(function(r) { return r.id === ruleId; })[0];
-                    if (!stored) { showToast('规则不存在', 'error'); return; }
-                    rule = JSON.parse(JSON.stringify(stored));
-                    window._editingCustomRule = rule;
-                }
-
-                var subjects = getSubjectOptions();
-                var wordOpts = getVoucherWordOptions(rule.voucherWord || '转');
-
-                // 构建条件行 HTML（新样式）
-                var condList = (rule.conditions && rule.conditions.length > 0) ? rule.conditions : [{ dimension: '业务环节', operator: '=', value: '' }];
-                var condRowsHtml = condList.map(function(cond, idx) {
-                    var isLast = idx === condList.length - 1;
-                    var dimOpts = Object.keys(COND_DIMENSIONS).map(function(k) {
-                        return '<option value="' + k + '"' + (k === cond.dimension ? ' selected' : '') + '>' + k + '</option>';
-                    }).join('');
-                    var vals = COND_DIMENSIONS[cond.dimension] || [];
-                    var valOpts = '<option value="">--请选择业务场景--</option>' + vals.map(function(v) {
-                        return '<option value="' + v + '"' + (v === cond.value ? ' selected' : '') + '>' + v + '</option>';
-                    }).join('');
-                    var badgeBg = idx === 0 ? '#16a34a' : '#3b82f6';
-                    var badgeLabel = idx === 0 ? 'IF' : 'AND';
-                    return '<div class="cond-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-                        '<span style="background:' + badgeBg + ';color:#fff;border-radius:4px;padding:4px 9px;font-size:12px;font-weight:700;flex-shrink:0;min-width:36px;text-align:center;">' + badgeLabel + '</span>' +
-                        '<select class="cond-dim" onchange="onCondDimChange(this)" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' + dimOpts + '</select>' +
-                        '<select class="cond-op" style="width:88px;flex:none;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' +
-                        '<option value="="'  + (cond.operator === '='  ? ' selected' : '') + '>等于</option>' +
-                        '<option value="!="' + (cond.operator === '!=' ? ' selected' : '') + '>不等于</option>' +
-                        '<option value="in"' + (cond.operator === 'in' ? ' selected' : '') + '>包含于</option>' +
-                        '</select>' +
-                        '<select class="cond-val" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' + valOpts + '</select>' +
-                        (idx > 0 ? '<button class="btn-del-cond" onclick="removeCustomCondition(this, \'' + rule.id + '\')" style="width:28px;height:28px;border:1px solid #fca5a5;border-radius:6px;background:#fff5f5;color:#dc2626;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>' : '') +
-                        (isLast ? '<button onclick="addCustomCondition(\'' + rule.id + '\')" style="width:30px;height:30px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:18px;font-weight:300;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;">+</button>' : '') +
-                        '</div>';
-                }).join('');
-
-                // 构建分录行 HTML（新样式：替换辅助核算为金额计算公式）
-                var entryRowsHtml = (rule.entries && rule.entries.length > 0)
-                    ? rule.entries.map(function(e, i) {
-                        var subjectOpts = subjects.map(function(s) {
-                            var v = s.code + '|||' + s.name;
-                            return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' - ' + s.name + '</option>';
-                        }).join('');
-                        return '<tr style="border-bottom:1px solid #f3f4f6;">' +
-                            '<td style="padding:8px 6px;width:80px;">' +
-                            '<select class="engine-dir" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">' +
-                            '<option value="借"' + (e.dir === '借' ? ' selected' : '') + '>借</option>' +
-                            '<option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option>' +
-                            '</select></td>' +
-                            '<td style="padding:8px 6px;">' +
-                            '<select class="engine-subject" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
-                            '<td style="padding:8px 6px;width:150px;">' +
-                            '<input type="text" class="engine-formula" value="' + (e.amountFormula || '').replace(/"/g, '&quot;') + '" placeholder="{base_salary}" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;"></td>' +
-                            '<td style="padding:8px 6px;">' +
-                            '<input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="{month}月工资 - {dept_name}" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;"></td>' +
-                            '<td style="padding:8px 6px;width:60px;text-align:center;">' +
-                            '<button onclick="removeCustomEntry(' + i + ', \'' + rule.id + '\')" style="padding:5px 12px;border:1px solid #fca5a5;background:#fff5f5;color:#dc2626;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;">删除</button>' +
-                            '</td></tr>';
-                    }).join('')
-                    : '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">暂无分录，点击下方按钮添加</td></tr>';
-
-                // 业务源系统下拉选项
-                var sourceOpts = [
-                    { val: 'TMS', label: '物流系统 (TMS)' },
-                    { val: 'HRM', label: '人事系统 (HRM)' },
-                    { val: 'ERP', label: '仓储系统 (WMS)' },
-                    { val: 'OA',  label: '审批系统 (OA)' },
-                    { val: 'CRM', label: '客户管理系统 (CRM)' }
-                ].map(function(o) {
-                    return '<option value="' + o.val + '"' + ((rule.sourceSystem || 'TMS') === o.val ? ' selected' : '') + '>' + o.label + '</option>';
-                }).join('');
-
-                var cardStyle = 'background:#fff;border-radius:10px;border:1px solid #e8eaf0;padding:22px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);';
-                var sectionHeadStyle = 'border-left:3px solid #2563eb;padding-left:10px;font-size:15px;font-weight:600;color:#1e293b;margin:0 0 18px 0;';
-                var labelStyle = 'display:block;font-size:12px;color:#64748b;margin-bottom:5px;';
-                var inputStyle = 'width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;background:#fff;';
-
-                var html =
-                    // ── 基本信息 Card ──
-                    '<div style="' + cardStyle + '">' +
-                        '<p style="' + sectionHeadStyle + '">基本信息</p>' +
-                        '<div style="display:grid;grid-template-columns:220px 1fr 130px;gap:16px;margin-bottom:16px;">' +
-                            '<div><label style="' + labelStyle + '">业务源系统</label>' +
-                            '<select id="cust-rule-source" style="' + inputStyle + '">' + sourceOpts + '</select></div>' +
-                            '<div><label style="' + labelStyle + '">规则名称 <span style="color:#dc2626;">*</span></label>' +
-                            '<input type="text" id="cust-rule-name" value="' + (rule.name || '').replace(/"/g, '&quot;') + '" placeholder="例如：离职补偿金计提规则 / 运单签收收入确认" style="' + inputStyle + '"></div>' +
-                            '<div><label style="' + labelStyle + '">优先级</label>' +
-                            '<input type="number" id="cust-rule-priority" value="' + (rule.priority || 100) + '" min="1" max="999" style="' + inputStyle + '"></div>' +
-                        '</div>' +
-                        '<div><label style="' + labelStyle + '">场景备注</label>' +
-                        '<textarea id="cust-rule-remark" rows="3" placeholder="描述该规则适用的财务核算场景..." style="' + inputStyle + 'resize:vertical;font-family:inherit;">' + (rule.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>' +
-                    '</div>' +
-                    // ── 触发条件 (IF) Card ──
-                    '<div style="' + cardStyle + '">' +
-                        '<p style="' + sectionHeadStyle + '">触发条件 (IF)</p>' +
-                        '<div id="custom-cond-box">' + condRowsHtml + '</div>' +
-                        '<p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">* 系统将解析业务报文，当满足上述条件时触发分录生成。</p>' +
-                    '</div>' +
-                    // ── 分录配置 (THEN) Card ──
-                    '<div style="' + cardStyle + '">' +
-                        '<p style="' + sectionHeadStyle + '">分录配置 (THEN)</p>' +
-                        '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-                        '<thead><tr style="border-bottom:1px solid #e5e7eb;">' +
-                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:80px;">方向</th>' +
-                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;">会计科目（科目编码 - 中文名称）</th>' +
-                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:150px;">金额计算公式</th>' +
-                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;">摘要模板</th>' +
-                            '<th style="padding:8px 6px;text-align:left;font-weight:500;color:#374151;width:60px;">操作</th>' +
-                        '</tr></thead>' +
-                        '<tbody id="engine-entries-body">' + entryRowsHtml + '</tbody>' +
-                        '</table>' +
-                        '<button onclick="addCustomEntry(\'' + rule.id + '\')" style="margin-top:14px;width:100%;padding:10px 0;border:1px dashed #93c5fd;background:#f0f7ff;color:#2563eb;border-radius:8px;cursor:pointer;font-size:13px;">+ 添加分录行</button>' +
-                    '</div>' +
-                    // ── 操作区 ──
-                    '<div class="action-bar">' +
-                        (isNew ? '' : '<button class="btn-reset" style="color:#dc2626;border-color:#fca5a5;background:#fff5f5;" onclick="deleteCustomRule(\'' + rule.id + '\')">删除规则</button>') +
-                        '<button class="btn-reset" onclick="resetCustomRule(\'' + rule.id + '\', ' + isNew + ')">重置</button>' +
-                        '<button style="padding:8px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;" onclick="testCustomRule(\'' + rule.id + '\')">▶ 测试(100元)</button>' +
-                        '<button class="btn-save" onclick="saveCustomRule(\'' + rule.id + '\', ' + isNew + ')">&#x2713; 保存规则</button>' +
-                    '</div>';
-
-                var contentArea = document.getElementById('engine-content-area');
-                if (contentArea) contentArea.innerHTML = html;
-            };
-
-            window.onCondDimChange = function(dimSelect) {
-                var row = dimSelect.parentElement;
-                var dim = dimSelect.value;
-                var vals = COND_DIMENSIONS[dim] || [];
-                var valSel = row.querySelector('.cond-val');
-                if (valSel) {
-                    valSel.innerHTML = vals.map(function(v) {
-                        return '<option value="' + v + '">' + v + '</option>';
-                    }).join('');
-                }
-            };
-
-            window.addCustomCondition = function(ruleId) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
-                window._editingCustomRule.conditions = collectCondRows();
-                window._editingCustomRule.entries    = collectEntryRowsCustom();
-                var firstDim = Object.keys(COND_DIMENSIONS)[0];
-                window._editingCustomRule.conditions.push({ dimension: firstDim, operator: '=', value: (COND_DIMENSIONS[firstDim] || [''])[0] });
-                window.loadCustomRuleEditor(ruleId, null);
-            };
-
-            window.removeCustomCondition = function(btn, ruleId) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
-                var rows = Array.from(document.querySelectorAll('#custom-cond-box .cond-row'));
-                var idx  = rows.indexOf(btn.parentElement);
-                if (idx === -1) return;
-                window._editingCustomRule.conditions = collectCondRows();
-                window._editingCustomRule.entries    = collectEntryRowsCustom();
-                window._editingCustomRule.conditions.splice(idx, 1);
-                window.loadCustomRuleEditor(ruleId, null);
-            };
-
-            window.addCustomEntry = function(ruleId) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
-                window._editingCustomRule.conditions = collectCondRows();
-                window._editingCustomRule.entries    = collectEntryRowsCustom();
-                window._editingCustomRule.entries.push({ dir: '借', subjectCode: '', subjectName: '', amountFormula: '', summary: '', usePaymentMethod: false });
-                window.loadCustomRuleEditor(ruleId, null);
-            };
-
-            window.removeCustomEntry = function(index, ruleId) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) return;
-                window._editingCustomRule.conditions = collectCondRows();
-                window._editingCustomRule.entries    = collectEntryRowsCustom();
-                window._editingCustomRule.entries.splice(index, 1);
-                window.loadCustomRuleEditor(ruleId, null);
-            };
-
-            window.resetCustomRule = function(ruleId, isNew) {
-                window._editingCustomRule = null;
-                window.loadCustomRuleEditor(isNew ? null : ruleId, null);
-            };
-
-            window.saveCustomRule = function(ruleId, isNew) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) {
-                    showToast('编辑状态丢失，请重新打开规则', 'error'); return;
-                }
-                var nameEl     = document.getElementById('cust-rule-name');
-                var priorityEl = document.getElementById('cust-rule-priority');
-                var remarkEl   = document.getElementById('cust-rule-remark');
-                var wordEl     = document.getElementById('engine-voucher-word');
-
-                var name = nameEl ? nameEl.value.trim() : '';
-                if (!name) { showToast('规则名称不能为空', 'error'); return; }
-
-                var entries = collectEntryRowsCustom();
-                if (entries.length === 0) { showToast('请至少配置一条分录', 'error'); return; }
-                var invalid = entries.filter(function(e) { return !e.subjectCode || !e.subjectName; });
-                if (invalid.length > 0) { showToast('请为所有分录选择会计科目', 'error'); return; }
-
-                var sourceEl = document.getElementById('cust-rule-source');
-                window._editingCustomRule.name         = name;
-                window._editingCustomRule.sourceSystem = sourceEl ? sourceEl.value : 'TMS';
-                window._editingCustomRule.priority     = priorityEl ? (parseInt(priorityEl.value) || 100) : 100;
-                window._editingCustomRule.remark       = remarkEl ? remarkEl.value.trim() : '';
-                window._editingCustomRule.voucherWord  = wordEl ? wordEl.value : '转';
-                window._editingCustomRule.conditions = collectCondRows();
-                window._editingCustomRule.entries    = entries;
-
-                var allRules = loadCustomRules();
-                var existIdx = -1;
-                for (var ri = 0; ri < allRules.length; ri++) {
-                    if (allRules[ri].id === ruleId) { existIdx = ri; break; }
-                }
-                if (isNew || existIdx === -1) allRules.push(window._editingCustomRule);
-                else allRules[existIdx] = window._editingCustomRule;
-                saveCustomRules(allRules);
-
-                showToast('自定义规则已保存', 'success');
-                var savedId = ruleId;
-                var searchVal = document.getElementById('treeSearchInput') ? document.getElementById('treeSearchInput').value : '';
-                renderEngineTree(searchVal);
-                window.loadCustomRuleEditor(savedId, null);
-                setTimeout(function() {
-                    document.querySelectorAll('.tree-node[data-cust-id="' + savedId + '"]').forEach(function(n) { n.classList.add('active'); });
-                }, 60);
-            };
-
-            window.deleteCustomRule = function(ruleId) {
-                if (!confirm('确定删除该自定义规则吗？此操作不可恢复。')) return;
-                saveCustomRules(loadCustomRules().filter(function(r) { return r.id !== ruleId; }));
-                window._editingCustomRule = null;
-                showToast('规则已删除', 'success');
-                renderEngineTree('');
-                var ca = document.getElementById('engine-content-area');
-                if (ca) ca.innerHTML = '<div class="empty-state"><div class="icon">&#x2699;&#xFE0F;</div><p>请在左侧选择具体的费用类型</p><small>以配置其会计分录生成规则</small></div>';
-            };
-
-            window.testCustomRule = function(ruleId) {
-                if (!window._editingCustomRule || window._editingCustomRule.id !== ruleId) {
-                    showToast('请先配置分录后再测试', 'error'); return;
-                }
-                var entries = collectEntryRowsCustom();
-                if (entries.length === 0) { showToast('请先配置分录', 'error'); return; }
-                var lines = entries.map(function(e) {
-                    var label = e.subjectCode ? (e.subjectCode + ' ' + e.subjectName) : '（未选择科目）';
-                    return (e.dir === '借' ? '  借 ' : '  贷 ') + label + '  100.00';
-                }).join('\n');
-                var conds = window._editingCustomRule.conditions;
-                var condDesc = (conds && conds.length > 0)
-                    ? conds.map(function(c, i) { return (i === 0 ? 'IF ' : 'AND ') + c.dimension + ' ' + c.operator + ' ' + c.value; }).join('\n  ')
-                    : '（无条件，所有业务均触发）';
-                alert('✅ 自定义规则测试预览（金额 = 100元）\n\n触发条件：\n  ' + condDesc + '\n\n生成分录：\n' + lines);
-            };
-
-            // ============================================================
-            // 五点五、辅助核算项选项构建（读取辅助核算项页面数据）
-            // ============================================================
-            function buildEngineAuxOptions(selectedVal) {
-                var AUX_TYPES = [
-                    { key: 'dept',     label: '部门' },
-                    { key: 'customer', label: '客户' },
-                    { key: 'vendor',   label: '供应商' },
-                    { key: 'employee', label: '职员' },
-                    { key: 'project',  label: '项目' },
-                    { key: 'inventory',label: '存货' },
-                    { key: 'cashflow', label: '现金流量项目' }
-                ];
-                var html = '<option value="">无</option>';
-                AUX_TYPES.forEach(function(t) {
-                    var list = [];
-                    if (typeof window.getAuxiliaryDataByKey === 'function') {
-                        list = window.getAuxiliaryDataByKey(t.key).filter(function(item) { return item.enabled !== false; });
-                    } else {
-                        try {
-                            var raw = sessionStorage.getItem('AuxiliaryData:' + t.key) || localStorage.getItem('AuxiliaryData:' + t.key);
-                            var parsed = JSON.parse(raw || '[]');
-                            list = Array.isArray(parsed) ? parsed.filter(function(item) { return item.enabled !== false; }) : [];
-                        } catch(e) {}
-                    }
-                    if (!list.length) return;
-                    html += '<optgroup label="' + t.label + '">';
-                    list.forEach(function(item) {
-                        var val = t.key + '|||' + item.code + '|||' + item.name;
-                        html += '<option value="' + val + '"' + (val === selectedVal ? ' selected' : '') + '>' + item.code + ' ' + item.name + '</option>';
-                    });
-                    html += '</optgroup>';
-                });
-                return html;
-            }
-
-            // ============================================================
-            // 六、加载右侧配置面板
-            // ============================================================
-            window.loadEngineConfig = function(itemName, clickedEl) {
-                document.querySelectorAll('.tree-node').forEach(function(n) { n.classList.remove('active'); });
-                if (clickedEl) clickedEl.classList.add('active');
-
-                var info = findCategory(itemName);
-                var isSettlement = info.category === '核销';
-                var tpl = getTemplate(itemName);
-                var subjects = getSubjectOptions();
-
-                var entryRows = (tpl.entries || []).map(function(e, i) {
-                    var subjectOpts = subjects.map(function(s) {
-                        var v = s.code + '|||' + s.name;
-                        return '<option value="' + v + '"' + (s.code === e.subjectCode ? ' selected' : '') + '>' + s.code + ' ' + s.name + '</option>';
-                    }).join('');
-                    var auxSelectedVal = (e.auxType && e.auxCode) ? (e.auxType + '|||' + e.auxCode + '|||' + (e.auxName || '')) : '';
-                    var auxOpts = buildEngineAuxOptions(auxSelectedVal);
-                    return '<tr data-index="' + i + '">' +
-                        '<td style="width:80px;">' +
-                        '<select class="engine-dir">' +
-                        '<option value="借"' + (e.dir === '借' ? ' selected' : '') + '>借</option>' +
-                        '<option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option>' +
-                        '</select></td>' +
-                        '<td><select class="engine-subject"><option value="">请选择科目</option>' + subjectOpts + '</select></td>' +
-                        '<td style="min-width:160px;"><select class="engine-aux" style="width:100%;padding:5px 6px;border:1px solid #dfe6e9;border-radius:4px;font-size:13px;">' + auxOpts + '</select></td>' +
-                        '<td><input type="text" class="engine-summary" value="' + (e.summary || '').replace(/"/g, '&quot;') + '" placeholder="摘要模板，如：{waybillNo}"></td>' +
-                        '<td style="width:70px; text-align:center;">' +
-                        '<button class="btn-remove" onclick="removeEntry(\'' + itemName.replace(/'/g, "\\'") + '\', ' + i + ')">删除</button>' +
-                        '</td></tr>';
-                }).join('');
-
-                var tipClass = isSettlement ? 'tip-warning' : 'tip-info';
-                var tipText = isSettlement
-                    ? '&#x26A0; 核销类凭证：仅需配置第一条分录的会计科目；另一条收支方式分录执行核销时系统将自动从 <strong>基础设置 &gt; 收支方式配置</strong> 中读取对应科目。'
-                    : '&#x2139; 结算类凭证：请手动配置借贷分录及对应会计科目，系统将按模板生成凭证。';
-                var badgeClass = isSettlement ? 'badge-write-off' : 'badge-accrual';
-                var badgeText = isSettlement ? '核销类' : '结算类';
-
-                var wordOpts = getVoucherWordOptions(tpl.voucherWord || '转');
-
-                var html = '<div class="config-header">' +
-                    '<div>' +
-                    '<div class="config-title">' + itemName + '</div>' +
-                    '<div class="config-meta">分类：' + info.category + ' &nbsp;/&nbsp; 分组：' + info.group + '</div>' +
-                    '</div>' +
-                    '<span class="config-badge ' + badgeClass + '">' + badgeText + '</span>' +
-                    '</div>' +
-                    '<div class="tip-box ' + tipClass + '">' + tipText + '</div>' +
-                    '<div class="form-grid">' +
-                    '<div class="form-item"><label>凭证字</label>' +
-                    '<select id="engine-voucher-word">' + wordOpts + '</select></div>' +
-                    '<div class="form-item"><label>规则备注</label>' +
-                    '<input type="text" id="engine-remark" value="' + (tpl.remark || '').replace(/"/g, '&quot;') + '" placeholder="选填备注说明"></div>' +
-                    '</div>' +
-                    '<div class="entries-section">' +
-                    '<div class="entries-header">' +
-                    '<div class="entries-title">分录配置</div>' +
-                    '<button class="btn-add-entry" onclick="addEntry(\'' + itemName.replace(/'/g, "\\'") + '\')">+ 添加分录</button>' +
-                    '</div>' +
-                    '<table class="entries-table">' +
-                    '<thead><tr><th>方向</th><th>会计科目</th><th>辅助核算项</th><th>摘要模板</th><th>操作</th></tr></thead>' +
-                    '<tbody id="engine-entries-body">' +
-                    (entryRows || '<tr><td colspan="5" style="text-align:center; padding:20px; color:#9ca3af;">暂无分录，点击"添加分录"创建</td></tr>') +
-                    '</tbody></table></div>' +
-                    '<div class="action-bar">' +
-                    '<button class="btn-reset" onclick="resetTemplate(\'' + itemName.replace(/'/g, "\\'") + '\')">清空科目</button>' +
-                    '<button class="btn-test" onclick="testGenerateVoucher(\'' + itemName.replace(/'/g, "\\'") + '\')" style="background:#2ecc71;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;">▶ 测试生成(100元)</button>' +
-                    '<button class="btn-save" onclick="saveTemplate(\'' + itemName.replace(/'/g, "\\'") + '\', ' + isSettlement + ')">&#x2713; 保存模板</button>' +
-                    '</div>';
-
-                var contentArea = document.getElementById('engine-content-area');
-                if (contentArea) contentArea.innerHTML = html;
-            };
-
-            // ============================================================
-            // 七、分录操作
-            // ============================================================
-            window.addEntry = function(itemName) {
-                var tpl = getTemplate(itemName);
-                tpl.entries.push({ dir: '借', subjectCode: '', subjectName: '', auxType: '', auxCode: '', auxName: '', summary: '', usePaymentMethod: false });
-                setTemplate(itemName, tpl);
-                window.loadEngineConfig(itemName);
-            };
-
-            window.removeEntry = function(itemName, index) {
-                var tpl = getTemplate(itemName);
-                tpl.entries.splice(index, 1);
-                setTemplate(itemName, tpl);
-                window.loadEngineConfig(itemName);
-            };
-
-            window.resetTemplate = function(itemName) {
-                if (!confirm('确定清空所有分录配置吗？')) return;
-                var info = findCategory(itemName);
-                setTemplate(itemName, buildEmpty(itemName, info));
-                window.loadEngineConfig(itemName);
-                showToast('已清空分录配置', 'success');
-            };
-
-            window.saveTemplate = function(itemName, isSettlement) {
-                var tpl = getTemplate(itemName);
-                var rows = Array.from(document.querySelectorAll('#engine-entries-body tr')).filter(function(r) {
-                    return r.querySelector('.engine-dir');
+            function renderList() {
+                var source = document.getElementById('ae-filter-source').value;
+                var fee = document.getElementById('ae-filter-fee').value;
+                var status = document.getElementById('ae-filter-status').value;
+                var kw = (document.getElementById('ae-filter-keyword').value || '').trim();
+                var allRows = buildListRows().filter(function(r) {
+                    if (source && r.sourceSystem !== source) return false;
+                    if (fee && r.feeType !== fee) return false;
+                    if (status && r.status !== status) return false;
+                    if (kw && r.name.indexOf(kw) === -1) return false;
+                    return true;
                 });
 
-                if (rows.length === 0) {
-                    showToast('请至少配置一条分录', 'error');
+                var total = allRows.length;
+                var totalPages = Math.max(1, Math.ceil(total / pageSize));
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                var startIdx = (currentPage - 1) * pageSize;
+                var rows = allRows.slice(startIdx, startIdx + pageSize);
+
+                var tbody = document.getElementById('ae-template-tbody');
+                if (!tbody) return;
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#98a2b3;padding:36px;">暂无模板，请点击右上角新增模板</td></tr>';
+                    updatePagination(0);
                     return;
                 }
+                tbody.innerHTML = rows.map(function(r) {
+                   var isEnabled = (r.status === '启用');
+                   var badgeClass = isEnabled ? 'on' : 'off';
+                   var isSys = !!r.isSystem;
+                   
+                   // 状态按钮文本：当前启用则显示"停用"，否则显示"启用"
+                   var toggleText = isEnabled ? '停用' : '启用';
+                   
+                   return '<tr>' +
+                       '<td>' + esc(r.code) + '</td>' +
+                       '<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(r.name) + '">' + esc(r.name) + '</td>' +
+                       '<td>' + esc(sourceLabel(r.sourceSystem)) + '</td>' +
+                       '<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(r.triggerInfo) + '">' + esc(r.triggerInfo) + '</td>' +
+                       '<td>' + esc(r.entriesCount) + '</td>' +
+                       '<td><span class="ae-badge ' + badgeClass + '">' + esc(r.status) + '</span></td>' +
+                       '<td>' +
+                       '<button class="ae-btn text" data-ae-action="edit" data-id="' + esc(r.id) + '" data-type="' + esc(r.type) + '" data-name="' + esc(r.name) + '" data-is-system="' + isSys + '">' + (isSys ? '查看' : '编辑') + '</button>' +
+                       '<button class="ae-btn text" data-ae-action="copy" data-id="' + esc(r.id) + '" data-type="' + esc(r.type) + '" data-name="' + esc(r.name) + '" data-is-system="' + isSys + '">复制</button>' +
+                       '<button class="ae-btn text" data-ae-action="toggle" data-id="' + esc(r.id) + '" data-type="' + esc(r.type) + '" data-is-system="' + isSys + '">' + toggleText + '</button>' +
+                       (isSys ? '' : '<button class="ae-btn text" data-ae-action="delete" data-id="' + esc(r.id) + '" data-type="' + esc(r.type) + '" data-is-system="' + isSys + '">删除</button>') +
+                       '</td></tr>';
+                }).join('');
 
-                var entries = rows.map(function(row) {
-                    var subVal = (row.querySelector('.engine-subject') || {}).value || '';
-                    var parts = subVal.split('|||');
-                    var auxVal = (row.querySelector('.engine-aux') || {}).value || '';
-                    var auxParts = auxVal && auxVal.indexOf('|||') !== -1 ? auxVal.split('|||') : [];
-                    return {
-                        dir: (row.querySelector('.engine-dir') || {}).value || '借',
-                        subjectCode: (parts[0] || '').trim(),
-                        subjectName: (parts[1] || '').trim(),
-                        auxType:  auxParts[0] || '',
-                        auxCode:  auxParts[1] || '',
-                        auxName:  auxParts[2] || '',
-                        summary: ((row.querySelector('.engine-summary') || {}).value || '').trim(),
-                        usePaymentMethod: false
-                    };
-                });
-
-                var invalid = entries.filter(function(e) { return !e.subjectCode || !e.subjectName; });
-                if (invalid.length > 0) {
-                    showToast('科目代码和名称不能为空', 'error');
-                    return;
+                updatePagination(total);
+            }
+            function updatePagination(total) {
+                var pg = document.getElementById('ae-pagination');
+                if (!pg) return;
+                var totalPages = Math.max(1, Math.ceil(total / pageSize));
+                var html = '<div class="ae-pagination-left">共 ' + total + ' 条，每页 ' + pageSize + ' 条</div>';
+                html += '<div class="ae-pagination-right">';
+                html += '<button class="ae-page-btn" ' + (currentPage === 1 ? 'disabled' : '') + ' onclick="aeChangePage(' + (currentPage - 1) + ')">上一页</button>';
+                var start = Math.max(1, currentPage - 2);
+                var end = Math.min(totalPages, start + 4);
+                if (end - start < 4) start = Math.max(1, end - 4);
+                for (var i = start; i <= end; i++) {
+                    html += '<button class="ae-page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="aeChangePage(' + i + ')">' + i + '</button>';
                 }
-
-                var wordEl = document.getElementById('engine-voucher-word');
-                var remarkEl = document.getElementById('engine-remark');
-                tpl.voucherWord = wordEl ? wordEl.value : '转';
-                tpl.remark = remarkEl ? remarkEl.value.trim() : '';
-                tpl.entries = entries;
-                setTemplate(itemName, tpl);
-
-                // 同步写入 EngineVoucherTemplates（供 generateVoucherFromEngineTemplate 读取）
-                try {
-                    var ssStore = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
-                    ssStore[itemName] = tpl;
-                    sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(ssStore));
-                } catch(e2) {}
-                try {
-                    var lsStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
-                    lsStore[itemName] = tpl;
-                    localStorage.setItem('EngineVoucherTemplates', JSON.stringify(lsStore));
-                } catch(e3) {}
-
-                showToast('模板已保存并生效', 'success');
+                html += '<button class="ae-page-btn" ' + (currentPage === totalPages ? 'disabled' : '') + ' onclick="aeChangePage(' + (currentPage + 1) + ')">下一页</button>';
+                html += '</div>';
+                pg.innerHTML = html;
+            }
+            window.aeChangePage = function(p) {
+                currentPage = p;
+                renderList();
             };
-
-            // ============================================================
-            // 八、Toast 提示
-            // ============================================================
-            function showToast(msg, type) {
-                var t = document.getElementById('engine-toast');
+            function showToast(msg) {
+                var t = document.getElementById('ae-toast');
                 if (!t) return;
                 t.textContent = msg;
-                t.className = 'toast ' + (type || 'success');
                 t.style.display = 'block';
-                setTimeout(function() { t.style.display = 'none'; }, 3000);
+                setTimeout(function() { t.style.display = 'none'; }, 1600);
+            }
+            function switchView(name) {
+                document.getElementById('ae-list-view').classList.add('active');
+                document.getElementById('ae-form-view').classList.toggle('active', name === 'form');
+            }
+            function getConditionSchema(sourceSystem) {
+                if (sourceSystem === 'HRMS') sourceSystem = 'HRM';
+                return CONDITION_SCHEMAS[sourceSystem] || CONDITION_SCHEMAS.TMS;
             }
 
-            // ============================================================
-            // 八点五、测试生成凭证（在配置面板验证金额逻辑）
-            // ============================================================
-            window.testGenerateVoucher = function(itemName) {
-                if (typeof window.generateVoucherFromEngineTemplate !== 'function') {
-                    showToast('会计引擎未加载，请刷新页面', 'error');
-                    return;
-                }
-                var result = window.generateVoucherFromEngineTemplate(itemName, {
-                    type: itemName,
-                    date: new Date().toISOString().split('T')[0],
-                    amount: 100,
-                    clientName: '测试客户',
-                    waybillNo: 'TEST-001',
-                    id: 'TEST-001'
-                });
-                if (result && result.success) {
-                    var v = result.voucher;
-                    var rows = (v.lines || []).map(function(l) {
-                        return '  ' + (l.debit ? '借 ' + l.account + ' ' + l.debit : '贷 ' + l.account + ' ' + l.credit);
-                    }).join('\n');
-                    showToast('✅ 凭证 ' + result.voucherId + ' 已生成，请前往凭证列表查看', 'success');
-                    alert('✅ 测试凭证已生成：' + result.voucherId + '\n\n分录明细：\n' + rows + '\n\n（金额=100元）');
-                } else {
-                    showToast('❌ 生成失败：' + (result ? result.error : '未知错误'), 'error');
-                }
-            };
+            function getConditionSummary(conditions) {
+                if (!conditions || !conditions.length) return '-';
+                var first = conditions[0];
+                return first.dimension + (first.operator === '=' ? '=' : first.operator) + first.value + (conditions.length > 1 ? '...' : '');
+            }
+            function defaultConditionForSource(sourceSystem) {
+                var schema = getConditionSchema(sourceSystem);
+                var firstDim = Object.keys(schema)[1] || Object.keys(schema)[0];
+                var vals = schema[firstDim] || [];
+                return { dimension:firstDim, operator:'=', value:vals[0] || '' };
+            }
+            function conditionValueOptions(dim, selected, sourceSystem) {
+                var vals = getConditionSchema(sourceSystem)[dim] || [];
+                return vals.map(function(v) { return '<option value="' + esc(v) + '"' + (v === selected ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+            }
+            function renderConditionRows(rule) {
+                var isReadOnly = window._isAeFormReadOnly ? ' disabled ' : '';
+                var box = document.getElementById('ae-if-rows');
+                box.innerHTML = (rule.conditions || []).map(function(c, idx) {
+                    var schema = getConditionSchema(rule.sourceSystem || 'TMS');
+                    if (!schema[c.dimension]) {
+                        c = defaultConditionForSource(rule.sourceSystem || 'TMS');
+                    }
+                    var dimOptions = Object.keys(schema).map(function(k) {
+                        return '<option value="' + esc(k) + '"' + (k === c.dimension ? ' selected' : '') + '>' + esc(k) + '</option>';
+                    }).join('');
+                    return '<div class="ae-if-row">' +
+                        '<span class="ae-if-label ' + (idx ? 'and' : '') + '">' + (idx ? 'AND' : 'IF') + '</span>' +
+                        '<select class="ae-cond-dim"' + isReadOnly + '>' + dimOptions + '</select>' +
+                        '<select class="ae-cond-op"' + isReadOnly + '><option value="="' + (c.operator === '=' ? ' selected' : '') + '>等于</option><option value="!="' + (c.operator === '!=' ? ' selected' : '') + '>不等于</option><option value="in"' + (c.operator === 'in' ? ' selected' : '') + '>包含</option></select>' +
+                        '<select class="ae-cond-val"' + isReadOnly + '>' + conditionValueOptions(c.dimension, c.value, rule.sourceSystem || 'TMS') + '</select>' +
+                        '<button class="ae-btn ae-plus" data-ae-action="' + (idx === (rule.conditions.length - 1) ? 'add-cond' : 'remove-cond') + '"' + (isReadOnly ? ' style="display:none;"' : '') + '>' + (idx === (rule.conditions.length - 1) ? '+' : '×') + '</button>' +
+                        '</div>';
+                }).join('');
+            }
+            function renderEntryRows(rule) {
+                var isReadOnly = window._isAeFormReadOnly ? ' disabled ' : '';
+                var body = document.getElementById('ae-entry-body');
+                
+                var assistantOptions = [
+                    { value: '', label: '无' },
+                    { value: 'client', label: '往来单位（客户/供应商/网点）' },
+                    { value: 'dept', label: '所属部门' },
+                    { value: 'project', label: '项目名称' },
+                    { value: 'employee', label: '员工/经办人' },
+                    { value: 'car', label: '车辆/运力' },
+                    { value: 'dynamic', label: '根据单据动态匹配' }
+                ];
 
-            // ============================================================
-            // 九、预置默认模板（仅首次未配置时写入）
-            // ============================================================
-            (function() {
-                var DEFAULT_TPLS = {
-                    '测试应收': {
-                        name: '测试应收', category: '结算', group: '测试',
-                        voucherWord: '收', remark: '确认应收账款（含税9%）',
-                        taxRate: 0.09,
-                        entries: [
-                            { dir: '借', subjectCode: '1122',   subjectName: '应收账款',     summary: '确认应收债权', amountType: 'gross', usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '5001',   subjectName: '主营业务收入', summary: '确认运输收入', amountType: 'net',   usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '22210107',   subjectName: '应交税费-应交增值税',     summary: '确认销项税额', amountType: 'tax',   usePaymentMethod: false }
-                        ]
-                    },
-                    '测试应付': {
-                        name: '测试应付', category: '结算', group: '测试',
-                        voucherWord: '付', remark: '网络货运司机成本（3%简易计税进项税）',
-                        taxRate: 0.03,
-                        entries: [
-                            { dir: '借', subjectCode: '640101', subjectName: '运输成本',   summary: '运费成本（不含税）', amountType: 'net',   usePaymentMethod: false },
-                            { dir: '借', subjectCode: '2221',   subjectName: '应交税费',   summary: '进项税额（3%）',     amountType: 'tax',   usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '2202',   subjectName: '应付账款',   summary: '应付司机款',          amountType: 'gross', usePaymentMethod: false }
-                        ]
-                    },
-                    '测试内部报销': {
-                        name: '测试内部报销', category: '结算', group: '测试',
-                        voucherWord: '付', remark: '内部员工费用报销',
-                        taxRate: 0,
-                        entries: [
-                            { dir: '借', subjectCode: '6602', subjectName: '管理费用', summary: '报销费用', amountType: 'gross', usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '1002', subjectName: '银行存款', summary: '报销支出', amountType: 'gross', usePaymentMethod: false }
-                        ]
-                    },
-                    '测试应收1': {
-                        name: '测试应收1', category: '核销', group: '运单',
-                        voucherWord: '收', remark: '收款冲销应收账款',
-                        taxRate: 0,
-                        entries: [
-                            { dir: '借', subjectCode: '1002', subjectName: '银行存款', summary: '收到客户款项', amountType: 'gross', usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '1122', subjectName: '应收账款', summary: '冲销应收账款', amountType: 'gross', usePaymentMethod: false }
-                        ]
-                    },
-                    '测试应付1': {
-                        name: '测试应付1', category: '核销', group: '运单',
-                        voucherWord: '付', remark: '付款核销应付账款（代扣个税1%）',
-                        taxRate: 0,
-                        entries: [
-                            { dir: '借', subjectCode: '2202',   subjectName: '应付账款',       summary: '核销应付账款',   amountType: 'gross',         usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '222119', subjectName: '应交个人所得税', summary: '代扣个税（1%）', amountType: 'flatRate',       flatRate: 0.01, usePaymentMethod: false },
-                            { dir: '贷', subjectCode: '1002',   subjectName: '银行存款',       summary: '实付司机款',     amountType: 'flatComplement', flatRate: 0.01, usePaymentMethod: false }
-                        ]
-                    }
-                };
-                // 判断模板是否已配置科目（entries 里有任意 subjectCode 则视为已配置）
-                var hasFilledEntries = function(tpl) {
-                    return tpl && Array.isArray(tpl.entries) && tpl.entries.some(function(e) { return (e.subjectCode || '').trim(); });
-                };
-                var lsStore = loadStore();
-                var dirty = false;
-                Object.keys(DEFAULT_TPLS).forEach(function(name) {
-                    // 不存在 或 entries 全为空（从未配置过）则写入预置
-                    if (!hasFilledEntries(lsStore[name])) {
-                        lsStore[name] = DEFAULT_TPLS[name];
-                        dirty = true;
-                    }
+                body.innerHTML = (rule.entries || []).map(function(e) {
+                    var optHtml = assistantOptions.map(function(opt) {
+                        return '<option value="' + opt.value + '"' + (e.assistant === opt.value ? ' selected' : '') + '>' + opt.label + '</option>';
+                    }).join('');
+
+                    return '<tr>' +
+                        '<td><select class="ae-entry-dir"' + isReadOnly + '><option value="借"' + (e.dir === '借' ? ' selected' : '') + '>借</option><option value="贷"' + (e.dir === '贷' ? ' selected' : '') + '>贷</option></select></td>' +
+                        '<td><select class="ae-entry-subject"' + isReadOnly + '>' + subjectOptionsHtml(e.subjectCode) + '</select></td>' +
+                        '<td><select class="ae-entry-assistant"' + isReadOnly + '>' + optHtml + '</select></td>' +
+                        '<td><input class="ae-entry-summary" value="' + esc(e.summary || '') + '" placeholder="{month}月工资 - {dept_name}"' + isReadOnly + '></td>' +
+                        '<td><button class="ae-btn danger" data-ae-action="remove-entry"' + (isReadOnly ? ' style="display:none;"' : '') + '>删除</button></td>' +
+                        '</tr>';
+                }).join('');
+            }
+            function collectFormRule() {
+                var rule = normalizeRule({ id: editingRuleId || ('CUSTOM_' + Date.now()) });
+                rule.sourceSystem = document.getElementById('ae-rule-source').value || 'TMS';
+                rule.name = (document.getElementById('ae-rule-name').value || '').trim();
+                rule.remark = (document.getElementById('ae-rule-remark').value || '').trim();
+                var old = loadCustomRules().filter(function(r) { return r.id === rule.id; })[0];
+                rule.status = old ? normalizeRule(old).status : '未启用';
+                rule.updatedAt = nowText();
+                rule.conditions = Array.from(document.querySelectorAll('#ae-if-rows .ae-if-row')).map(function(row) {
+                    return {
+                        dimension: row.querySelector('.ae-cond-dim').value,
+                        operator: row.querySelector('.ae-cond-op').value,
+                        value: row.querySelector('.ae-cond-val').value
+                    };
                 });
-                if (dirty) saveStore(lsStore);
-                // 同步写入 EngineVoucherTemplates（runtime 引擎读取）
-                try {
-                    var ssStore = JSON.parse(sessionStorage.getItem('EngineVoucherTemplates') || '{}');
-                    var lsRtStore = JSON.parse(localStorage.getItem('EngineVoucherTemplates') || '{}');
-                    var rtDirtyS = false, rtDirtyL = false;
-                    Object.keys(DEFAULT_TPLS).forEach(function(name) {
-                        if (!hasFilledEntries(ssStore[name])) { ssStore[name] = DEFAULT_TPLS[name]; rtDirtyS = true; }
-                        if (!hasFilledEntries(lsRtStore[name])) { lsRtStore[name] = DEFAULT_TPLS[name]; rtDirtyL = true; }
+                rule.entries = Array.from(document.querySelectorAll('#ae-entry-body tr')).map(function(row) {
+                    var parts = (row.querySelector('.ae-entry-subject').value || '').split('|||');
+                    return {
+                        dir: row.querySelector('.ae-entry-dir').value || '借',
+                        subjectCode: (parts[0] || '').trim(),
+                        subjectName: (parts[1] || '').trim(),
+                        assistant: row.querySelector('.ae-entry-assistant')?.value || '',
+                        summary: (row.querySelector('.ae-entry-summary').value || '').trim(),
+                        usePaymentMethod: false
+                    };
+                });
+                return rule;
+            }
+            function openForm(rule) {
+                rule = normalizeRule(rule);
+                editingRuleId = rule.id;
+                var isReadOnly = !!rule.isSystem;
+                window._isAeFormReadOnly = isReadOnly; 
+
+                document.getElementById('ae-form-title').textContent = isReadOnly ? '查看会计引擎模板' : (rule.name ? '编辑会计引擎模板' : '新增会计引擎模板');
+                document.getElementById('ae-rule-source').value = rule.sourceSystem || 'TMS';
+                document.getElementById('ae-rule-name').value = rule.name || '';
+                document.getElementById('ae-rule-remark').value = rule.remark || '';
+
+                renderConditionRows(rule);
+                renderEntryRows(rule);
+
+                // 处理只读状态
+                var formShell = document.querySelector('.ae-form-shell');
+                var saveBtn = document.getElementById('ae-save-top-btn');
+                var addEntryBtn = document.getElementById('ae-add-entry-btn');
+
+                if (isReadOnly) {
+                    formShell.classList.add('ae-readonly-mode');
+                    document.getElementById('ae-rule-source').disabled = true;
+                    document.getElementById('ae-rule-name').disabled = true;
+                    document.getElementById('ae-rule-remark').disabled = true;
+                    
+                    formShell.querySelectorAll('input, select, textarea, button').forEach(function(el) {
+                        if (el.id !== 'ae-back-btn') el.disabled = true;
                     });
-                    if (rtDirtyS) sessionStorage.setItem('EngineVoucherTemplates', JSON.stringify(ssStore));
-                    if (rtDirtyL) localStorage.setItem('EngineVoucherTemplates', JSON.stringify(lsRtStore));
-                } catch(e) {}
-            })();
+                    if (saveBtn) { saveBtn.style.display = 'none'; saveBtn.disabled = true; }
+                    if (addEntryBtn) { addEntryBtn.style.display = 'none'; addEntryBtn.disabled = true; }
+                    formShell.querySelectorAll('.ae-btn.danger').forEach(function(btn) { btn.style.display = 'none'; });
+                    formShell.querySelectorAll('.ae-plus').forEach(function(btn) { btn.style.display = 'none'; });
+                } else {
+                    formShell.classList.remove('ae-readonly-mode');
+                    document.getElementById('ae-rule-source').disabled = false;
+                    document.getElementById('ae-rule-name').disabled = false;
+                    document.getElementById('ae-rule-remark').disabled = false;
+                    
+                    formShell.querySelectorAll('input, select, textarea, button').forEach(function(el) { el.disabled = false; });
+                    if (saveBtn) { saveBtn.style.display = 'inline-block'; saveBtn.disabled = false; }
+                    if (addEntryBtn) { addEntryBtn.style.display = 'block'; addEntryBtn.disabled = false; }
+                    formShell.querySelectorAll('.ae-btn.danger').forEach(function(btn) { btn.style.display = 'inline-block'; });
+                    formShell.querySelectorAll('.ae-plus').forEach(function(btn) { btn.style.display = 'inline-flex'; });
+                }
 
-            // ============================================================
-            // 初始化
-            // ============================================================
-            renderEngineTree('');
+                switchView('form');
+            }
 
+            function saveForm() {
+                var rule = collectFormRule();
+                if (!rule.name) { showToast('规则名称不能为空'); return; }
+                if (!rule.entries.length) { showToast('请至少配置一条分录'); return; }
+                if (rule.entries.some(function(e) { return !e.subjectCode || !e.subjectName; })) { showToast('请为所有分录选择会计科目'); return; }
+                var all = loadCustomRules();
+                var idx = all.findIndex(function(r) { return r.id === rule.id; });
+                if (idx >= 0) all[idx] = rule; else all.unshift(rule);
+                saveCustomRules(all);
+                var runtime = loadObjectStore(RUNTIME_TEMPLATE_KEY);
+                runtime[rule.name] = {
+	                    name: rule.name,
+	                    category: '自定义规则',
+	                    group: rule.conditions[0] ? rule.conditions[0].value : '默认',
+	                    sourceSystem: rule.sourceSystem,
+	                    voucherWord: rule.voucherWord || '转',
+                    summaryTemplate: rule.name,
+                    remark: rule.remark,
+                    entries: rule.entries
+                };
+                saveObjectStore(RUNTIME_TEMPLATE_KEY, runtime);
+                showToast('模板已保存');
+                renderList();
+                switchView('list');
+            }
+
+            document.getElementById('ae-new-template-btn').addEventListener('click', function() { openForm(normalizeRule({ id:'CUSTOM_' + Date.now(), name:'' })); });
+            document.getElementById('ae-back-btn').addEventListener('click', function() { switchView('list'); });
+	            document.getElementById('ae-save-top-btn').addEventListener('click', saveForm);
+            document.getElementById('ae-query-btn').addEventListener('click', renderList);
+            ['ae-filter-source','ae-filter-fee','ae-filter-status'].forEach(function(id) {
+                document.getElementById(id).addEventListener('change', renderList);
+            });
+            document.getElementById('ae-filter-keyword').addEventListener('input', renderList);
+            document.getElementById('ae-template-tbody').addEventListener('click', function(ev) {
+                var btn = ev.target.closest('button[data-ae-action]');
+                if (!btn) return;
+                var action = btn.getAttribute('data-ae-action');
+                var id = btn.getAttribute('data-id');
+                var type = btn.getAttribute('data-type');
+                var name = btn.getAttribute('data-name');
+	                var isSystem = btn.getAttribute('data-is-system') === 'true';
+
+	                if (action === 'edit') {
+	                    var found;
+	                    if (isSystem) {
+	                        found = (window.SYSTEM_ENGINE_TEMPLATES || []).find(function(t) { return t.id === id; });
+	                        if (found) found = JSON.parse(JSON.stringify(found)); // 脱离引用
+	                    } else {
+	                        found = loadCustomRules().filter(function(r) { return r.id === id; })[0];
+	                    }
+	                    if (found) openForm(found);
+	                } else if (action === 'copy') {
+	                var base;
+	                if (isSystem) {
+	                base = (window.SYSTEM_ENGINE_TEMPLATES || []).find(function(t) { return t.id === id; });
+	                } else {
+	                base = loadCustomRules().find(function(r) { return r.id === id; });
+	                }
+	                if (!base) return;
+	                base = JSON.parse(JSON.stringify(base));
+	                base.id = 'CUSTOM_' + Date.now();
+	                base.name = (base.name || '复制模板') + '-副本';
+	                base.status = '未启用';
+	                base.isSystem = false; // 复制后的不再是系统模板
+	                openForm(base);
+	                } else if (action === 'toggle') {
+	                    if (isSystem) {
+	                        var systemStatusMap = loadObjectStore('SystemEngineStatus') || {};
+	                        var currentStatus = systemStatusMap[id] || '启用';
+	                        systemStatusMap[id] = (currentStatus === '启用' ? '停用' : '启用');
+	                        saveObjectStore('SystemEngineStatus', systemStatusMap);
+	                        renderList();
+	                        showToast('状态已更新');
+	                    } else {
+	                        var rules = loadCustomRules();
+	                        var i = rules.findIndex(function(r) { return r.id === id; });
+	                        if (i >= 0) {
+	                            var oldStatus = normalizeRule(rules[i]).status;
+                                rules[i].status = (oldStatus === '启用' ? '停用' : '启用');
+	                            rules[i].updatedAt = nowText();
+	                            saveCustomRules(rules);
+	                            renderList();
+                                showToast('状态已更新');
+	                        }
+	                    }
+	                } else if (action === 'delete') {
+	                    if (isSystem) {
+	                        if (!confirm('确认隐藏该系统预置模板吗？')) return;
+	                        var sysStatusMap = loadObjectStore('SystemEngineStatus') || {};
+	                        sysStatusMap[id] = '已删除';
+	                        saveObjectStore('SystemEngineStatus', sysStatusMap);
+	                        renderList();
+	                        showToast('预置模板已从列表移除');
+	                    } else {
+	                        var delRules = loadCustomRules();
+	                        var di = delRules.findIndex(function(r) { return r.id === id; });
+	                        if (di >= 0) {
+	                            delRules[di].status = '删除';
+	                            delRules[di].updatedAt = nowText();
+	                            saveCustomRules(delRules);
+	                            renderList();
+	                            showToast('自定义模板已删除');
+	                        }
+	                    }
+	                }
+
+	            });
+	            document.getElementById('ae-if-rows').addEventListener('change', function(ev) {
+	                if (!ev.target.classList.contains('ae-cond-dim')) return;
+	                var row = ev.target.closest('.ae-if-row');
+	                var source = document.getElementById('ae-rule-source').value || 'TMS';
+	                row.querySelector('.ae-cond-val').innerHTML = conditionValueOptions(ev.target.value, '', source);
+	            });
+	            document.getElementById('ae-rule-source').addEventListener('change', function() {
+	                var rule = collectFormRule();
+	                rule.sourceSystem = this.value || 'TMS';
+	                rule.conditions = [defaultConditionForSource(rule.sourceSystem)];
+	                renderConditionRows(rule);
+	            });
+	            document.getElementById('ae-if-rows').addEventListener('click', function(ev) {
+	                var btn = ev.target.closest('button[data-ae-action]');
+	                if (!btn) return;
+	                var rule = collectFormRule();
+	                if (btn.getAttribute('data-ae-action') === 'add-cond') {
+	                    rule.conditions.push(defaultConditionForSource(rule.sourceSystem));
+	                } else {
+                    var rows = Array.from(document.querySelectorAll('#ae-if-rows .ae-if-row'));
+                    var idx = rows.indexOf(btn.closest('.ae-if-row'));
+                    if (idx > 0) rule.conditions.splice(idx, 1);
+                }
+                renderConditionRows(rule);
+            });
+            document.getElementById('ae-add-entry-btn').addEventListener('click', function() {
+                var rule = collectFormRule();
+                rule.entries.push({ dir:'借', subjectCode:'', subjectName:'', summary:'', usePaymentMethod:false });
+                renderEntryRows(rule);
+            });
+            document.getElementById('ae-entry-body').addEventListener('click', function(ev) {
+                var btn = ev.target.closest('button[data-ae-action="remove-entry"]');
+                if (!btn) return;
+                var rows = Array.from(document.querySelectorAll('#ae-entry-body tr'));
+                if (rows.length <= 1) { showToast('至少保留一条分录'); return; }
+                btn.closest('tr').remove();
+            });
+
+            renderList();
         }, 0);
     }
 

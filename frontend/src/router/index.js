@@ -31,10 +31,16 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/approvals/apply/template/:id',
+    name: 'approval-apply-template',
+    component: () => import('../pages/ApprovalFormSubmit.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/approvals/workflow/create',
     name: 'approval-workflow-create',
     component: () => import('../pages/WorkflowBuilder.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, layout: 'fullscreen' },
   },
   {
     path: '/approvals/:id',
@@ -79,15 +85,22 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  const isAuthed = auth.isAuthenticated
 
   if (to.path === '/approvals' && to.query.tab === 'apply') {
     return { name: 'approval-apply' }
   }
 
-  if (to.meta.requiresAuth && !isAuthed) {
+  if (to.meta.requiresAuth && auth.isAuthenticated && !auth.user) {
+    try {
+      await auth.fetchMe()
+    } catch {
+      return { name: 'login', query: { redirect: to.fullPath } }
+    }
+  }
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
@@ -95,7 +108,14 @@ router.beforeEach((to) => {
     return { name: 'approvals' }
   }
 
-  if (to.name === 'login' && isAuthed) {
+  if (to.name === 'login' && auth.isAuthenticated) {
+    if (!auth.user) {
+      try {
+        await auth.fetchMe()
+      } catch {
+        return true
+      }
+    }
     return { name: 'approvals' }
   }
 })
