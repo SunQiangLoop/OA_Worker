@@ -810,10 +810,8 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
             </div>
           </div>
           <div class="fa-detail-actions">
-            <button class="fa-btn fa-btn-primary" onclick="loadContent('AssetRegister')">编辑</button>
+            <button class="fa-btn fa-btn-primary" onclick="loadContent('AssetEdit')">编辑</button>
             <button class="fa-btn" onclick="faOpenActionModal('transfer')">调拨</button>
-            <button class="fa-btn" onclick="faOpenActionModal('repair')">送修</button>
-            <button class="fa-btn fa-btn-danger" onclick="faOpenActionModal('scrap')">报废</button>
             <button class="fa-btn" onclick="loadContent('AssetList')">← 返回列表</button>
           </div>
         </div>
@@ -857,27 +855,14 @@ window.VM_MODULES['AssetDetail'] = function(contentArea, contentHTML, moduleCode
         </div>
       </div>
 
-      <!-- 折旧明细 & 变动记录 -->
+      <!-- 变动记录 -->
       <div class="fa-card">
         <div class="fa-sub-tabs">
-          <button class="fa-sub-tab active" onclick="faDetailSubTab('depr',this)">折旧明细</button>
-          <button class="fa-sub-tab" onclick="faDetailSubTab('log',this)">变动记录</button>
-        </div>
-
-        <!-- 折旧明细 -->
-        <div id="faPanel_depr" class="fa-sub-panel active" style="padding:16px;overflow-x:auto">
-          <table class="fa-depr-table">
-            <thead><tr>
-              <th style="text-align:left">月份</th>
-              <th>期初净值</th><th>本月折旧</th><th>累计折旧</th><th>期末净值</th>
-            </tr></thead>
-            <tbody>${deprRows}</tbody>
-          </table>
-          <div style="font-size:11px;color:#9ca3af;margin-top:8px">* 灰色行为待计提；入账月当月不计提折旧</div>
+          <button class="fa-sub-tab active" onclick="faDetailSubTab('log',this)">变动记录</button>
         </div>
 
         <!-- 变动记录时间线 -->
-        <div id="faPanel_log" class="fa-sub-panel" style="padding:16px 20px">
+        <div id="faPanel_log" class="fa-sub-panel active" style="padding:16px 20px">
           <div class="fa-timeline">
             ${logs.length ? logs.map(function(log, index){
                 return '<div class="fa-tl-item">' +
@@ -1045,6 +1030,197 @@ window.VM_MODULES['AssetReport'] = function(contentArea, contentHTML) {
     </div>`;
 
     contentArea.innerHTML = contentHTML;
+};
+
+// ═══════════════════════════════════════════════════════
+// 模块 4：AssetEdit — 资产编辑（带变动记录）
+// ═══════════════════════════════════════════════════════
+window.VM_MODULES['AssetEdit'] = function(contentArea) {
+
+    var id   = window._faDetailId;
+    var list = faGetList();
+    var asset = list.find(function(a){ return a.id === id; });
+
+    if (!asset) {
+        contentArea.innerHTML = '<div class="fa-wrap"><div class="fa-empty">未找到资产，请返回列表。<br><br><button class="fa-btn fa-btn-primary" onclick="loadContent(\'AssetList\')">← 返回台账</button></div></div>';
+        return;
+    }
+
+    // ── 保存并生成变动记录 ──
+    window.faEditSave = function() {
+        var g = function(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; };
+
+        // 采集新值
+        var updated = {
+            name:         g('faEditName'),
+            brand:        g('faEditBrand'),
+            model:        g('faEditModel'),
+            serialNo:     g('faEditSerial'),
+            dept:         g('faEditDept'),
+            user:         g('faEditUser'),
+            location:     g('faEditLocation'),
+            status:       g('faEditStatus'),
+            remark:       g('faEditRemark'),
+            supplier:     g('faEditSupplier'),
+            invoiceNo:    g('faEditInvoice'),
+            purchaseDate: g('faEditPurchaseDate'),
+            warrantyEnd:  g('faEditWarranty')
+        };
+
+        if (!updated.name || !updated.dept || !updated.location) {
+            alert('资产名称、使用部门、存放地点为必填项'); return;
+        }
+
+        // ── 对比变更，生成日志描述 ──
+        var LABELS = {
+            name:'资产名称', brand:'品牌', model:'型号', serialNo:'序列号',
+            dept:'使用部门', user:'使用人', location:'存放地点', status:'使用状态',
+            remark:'备注', supplier:'供应商', invoiceNo:'发票号',
+            purchaseDate:'采购日期', warrantyEnd:'保修截止'
+        };
+        var diffs = [];
+        Object.keys(LABELS).forEach(function(k){
+            var oldVal = (asset[k] || '').toString().trim();
+            var newVal = (updated[k] || '').toString().trim();
+            if (oldVal !== newVal) {
+                diffs.push(LABELS[k] + '：「' + (oldVal || '空') + '」→「' + (newVal || '空') + '」');
+            }
+        });
+
+        // ── 更新资产 ──
+        Object.assign(asset, updated);
+        var idx = list.findIndex(function(a){ return a.id === id; });
+        if (idx !== -1) list[idx] = asset;
+        faSaveList(list);
+
+        // ── 写入变动记录 ──
+        if (diffs.length > 0) {
+            faAddLog(id, '资产编辑', diffs.join('；'));
+        }
+
+        loadContent('AssetDetail');
+    };
+
+    var statusOptions = [
+        {v:'active',l:'在用'},{v:'idle',l:'闲置'},{v:'repair',l:'维修中'},{v:'pending',l:'待报废'}
+    ].map(function(o){
+        return '<option value="' + o.v + '"' + (asset.status === o.v ? ' selected' : '') + '>' + o.l + '</option>';
+    }).join('');
+
+    var deptOptions = ['研发部','生产部','行政部','销售部','财务部','IT部','设计部','人力资源部','运营部'].map(function(d){
+        return '<option' + (asset.dept === d ? ' selected' : '') + '>' + d + '</option>';
+    }).join('');
+
+    var userOptions = ['陈明','张雪','王芳','李强','赵刚','刘强'].map(function(u){
+        return '<option' + (asset.user === u ? ' selected' : '') + '>' + u + '</option>';
+    }).join('');
+
+    var supplierOptions = ['Apple Store 官方','京东企业购','联想官方商城','其他'].map(function(s){
+        return '<option' + (asset.supplier === s ? ' selected' : '') + '>' + s + '</option>';
+    }).join('');
+
+    var html = FA_CSS + `
+    <div class="fa-wrap">
+      <div class="fa-card">
+        <div class="fa-form-hdr">
+          <div>
+            <span style="font-size:15px;font-weight:600">编辑资产：${asset.name}</span>
+            <span style="font-size:12px;color:#9ca3af;margin-left:10px;">${asset.code}</span>
+          </div>
+          <button class="fa-btn" onclick="loadContent('AssetDetail')">← 返回详情</button>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="fa-section">
+          <div class="fa-section-title"><span class="fa-section-bar"></span>基本信息</div>
+          <div class="fa-grid2">
+            <div class="fa-field">
+              <label class="fa-flabel">资产编号</label>
+              <input class="fa-finput" disabled value="${asset.code}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">资产名称 <span class="fa-req">*</span></label>
+              <input id="faEditName" class="fa-finput" value="${asset.name || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">品牌</label>
+              <input id="faEditBrand" class="fa-finput" value="${asset.brand || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">型号规格</label>
+              <input id="faEditModel" class="fa-finput" value="${asset.model || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">序列号</label>
+              <input id="faEditSerial" class="fa-finput" value="${asset.serialNo || ''}">
+            </div>
+          </div>
+        </div>
+
+        <!-- 使用信息 -->
+        <div class="fa-section">
+          <div class="fa-section-title"><span class="fa-section-bar"></span>使用信息</div>
+          <div class="fa-grid2">
+            <div class="fa-field">
+              <label class="fa-flabel">使用部门 <span class="fa-req">*</span></label>
+              <select id="faEditDept" class="fa-fselect">
+                <option value="">请选择部门</option>${deptOptions}
+              </select>
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">使用人</label>
+              <select id="faEditUser" class="fa-fselect">
+                <option value="">请选择使用人</option>${userOptions}
+              </select>
+            </div>
+            <div class="fa-field fa-full">
+              <label class="fa-flabel">存放地点 <span class="fa-req">*</span></label>
+              <input id="faEditLocation" class="fa-finput" value="${asset.location || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">使用状态</label>
+              <select id="faEditStatus" class="fa-fselect">${statusOptions}</select>
+            </div>
+            <div class="fa-field fa-full">
+              <label class="fa-flabel">备注</label>
+              <textarea id="faEditRemark" class="fa-ftextarea" style="height:60px">${asset.remark || ''}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 采购信息 -->
+        <div class="fa-section">
+          <div class="fa-section-title"><span class="fa-section-bar"></span>采购信息</div>
+          <div class="fa-grid2">
+            <div class="fa-field">
+              <label class="fa-flabel">供应商</label>
+              <select id="faEditSupplier" class="fa-fselect">
+                <option value="">请选择供应商</option>${supplierOptions}
+              </select>
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">发票号</label>
+              <input id="faEditInvoice" class="fa-finput" value="${asset.invoiceNo || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">采购日期</label>
+              <input id="faEditPurchaseDate" class="fa-finput" type="date" value="${asset.purchaseDate || ''}">
+            </div>
+            <div class="fa-field">
+              <label class="fa-flabel">保修截止日</label>
+              <input id="faEditWarranty" class="fa-finput" type="date" value="${asset.warrantyEnd || ''}">
+            </div>
+          </div>
+        </div>
+
+        <div class="fa-form-footer">
+          <button class="fa-btn fa-btn-primary" onclick="faEditSave()">✓ 保存更改</button>
+          <button class="fa-btn" onclick="loadContent('AssetDetail')">取消</button>
+        </div>
+      </div>
+    </div>`;
+
+    contentArea.innerHTML = html;
 };
 
 })(); // end IIFE

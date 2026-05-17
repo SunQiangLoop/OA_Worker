@@ -1670,3 +1670,627 @@ Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust
 2026/05/16 10:17:38 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:168
 [0m[33m[0.353ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
 [GIN] 2026/05/16 - 10:17:38 | 200 |    7.788625ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+[GIN] 2026/05/16 - 11:25:23 | 204 |    3.469375ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 11:25:23 | 204 |    3.395917ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 11:25:23 | 401 |    8.627541ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 11:25:23 | 401 |      41.291µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 11:25:23 | 204 |       6.542µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[150.248ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'a0e2ac31ed01650b32306e4ccac1df2b612c7b4d0aec76f8c64afd49fd69379d' AND revoked_at IS NULL AND expires_at > '2026-05-16 11:25:23.612') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[15.132ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 09:47:50.643',`updated_at`='2026-05-16 11:25:23.769',`deleted_at`=NULL,`user_id`=1,`token_hash`='a0e2ac31ed01650b32306e4ccac1df2b612c7b4d0aec76f8c64afd49fd69379d',`expires_at`='2026-06-15 09:47:50.642',`revoked_at`='2026-05-16 11:25:23.766' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 228
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[8.202ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 11:25:23.784','2026-05-16 11:25:23.784',NULL,1,'60c7fd4ad9d22cf9e806dd4ceca62224d7021c6b3f72c29b60d01fbd2dad4612','2026-06-15 11:25:23.782',NULL)
+[GIN] 2026/05/16 - 11:25:23 | 200 |  185.257667ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.690ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.288ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.855ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 11:25:23 | 200 |    6.226875ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.226ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.375ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.219ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 11:25:23 | 200 |    3.587292ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 11:25:23 | 204 |       6.833µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/1"
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[7.694ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/16 11:25:23 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:129
+[0m[33m[0.678ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/05/16 - 11:25:23 | 200 |      8.6925ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+[GIN] 2026/05/16 - 12:19:23 | 204 |    5.531542ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:19:23 | 204 |    5.449708ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:19:23 | 401 |   18.762541ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:19:23 | 401 |      37.208µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:19:23 | 204 |       5.916µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 12:19:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[925.716ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = '60c7fd4ad9d22cf9e806dd4ceca62224d7021c6b3f72c29b60d01fbd2dad4612' AND revoked_at IS NULL AND expires_at > '2026-05-16 12:19:23.927') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/05/16 12:19:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[123.462ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 11:25:23.784',`updated_at`='2026-05-16 12:19:24.924',`deleted_at`=NULL,`user_id`=1,`token_hash`='60c7fd4ad9d22cf9e806dd4ceca62224d7021c6b3f72c29b60d01fbd2dad4612',`expires_at`='2026-06-15 11:25:23.783',`revoked_at`='2026-05-16 12:19:24.857' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 229
+
+2026/05/16 12:19:24 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[8.560ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 12:19:24.985','2026-05-16 12:19:24.985',NULL,1,'9bcb81cbfe3c08fc630c2cb6c9dfe4b74768335da571f6aef5879f7e77b631ac','2026-06-15 12:19:24.981',NULL)
+[GIN] 2026/05/16 - 12:19:24 | 200 |  1.066273833s |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.485ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.753ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[11.198ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:19:25 | 200 |   11.666792ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.462ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.466ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.693ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:19:25 | 200 |    3.409042ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:19:25 | 204 |      20.625µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/1"
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[5.608ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/16 12:19:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:129
+[0m[33m[1.164ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:19:25 | 200 |    7.228458ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+[GIN] 2026/05/16 - 12:54:49 | 204 |     2.03875ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:54:49 | 204 |    2.033833ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:54:49 | 401 |    5.375584ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:54:49 | 401 |     105.625µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:54:49 | 204 |        7.25µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[60.838ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '9bcb81cbfe3c08fc630c2cb6c9dfe4b74768335da571f6aef5879f7e77b631ac' AND revoked_at IS NULL AND expires_at > '2026-05-16 12:54:49.584') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[24.067ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 12:19:24.985',`updated_at`='2026-05-16 12:54:49.658',`deleted_at`=NULL,`user_id`=1,`token_hash`='9bcb81cbfe3c08fc630c2cb6c9dfe4b74768335da571f6aef5879f7e77b631ac',`expires_at`='2026-06-15 12:19:24.981',`revoked_at`='2026-05-16 12:54:49.649' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 230
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[5.237ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 12:54:49.674','2026-05-16 12:54:49.674',NULL,1,'535268181d5c5a171037cd5cfdbb5c926287aec819eac4559b262491f7379247','2026-06-15 12:54:49.674',NULL)
+[GIN] 2026/05/16 - 12:54:49 | 200 |   96.787417ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.357ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.351ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.762ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:54:49 | 200 |    1.893333ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.320ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.260ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.486ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:54:49 | 200 |    2.540167ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 12:54:49 | 204 |      28.416µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/1"
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[4.270ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/16 12:54:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:129
+[0m[33m[2.207ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/05/16 - 12:54:49 | 200 |    6.816417ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+
+2026/05/16 13:47:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:167
+[0m[33m[80.210ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL
+
+2026/05/16 13:47:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:168
+[0m[33m[5.351ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/05/16 - 13:47:12 | 200 |   94.519792ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+
+2026/05/16 17:52:04 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:167
+[0m[33m[79.961ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL
+
+2026/05/16 17:52:04 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:168
+[0m[33m[5.947ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE type = 'expense' AND `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/05/16 - 17:52:04 | 200 |   97.199875ms |       127.0.0.1 | GET      "/public/v1/approvals?type=expense"
+[GIN] 2026/05/16 - 18:22:30 | 204 |    3.902375ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 18:22:30 | 204 |    3.873042ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 18:22:30 | 401 |    4.482834ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 18:22:30 | 401 |      52.083µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 18:22:30 | 204 |       4.708µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[602.923ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = '535268181d5c5a171037cd5cfdbb5c926287aec819eac4559b262491f7379247' AND revoked_at IS NULL AND expires_at > '2026-05-16 18:22:30.079') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[18.301ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 12:54:49.674',`updated_at`='2026-05-16 18:22:30.689',`deleted_at`=NULL,`user_id`=1,`token_hash`='535268181d5c5a171037cd5cfdbb5c926287aec819eac4559b262491f7379247',`expires_at`='2026-06-15 12:54:49.674',`revoked_at`='2026-05-16 18:22:30.687' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 231
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[4.440ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 18:22:30.706','2026-05-16 18:22:30.706',NULL,1,'93a46e71fcb48fd9bb5d2d754b8e5bfdcd51591cd5a587aca8a431130ad658e6','2026-06-15 18:22:30.705',NULL)
+[GIN] 2026/05/16 - 18:22:30 | 200 |    632.4985ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.748ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.885ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[9.261ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 18:22:30 | 200 |     9.46625ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.644ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.555ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 18:22:30 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[7.146ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 18:22:30 | 200 |    8.621667ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 18:22:31 | 204 |       8.375µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets/1"
+
+2026/05/16 18:22:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[5.856ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/16 18:22:31 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:129
+[0m[33m[7.372ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`id` = '1' AND `tickets`.`deleted_at` IS NULL ORDER BY `tickets`.`id` LIMIT 1
+[GIN] 2026/05/16 - 18:22:31 | 200 |   13.973375ms |       127.0.0.1 | GET      "/api/v1/tickets/1"
+[GIN] 2026/05/16 - 19:38:43 | 204 |    2.118875ms |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+[GIN] 2026/05/16 - 19:38:43 | 401 |    7.965459ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/05/16 - 19:38:43 | 204 |      11.084µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[76.689ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '93a46e71fcb48fd9bb5d2d754b8e5bfdcd51591cd5a587aca8a431130ad658e6' AND revoked_at IS NULL AND expires_at > '2026-05-16 19:38:43.446') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[21.448ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 18:22:30.706',`updated_at`='2026-05-16 19:38:43.533',`deleted_at`=NULL,`user_id`=1,`token_hash`='93a46e71fcb48fd9bb5d2d754b8e5bfdcd51591cd5a587aca8a431130ad658e6',`expires_at`='2026-06-15 18:22:30.706',`revoked_at`='2026-05-16 19:38:43.525' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 232
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[2.895ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 19:38:43.547','2026-05-16 19:38:43.547',NULL,1,'838f6332e0fce28f7d2ac4789a9d221084bacda42d7942eb5edce5f2ea5b0011','2026-06-15 19:38:43.547',NULL)
+[GIN] 2026/05/16 - 19:38:43 | 200 |  105.598875ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[3.256ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:113
+[0m[33m[0.711ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/05/16 19:38:43 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:114
+[0m[33m[1.009ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/05/16 - 19:38:43 | 200 |    5.340208ms |       127.0.0.1 | GET      "/api/v1/tickets"
+[GIN] 2026/05/16 - 20:17:44 | 204 |    1.714708ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 20:17:44 | 204 |    1.692917ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 20:17:44 | 401 |    5.130208ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 20:17:44 | 401 |     264.083µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 20:17:44 | 204 |       7.791µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[100.773ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '838f6332e0fce28f7d2ac4789a9d221084bacda42d7942eb5edce5f2ea5b0011' AND revoked_at IS NULL AND expires_at > '2026-05-16 20:17:44.296') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[14.040ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 19:38:43.547',`updated_at`='2026-05-16 20:17:44.402',`deleted_at`=NULL,`user_id`=1,`token_hash`='838f6332e0fce28f7d2ac4789a9d221084bacda42d7942eb5edce5f2ea5b0011',`expires_at`='2026-06-15 19:38:43.547',`revoked_at`='2026-05-16 20:17:44.399' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 233
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[2.150ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 20:17:44.414','2026-05-16 20:17:44.414',NULL,1,'90526393619691c22e195137c791d9aab08e972fb308fe5a4631a2ebc3b09f93','2026-06-15 20:17:44.413',NULL)
+[GIN] 2026/05/16 - 20:17:44 | 200 |  120.972708ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.663ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.959ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.001ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 20:17:44 | 200 |    5.644625ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.151ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.158ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 20:17:44 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.667ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 20:17:44 | 200 |    2.332167ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 22:33:53 | 204 |     1.90575ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 22:33:53 | 204 |    1.907125ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 22:33:53 | 401 |    4.994916ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 22:33:53 | 401 |      28.625µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 22:33:53 | 204 |       3.834µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154 [33mSLOW SQL >= 200ms
+[0m[31;1m[230.047ms] [33m[rows:1][35m SELECT * FROM `refresh_tokens` WHERE (token_hash = '90526393619691c22e195137c791d9aab08e972fb308fe5a4631a2ebc3b09f93' AND revoked_at IS NULL AND expires_at > '2026-05-16 22:33:53.034') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1[0m
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[15.944ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 20:17:44.414',`updated_at`='2026-05-16 22:33:53.271',`deleted_at`=NULL,`user_id`=1,`token_hash`='90526393619691c22e195137c791d9aab08e972fb308fe5a4631a2ebc3b09f93',`expires_at`='2026-06-15 20:17:44.414',`revoked_at`='2026-05-16 22:33:53.267' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 234
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.587ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 22:33:53.284','2026-05-16 22:33:53.284',NULL,1,'2dc4187027d2be6c0dcc6442556790efcd26e53d062c5914f83c11a6543fa136','2026-06-15 22:33:53.284',NULL)
+[GIN] 2026/05/16 - 22:33:53 | 200 |  254.992292ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.430ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.346ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[7.455ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 22:33:53 | 200 |     7.80425ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.373ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.281ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 22:33:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.447ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 22:33:53 | 200 |    2.810917ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:01:48 | 204 |    1.932375ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:01:48 | 204 |    1.931667ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:01:48 | 401 |       4.375ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:01:48 | 401 |      25.125µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:01:48 | 204 |       6.209µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[71.561ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '2dc4187027d2be6c0dcc6442556790efcd26e53d062c5914f83c11a6543fa136' AND revoked_at IS NULL AND expires_at > '2026-05-16 23:01:48.626') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[23.593ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 22:33:53.284',`updated_at`='2026-05-16 23:01:48.711',`deleted_at`=NULL,`user_id`=1,`token_hash`='2dc4187027d2be6c0dcc6442556790efcd26e53d062c5914f83c11a6543fa136',`expires_at`='2026-06-15 22:33:53.284',`revoked_at`='2026-05-16 23:01:48.7' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 235
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[1.607ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 23:01:48.725','2026-05-16 23:01:48.725',NULL,1,'680fc23442024016df0ddda73566fddd0e8b30066dc90fe4a0862d0f454b6c7b','2026-06-15 23:01:48.724',NULL)
+[GIN] 2026/05/16 - 23:01:48 | 200 |  102.483375ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.881ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.297ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[5.858ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:01:48 | 200 |    5.984125ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.150ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.122ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:01:48 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.638ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:01:48 | 200 |    1.630208ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:25:51 | 204 |      46.625µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:25:51 | 204 |     167.625µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:25:51 | 401 |     146.083µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:25:51 | 401 |      36.875µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:25:51 | 204 |       3.917µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[29.993ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '680fc23442024016df0ddda73566fddd0e8b30066dc90fe4a0862d0f454b6c7b' AND revoked_at IS NULL AND expires_at > '2026-05-16 23:25:51.226') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[3.174ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 23:01:48.725',`updated_at`='2026-05-16 23:25:51.257',`deleted_at`=NULL,`user_id`=1,`token_hash`='680fc23442024016df0ddda73566fddd0e8b30066dc90fe4a0862d0f454b6c7b',`expires_at`='2026-06-15 23:01:48.725',`revoked_at`='2026-05-16 23:25:51.256' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 236
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[2.349ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-16 23:25:51.26','2026-05-16 23:25:51.26',NULL,1,'9f007dd573c71ecef7327f932e1b7e8782290ecce91928bc5aad3dbfb0588969','2026-06-15 23:25:51.259',NULL)
+[GIN] 2026/05/16 - 23:25:51 | 200 |   35.926333ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.875ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.145ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.189ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:25:51 | 200 |    3.358541ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.584ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.323ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:25:51 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.294ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:25:51 | 200 |    2.486417ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:29:11 | 204 |    1.704958ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/16 - 23:29:11 | 204 |     179.791µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[73.619ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.730ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[159.545ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:29:11 | 200 |  159.999791ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.659ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.654ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/16 23:29:11 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.025ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/16 - 23:29:11 | 200 |    3.151459ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 00:07:54 | 204 |    5.456666ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 00:07:54 | 204 |    3.985917ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 00:07:54 | 401 |   19.136333ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 00:07:54 | 401 |     178.166µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 00:07:54 | 204 |       4.542µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[147.643ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '9f007dd573c71ecef7327f932e1b7e8782290ecce91928bc5aad3dbfb0588969' AND revoked_at IS NULL AND expires_at > '2026-05-17 00:07:54.274') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[18.946ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-16 23:25:51.26',`updated_at`='2026-05-17 00:07:54.432',`deleted_at`=NULL,`user_id`=1,`token_hash`='9f007dd573c71ecef7327f932e1b7e8782290ecce91928bc5aad3dbfb0588969',`expires_at`='2026-06-15 23:25:51.26',`revoked_at`='2026-05-17 00:07:54.424' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 237
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[1.727ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-17 00:07:54.444','2026-05-17 00:07:54.444',NULL,1,'37f1ca7bf8db71499094267d835a392f53886a6e467d0c4685c94dc033c67f57','2026-06-16 00:07:54.443',NULL)
+[GIN] 2026/05/17 - 00:07:54 | 200 |  172.207792ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[6.776ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.083ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[9.644ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 00:07:54 | 200 |    9.962125ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.214ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.186ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 00:07:54 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.942ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 00:07:54 | 200 |    1.834166ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 07:38:26 | 204 |    2.302667ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 07:38:26 | 204 |    2.323792ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 07:38:26 | 401 |    8.203375ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 07:38:26 | 401 |     238.084µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 07:38:26 | 204 |       5.083µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[133.371ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '37f1ca7bf8db71499094267d835a392f53886a6e467d0c4685c94dc033c67f57' AND revoked_at IS NULL AND expires_at > '2026-05-17 07:38:26.454') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[14.195ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-17 00:07:54.444',`updated_at`='2026-05-17 07:38:26.592',`deleted_at`=NULL,`user_id`=1,`token_hash`='37f1ca7bf8db71499094267d835a392f53886a6e467d0c4685c94dc033c67f57',`expires_at`='2026-06-16 00:07:54.444',`revoked_at`='2026-05-17 07:38:26.59' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 238
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[3.541ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-17 07:38:26.606','2026-05-17 07:38:26.606',NULL,1,'36c0cc521b6b56a758e07288079bd9e470f4b937810ce5d73b8b5e5c82cb5c6b','2026-06-16 07:38:26.605',NULL)
+[GIN] 2026/05/17 - 07:38:26 | 200 |  155.541875ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.498ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.989ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[7.578ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 07:38:26 | 200 |    7.786375ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.223ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.604ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 07:38:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.542ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 07:38:26 | 200 |    2.915083ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 11:06:25 | 204 |    2.603792ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 11:06:25 | 204 |     2.64325ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 11:06:25 | 401 |    6.098417ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 11:06:25 | 401 |     101.958µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 11:06:25 | 204 |       2.583µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[161.749ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = '36c0cc521b6b56a758e07288079bd9e470f4b937810ce5d73b8b5e5c82cb5c6b' AND revoked_at IS NULL AND expires_at > '2026-05-17 11:06:25.791') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[21.296ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-17 07:38:26.606',`updated_at`='2026-05-17 11:06:25.964',`deleted_at`=NULL,`user_id`=1,`token_hash`='36c0cc521b6b56a758e07288079bd9e470f4b937810ce5d73b8b5e5c82cb5c6b',`expires_at`='2026-06-16 07:38:26.605',`revoked_at`='2026-05-17 11:06:25.956' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 239
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[9.250ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-17 11:06:25.979','2026-05-17 11:06:25.979',NULL,1,'c465b664a94551955d98d9b613c395252d7c30129fa0dd9cdaad09983dd47fa0','2026-06-16 11:06:25.978',NULL)
+[GIN] 2026/05/17 - 11:06:25 | 200 |  198.413333ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.639ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.511ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 11:06:25 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.707ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 11:06:25 | 200 |    3.088583ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 11:06:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.407ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 11:06:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.378ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 11:06:26 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.634ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 11:06:26 | 200 |    2.695167ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:25:11 | 204 |    2.207875ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:25:11 | 204 |    2.203083ms |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:25:11 | 401 |    4.135333ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:25:11 | 401 |      45.041µs |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:25:11 | 204 |       3.125µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[138.468ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'c465b664a94551955d98d9b613c395252d7c30129fa0dd9cdaad09983dd47fa0' AND revoked_at IS NULL AND expires_at > '2026-05-17 12:25:11.997') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[14.816ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-17 11:06:25.979',`updated_at`='2026-05-17 12:25:12.141',`deleted_at`=NULL,`user_id`=1,`token_hash`='c465b664a94551955d98d9b613c395252d7c30129fa0dd9cdaad09983dd47fa0',`expires_at`='2026-06-16 11:06:25.979',`revoked_at`='2026-05-17 12:25:12.138' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 240
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[1.654ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-17 12:25:12.154','2026-05-17 12:25:12.154',NULL,1,'ed27a5c2f2abda1b996df4facb3bd7b113f8753cf263f9a4735ac39de4755766','2026-06-16 12:25:12.153',NULL)
+[GIN] 2026/05/17 - 12:25:12 | 200 |  159.100209ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.762ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.666ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.483ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:25:12 | 200 |    2.610917ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.279ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.308ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:25:12 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.299ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:25:12 | 200 |     4.28025ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:28:09 | 204 |       6.625µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:28:09 | 204 |      32.291µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.630ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[3.327ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[7.069ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:28:09 | 200 |    7.598708ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.669ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.342ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:28:09 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[2.780ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:28:09 | 200 |       3.201ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:41:14 | 204 |     209.334µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:41:14 | 204 |     209.542µs |       127.0.0.1 | OPTIONS  "/api/v1/users/me"
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[1.012ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.349ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[6.198ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:41:14 | 200 |    6.496125ms |       127.0.0.1 | GET      "/api/v1/users/me"
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.464ms] [34;1m[rows:1][0m SELECT * FROM `user_roles` WHERE `user_roles`.`user_id` = 1
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[0.283ms] [34;1m[rows:1][0m SELECT * FROM `roles` WHERE `roles`.`id` = 1 AND `roles`.`deleted_at` IS NULL
+
+2026/05/17 12:41:14 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/user.go:26
+[0m[33m[8.304ms] [34;1m[rows:1][0m SELECT * FROM `users` WHERE `users`.`id` = 1 AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:41:14 | 200 |    8.513958ms |       127.0.0.1 | GET      "/api/v1/users/me"
+[GIN] 2026/05/17 - 12:43:18 | 204 |          13µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates"
+[GIN] 2026/05/17 - 12:43:18 | 401 |      91.042µs |       127.0.0.1 | POST     "/api/v1/workflows/templates"
+[GIN] 2026/05/17 - 12:43:18 | 204 |      10.417µs |       127.0.0.1 | OPTIONS  "/api/v1/auth/refresh"
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:154
+[0m[33m[6.077ms] [34;1m[rows:1][0m SELECT * FROM `refresh_tokens` WHERE (token_hash = 'ed27a5c2f2abda1b996df4facb3bd7b113f8753cf263f9a4735ac39de4755766' AND revoked_at IS NULL AND expires_at > '2026-05-17 12:43:18.3') AND `refresh_tokens`.`deleted_at` IS NULL ORDER BY `refresh_tokens`.`id` LIMIT 1
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:161
+[0m[33m[15.435ms] [34;1m[rows:1][0m UPDATE `refresh_tokens` SET `created_at`='2026-05-17 12:25:12.154',`updated_at`='2026-05-17 12:43:18.312',`deleted_at`=NULL,`user_id`=1,`token_hash`='ed27a5c2f2abda1b996df4facb3bd7b113f8753cf263f9a4735ac39de4755766',`expires_at`='2026-06-16 12:25:12.154',`revoked_at`='2026-05-17 12:43:18.306' WHERE `refresh_tokens`.`deleted_at` IS NULL AND `id` = 241
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/auth.go:174
+[0m[33m[1.786ms] [34;1m[rows:1][0m INSERT INTO `refresh_tokens` (`created_at`,`updated_at`,`deleted_at`,`user_id`,`token_hash`,`expires_at`,`revoked_at`) VALUES ('2026-05-17 12:43:18.322','2026-05-17 12:43:18.322',NULL,1,'8a54b128b6a67f408dcf4c80ce452ac6ee46dee97bf3e88b7870e418ec565a9d','2026-06-16 12:43:18.322',NULL)
+[GIN] 2026/05/17 - 12:43:18 | 200 |   27.356458ms |       127.0.0.1 | POST     "/api/v1/auth/refresh"
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:23
+[0m[33m[5.025ms] [34;1m[rows:3][0m INSERT INTO `process_nodes` (`created_at`,`updated_at`,`deleted_at`,`template_id`,`node_key`,`node_type`,`node_name`,`approve_mode`,`empty_approver_rule`,`assignee_rule`,`condition_rule`,`next_node_key`) VALUES ('2026-05-17 12:43:18.338','2026-05-17 12:43:18.338',NULL,3,'condition-1778992878152','condition','添加条件','or_sign','auto_pass','{"type":"leader"}','null','approval-1'),('2026-05-17 12:43:18.338','2026-05-17 12:43:18.338',NULL,3,'approval-1','approval','审批人','or_sign','auto_pass','{"type":"leader"}','null','cc-1'),('2026-05-17 12:43:18.338','2026-05-17 12:43:18.338',NULL,3,'cc-1','cc','抄送人','or_sign','auto_pass','{"type":"self"}','null','') ON DUPLICATE KEY UPDATE `updated_at`='2026-05-17 12:43:18.338',`deleted_at`=VALUES(`deleted_at`),`template_id`=VALUES(`template_id`),`node_key`=VALUES(`node_key`),`node_type`=VALUES(`node_type`),`node_name`=VALUES(`node_name`),`approve_mode`=VALUES(`approve_mode`),`empty_approver_rule`=VALUES(`empty_approver_rule`),`assignee_rule`=VALUES(`assignee_rule`),`condition_rule`=VALUES(`condition_rule`),`next_node_key`=VALUES(`next_node_key`)
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:23
+[0m[33m[17.017ms] [34;1m[rows:1][0m INSERT INTO `workflow_templates` (`created_at`,`updated_at`,`deleted_at`,`name`,`description`,`category`,`submitter_scope`,`admin_type`,`form_fields`,`visibility_scope`,`version`,`is_active`,`created_by`) VALUES ('2026-05-17 12:43:18.329','2026-05-17 12:43:18.329',NULL,'rwe','','财务','全员','all_admin','[{"id":"1778992954514-22045bae7925d8","type":"单行输入框","label":"单行输入框","placeholder":"请输入","unit":"","min":"","required":false},{"id":"1778992957273-d8b171c9c32d4","type":"电话","label":"电话","placeholder":"请输入","unit":"","min":"","required":false},{"id":"1778992963021-7ca011877b5b98","type":"附件","label":"附件","placeholder":"上传文件","unit":"","min":"","required":false},{"id":"1778992966229-856e72bb093ea8","type":"手写签名","label":"手写签名","placeholder":"请输入","unit":"","min":"","required":false}]','all',1,true,1)
+[GIN] 2026/05/17 - 12:43:18 | 201 |   18.160083ms |       127.0.0.1 | POST     "/api/v1/workflows/templates"
+[GIN] 2026/05/17 - 12:43:18 | 204 |       7.959µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates?active=true"
+
+2026/05/17 12:43:18 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:40
+[0m[33m[8.496ms] [34;1m[rows:3][0m SELECT * FROM `workflow_templates` WHERE is_active = true AND `workflow_templates`.`deleted_at` IS NULL ORDER BY id desc
+[GIN] 2026/05/17 - 12:43:18 | 200 |    9.603958ms |       127.0.0.1 | GET      "/api/v1/workflows/templates?active=true"
+[GIN] 2026/05/17 - 12:43:20 | 204 |       8.834µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates/3"
+
+2026/05/17 12:43:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[0.454ms] [34;1m[rows:3][0m SELECT * FROM `process_nodes` WHERE `process_nodes`.`template_id` = 3 AND `process_nodes`.`deleted_at` IS NULL
+
+2026/05/17 12:43:20 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[1.276ms] [34;1m[rows:1][0m SELECT * FROM `workflow_templates` WHERE `workflow_templates`.`id` = 3 AND `workflow_templates`.`deleted_at` IS NULL ORDER BY `workflow_templates`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:43:20 | 200 |     2.09225ms |       127.0.0.1 | GET      "/api/v1/workflows/templates/3"
+[GIN] 2026/05/17 - 12:43:45 | 204 |       7.792µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates?active=true"
+
+2026/05/17 12:43:45 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:40
+[0m[33m[1.441ms] [34;1m[rows:3][0m SELECT * FROM `workflow_templates` WHERE is_active = true AND `workflow_templates`.`deleted_at` IS NULL ORDER BY id desc
+[GIN] 2026/05/17 - 12:43:45 | 200 |    2.194125ms |       127.0.0.1 | GET      "/api/v1/workflows/templates?active=true"
+[GIN] 2026/05/17 - 12:43:47 | 204 |      32.666µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates/2"
+
+2026/05/17 12:43:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[0.801ms] [34;1m[rows:3][0m SELECT * FROM `process_nodes` WHERE `process_nodes`.`template_id` = 2 AND `process_nodes`.`deleted_at` IS NULL
+
+2026/05/17 12:43:47 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[1.856ms] [34;1m[rows:1][0m SELECT * FROM `workflow_templates` WHERE `workflow_templates`.`id` = 2 AND `workflow_templates`.`deleted_at` IS NULL ORDER BY `workflow_templates`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:43:47 | 200 |    2.008375ms |       127.0.0.1 | GET      "/api/v1/workflows/templates/2"
+
+2026/05/17 12:43:49 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:40
+[0m[33m[0.816ms] [34;1m[rows:3][0m SELECT * FROM `workflow_templates` WHERE is_active = true AND `workflow_templates`.`deleted_at` IS NULL ORDER BY id desc
+[GIN] 2026/05/17 - 12:43:49 | 200 |    2.042125ms |       127.0.0.1 | GET      "/api/v1/workflows/templates?active=true"
+[GIN] 2026/05/17 - 12:43:53 | 204 |       6.417µs |       127.0.0.1 | OPTIONS  "/api/v1/workflows/templates/2"
+
+2026/05/17 12:43:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[0.397ms] [34;1m[rows:3][0m SELECT * FROM `process_nodes` WHERE `process_nodes`.`template_id` = 2 AND `process_nodes`.`deleted_at` IS NULL
+
+2026/05/17 12:43:53 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/repo/workflow_repo_impl.go:28
+[0m[33m[1.066ms] [34;1m[rows:1][0m SELECT * FROM `workflow_templates` WHERE `workflow_templates`.`id` = 2 AND `workflow_templates`.`deleted_at` IS NULL ORDER BY `workflow_templates`.`id` LIMIT 1
+[GIN] 2026/05/17 - 12:43:53 | 200 |    1.198417ms |       127.0.0.1 | GET      "/api/v1/workflows/templates/2"
+[GIN] 2026/05/17 - 12:44:03 | 204 |          13µs |       127.0.0.1 | OPTIONS  "/api/v1/tickets"
+
+2026/05/17 12:44:03 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/middleware/auth.go:59
+[0m[33m[8.139ms] [34;1m[rows:1][0m SELECT count(*) FROM `users` JOIN user_roles ur ON ur.user_id = users.id JOIN role_permissions rp ON rp.role_id = ur.role_id JOIN permissions p ON p.id = rp.permission_id WHERE (users.id = 1 AND p.code = 'ticket:read') AND `users`.`deleted_at` IS NULL
+
+2026/05/17 12:44:03 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:113
+[0m[33m[3.397ms] [34;1m[rows:1][0m SELECT count(*) FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL
+
+2026/05/17 12:44:03 [32m/Users/sunqiang/Desktop/OA_Worker/backend/internal/handler/ticket.go:114
+[0m[33m[0.891ms] [34;1m[rows:1][0m SELECT * FROM `tickets` WHERE `tickets`.`deleted_at` IS NULL ORDER BY id desc LIMIT 20
+[GIN] 2026/05/17 - 12:44:03 | 200 |   13.880333ms |       127.0.0.1 | GET      "/api/v1/tickets"

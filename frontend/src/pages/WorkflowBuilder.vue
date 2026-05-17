@@ -79,12 +79,9 @@ const fieldMetaByType = {
   联系人: { label: '联系人', placeholder: '请选择联系人', unit: '', min: '' },
 }
 
-const formFields = ref([
-  { id: 'sample-date-range', type: '日期区间', label: '日期区间', placeholder: '请选择', unit: '', min: '', required: false },
-  { id: 'sample-phone', type: '电话', label: '电话', placeholder: '请输入', unit: '', min: '', required: false },
-  { id: 'sample-ai', type: 'AI控件', label: 'AI控件', placeholder: '无需手动输入，提交后AI自动进行解读并输出内容', unit: '', min: '', required: false },
-])
-const selectedFieldId = ref('sample-date-range')
+const formFields = ref([])
+const selectedFieldId = ref(null)
+const deviceMode = ref('mobile')
 
 const selectedField = computed(
   () => formFields.value.find((f) => f.id === selectedFieldId.value) || null,
@@ -360,7 +357,7 @@ function closeNodeConfig() {
   selectedNodeId.value = ''
 }
 
-// 条件分支面板（原有逻辑）
+// 条件分支面板
 const selectedConditionId = ref('')
 const selectedBranchId = ref('')
 
@@ -380,6 +377,45 @@ function selectConditionBranch(conditionId, branchId) {
 function closeConditionPanel() {
   selectedConditionId.value = ''
   selectedBranchId.value = ''
+}
+
+function addBranchToBranch(conditionId) {
+  const condition = flowNodes.value.find((n) => n.id === conditionId)
+  if (!condition) return
+  const idx = condition.branches.length - 1
+  const newBranch = {
+    id: `${conditionId}-branch-${Date.now()}`,
+    title: `条件${idx + 1}`,
+    hint: '请设置条件',
+    nodes: [],
+    removable: true,
+    isDefault: false,
+  }
+  condition.branches.splice(idx, 0, newBranch)
+}
+
+// 选择条件弹窗
+const conditionModalOpen = ref(false)
+const conditionModalFields = ref([
+  { key: 'initiator', label: '发起人', checked: true },
+  { key: 'dept', label: '用人部门', checked: false },
+  { key: 'position', label: '职位', checked: false },
+  { key: 'empType', label: '员工类型', checked: false },
+])
+
+const conditionModalCheckedCount = computed(() => conditionModalFields.value.filter((f) => f.checked).length)
+const conditionModalAvailable = computed(() => conditionModalFields.value.filter((f) => !f.checked).length)
+
+function openConditionModal() {
+  conditionModalOpen.value = true
+}
+
+function confirmConditionModal() {
+  conditionModalOpen.value = false
+}
+
+function cancelConditionModal() {
+  conditionModalOpen.value = false
 }
 
 // ── 高级设置 ──────────────────────────────────────────────────────────────────
@@ -579,8 +615,8 @@ function goNextStep() {
       <section class="form-preview">
         <div class="preview-toolbar">
           <div class="toolbar-tabs">
-            <button class="device-btn active" type="button"><span class="pc-icon"></span></button>
-            <button class="device-btn" type="button"><span class="phone-icon"></span></button>
+            <button class="device-btn" :class="{ active: deviceMode === 'pc' }" type="button" @click="deviceMode = 'pc'"><span class="pc-icon"></span></button>
+            <button class="device-btn" :class="{ active: deviceMode === 'mobile' }" type="button" @click="deviceMode = 'mobile'"><span class="phone-icon"></span></button>
             <button class="toolbar-icon undo" type="button"></button>
             <button class="toolbar-icon redo" type="button"></button>
           </div>
@@ -589,20 +625,12 @@ function goNextStep() {
           </div>
         </div>
         <div class="preview-body">
-          <div class="phone-frame">
+          <!-- 手机预览 -->
+          <div v-if="deviceMode === 'mobile'" class="phone-frame">
             <div class="phone-notch"></div>
             <div class="phone-body" @drop="onDrop" @dragover="onDragOver">
-              <div class="phone-field compact">
-                <div class="field-title">单行输入框</div>
-                <div class="field-input">请输入</div>
-              </div>
-              <div class="phone-drop">
-                <span>分栏</span>
-                <strong>拖动控件到这里</strong>
-              </div>
-              <div class="invoice-block">
-                <span>发票</span>
-                <button type="button"></button>
+              <div v-if="formFields.length === 0" class="canvas-empty">
+                <span>从左侧拖入控件，或点击控件快速添加</span>
               </div>
               <div
                 v-for="field in formFields"
@@ -624,6 +652,38 @@ function goNextStep() {
                     <button class="trash-field" type="button" @click.stop="deleteField(field.id)"></button>
                   </div>
                   <span v-else-if="field.type === '日期区间'" class="phone-chevron"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- PC预览 -->
+          <div v-else class="pc-frame">
+            <div class="pc-titlebar">
+              <span class="pc-dot"></span><span class="pc-dot"></span><span class="pc-dot"></span>
+            </div>
+            <div class="pc-body" @drop="onDrop" @dragover="onDragOver">
+              <div v-if="formFields.length === 0" class="canvas-empty">
+                <span>从左侧拖入控件，或点击控件快速添加</span>
+              </div>
+              <div
+                v-for="field in formFields"
+                :key="field.id"
+                class="pc-field"
+                :class="{ active: field.id === selectedFieldId }"
+                @click="selectedFieldId = field.id"
+              >
+                <div class="field-row">
+                  <div style="flex:1">
+                    <div class="field-title" style="font-size:14px;margin-bottom:6px;">
+                      {{ field.label }}
+                      <span v-if="field.required" class="required-star">*</span>
+                    </div>
+                    <div class="pc-field-input">{{ field.placeholder }}</div>
+                  </div>
+                  <div v-if="field.id === selectedFieldId" class="field-actions" style="position:static;background:none;padding:0;">
+                    <button class="copy-field" type="button"></button>
+                    <button class="trash-field" type="button" @click.stop="deleteField(field.id)"></button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -718,33 +778,38 @@ function goNextStep() {
             </template>
             <template v-else>
               <div class="condition-block">
-                <div class="condition-pill">添加条件</div>
+                <div class="condition-top-bar">
+                  <button class="condition-add-branch" type="button" @click.stop="addBranchToBranch(node.id)">+ 添加条件</button>
+                </div>
                 <div class="condition-branches">
-                  <div v-for="branch in node.branches" :key="branch.id" class="condition-branch">
+                  <div v-for="(branch, bi) in node.branches" :key="branch.id" class="condition-branch">
+                    <div class="condition-branch-line-top"></div>
                     <div
                       class="condition-card"
-                      :class="{ default: branch.isDefault, active: selectedBranchId === branch.id }"
+                      :class="{
+                        'is-default': branch.isDefault,
+                        'is-active': selectedBranchId === branch.id && selectedConditionId === node.id
+                      }"
                       @click.stop="selectConditionBranch(node.id, branch.id)"
                     >
-                      <div class="condition-card-title">
-                        <span>{{ branch.title }}</span>
-                        <div class="condition-card-actions">
-                          <span v-if="branch.isDefault" class="muted">优先级2</span>
+                      <div class="condition-card-header">
+                        <span class="condition-card-title">{{ branch.title }}</span>
+                        <div class="condition-card-meta">
+                          <span class="condition-priority">优先级{{ bi + 1 }}</span>
                           <button
                             v-if="branch.removable"
-                            class="node-remove"
+                            class="condition-card-del"
                             type="button"
-                            @click.stop="removeFlowNode(node.id)"
+                            @click.stop="() => {
+                              const c = flowNodes.value.find(n => n.id === node.id)
+                              if (c) c.branches = c.branches.filter(b => b.id !== branch.id)
+                            }"
                           >×</button>
                         </div>
                       </div>
                       <div class="condition-card-body">{{ branch.hint }}</div>
                     </div>
-                    <button
-                      class="flow-connector branch"
-                      type="button"
-                      @click="openFlowMenu($event, { scope: 'branch', index: branch.nodes.length, conditionId: node.id, branchId: branch.id })"
-                    >+</button>
+                    <div class="condition-branch-line-bottom"></div>
                     <div v-if="branch.nodes.length" class="branch-nodes">
                       <div
                         v-for="child in branch.nodes"
@@ -897,36 +962,62 @@ function goNextStep() {
         <!-- 条件分支面板 -->
         <aside v-else-if="selectedCondition" class="condition-panel">
           <div class="condition-panel-header">
-            <div class="panel-title">{{ selectedBranch?.title || '条件' }}</div>
-            <div class="panel-actions">
-              <select>
-                <option>优先级1</option>
-                <option>优先级2</option>
+            <div class="cond-panel-title">
+              <span>{{ selectedBranch?.title || '条件' }}</span>
+              <button class="cond-edit-btn" type="button">✎</button>
+            </div>
+            <div class="cond-panel-right">
+              <select class="cond-priority-select">
+                <option v-for="(b, i) in selectedCondition.branches" :key="b.id" :selected="b.id === selectedBranchId">优先级{{ i + 1 }}</option>
               </select>
-              <button class="btn btn-ghost" type="button" @click="closeConditionPanel">×</button>
+              <button class="cond-help-btn" type="button">①</button>
+              <button class="cond-close-btn" type="button" @click="closeConditionPanel">×</button>
             </div>
           </div>
-          <div class="condition-tip">
-            当前审批单同时满足以下条件时进入此流程
-            <span class="link">我知道了</span>
+
+          <div class="cond-condition-list">
+            <template v-for="field in conditionModalFields.filter(f => f.checked)" :key="field.key">
+              <div class="cond-row">
+                <span class="cond-row-label">{{ field.label }}</span>
+                <input class="cond-row-input" type="text" placeholder="请选择具体人员/角色/部门" />
+                <button class="cond-row-del" type="button" @click="field.checked = false">🗑</button>
+              </div>
+            </template>
           </div>
-          <label class="field">
-            <span>发起人</span>
-            <input type="text" placeholder="请选择具体人员/角色/部门" />
-          </label>
-          <div class="condition-actions">
-            <button class="btn btn-ghost" type="button">+ 添加条件</button>
-            <span class="muted">还有0个可用条件</span>
+
+          <div class="cond-add-bar">
+            <button class="cond-add-btn" type="button" @click="openConditionModal">+ 添加条件</button>
+            <span class="cond-add-hint">还有{{ conditionModalAvailable }}个可用条件</span>
           </div>
-          <button class="btn btn-primary" type="button">+ 添加条件组</button>
-          <div class="condition-links">
-            <span>如何添加更多条件</span>
-          </div>
+
           <div class="condition-footer">
-            <button class="btn btn-ghost" type="button">取消</button>
-            <button class="btn btn-primary" type="button">保存</button>
+            <button class="btn btn-ghost" type="button" @click="closeConditionPanel">取消</button>
+            <button class="btn btn-primary" type="button" @click="closeConditionPanel">保存</button>
           </div>
         </aside>
+
+        <!-- 选择条件弹窗 -->
+        <div v-if="conditionModalOpen" class="cond-modal-mask" @click.self="cancelConditionModal">
+          <div class="cond-modal">
+            <div class="cond-modal-header">
+              <span>选择条件</span>
+              <button type="button" @click="cancelConditionModal">×</button>
+            </div>
+            <div class="cond-modal-body">
+              <p class="cond-modal-desc">请选择用来分审批流程的条件字段，已选{{ conditionModalCheckedCount }}个</p>
+              <div class="cond-modal-options">
+                <label v-for="field in conditionModalFields" :key="field.key" class="cond-modal-option">
+                  <input type="checkbox" v-model="field.checked" />
+                  {{ field.label }}
+                </label>
+              </div>
+            </div>
+            <div class="cond-modal-footer">
+              <button class="btn btn-ghost" type="button" @click="cancelConditionModal">取 消</button>
+              <button class="btn btn-primary" type="button" @click="confirmConditionModal">确 定</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="flow-footer">
@@ -1672,6 +1763,16 @@ input[type="checkbox"] {
   place-items: center;
 }
 
+.device-btn.active {
+  background: #e0eaff;
+  box-shadow: 0 0 0 1.5px #1683ff;
+}
+
+.device-btn.active .pc-icon,
+.device-btn.active .phone-icon {
+  border-color: #1683ff;
+}
+
 .pc-icon,
 .phone-icon {
   width: 14px;
@@ -1749,6 +1850,78 @@ input[type="checkbox"] {
   box-shadow: 0 0 0 1px #e8eaef, 0 14px 35px rgba(15, 23, 42, 0.08);
   overflow: hidden;
   position: relative;
+}
+
+.pc-frame {
+  width: 760px;
+  min-height: 500px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #e8eaef, 0 14px 35px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.pc-titlebar {
+  height: 28px;
+  background: #f0f2f5;
+  border-bottom: 1px solid #e8eaef;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+}
+
+.pc-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d0d4da;
+  display: block;
+}
+
+.pc-body {
+  padding: 20px 24px;
+  min-height: 472px;
+}
+
+.pc-field {
+  background: #fff;
+  border: 1px solid #e8eaef;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.pc-field.active {
+  border-left: 3px solid #1683ff;
+}
+
+.pc-field-input {
+  height: 34px;
+  border: 1px solid #dce0e8;
+  border-radius: 4px;
+  color: #a4abb5;
+  font-size: 14px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.canvas-empty {
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c0c8d4;
+  font-size: 14px;
+  border: 2px dashed #e0e4ea;
+  border-radius: 8px;
+  margin: 16px;
+  padding: 40px;
+  text-align: center;
 }
 
 .phone-notch {
@@ -2441,6 +2614,365 @@ input[type="checkbox"] {
   box-shadow: 0 5px 0 currentColor;
 }
 
+/* ── 条件块横向布局 ────────────────────────────────── */
+
+.condition-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 0;
+}
+
+.condition-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0;
+}
+
+.condition-add-branch {
+  height: 26px;
+  padding: 0 14px;
+  border-radius: 13px;
+  background: #fff;
+  border: 1px solid #d5dae3;
+  color: #47a84b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.condition-branches {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* 横向连接线 */
+.condition-branches::before,
+.condition-branches::after {
+  content: "";
+  position: absolute;
+  height: 2px;
+  background: #d7dbe1;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 110px);
+  pointer-events: none;
+}
+
+.condition-branches::after {
+  top: auto;
+  bottom: 0;
+}
+
+.condition-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+  padding: 0 20px;
+  position: relative;
+}
+
+.condition-branch-line-top,
+.condition-branch-line-bottom {
+  width: 2px;
+  height: 24px;
+  background: #d7dbe1;
+  flex-shrink: 0;
+}
+
+.condition-card {
+  width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(21, 34, 54, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  border: 1.5px solid #e4e7ed;
+  transition: border-color 0.15s;
+}
+
+.condition-card:hover {
+  border-color: #b0bcd4;
+}
+
+.condition-card.is-active {
+  border-color: #1683ff;
+}
+
+.condition-card.is-default {
+  border-color: #d0d5de;
+}
+
+.condition-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #f7f8fa;
+  border-bottom: 1px solid #eef0f4;
+  font-size: 13px;
+}
+
+.condition-card-title {
+  font-weight: 700;
+  color: #2d3540;
+}
+
+.condition-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.condition-priority {
+  color: #8d96a3;
+  font-size: 12px;
+}
+
+.condition-card-del {
+  color: #c5ccd5;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.condition-card-del:hover {
+  color: #ff5555;
+}
+
+.condition-card-body {
+  padding: 10px 12px 12px;
+  font-size: 13px;
+  color: #aab0bc;
+  min-height: 40px;
+}
+
+.branch-nodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── 条件面板新样式 ────────────────────────────────── */
+
+.condition-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef0f4;
+  margin-bottom: 14px;
+}
+
+.cond-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d3540;
+}
+
+.cond-edit-btn {
+  color: #8d96a3;
+  font-size: 14px;
+}
+
+.cond-panel-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cond-priority-select {
+  height: 26px;
+  padding: 0 20px 0 8px;
+  border: 1px solid #d5dae3;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #3d4652;
+  background: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  cursor: pointer;
+}
+
+.cond-help-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #c5ccd5;
+  font-size: 11px;
+  color: #8d96a3;
+  display: grid;
+  place-items: center;
+}
+
+.cond-close-btn {
+  font-size: 16px;
+  color: #8d96a3;
+  line-height: 1;
+  padding: 2px;
+}
+
+.cond-condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cond-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cond-row-label {
+  width: 50px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #3d4652;
+  font-weight: 600;
+}
+
+.cond-row-input {
+  flex: 1;
+  height: 32px;
+  border: 1px solid #d5dae3;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #3d4652;
+}
+
+.cond-row-input::placeholder { color: #b5bcc7; }
+
+.cond-row-del {
+  color: #c5ccd5;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.cond-row-del:hover { color: #ff5555; }
+
+.cond-add-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.cond-add-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #d5dae3;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #3d4652;
+  background: #fff;
+}
+
+.cond-add-btn:hover {
+  border-color: #1683ff;
+  color: #1683ff;
+}
+
+.cond-add-hint {
+  font-size: 12px;
+  color: #a4abb5;
+}
+
+/* ── 选择条件弹窗 ────────────────────────────────── */
+
+.cond-modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.cond-modal {
+  width: 520px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.cond-modal-header {
+  height: 50px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3540;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.cond-modal-header button {
+  font-size: 18px;
+  color: #8d96a3;
+}
+
+.cond-modal-body {
+  padding: 20px 24px 24px;
+}
+
+.cond-modal-desc {
+  font-size: 13px;
+  color: #6b7585;
+  margin-bottom: 16px;
+}
+
+.cond-modal-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+}
+
+.cond-modal-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #2d3540;
+  cursor: pointer;
+}
+
+.cond-modal-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #1683ff;
+}
+
+.cond-modal-footer {
+  height: 52px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #eef0f4;
+}
+
 .flow-footer {
   display: none;
 }
@@ -2458,23 +2990,27 @@ input[type="checkbox"] {
   z-index: 20;
 }
 
-.condition-panel-header,
 .condition-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eef0f4;
+  margin-top: 4px;
 }
 
 .condition-panel .btn {
   border: 1px solid #dfe4ec;
   border-radius: 4px;
-  padding: 7px 12px;
+  padding: 7px 14px;
+  font-size: 13px;
 }
 
 .condition-panel .btn-primary {
   background: #1683ff;
   color: #fff;
+  border-color: #1683ff;
 }
 
 .config-section {

@@ -6,3 +6,13 @@
   VITE v7.3.1  ready in 214 ms
 
   ➜  Local:   http://127.0.0.1:44391/
+12:25:55 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:26:16 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:26:22 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue?vue&type=style&index=0&scoped=205e1dcf&lang.css
+12:26:34 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue?vue&type=style&index=0&scoped=205e1dcf&lang.css
+12:39:14 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:39:32 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:39:53 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:40:29 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue?vue&type=style&index=0&scoped=205e1dcf&lang.css
+12:40:35 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue
+12:40:52 [vite] (client) hmr update /src/pages/WorkflowBuilder.vue?vue&type=style&index=0&scoped=205e1dcf&lang.css
